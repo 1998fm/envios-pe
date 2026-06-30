@@ -223,14 +223,48 @@ async function handleSubmit() {
       },
 
       body: JSON.stringify({
-        user_id: userId,
-        nombre,
-        dni,
-        telefono,
-        metodo,
-        detalle,
-        observaciones: '',
-      }),
+
+  user_id: userId,
+
+  nombre,
+
+  dni,
+
+  telefono,
+
+  metodo,
+
+  destino:
+
+    metodo === 'SHALOM'
+      ? agencia
+
+      : metodo === 'OLVA'
+      ? provincia
+
+      : distrito,
+
+  direccion:
+
+    metodo === 'SHALOM'
+
+      ? null
+
+      : direccion,
+
+  referencia:
+
+    metodo === 'SHALOM'
+
+      ? null
+
+      : referencia,
+
+  detalle,
+
+  observaciones: '',
+
+})
     }
   )
 

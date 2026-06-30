@@ -6,7 +6,20 @@ import { useRouter } from 'next/navigation'
 import EstadoSelect from '@/components/EstadoSelect'
 import TamanoSelect from '@/components/TamanoSelect'
 import { exportarShalom } from '@/lib/shalomExport'
-import * as XLSX from 'xlsx'
+import { toast } from 'sonner'
+
+/* ========================================
+   COPIAR DATOS
+======================================== */
+
+import {
+
+  ModalCopiarDatos
+
+} from '@/components/copiar-datos'
+/*======================================== */
+import distritosMoto
+from '@/data/distritos-moto.json'
 
 export default function DashboardPage() {
   const supabase = createClient()
@@ -29,7 +42,20 @@ export default function DashboardPage() {
   setMarcarComoEnviado,
 ] = useState(true)
 
+const [mensajeToast, setMensajeToast] =
+  useState('')
 
+  const [tarifas, setTarifas] =
+  useState<
+    Record<string, string>
+  >({})
+// ========================================
+// VISTA CONFIGURACION
+// ========================================
+
+const [vistaConfig,
+  setVistaConfig] =
+  useState('EMPRESA')
 // ========================================
 // ETIQUETAS
 // ========================================
@@ -49,17 +75,81 @@ const [
   setEnviosEtiquetas,
 ] = useState<any[]>([])
 
-/* MODAL COPIAR DATOS */
-
 const [
   mostrarModalCopiar,
-  setMostrarModalCopiar,
+  setMostrarModalCopiar
 ] = useState(false)
 
+/* ========================================
+   COBRAR ENVÍOS
+======================================== */
+
 const [
-  textoCopiar,
-  setTextoCopiar,
-] = useState('')
+
+  cobrarEnvios,
+
+  setCobrarEnvios
+
+] = useState<{
+
+  [id:number]: boolean
+
+}>({})
+/*======================================== */
+
+/* ========================================
+   CAMBIAR COBRO
+======================================== */
+/* ========================================
+   ABRIR MODAL COPIAR DATOS
+======================================== */
+
+function abrirModalCopiar() {
+
+  const estadoInicial: Record<number, boolean> = {}
+
+  enviosMotoSeleccionados.forEach((envio) => {
+
+    estadoInicial[envio.id] = false
+
+  })
+
+  setCobrarEnvios(estadoInicial)
+
+  setMostrarModalCopiar(true)
+
+}
+/*======================================== */
+function cambiarCobro(
+
+  id:number
+
+){
+
+  setCobrarEnvios(
+
+    anterior => ({
+
+      ...anterior,
+
+      [id]:
+      !anterior[id]
+
+    })
+
+  )
+
+}
+/*======================================== */
+
+/* ========================================
+   EXPORTAR
+======================================== */
+
+function exportarDatos(){
+
+}
+/*======================================== */
 
     function toggleSeleccionTodos() {
 
@@ -158,6 +248,24 @@ const [cambiandoEstado, setCambiandoEstado] =
 
     const [origenShalom, setOrigenShalom] =
   useState('')
+// ========================================
+// DATOS DE EMPRESA
+// ========================================
+
+const [empresa, setEmpresa] =
+  useState('')
+
+const [telefonoEmpresa,
+  setTelefonoEmpresa] =
+  useState('')
+
+const [direccionEmpresa,
+  setDireccionEmpresa] =
+  useState('')
+
+const [slugEmpresa,
+  setSlugEmpresa] =
+  useState('')
 
 const [mostrarConfig, setMostrarConfig] =
   useState(false)
@@ -168,6 +276,8 @@ const [nuevoOrigen, setNuevoOrigen] =
 
   const [logoFile, setLogoFile] =
   useState<File | null>(null)
+
+
 
 const [logoUrl, setLogoUrl] =
   useState('')
@@ -245,6 +355,28 @@ const [
   setEnviosExportar,
 ] = useState<any[]>([])
 
+/* ========================================
+   VARIABLES DERIVADAS
+======================================== */
+/* ========================================
+   ENVÍOS MOTO SELECCIONADOS
+======================================== */
+
+const enviosMotoSeleccionados =
+  envios.filter(
+    (envio) =>
+      seleccionados.includes(envio.id) &&
+      envio.metodo === 'MOTORIZADO'
+  )
+  /* ========================================
+   MOSTRAR BOTÓN COPIAR DATOS
+======================================== */
+
+const mostrarBotonCopiar =
+  enviosMotoSeleccionados.length > 0 &&
+  enviosMotoSeleccionados.length ===
+    seleccionados.length
+
   useEffect(() => {
     async function cargar() {
       const {
@@ -255,26 +387,74 @@ const [
         router.push('/login')
         return
       }
+// ========================================
+// CREAR PERFIL AUTOMÁTICO
+// ========================================
 
-      const { data: profile } = await supabase
-  .from('profiles')
-.select(`
-  origen_shalom,
-  logo_url,
-  redirect_url,
-  redirect_message,
-  instagram_url,
-  facebook_url,
-  tiktok_url,
-  web_url,
-  whatsapp_url
-`)
-  .eq('id', user.id)
-  .single()
+const { error: crearPerfilError } =
+  await supabase
+    .from('profiles')
+    .upsert(
+      {
+        id: user.id,
+      },
+      {
+        onConflict: 'id',
+      }
+    )
+
+if (crearPerfilError) {
+
+  console.error(
+    'Error creando perfil:',
+    crearPerfilError
+  )
+
+}
+  const { data: profile } =
+  await supabase
+    .from('profiles')
+    .select(`
+      empresa,
+      slug,
+      telefono,
+      direccion,
+
+      origen_shalom,
+      logo_url,
+      redirect_url,
+      redirect_message,
+
+      instagram_url,
+      facebook_url,
+      tiktok_url,
+      web_url,
+      whatsapp_url
+    `)
+    .eq('id', user.id)
+    .maybeSingle()
+
+// ========================================
+// CARGAR TARIFAS
+// ========================================
+
+const {
+  data: tarifasData
+} = await supabase
+  .from('tarifas_moto')
+  .select(`
+    distrito,
+    precio
+  `)
+  .eq(
+    'profile_id',
+    user.id
+  )
 
 setOrigenShalom(
   profile?.origen_shalom || ''
 )
+
 setNuevoOrigen(
   profile?.origen_shalom || ''
 )
@@ -309,6 +489,58 @@ setWebUrl(
 
 setWhatsappUrl(
   profile?.whatsapp_url || ''
+)
+
+// ========================================
+// SET TARIFAS
+// ========================================
+
+if (tarifasData) {
+
+  const tarifasObj =
+    tarifasData.reduce(
+      (
+        acc,
+        item
+      ) => {
+
+        acc[
+          item.distrito
+        ] =
+          String(
+            item.precio
+          )
+
+        return acc
+
+      },
+
+      {} as Record<
+        string,
+        string
+      >
+    )
+
+  setTarifas(
+    tarifasObj
+  )
+
+}
+
+setEmpresa(
+  profile?.empresa || ''
+)
+
+setTelefonoEmpresa(
+  profile?.telefono || ''
+)
+
+setDireccionEmpresa(
+  profile?.direccion || ''
+)
+
+setSlugEmpresa(
+  profile?.slug || ''
 )
 
       const { data } = await supabase
@@ -573,7 +805,7 @@ async function aplicarCambioMasivo() {
     false
   )
 
-  alert(
+  toast.success(
     `${ids.length} pedidos actualizados`
   )
 
@@ -638,6 +870,18 @@ async function guardarConfiguracion() {
       .from('profiles')
       .update({
 
+         empresa: empresa,
+
+         telefono: telefonoEmpresa,
+
+         direccion: direccionEmpresa,
+
+         slug:
+         empresa
+         .toLowerCase()
+         .trim()
+         .replaceAll(' ', '-'),
+
         origen_shalom:
           nuevoOrigen,
 
@@ -676,140 +920,81 @@ async function guardarConfiguracion() {
     return
   }
 
+// ========================================
+// GUARDAR TARIFAS
+// ========================================
+
+const tarifasParaGuardar =
+  Object.entries(
+    tarifas
+  )
+    .filter(
+      ([_, precio]) =>
+        precio !== ''
+    )
+    .map(
+      ([distrito, precio]) => ({
+        profile_id:
+          user.id,
+
+        distrito,
+
+        precio:
+          Number(precio),
+      })
+    )
+
+if (
+  tarifasParaGuardar.length > 0
+) {
+
+  const {
+    error: tarifasError,
+  } = await supabase
+    .from(
+      'tarifas_moto'
+    )
+    .upsert(
+      tarifasParaGuardar,
+      {
+        onConflict:
+          'profile_id,distrito',
+      }
+    )
+
+  if (tarifasError) {
+
+    console.error(
+      tarifasError
+    )
+
+    setMensajeToast(
+      'Error guardando tarifas'
+    )
+
+    return
+
+  }
+
+}
+
   setOrigenShalom(
     nuevoOrigen
   )
 
-  alert(
-    'Configuración guardada'
-  )
+ setMensajeToast(
+        'Configuración guardada'
+      )
+
+      setTimeout(() => {
+        setMensajeToast('')
+      }, 1500)
 
   setMostrarConfig(false)
 
 }
 
-/* GENERAR TEXTO PARA MOTORIZADO */
 
-function generarTextoMoto() {
-
-  const texto =
-    pedidosSeleccionados
-      .map(
-        (envio) =>
-
-`${envio.nombre}
-${envio.telefono}
-${envio.detalle}
-
-*COBRAR () *`
-      )
-      .join('\n\n')
-
-  setTextoCopiar(texto)
-
-  setMostrarModalCopiar(true)
-
-}
-/* COPIAR AL PORTAPAPELES */
-
-async function copiarDatos() {
-
-  await navigator.clipboard.writeText(
-    textoCopiar
-  )
-
-  alert(
-    'Datos copiados'
-  )
-
-}
-
-/* EXPORTAR EXCEL MOTORIZADO */
-
-function descargarDatosMoto() {
-
-  const bloques =
-    textoCopiar
-      .split('\n\n')
-      .filter(Boolean)
-
-  const filas =
-    bloques.map(
-      (bloque) => {
-
-        const lineas =
-          bloque
-            .split('\n')
-            .filter(Boolean)
-
-        const nombre =
-          lineas[0] || ''
-
-        const telefono =
-          lineas[1] || ''
-
-        const direccion =
-          lineas[2] || ''
-
-        const cobrarLinea =
-          lineas.find(
-            (l) =>
-              l.includes(
-                'COBRAR'
-              )
-          ) || ''
-
-        const cobrar =
-          cobrarLinea
-            .replace(
-              '*COBRAR',
-              ''
-            )
-            .replace('*', '')
-            .trim()
-
-        return {
-
-          Nombre: nombre,
-
-          Telefono: telefono,
-
-          Distrito:
-            direccion
-              .split(',')[0]
-              ?.trim(),
-
-          Direccion:
-            direccion,
-
-          Cobrar:
-            cobrar,
-
-        }
-
-      }
-    )
-
-  const wb =
-    XLSX.utils.book_new()
-
-  const ws =
-    XLSX.utils.json_to_sheet(
-      filas
-    )
-
-  XLSX.utils.book_append_sheet(
-    wb,
-    ws,
-    'Pedidos Moto'
-  )
-
-  XLSX.writeFile(
-    wb,
-    'Pedidos_Motorizado.xlsx'
-  )
-
-}
 /* VALIDAR SI TODOS LOS SELECCIONADOS SON MOTORIZADO */
 
 const pedidosSeleccionados =
@@ -895,7 +1080,7 @@ for (
     flex
     justify-between
     items-center
-    mb-4
+    mb-5
     px-12
   "
 >
@@ -917,44 +1102,124 @@ for (
     ) : null}
 
   </div>
+ 
+
+ <div
+  className="
+    flex
+    justify-end
+    gap-5
+  "
+>
+<button
+    onClick={() => {
+
+      navigator.clipboard.writeText(
+        `${window.location.origin}/f/${slugEmpresa}`
+      )
+
+      setMensajeToast(
+        '✅ Formulario copiado'
+      )
+
+      setTimeout(() => {
+        setMensajeToast('')
+      }, 1500)
+
+    }}
+   className="
+bg-white
+border
+border-gray-200
+
+text-gray-700
+
+px-6
+py-3
+
+rounded-2xl
+
+font-semibold
+
+shadow-sm
+
+transition-all
+duration-300
+ease-in-out
+
+hover:bg-gradient-to-r
+hover:from-cyan-600
+hover:to-blue-600
+hover:text-white
+hover:border-transparent
+hover:shadow-lg
+hover:scale-[1.02]
+"
+  >
+    Compartir formulario
+  </button>
 
   <button
     onClick={() =>
       setMostrarConfig(true)
     }
     className="
-      bg-black
-      text-white
-      px-4
-      py-2
-      rounded-xl
-      hover:opacity-90
-      transition
-    "
+bg-white
+border
+border-gray-200
+
+text-gray-700
+
+px-6
+py-3
+
+rounded-2xl
+
+font-semibold
+
+shadow-sm
+
+transition-all
+duration-300
+ease-in-out
+
+hover:bg-gradient-to-r
+hover:from-cyan-600
+hover:to-blue-600
+hover:text-white
+hover:border-transparent
+hover:shadow-lg
+hover:scale-[1.02]
+"
   >
     ⚙ Configuración
   </button>
 
 </div>
+</div>
 
-      <div
+
+  <div
   className="
     bg-white
     border
-    rounded-2xl
-    p-5
-    shadow-sm
-    mb-6
+    border-gray-100
+    rounded-[32px]
+    shadow-2xl
+    p-8
+    space-y-6
+    mb-8
   "
 >
 
   <div
-    className="
-      flex
-      gap-3
-      flex-wrap
-    "
-  >
+  className="
+    flex
+    gap-4
+    flex-wrap
+    items-center
+  "
+>
 
     <input
       type="text"
@@ -963,14 +1228,25 @@ for (
       onChange={(e) =>
         setBusqueda(e.target.value)
       }
-      className="
-        flex-1
-        min-w-[280px]
-        border
-        rounded-xl
-        px-4
-        py-3
-      "
+     className="
+flex-1
+min-w-[320px]
+
+bg-gray-50
+border
+border-gray-200
+
+rounded-2xl
+
+px-5
+py-4
+
+focus:outline-none
+focus:ring-2
+focus:ring-cyan-500
+
+transition
+"
     />
 
     <select
@@ -978,12 +1254,22 @@ for (
       onChange={(e) =>
         setFiltroEstado(e.target.value)
       }
-      className="
-        border
-        rounded-xl
-        px-4
-        py-3
-      "
+     className="
+bg-gray-50
+border
+border-gray-200
+
+rounded-2xl
+
+px-5
+py-4
+
+focus:outline-none
+focus:ring-2
+focus:ring-cyan-500
+
+transition
+"
     >
       <option value="TODOS">
         Todos los estados
@@ -1008,12 +1294,22 @@ for (
       onChange={(e) =>
         setFiltroMetodo(e.target.value)
       }
-      className="
-        border
-        rounded-xl
-        px-4
-        py-3
-      "
+     className="
+bg-gray-50
+border
+border-gray-200
+
+rounded-2xl
+
+px-5
+py-4
+
+focus:outline-none
+focus:ring-2
+focus:ring-cyan-500
+
+transition
+"
     >
       <option value="TODOS">
         Todos los métodos
@@ -1039,26 +1335,46 @@ for (
 
  
 <div
-  className="
-    flex
-    items-center
-    gap-3
-    mb-4
-    flex-wrap
-  "
+ className="
+  flex
+  items-center
+  gap-4
+  mb-6
+  flex-wrap
+"
 >
 
 
   <button
     onClick={exportarSeleccionados}
     className="
-      bg-green-600
-      text-white
-      px-3
-      py-1
-      rounded-xl
-      font-medium
-    "
+bg-white
+border
+border-gray-200
+
+text-gray-700
+
+px-6
+py-3
+
+rounded-2xl
+
+font-semibold
+
+shadow-sm
+
+transition-all
+duration-300
+ease-in-out
+
+hover:bg-gradient-to-r
+hover:from-cyan-600
+hover:to-blue-600
+hover:text-white
+hover:border-transparent
+hover:shadow-lg
+hover:scale-[1.02]
+"
   >
     Exportar Shalom
   </button>
@@ -1067,16 +1383,34 @@ for (
     onClick={() =>
       setMostrarModalEstado(true)
     }
-    className="
-      bg-purple-600
-      text-white
-      px-3
-      py-1
-      rounded-xl
-      font-medium
-      hover:bg-purple-700
-      transition
-    "
+  className="
+bg-white
+border
+border-gray-200
+
+text-gray-700
+
+px-6
+py-3
+
+rounded-2xl
+
+font-semibold
+
+shadow-sm
+
+transition-all
+duration-300
+ease-in-out
+
+hover:bg-gradient-to-r
+hover:from-cyan-600
+hover:to-blue-600
+hover:text-white
+hover:border-transparent
+hover:shadow-lg
+hover:scale-[1.02]
+"
   >
     Cambio Masivo
   </button>
@@ -1108,152 +1442,181 @@ for (
       setMostrarEtiquetas(true)
 
     }}
-    className="
-      bg-blue-600
-      text-white
-      px-3
-      py-1
-      rounded-xl
-      font-medium
-    "
+ className="
+bg-white
+border
+border-gray-200
+
+text-gray-700
+
+px-6
+py-3
+
+rounded-2xl
+
+font-semibold
+
+shadow-sm
+
+transition-all
+duration-300
+ease-in-out
+
+hover:bg-gradient-to-r
+hover:from-cyan-600
+hover:to-blue-600
+hover:text-white
+hover:border-transparent
+hover:shadow-lg
+hover:scale-[1.02]
+"
   >
     Generar etiquetas
-  </button>{/* COPIAR DATOS MOTO */}
-
-{todosMoto && (
-
-  <button
-    onClick={
-      generarTextoMoto
-    }
-    className="
-      bg-cyan-600
-      text-white
-      px-3
-      py-1
-      rounded-xl
-      font-medium
-      hover:bg-cyan-700
-      transition
-    "
-  >
-    Copiar Datos
   </button>
 
-)}
 
-</div>
+{
+  mostrarBotonCopiar && (
+
+<button
+  onClick={abrirModalCopiar}
+
+
+className="
+bg-white
+border
+border-gray-200
+
+text-gray-700
+
+px-6
+py-3
+
+rounded-2xl
+
+font-semibold
+
+shadow-sm
+
+transition-all
+duration-300
+ease-in-out
+
+hover:bg-gradient-to-r
+hover:from-cyan-600
+hover:to-blue-600
+hover:text-white
+hover:border-transparent
+hover:shadow-lg
+hover:scale-[1.02]
+"
+
+>
+
+📋 Copiar datos
+
+</button>
+
+)
+}
+</div> 
 
 
 <div
   className="
-    bg-white
-    rounded-2xl
-    shadow-sm
-    border
-    overflow-hidden
+    overflow-x-auto
   "
 >
 
   <div
     className="
-      overflow-x-auto
+      bg-white
+      rounded-[32px]
+      border
+      border-gray-100
+      shadow-2xl
+      overflow-hidden
     "
   >
+
+    {/* ========================================
+        CABECERA
+    ======================================== */}
 
     <div
-  className="
-    bg-white
-    rounded-3xl
-    shadow-lg
-    border
-    border-gray-200
-    overflow-hidden
-  "
->
+      className="
+        flex
+        justify-between
+        items-center
+        px-8
+        py-4
+        border-b
+        border-gray-100
+        bg-white
+      "
+    >
 
-  <div
-    className="
-      flex
-      justify-between
-      items-center
-      px-6
-      py-5
-      border-b
-      bg-gradient-to-r
-      from-white
-      to-gray-50
-    "
-  >
+      <div
+        className="
+          flex
+          items-center
+          gap-3
+        "
+      >
 
-    <div
-  className="
-    flex
-    items-center
-    gap-3
-    bg-white
-    border
-    border-gray-200
-    rounded-2xl
-    px-5
-    py-3
-  "
->
+        <input
+          type="checkbox"
+          checked={
+            enviosFiltrados.length > 0 &&
+            enviosFiltrados.every(
+              (envio) =>
+                seleccionados.includes(
+                  envio.id
+                )
+            )
+          }
+          onChange={toggleSeleccionTodos}
+          className="
+            w-5
+            h-5
+            accent-cyan-500
+            cursor-pointer
+          "
+        />
 
-  <input
-    type="checkbox"
-    checked={
-      enviosFiltrados.length > 0 &&
-      enviosFiltrados.every(
-        (envio) =>
-          seleccionados.includes(
-            envio.id
-          )
-      )
-    }
-    onChange={
-      toggleSeleccionTodos
-    }
-    className="
-      w-5
-      h-5
-      accent-cyan-500
-      cursor-pointer
-    "
-  />
+        <span
+          className="
+            text-sm
+            font-semibold
+            text-gray-700
+          "
+        >
+          Seleccionar todos
+        </span>
 
-  <span
-    className="
-      text-sm
-      font-medium
-      text-gray-700
-    "
-  >
-    Seleccionar todos
-  </span>
+        <span
+          className="
+            text-xs
+            text-gray-500
+          "
+        >
+          ({seleccionados.length} seleccionados)
+        </span>
 
-  <span
-    className="
-      text-sm
-      text-gray-400
-    "
-  >
-    ({seleccionados.length} envíos)
-  </span>
+      </div>
 
-</div>
-
-  </div>
+    </div>
 
 {/* VISTA ESTILO TARJETA */}
 
 
  <div
   className="
-    flex
-    flex-col
-    gap-4
-  "
+  flex
+  flex-col
+  gap-5
+  p-5
+"
 >
 
 {enviosFiltrados.map(
@@ -1274,23 +1637,28 @@ for (
           setEnvioDetalle(envio)
         }
         className={`
-          bg-white
-          rounded-2xl
-          border
-          border-gray-200
-          border-l-4
-          ${colorEstado}
-          p-5
-          cursor-pointer
-          hover:shadow-lg
-          hover:border-blue-300
-          transition-all
+  bg-white
+  rounded-[28px]
+  border
+  border-gray-100
+  border-l-4
+  ${colorEstado}
 
-          flex
-          items-center
-          justify-between
-          gap-6
-        `}
+  p-6
+
+  cursor-pointer
+
+  hover:shadow-xl
+  hover:border-cyan-200
+
+  transition-all
+  duration-300
+
+  flex
+  items-center
+  justify-between
+  gap-8
+`}
       >
 
        {/* CLIENTE */}
@@ -1300,7 +1668,7 @@ for (
     flex
     items-center
     gap-4
-    min-w-[320px]
+    min-w-[340px]
   "
 >
 
@@ -1328,30 +1696,38 @@ for (
 
 
           <div
-            className="
-              w-12
-              h-12
-              rounded-xl
-              bg-black
-              text-white
-              flex
-              items-center
-              justify-center
-              font-bold
-            "
-          >
-            {envio.nombre
-              ?.charAt(0)
-              ?.toUpperCase()}
-          </div>
+  className="
+    w-12
+    h-12
+    rounded-2xl
+
+    bg-gradient-to-r
+    from-cyan-600
+    to-blue-600
+
+    text-white
+
+    flex
+    items-center
+    justify-center
+
+    font-bold
+    shadow-md
+  "
+>
+  {envio.nombre
+    ?.charAt(0)
+    ?.toUpperCase()}
+</div>
 
           <div>
 
             <div
-              className="
-                font-bold
-                text-lg
-              "
+             className="
+  text-xl
+font-extrabold
+tracking-tight
+"
             >
               {envio.nombre}
             </div>
@@ -1359,7 +1735,7 @@ for (
             <div
               className="
                 text-sm
-                text-gray-500
+                text-gray-600
               "
             >
               DNI {envio.dni}
@@ -1368,7 +1744,7 @@ for (
             <div
               className="
                 text-sm
-                text-gray-500
+                text-gray-600
               "
             >
              TLF {envio.telefono}
@@ -1378,33 +1754,40 @@ for (
 
         </div>
 
-        {/* DESTINO */}
+        {/* INFORMACION*/}
 
         <div
           className="
-            flex-1
+           flex-1
+    space-y-3
           "
         >
 
-          <div
-            className="
-              text-xs
-              uppercase
-              text-gray-400
-              font-bold
-              mb-1
-            "
-          >
-            Destino
-          </div>
+          <div>
 
-          <div
-            className="
-              text-gray-700
-            "
-          >
-            {envio.detalle}
-          </div>
+  <div
+    className="
+      text-xs
+      uppercase
+      tracking-wider
+      font-semibold
+      text-gray-500
+      mb-1
+    "
+  >
+    Destino
+  </div>
+
+  <div
+    className="
+      text-gray-800
+      leading-6
+    "
+  >
+    {envio.detalle}
+  </div>
+
+</div>
 
         </div>
 
@@ -1420,10 +1803,11 @@ for (
           <div
             className="
               text-xs
-              uppercase
-              text-gray-400
-              font-bold
-              mb-2
+uppercase
+tracking-wider
+font-semibold
+text-gray-500
+mb-2
             "
           >
             Método
@@ -1431,14 +1815,21 @@ for (
 
           <div
             className="
-              px-3
-              py-1
-              rounded-full
-              bg-blue-50
-              text-blue-700
-              text-sm
-              font-semibold
-            "
+  inline-flex
+  items-center
+  justify-center
+
+  px-3
+  py-1
+
+  rounded-full
+
+  bg-gray-100
+text-gray-700
+
+  text-xs
+  font-semibold
+"
           >
             {envio.metodo}
           </div>
@@ -1459,11 +1850,12 @@ for (
 
   <div
     className="
-      text-xs
-      uppercase
-      text-gray-400
-      font-bold
-      mb-2
+     text-xs
+uppercase
+tracking-wider
+font-semibold
+text-gray-500
+mb-2
     "
   >
     Tamaño
@@ -1493,10 +1885,11 @@ for (
   <div
     className="
       text-xs
-      uppercase
-      text-gray-400
-      font-bold
-      mb-2
+uppercase
+tracking-wider
+font-semibold
+text-gray-500
+mb-2
     "
   >
     Estado
@@ -1513,19 +1906,41 @@ for (
 
         {/* FECHA */}
 
-        <div
-          className="
-            text-sm
-            text-gray-400
-            whitespace-nowrap
-          "
-        >
-          {new Date(
-            envio.fecha_registro
-          ).toLocaleDateString(
-            'es-PE'
-          )}
-        </div>
+<div
+  className="
+    min-w-[120px]
+    text-center
+  "
+>
+
+  <div
+    className="
+      text-xs
+      uppercase
+      tracking-wider
+      font-semibold
+      text-gray-500
+      mb-2
+    "
+  >
+    Registro
+  </div>
+
+  <div
+    className="
+      text-sm
+      text-gray-600
+      whitespace-nowrap
+    "
+  >
+    {new Date(
+      envio.fecha_registro
+    ).toLocaleDateString(
+      'es-PE'
+    )}
+  </div>
+
+</div>
 
         {/* BOTON */}
 
@@ -1535,15 +1950,22 @@ for (
             setEnvioDetalle(envio)
           }}
           className="
-            px-4
-            py-2
-            rounded-xl
-            bg-black
-            text-white
-            text-sm
-            font-medium
-            hover:opacity-90
-          "
+  px-5
+  py-2.5
+
+  rounded-2xl
+
+  bg-white
+  border
+  border-gray-200
+
+  text-gray-700
+  font-semibold
+
+  hover:bg-gray-50
+
+  transition-all
+"
         >
           Ver
         </button>
@@ -1562,7 +1984,6 @@ for (
 
   </div>
 
-</div>
 
 {/* MODAL DE CONFIGURACION */}
 
@@ -1603,32 +2024,182 @@ overflow-y-auto
         Configuración
       </h2>
 
-      <label
-        className="
-          block
-          mb-2
-          font-medium
-        "
-      >
-        Origen Shalom
-      </label>
+{/* ========================================
+    MENU CONFIGURACION
+======================================== */}
 
-      <input
-        type="text"
-        value={nuevoOrigen}
-        onChange={(e) =>
-          setNuevoOrigen(
-            e.target.value
-          )
-        }
-        className="
-          w-full
-          border
-          rounded-xl
-          px-4
-          py-3
-        "
-      />
+<div
+  className="
+    flex
+    gap-2
+    mb-6
+    bg-slate-100
+    p-2
+    rounded-2xl
+  "
+>
+
+  <button
+    onClick={() =>
+      setVistaConfig(
+        'EMPRESA'
+      )
+    }
+    className={`
+      flex-1
+      py-2
+      rounded-xl
+      font-medium
+      transition
+
+      ${
+        vistaConfig ===
+        'EMPRESA'
+          ? 'bg-white shadow'
+          : ''
+      }
+    `}
+  >
+    🏢 Empresa
+  </button>
+
+  <button
+    onClick={() =>
+      setVistaConfig(
+        'LOGISTICA'
+      )
+    }
+    className={`
+      flex-1
+      py-2
+      rounded-xl
+      font-medium
+      transition
+
+      ${
+        vistaConfig ===
+        'LOGISTICA'
+          ? 'bg-white shadow'
+          : ''
+      }
+    `}
+  >
+    🚚 Logística
+  </button>
+
+  <button
+    onClick={() =>
+      setVistaConfig(
+        'TARIFAS'
+      )
+    }
+    className={`
+      flex-1
+      py-2
+      rounded-xl
+      font-medium
+      transition
+
+      ${
+        vistaConfig ===
+        'TARIFAS'
+          ? 'bg-white shadow'
+          : ''
+      }
+    `}
+  >
+    💰 Tarifas
+  </button>
+
+</div>
+
+    {/* ========================================
+    DATOS DE EMPRESA
+======================================== */}
+{
+  vistaConfig ===
+  'EMPRESA' && (
+
+    <>
+<div
+  className="
+    mb-8
+    p-5
+    border
+    rounded-2xl
+    bg-slate-50
+  "
+>
+
+  <h3
+    className="
+      text-lg
+      font-bold
+      mb-4
+    "
+  >
+    Datos de empresa
+  </h3>
+
+  <input
+    type="text"
+    placeholder="Nombre empresa"
+    value={empresa}
+    onChange={(e) =>
+      setEmpresa(
+        e.target.value
+      )
+    }
+    className="
+      w-full
+      border
+      rounded-xl
+      px-4
+      py-3
+      mb-3
+    "
+  />
+
+  <input
+    type="text"
+    placeholder="Teléfono empresa"
+    value={telefonoEmpresa}
+    onChange={(e) =>
+      setTelefonoEmpresa(
+        e.target.value
+      )
+    }
+    className="
+      w-full
+      border
+      rounded-xl
+      px-4
+      py-3
+      mb-3
+    "
+  />
+
+  <input
+    type="text"
+    placeholder="Dirección empresa"
+    value={direccionEmpresa}
+    onChange={(e) =>
+      setDireccionEmpresa(
+        e.target.value
+      )
+    }
+    className="
+      w-full
+      border
+      rounded-xl
+      px-4
+      py-3
+    "
+  />
+
+</div>
+ 
+      
 
 <div className="mt-6">
 
@@ -1855,6 +2426,196 @@ En unos segundos te llevaremos a nuestro canal oficial.
   </div>
 
 </div>
+ </>
+
+  )
+}
+
+{
+  vistaConfig ===
+  'LOGISTICA' && (
+
+    <>
+
+      <div
+        className="
+          p-5
+          border
+          rounded-2xl
+        "
+      >
+
+        <h3
+          className="
+            text-lg
+            font-bold
+            mb-4
+          "
+        >
+          Logística
+        </h3>
+
+        <label
+          className="
+            block
+            mb-2
+            font-medium
+          "
+        >
+          Origen Shalom
+        </label>
+
+        <input
+          type="text"
+          value={nuevoOrigen}
+          onChange={(e) =>
+            setNuevoOrigen(
+              e.target.value
+            )
+          }
+          className="
+            w-full
+            border
+            rounded-xl
+            px-4
+            py-3
+          "
+        />
+
+      </div>
+
+    </>
+
+  )
+}
+{
+  vistaConfig ===
+  'TARIFAS' && (
+
+    <div
+      className="
+        p-5
+        border
+        rounded-2xl
+        bg-slate-50
+      "
+    >
+
+      <h3
+        className="
+          text-lg
+          font-bold
+          mb-2
+        "
+      >
+        Tarifas motorizado
+      </h3>
+
+      <p
+        className="
+          text-sm
+          text-gray-500
+          mb-6
+        "
+      >
+        Define cuánto cobrar
+        por cada distrito.
+      </p>
+
+      <div
+        className="
+          space-y-3
+        "
+      >
+
+        {distritosMoto.map(
+          (distrito) => (
+
+            <div
+              key={distrito}
+              className="
+                flex
+                items-center
+                justify-between
+                gap-4
+
+                bg-white
+                border
+                rounded-xl
+
+                px-4
+                py-3
+              "
+            >
+
+              <div
+                className="
+                  font-medium
+                  text-gray-700
+                "
+              >
+                {distrito}
+              </div>
+
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-2
+                "
+              >
+
+                <span
+                  className="
+                    text-gray-500
+                    text-sm
+                  "
+                >
+                  S/
+                </span>
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.50"
+                  value={
+                    tarifas[
+                      distrito
+                    ] || ''
+                  }
+                  onChange={(e) =>
+                    setTarifas(
+                      {
+                        ...tarifas,
+
+                        [distrito]:
+                          e.target.value,
+                      }
+                    )
+                  }
+                  className="
+                    w-24
+                    border
+                    rounded-lg
+                    px-3
+                    py-2
+                    text-right
+                  "
+                />
+
+              </div>
+
+            </div>
+
+          )
+        )}
+
+      </div>
+
+    </div>
+
+  )
+}
 
 
       <div
@@ -1903,10 +2664,9 @@ En unos segundos te llevaremos a nuestro canal oficial.
 
 )}
 
-{/* MODAL DE CONFIGURACION */}
+{/* MODAL DE export */}
 
 {mostrarModalExportar && (
-
   <div
     className="
       fixed
@@ -1918,160 +2678,202 @@ En unos segundos te llevaremos a nuestro canal oficial.
       z-50
     "
   >
-
     <div
       className="
         bg-white
-        rounded-2xl
-        p-6
+        rounded-[32px]
         w-full
-        max-w-lg
-        shadow-xl
+        max-w-xl
+        overflow-hidden
+        border
+        border-gray-200
+        shadow-2xl
       "
     >
-
-      <h2
-        className="
-          text-2xl
-          font-bold
-          mb-4
-        "
-      >
-        Exportar Shalom
-      </h2>
-
-      <p
-        className="
-          text-gray-700
-          whitespace-pre-line
-        "
-      >
-        {mensajeExportar}
-      </p>
-
       <div
         className="
-          mt-4
-          p-4
-          bg-gray-50
-          rounded-xl
-          border
+          p-8
+          border-b
+          border-gray-100
         "
       >
-
-        <div className="text-sm">
-          Envíos a exportar:
-        </div>
-
-        <div className="font-bold text-2xl mt-1">
-          {enviosExportar.length}
-        </div>
-
-        <div className="text-sm text-gray-500 mt-3">
-          Método: SHALOM
-        </div>
-
-        <div className="text-sm text-gray-500">
-          Origen: {origenShalom}
-        </div>
-
-      </div>
-
-      <div
-        className="
-          mt-4
-          flex
-          items-center
-          gap-3
-        "
-      >
-
-        <input
-          type="checkbox"
-          checked={
-            marcarComoEnviado
-          }
-          onChange={(e) =>
-            setMarcarComoEnviado(
-              e.target.checked
-            )
-          }
+        <h2
           className="
-            w-4
-            h-4
-          "
-        />
-
-        <label
-          className="
-            text-sm
-            text-gray-700
-            select-none
+            text-4xl
+            font-extrabold
+            text-slate-900
           "
         >
-          Marcar también como{' '}
-          <span
-            className="
-              font-semibold
-              text-green-700
-            "
-          >
-            ENVIADO
-          </span>
-        </label>
+          Exportar Shalom
+        </h2>
 
+        <p
+          className="
+            mt-3
+            text-gray-750
+            whitespace-pre-line
+          "
+        >
+          {mensajeExportar}
+        </p>
       </div>
 
       <div
         className="
-          flex
-          justify-end
-          gap-3
-          mt-6
+          p-8
+          space-y-6
         "
       >
-
-        <button
-          onClick={() =>
-            setMostrarModalExportar(false)
-          }
+        <div
           className="
+            bg-slate-50
             border
-            px-4
-            py-2
-            rounded-xl
+            border-gray-200
+            rounded-2xl
+            p-6
+          "
+        >
+          <div
+            className="
+              text-sm
+              uppercase
+              tracking-wider
+              text-gray-500
+              font-semibold
+            "
+          >
+            Envíos a exportar
+          </div>
+
+          <div
+            className="
+              text-5xl
+              font-extrabold
+              text-slate-900
+              mt-2
+              mb-5
+            "
+          >
+            {enviosExportar.length}
+          </div>
+
+          <div
+            className="
+              space-y-2
+              text-sm
+              text-gray-600
+            "
+          >
+            <div>
+              <span className="font-semibold text-gray-800">
+                Método:
+              </span>{" "}
+              SHALOM
+            </div>
+
+            <div>
+              <span className="font-semibold text-gray-800">
+                Origen:
+              </span>{" "}
+              {origenShalom}
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="
+            flex
+            items-center
+            gap-4
+            bg-slate-50
+            border
+            border-gray-200
+            rounded-2xl
+            p-5
+          "
+        >
+          <input
+            type="checkbox"
+            checked={marcarComoEnviado}
+            onChange={(e) =>
+              setMarcarComoEnviado(e.target.checked)
+            }
+            className="
+              w-5
+              h-5
+              accent-cyan-600
+              cursor-pointer
+            "
+          />
+
+          <label
+            className="
+              text-sm
+              text-gray-700
+              select-none
+              leading-relaxed
+            "
+          >
+            Marcar automáticamente los pedidos como{" "}
+            <span
+              className="
+                font-semibold
+                text-green-700
+              "
+            >
+              ENVIADO
+            </span>{" "}
+            después de exportarlos.
+          </label>
+        </div>
+      </div>
+
+      <div
+        className="
+          border-t
+          border-gray-100
+          p-6
+          flex
+          justify-end
+          gap-4
+        "
+      >
+        <button
+          onClick={() => setMostrarModalExportar(false)}
+          className="
+            px-7
+            py-3
+            rounded-2xl
+            border
+            border-gray-300
+            font-semibold
+            hover:bg-gray-100
+            transition-all
           "
         >
           Cancelar
         </button>
 
         <button
-          onClick={
-            confirmarExportacion
-          }
+          onClick={confirmarExportacion}
           className="
-            bg-green-600
+            bg-black
             text-white
-            px-4
-            py-2
-            rounded-xl
-            hover:bg-green-700
-            transition
+            px-7
+            py-3
+            rounded-2xl
+            font-semibold
+            hover:bg-gray-900
+            transition-all
           "
         >
-          {
-            marcarComoEnviado
-              ? 'Exportar y enviar'
-              : 'Exportar'
-          }
+          {marcarComoEnviado
+            ? "Exportar y enviar"
+            : "Exportar"}
         </button>
-
       </div>
-
     </div>
-
   </div>
-
 )}
 
 {/* MODAL DE DETALLES DOBLE CLICK*/}
@@ -2080,112 +2882,295 @@ En unos segundos te llevaremos a nuestro canal oficial.
 
   <div
     className="
-      fixed
-      inset-0
-      bg-black/40
-      flex
-      items-center
-      justify-center
-      z-50
-    "
+  fixed
+  inset-0
+  bg-black/50
+  backdrop-blur-sm
+  flex
+  items-center
+  justify-center
+  z-50
+  p-4
+"
   >
 
     <div
       className="
-        bg-white
-        rounded-2xl
-        p-6
-        w-full
-        max-w-lg
-        shadow-xl
-      "
+  bg-white
+  rounded-[33px]
+  border
+  border-gray-150
+  shadow-2xl
+  overflow-hidden
+  w-full
+  max-w-xl
+"
     >
 
-      <h2
-        className="
-          text-2xl
-          font-bold
-          mb-6
-        "
-      >
-        Detalle del pedido
-      </h2>
+      <div
+  className="
+    border-b
+    border-gray-100
+    px-8
+    py-6
+  "
+>
 
-      <div className="space-y-3">
+  <h2
+    className="
+      text-3xl
+      font-extrabold
+      tracking-tight
+      text-gray-900
+    "
+  >
+    Detalle del pedido
+  </h2>
 
-        <div>
-          <span className="font-semibold">
-            Nombre:
-          </span>{' '}
-          {envioDetalle.nombre}
-        </div>
+  <p
+    className="
+      mt-2
+      text-gray-500
+    "
+  >
+    Información completa del envío seleccionado.
+  </p>
 
-        <div>
-          <span className="font-semibold">
-            Documento:
-          </span>{' '}
-          {envioDetalle.dni}
-        </div>
+</div>
 
-        <div>
-          <span className="font-semibold">
-            Teléfono:
-          </span>{' '}
-          {envioDetalle.telefono}
-        </div>
-
-        <div>
-          <span className="font-semibold">
-            Método:
-          </span>{' '}
-          {envioDetalle.metodo}
-        </div>
-
-        <div>
-          <span className="font-semibold">
-            Estado:
-          </span>{' '}
-          {envioDetalle.estado}
-        </div>
+    <div
+  className="
+      bg-gray-50
+    rounded-2xl
+    p-7
+    mb-2
+  "
+>
 
         <div>
-          <span className="font-semibold">
-            Tamaño:
-          </span>{' '}
-          {envioDetalle.tamano}
-        </div>
 
-        <div>
-          <span className="font-semibold">
-            Fecha:
-          </span>{' '}
-          {new Date(
-            envioDetalle.fecha_registro
-          ).toLocaleString('es-PE')}
-        </div>
+  <div
+    className="
+      text-xs
+      uppercase
+      tracking-wider
+      text-gray-500
+      font-bold
+      mb-2
+    "
+  >
+    Cliente
+  </div>
 
+  <div
+    className="
+      text-3xl
+      font-extrabold
+      tracking-tight
+      text-gray-900
+      mb-8
+    "
+  >
+    {envioDetalle.nombre}
+  </div>
+
+</div>
+
+        <div
+  className="
+    grid
+    grid-cols-2
+    gap-4
+  "
+>
+
+  <div
+    className="
+      bg-gray-50
+      rounded-2xl
+      p-4
+    "
+  >
+    <p
+      className="
+        text-xs
+        uppercase
+        tracking-wider
+        text-gray-500
+        font-bold
+        mb-1
+      "
+    >
+      Documento
+    </p>
+
+    <p className="font-semibold">
+      {envioDetalle.dni}
+    </p>
+  </div>
+
+  <div
+    className="
+      bg-gray-50
+      rounded-2xl
+      p-4
+    "
+  >
+    <p
+      className="
+        text-xs
+        uppercase
+        tracking-wider
+        text-gray-500
+        font-bold
+        mb-1
+      "
+    >
+      Teléfono
+    </p>
+
+    <p className="font-semibold">
+      {envioDetalle.telefono}
+    </p>
+  </div>
+
+  <div
+    className="
+      bg-gray-50
+      rounded-2xl
+      p-4
+    "
+  >
+    <p
+      className="
+        text-xs
+        uppercase
+        tracking-wider
+        text-gray-500
+        font-bold
+        mb-1
+      "
+    >
+      Método
+    </p>
+
+    <p className="font-semibold">
+      {envioDetalle.metodo}
+    </p>
+  </div>
+
+  <div
+    className="
+      bg-gray-50
+      rounded-2xl
+      p-4
+    "
+  >
+    <p
+      className="
+        text-xs
+        uppercase
+        tracking-wider
+        text-gray-500
+        font-bold
+        mb-1
+      "
+    >
+      Estado
+    </p>
+
+    <p className="font-semibold">
+      {envioDetalle.estado}
+    </p>
+  </div>
+
+  <div
+    className="
+      bg-gray-50
+      rounded-2xl
+      p-4
+    "
+  >
+    <p
+      className="
+        text-xs
+        uppercase
+        tracking-wider
+        text-gray-500
+        font-bold
+        mb-1
+      "
+    >
+      Tamaño
+    </p>
+
+    <p className="font-semibold">
+      {envioDetalle.tamano}
+    </p>
+  </div>
+
+  <div
+    className="
+      bg-gray-50
+      rounded-2xl
+      p-4
+    "
+  >
+    <p
+      className="
+        text-xs
+        uppercase
+        tracking-wider
+        text-gray-500
+        font-bold
+        mb-1
+      "
+    >
+      Registro
+    </p>
+
+    <p className="font-semibold">
+      {new Date(
+        envioDetalle.fecha_registro
+      ).toLocaleString('es-PE')}
+    </p>
+  </div>
+
+</div>
         <div>
 
           <div
-            className="
-              font-semibold
-              mb-2
-            "
-          >
-            Detalle
-          </div>
+  className="
+    bg-gray-50
+    rounded-2xl
+    p-5
+  "
+>
 
-          <div
-            className="
-              bg-gray-50
-              border
-              rounded-xl
-              p-3
-              whitespace-pre-line
-            "
-          >
-            {envioDetalle.detalle}
-          </div>
+  <p
+    className="
+      text-xs
+      uppercase
+      tracking-wider
+      text-gray-500
+      font-bold
+      mb-3
+    "
+  >
+    Destino
+  </p>
+
+  <div
+    className="
+      text-gray-800
+      leading-relaxed
+      whitespace-pre-line
+    "
+  >
+    {envioDetalle.detalle}
+  </div>
+
+</div>
 
         </div>
 
@@ -2199,20 +3184,37 @@ En unos segundos te llevaremos a nuestro canal oficial.
         "
       >
 
-        <button
-          onClick={() =>
-            setEnvioDetalle(null)
-          }
-          className="
-            bg-black
-            text-white
-            px-4
-            py-2
-            rounded-xl
-          "
-        >
-          Cerrar
-        </button>
+       <div
+  className="
+    border-t
+    border-gray-100
+    p-6
+  "
+>
+
+  <button
+  onClick={() =>
+    setEnvioDetalle(null)
+  }
+  className="
+    bg-black
+    hover:bg-gray-900
+
+    text-white
+
+    px-8
+    py-3
+
+    rounded-2xl
+
+    font-semibold
+
+    transition-colors
+  "
+>
+  Cerrar
+</button>
+</div>
 
       </div>
 
@@ -2225,7 +3227,6 @@ En unos segundos te llevaremos a nuestro canal oficial.
 {/* MODAL PARA CAMBIO DE ESTADOS  */}
 
 {mostrarModalEstado && (
-
   <div
     className="
       fixed
@@ -2237,38 +3238,73 @@ En unos segundos te llevaremos a nuestro canal oficial.
       z-50
     "
   >
-
     <div
       className="
         bg-white
-        rounded-2xl
-        p-6
+        rounded-[32px]
         w-full
-        max-w-lg
-        shadow-xl
+        max-w-xl
+        overflow-hidden
+        border
+        border-gray-200
+        shadow-2xl
       "
     >
+      {/* Header */}
 
-      <h2
+      <div
         className="
-          text-2xl
-          font-bold
-          mb-6
+          p-8
+          border-b
+          border-gray-100
         "
       >
-        Cambio Masivo
-      </h2>
+        <h2
+          className="
+            text-4xl
+            font-extrabold
+            text-slate-900
+          "
+        >
+          Cambio Masivo
+        </h2>
 
-      <div className="space-y-4">
+        <p
+          className="
+            mt-2
+            text-gray-500
+          "
+        >
+          Cambia el estado de múltiples pedidos al mismo tiempo.
+        </p>
+      </div>
 
-        <div>
+      {/* Contenido */}
 
+      <div
+        className="
+          p-8
+          space-y-6
+        "
+      >
+        {/* Método */}
+
+        <div
+          className="
+            bg-slate-50
+            border
+            border-gray-200
+            rounded-2xl
+            p-5
+          "
+        >
           <label
             className="
               block
               text-sm
-              font-medium
-              mb-2
+              font-semibold
+              text-gray-700
+              mb-3
             "
           >
             Método
@@ -2277,76 +3313,73 @@ En unos segundos te llevaremos a nuestro canal oficial.
           <select
             value={metodoMasivo}
             onChange={(e) =>
-              setMetodoMasivo(
-                e.target.value
-              )
+              setMetodoMasivo(e.target.value)
             }
-            disabled={
-              soloSeleccionados
-            }
+            disabled={soloSeleccionados}
             className="
               w-full
+              rounded-2xl
               border
-              rounded-xl
+              border-gray-300
               px-4
               py-3
+              bg-white
+              focus:outline-none
+              focus:ring-2
+              focus:ring-cyan-500
             "
           >
-
-            <option value="TODOS">
-              Todos
-            </option>
-
-            <option value="SHALOM">
-              SHALOM
-            </option>
-
-            <option value="OLVA">
-              OLVA
-            </option>
-
-            <option value="MOTORIZADO">
-              MOTORIZADO
-            </option>
-
+            <option value="TODOS">Todos</option>
+            <option value="SHALOM">SHALOM</option>
+            <option value="OLVA">OLVA</option>
+            <option value="MOTORIZADO">MOTORIZADO</option>
           </select>
-
         </div>
 
-        <div>
+        {/* Estado actual */}
 
+        <div
+          className="
+            bg-slate-50
+            border
+            border-gray-200
+            rounded-2xl
+            p-5
+          "
+        >
           <label
             className="
               block
               text-sm
-              font-medium
-              mb-2
+              font-semibold
+              text-gray-700
+              mb-3
             "
           >
             Estado actual
           </label>
 
           <select
-            value={
-              estadoOrigenMasivo
-            }
+            value={estadoOrigenMasivo}
             onChange={(e) =>
               setEstadoOrigenMasivo(
                 e.target.value
               )
             }
-            disabled={
-              soloSeleccionados
-            }
+            disabled={soloSeleccionados}
             className="
               w-full
+              rounded-2xl
               border
-              rounded-xl
+              border-gray-300
               px-4
               py-3
+              bg-white
+              focus:outline-none
+              focus:ring-2
+              focus:ring-cyan-500
             "
           >
-
             <option value="NO_EMPACADO">
               No Empacado
             </option>
@@ -2358,28 +3391,34 @@ En unos segundos te llevaremos a nuestro canal oficial.
             <option value="ENVIADO">
               Enviado
             </option>
-
           </select>
-
         </div>
 
-        <div>
+        {/* Nuevo estado */}
 
+        <div
+          className="
+            bg-slate-50
+            border
+            border-gray-200
+            rounded-2xl
+            p-5
+          "
+        >
           <label
             className="
               block
               text-sm
-              font-medium
-              mb-2
+              font-semibold
+              text-gray-700
+              mb-3
             "
           >
             Nuevo estado
           </label>
 
           <select
-            value={
-              estadoDestinoMasivo
-            }
+            value={estadoDestinoMasivo}
             onChange={(e) =>
               setEstadoDestinoMasivo(
                 e.target.value
@@ -2387,13 +3426,17 @@ En unos segundos te llevaremos a nuestro canal oficial.
             }
             className="
               w-full
+              rounded-2xl
               border
-              rounded-xl
+              border-gray-300
               px-4
               py-3
+              bg-white
+              focus:outline-none
+              focus:ring-2
+              focus:ring-cyan-500
             "
           >
-
             <option value="NO_EMPACADO">
               No Empacado
             </option>
@@ -2405,33 +3448,35 @@ En unos segundos te llevaremos a nuestro canal oficial.
             <option value="ENVIADO">
               Enviado
             </option>
-
           </select>
-
         </div>
+
+        {/* Checkbox */}
 
         <div
           className="
             flex
             items-center
-            gap-3
-            pt-2
+            gap-4
+            bg-slate-50
+            border
+            border-gray-200
+            rounded-2xl
+            p-5
           "
         >
-
           <input
             type="checkbox"
-            checked={
-              soloSeleccionados
-            }
+            checked={soloSeleccionados}
             onChange={(e) =>
               setSoloSeleccionados(
                 e.target.checked
               )
             }
             className="
-              w-4
-              h-4
+              w-5
+              h-5
+              accent-cyan-600
             "
           />
 
@@ -2439,122 +3484,130 @@ En unos segundos te llevaremos a nuestro canal oficial.
             className="
               text-sm
               text-gray-700
+              leading-relaxed
               select-none
             "
           >
-            Solo cambiar pedidos seleccionados
+            Aplicar solamente a los pedidos
+            seleccionados.
           </label>
-
         </div>
+
+        {/* Resumen */}
 
         <div
           className="
-            bg-gray-50
+            bg-slate-50
             border
-            rounded-xl
-            p-4
-            text-sm
-            text-gray-600
+            border-gray-200
+            rounded-2xl
+            p-6
           "
         >
+          <div
+            className="
+              text-sm
+              uppercase
+              tracking-wider
+              text-gray-500
+              font-semibold
+              mb-4
+            "
+          >
+            Resumen
+          </div>
 
           {soloSeleccionados ? (
-
-            <>
-              Se modificarán
-              {' '}
-              <span className="font-bold">
+            <div className="text-gray-700">
+              Se modificarán{" "}
+              <span className="font-bold text-slate-900">
                 {seleccionados.length}
-              </span>
-              {' '}
+              </span>{" "}
               pedidos seleccionados.
-            </>
-
+            </div>
           ) : (
-
-            <>
-              Se modificarán pedidos con:
-
-              <div className="mt-2">
-                Método:
-                {' '}
-                <span className="font-semibold">
-                  {metodoMasivo}
-                </span>
+            <div
+              className="
+                space-y-2
+                text-sm
+                text-gray-600
+              "
+            >
+              <div>
+                <span className="font-semibold text-gray-800">
+                  Método:
+                </span>{" "}
+                {metodoMasivo}
               </div>
 
               <div>
-                Estado actual:
-                {' '}
-                <span className="font-semibold">
-                  {estadoOrigenMasivo}
-                </span>
+                <span className="font-semibold text-gray-800">
+                  Estado actual:
+                </span>{" "}
+                {estadoOrigenMasivo}
               </div>
 
               <div>
-                Nuevo estado:
-                {' '}
-                <span className="font-semibold text-blue-600">
+                <span className="font-semibold text-gray-800">
+                  Nuevo estado:
+                </span>{" "}
+                <span className="text-blue-700 font-bold">
                   {estadoDestinoMasivo}
                 </span>
               </div>
-
-            </>
-
+            </div>
           )}
-
         </div>
-
       </div>
+
+      {/* Footer */}
 
       <div
         className="
+          border-t
+          border-gray-100
+          p-6
           flex
           justify-end
-          gap-3
-          mt-6
+          gap-4
         "
       >
-
         <button
           onClick={() =>
-            setMostrarModalEstado(
-              false
-            )
+            setMostrarModalEstado(false)
           }
           className="
+            px-7
+            py-3
+            rounded-2xl
             border
-            px-4
-            py-2
-            rounded-xl
+            border-gray-300
+            font-semibold
+            hover:bg-gray-100
+            transition-all
           "
         >
           Cancelar
         </button>
 
         <button
-          onClick={
-            aplicarCambioMasivo
-          }
+          onClick={aplicarCambioMasivo}
           className="
-            bg-purple-600
+            bg-black
             text-white
-            px-4
-            py-2
-            rounded-xl
-            hover:bg-purple-700
-            transition
+            px-7
+            py-3
+            rounded-2xl
+            font-semibold
+            hover:bg-gray-900
+            transition-all
           "
         >
           Aplicar cambios
         </button>
-
       </div>
-
     </div>
-
   </div>
-
 )}
 
 {/* =======================================
@@ -3214,122 +4267,73 @@ En unos segundos te llevaremos a nuestro canal oficial.
 
 </div>
 
-{/* MODAL COPIAR DATOS */}
 
-{mostrarModalCopiar && (
-
-<div
-  className="
-    fixed
-    inset-0
-    bg-black/50
-    flex
-    items-center
-    justify-center
-    z-50
-  "
->
+{mensajeToast && (
 
   <div
-    className="
-      bg-white
-      rounded-3xl
-      w-full
-      max-w-4xl
-      p-6
-    "
-  >
+  className="
+    fixed
+    top-5
+    left-1/2
+    -translate-x-1/2
 
-    <h2
-      className="
-        text-2xl
-        font-bold
-        mb-4
-      "
-    >
-      Datos para Motorizado
-    </h2>
+    z-50
 
-    <textarea
-      value={textoCopiar}
-      onChange={(e) =>
-        setTextoCopiar(
-          e.target.value
-        )
-      }
-      className="
-        w-full
-        h-[450px]
-        border
-        rounded-2xl
-        p-4
-        font-mono
-        text-sm
-      "
-    />
+    bg-white
+    text-gray-900
 
-    <div
-      className="
-        flex
-        justify-end
-        gap-3
-        mt-4
-      "
-    >
+    border
+    border-gray-200
 
-      <button
-        onClick={
-          copiarDatos
-        }
-        className="
-          bg-cyan-600
-          text-white
-          px-5
-          py-2
-          rounded-xl
-        "
-      >
-        Copiar
-      </button>
+    px-5
+    py-3
 
-      <button
-        onClick={
-          descargarDatosMoto
-        }
-        className="
-          bg-green-600
-          text-white
-          px-5
-          py-2
-          rounded-xl
-        "
-      >
-        Descargar Datos
-      </button>
+    rounded-2xl
+    shadow-xl
 
-      <button
-        onClick={() =>
-          setMostrarModalCopiar(
-            false
-          )
-        }
-        className="
-          bg-gray-200
-          px-5
-          py-2
-          rounded-xl
-        "
-      >
-        Cerrar
-      </button>
-
-    </div>
-
-  </div>
-
+    font-medium
+  "
+>
+  {mensajeToast}
 </div>
 
 )}
+
+<ModalCopiarDatos
+
+  abierto={mostrarModalCopiar}
+
+  envios={enviosMotoSeleccionados}
+
+  tarifas={Object.entries(tarifas).map(
+
+    ([distrito, precio]) => ({
+
+      distrito,
+
+      precio: Number(precio)
+
+    })
+
+  )}
+
+  cobrarEnvios={cobrarEnvios}
+
+  setCobrarEnvios={setCobrarEnvios}
+
+  onCerrar={() =>
+
+    setMostrarModalCopiar(false)
+
+  }
+
+  onCambiarCobro={
+
+    cambiarCobro
+
+  }
+
+/>
     </main>
   )
 }

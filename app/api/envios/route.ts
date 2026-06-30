@@ -6,29 +6,58 @@ export async function POST(req: Request) {
     const body = await req.json()
 
     const {
-      user_id,
-      nombre,
-      dni,
-      telefono,
-      metodo,
-      detalle,
-      observaciones,
-    } = body
+
+  user_id,
+
+  nombre,
+
+  dni,
+
+  telefono,
+
+  metodo,
+
+  destino,
+
+  direccion,
+
+  referencia,
+
+  detalle,
+
+  observaciones,
+
+} = body
 
     const { data, error } = await supabaseAdmin
       .from('envios')
       .insert([
         {
-          user_id,
-          nombre,
-          dni,
-          telefono,
-          metodo,
-          detalle,
-          observaciones,
-          estado: 'NO_EMPACADO',
-          fecha_registro: new Date().toISOString(),
-        },
+  user_id,
+
+  nombre,
+
+  dni,
+
+  telefono,
+
+  metodo,
+
+  destino,
+
+  direccion,
+
+  referencia,
+
+  detalle,
+
+  observaciones,
+
+  estado: 'NO_EMPACADO',
+
+  fecha_registro:
+    new Date().toISOString(),
+},
       ])
       .select()
       .single()
