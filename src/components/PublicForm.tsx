@@ -39,6 +39,20 @@ type Props = {
   tiktokUrl?: string
   webUrl?: string
   whatsappUrl?: string
+
+  metodoMotorizado?: boolean
+
+metodoShalom?: boolean
+
+metodoOlva?: boolean
+
+metodoMarvisur?: boolean
+
+metodoFlores?: boolean
+
+metodoOtro?: boolean
+
+nombreMetodoOtro?: string
 }
 
 export default function PublicForm({userId,
@@ -52,7 +66,22 @@ export default function PublicForm({userId,
   facebookUrl,
   tiktokUrl,
   webUrl,
-  whatsappUrl,}: Props){
+  whatsappUrl,
+
+  metodoMotorizado,
+
+metodoShalom,
+
+metodoOlva,
+
+metodoMarvisur,
+
+metodoFlores,
+
+metodoOtro,
+
+nombreMetodoOtro,
+}: Props){
     
   const [loading, setLoading] = useState(false)
   const [enviado, setEnviado] = useState(false)
@@ -63,7 +92,75 @@ const [error, setError] = useState('')
   const [dni, setDni] = useState('')
   const [telefono, setTelefono] = useState('')
 
-  const [metodo, setMetodo] = useState('SHALOM')
+  const [metodo, setMetodo] = useState('')
+ type MetodoDisponible = {
+
+  value: string
+
+  label: string
+
+}
+const nombreOtro =
+
+  nombreMetodoOtro ?? ''
+  
+const metodosDisponibles: MetodoDisponible[] = [
+
+  metodoMotorizado
+    ? {
+        value: 'MOTORIZADO',
+        label: 'Motorizado',
+      }
+    : null,
+
+  metodoShalom
+    ? {
+        value: 'SHALOM',
+        label: 'Shalom',
+      }
+    : null,
+
+  metodoOlva
+    ? {
+        value: 'OLVA',
+        label: 'Olva',
+      }
+    : null,
+
+  metodoMarvisur
+    ? {
+        value: 'MARVISUR',
+        label: 'Marvisur',
+      }
+    : null,
+
+  metodoFlores
+    ? {
+        value: 'FLORES',
+        label: 'Flores',
+      }
+    : null,
+
+  metodoOtro &&
+nombreOtro.trim()
+
+  ? {
+
+      value: 'OTRO',
+
+      label: nombreOtro,
+
+    }
+
+  : null,
+
+].filter(
+
+  (item): item is MetodoDisponible =>
+
+    item !== null
+
+)
 
   const [agencia, setAgencia] = useState('')
 
@@ -95,6 +192,30 @@ const [error, setError] = useState('')
 }, [
   enviado,
   redirectUrl,
+])
+
+useEffect(() => {
+
+  if (
+
+    metodo ||
+
+    metodosDisponibles.length === 0
+
+  ) return
+
+  setMetodo(
+
+    metodosDisponibles[0].value
+
+  )
+
+}, [
+
+  metodo,
+
+  metodosDisponibles,
+
 ])
 
 async function handleSubmit() {
@@ -153,21 +274,42 @@ async function handleSubmit() {
   }
 
   if (
-    metodo === 'OLVA' &&
-    (
-      !provincia ||
-      !direccion
-    )
-  ) {
 
-    setError(
-      'Completa los datos de envío.'
-    )
+  [
 
-    setLoading(false)
+    'OLVA',
 
-    return
-  }
+    'MARVISUR',
+
+    'FLORES',
+
+    'OTRO',
+
+  ].includes(metodo)
+
+  &&
+
+  (
+
+    !provincia ||
+
+    !direccion
+
+  )
+
+) {
+
+  setError(
+
+    'Completa los datos de envío.'
+
+  )
+
+  setLoading(false)
+
+  return
+
+}
 
   if (
     metodo === 'MOTORIZADO' &&
@@ -194,14 +336,31 @@ async function handleSubmit() {
 
   }
 
-  if (metodo === 'OLVA') {
+  if (
 
-    detalle =
-      `Provincia: ${provincia}\n` +
-      `Dirección: ${direccion}\n` +
-      `Referencia: ${referencia}`
+  [
 
-  }
+    'OLVA',
+
+    'MARVISUR',
+
+    'FLORES',
+
+    'OTRO',
+
+  ].includes(metodo)
+
+) {
+
+  detalle =
+
+    `Provincia: ${provincia}\n` +
+
+    `Dirección: ${direccion}\n` +
+
+    `Referencia: ${referencia}`
+
+}
 
   if (metodo === 'MOTORIZADO') {
 
@@ -212,6 +371,14 @@ async function handleSubmit() {
 
   }
 
+  const metodoGuardar =
+
+  metodo === 'OTRO'
+
+    ? nombreOtro
+
+    : metodo
+    
   const res = await fetch(
     '/api/envios',
     {
@@ -234,31 +401,39 @@ async function handleSubmit() {
 
   metodo,
 
+  nombre_metodo:
+
+    metodo === 'OTRO'
+
+      ? nombreOtro
+
+      : null,
+
   destino:
 
     metodo === 'SHALOM'
+
       ? agencia
 
-      : metodo === 'OLVA'
+      : [
+
+          'OLVA',
+
+          'MARVISUR',
+
+          'FLORES',
+
+          'OTRO',
+
+        ].includes(metodo)
+
       ? provincia
 
       : distrito,
 
-  direccion:
+  direccion,
 
-    metodo === 'SHALOM'
-
-      ? null
-
-      : direccion,
-
-  referencia:
-
-    metodo === 'SHALOM'
-
-      ? null
-
-      : referencia,
+  referencia,
 
   detalle,
 
@@ -573,35 +748,44 @@ async function handleSubmit() {
 </h2>
 
         <select
-          value={metodo}
-          onChange={(e) => setMetodo(e.target.value)}
-         className="
-  w-full
-  bg-gray-50
-  border
-  border-gray-200
-  p-4
-  rounded-2xl
-  focus:outline-none
-  focus:ring-2
-  focus:ring-cyan-500
-  transition
-"
-        >
-          <option value="SHALOM">
-            Shalom
-          </option>
+  value={metodo}
+  onChange={(e) =>
+    setMetodo(
+      e.target.value
+    )
+  }
+  className="
+    w-full
+    bg-gray-50
+    border
+    border-gray-200
+    p-4
+    rounded-2xl
+    focus:outline-none
+    focus:ring-2
+    focus:ring-cyan-500
+    transition
+  "
+>
 
-          <option value="OLVA">
-            Olva
-          </option>
+  {metodosDisponibles.map(
 
-          <option value="MOTORIZADO">
-            Motorizado
-          </option>
+    (item) => (
 
-        </select>
+      <option
+        key={item.value}
+        value={item.value}
+      >
 
+        {item.label}
+
+      </option>
+
+    )
+
+  )}
+
+</select>
       </div>
 
       {metodo === 'SHALOM' && (
@@ -615,9 +799,14 @@ async function handleSubmit() {
 
       )}
 
-      {metodo === 'OLVA' && (
+   {[
+  'OLVA',
+  'MARVISUR',
+  'FLORES',
+  'OTRO',
+].includes(metodo) && (
 
-        <div className="space-y-3">
+  <div className="space-y-3">
 
           <AutocompleteInput
             value={provincia}

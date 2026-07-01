@@ -3,80 +3,101 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 
 export async function POST(req: Request) {
   try {
+
     const body = await req.json()
 
     const {
 
-  user_id,
+      user_id,
 
-  nombre,
+      nombre,
 
-  dni,
+      dni,
 
-  telefono,
+      telefono,
 
-  metodo,
+      metodo,
 
-  destino,
+      nombre_metodo,
 
-  direccion,
+      destino,
 
-  referencia,
+      direccion,
 
-  detalle,
+      referencia,
 
-  observaciones,
+      detalle,
 
-} = body
+      observaciones,
+
+    } = body
 
     const { data, error } = await supabaseAdmin
       .from('envios')
       .insert([
         {
-  user_id,
 
-  nombre,
+          user_id,
 
-  dni,
+          nombre,
 
-  telefono,
+          dni,
 
-  metodo,
+          telefono,
 
-  destino,
+          metodo,
 
-  direccion,
+          nombre_metodo,
 
-  referencia,
+          destino,
 
-  detalle,
+          direccion,
 
-  observaciones,
+          referencia,
 
-  estado: 'NO_EMPACADO',
+          detalle,
 
-  fecha_registro:
-    new Date().toISOString(),
-},
+          observaciones,
+
+          estado: 'NO_EMPACADO',
+
+          fecha_registro:
+            new Date().toISOString(),
+
+        },
       ])
       .select()
       .single()
 
     if (error) {
+
       return NextResponse.json(
+
         { error: error.message },
+
         { status: 400 }
+
       )
+
     }
 
     return NextResponse.json({
+
       success: true,
+
       envio: data,
+
     })
-  } catch (err) {
+
+  } catch {
+
     return NextResponse.json(
+
       { error: 'Error interno' },
+
       { status: 500 }
+
     )
+
   }
 }

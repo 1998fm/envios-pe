@@ -53,6 +53,19 @@ export default async function FormPage({
         tiktokUrl={profile.tiktok_url}
         webUrl={profile.web_url}
         whatsappUrl={profile.whatsapp_url}
+        metodoMotorizado={profile.metodo_motorizado}
+
+metodoShalom={profile.metodo_shalom}
+
+metodoOlva={profile.metodo_olva}
+
+metodoMarvisur={profile.metodo_marvisur}
+
+metodoFlores={profile.metodo_flores}
+
+metodoOtro={profile.metodo_otro}
+
+nombreMetodoOtro={profile.nombre_metodo_otro}
       />
 
     </div>

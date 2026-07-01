@@ -7,7 +7,15 @@ import EstadoSelect from '@/components/EstadoSelect'
 import TamanoSelect from '@/components/TamanoSelect'
 import { exportarShalom } from '@/lib/shalomExport'
 import { toast } from 'sonner'
-
+import agenciasShalom
+from '@/data/agencias-shalom.json'
+import ConfiguracionLogistica
+from '@/components/ConfiguracionLogistica'
+import ConfiguracionMetodos
+from '@/components/ConfiguracionMetodos'
+import SelectorDias
+from '@/components/SelectorDias'
+import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
 /* ========================================
    COPIAR DATOS
 ======================================== */
@@ -49,6 +57,8 @@ const [mensajeToast, setMensajeToast] =
   useState<
     Record<string, string>
   >({})
+
+  
 // ========================================
 // VISTA CONFIGURACION
 // ========================================
@@ -158,6 +168,8 @@ function exportarDatos(){
       (envio) => envio.id
     )
 
+
+    
   const todosSeleccionados =
     idsVisibles.every(
       (id) =>
@@ -356,8 +368,184 @@ const [
 ] = useState<any[]>([])
 
 /* ========================================
+   MÉTODOS DE ENVÍO
+======================================== */
+
+const [
+
+  metodoMotorizado,
+
+  setMetodoMotorizado
+
+] = useState(true)
+
+const [
+
+  metodoShalom,
+
+  setMetodoShalom
+
+] = useState(true)
+
+const [
+
+  metodoOlva,
+
+  setMetodoOlva
+
+] = useState(false)
+
+const [
+
+  metodoMarvisur,
+
+  setMetodoMarvisur
+
+] = useState(false)
+
+const [
+
+  metodoFlores,
+
+  setMetodoFlores
+
+] = useState(false)
+
+const [
+
+  metodoOtro,
+
+  setMetodoOtro
+
+] = useState(false)
+
+const [
+
+  nombreMetodoOtro,
+
+  setNombreMetodoOtro
+
+] = useState('')
+
+/* ========================================
+   CONFIGURACIÓN LOGÍSTICA
+======================================== */
+
+const diasSemana = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+]
+
+const [
+  logisticaMotoDias,
+  setLogisticaMotoDias,
+] = useState<string[]>(['MONDAY'])
+
+const [
+  logisticaMotoHoraCorte,
+  setLogisticaMotoHoraCorte,
+] = useState('18:00')
+
+const [
+  logisticaMotoLimitar,
+  setLogisticaMotoLimitar,
+] = useState(false)
+
+const [
+  logisticaMotoCupo,
+  setLogisticaMotoCupo,
+] = useState(0)
+
+const [
+  logisticaAgenciasDias,
+  setLogisticaAgenciasDias,
+] = useState<string[]>(['MONDAY'])
+
+const [
+  logisticaAgenciasHoraCorte,
+  setLogisticaAgenciasHoraCorte,
+] = useState('18:00')
+
+const [
+  logisticaMotoUsaHoraCorte,
+  setLogisticaMotoUsaHoraCorte,
+] = useState(true)
+
+const [
+  logisticaAgenciasUsaHoraCorte,
+  setLogisticaAgenciasUsaHoraCorte,
+] = useState(true)
+
+const [
+  logisticaAgenciasLimitar,
+  setLogisticaAgenciasLimitar,
+] = useState(false)
+
+const [
+  logisticaAgenciasCupo,
+  setLogisticaAgenciasCupo,
+] = useState(0)
+
+const metodosDisponibles = [
+
+  metodoShalom && {
+    value: 'SHALOM',
+    label: 'Shalom',
+  },
+
+  metodoOlva && {
+    value: 'OLVA',
+    label: 'Olva',
+  },
+
+  metodoMotorizado && {
+    value: 'MOTORIZADO',
+    label: 'Motorizado',
+  },
+
+  metodoMarvisur && {
+    value: 'MARVISUR',
+    label: 'Marvisur',
+  },
+
+  metodoFlores && {
+    value: 'FLORES',
+    label: 'Flores',
+  },
+
+  metodoOtro &&
+nombreMetodoOtro.trim() && {
+  value: nombreMetodoOtro,
+  label: nombreMetodoOtro,
+},
+
+].filter(
+  (
+    item
+  ): item is {
+    value: string
+    label: string
+  } => Boolean(item)
+)
+
+/* ========================================
    VARIABLES DERIVADAS
 ======================================== */
+
+const hayAgenciasActivas =
+
+  metodoOlva ||
+
+  metodoMarvisur ||
+
+  metodoFlores ||
+
+  metodoOtro
 /* ========================================
    ENVÍOS MOTO SELECCIONADOS
 ======================================== */
@@ -429,7 +617,25 @@ if (crearPerfilError) {
       facebook_url,
       tiktok_url,
       web_url,
-      whatsapp_url
+      whatsapp_url,
+      metodo_motorizado,
+metodo_shalom,
+metodo_olva,
+metodo_marvisur,
+metodo_flores,
+metodo_otro,
+nombre_metodo_otro,
+logistica_moto_dias,
+logistica_moto_hora_corte,
+logistica_moto_usa_hora_corte,
+logistica_moto_limitar,
+logistica_moto_cupo,
+
+logistica_agencias_dias,
+logistica_agencias_hora_corte,
+logistica_agencias_usa_hora_corte,
+logistica_agencias_limitar,
+logistica_agencias_cupo
     `)
     .eq('id', user.id)
     .maybeSingle()
@@ -542,6 +748,72 @@ setDireccionEmpresa(
 setSlugEmpresa(
   profile?.slug || ''
 )
+setMetodoMotorizado(
+  profile?.metodo_motorizado ?? true
+)
+
+setMetodoShalom(
+  profile?.metodo_shalom ?? true
+)
+
+setMetodoOlva(
+  profile?.metodo_olva ?? false
+)
+
+setMetodoMarvisur(
+  profile?.metodo_marvisur ?? false
+)
+
+setMetodoFlores(
+  profile?.metodo_flores ?? false
+)
+
+setMetodoOtro(
+  profile?.metodo_otro ?? false
+)
+
+setNombreMetodoOtro(
+  profile?.nombre_metodo_otro || ''
+)
+
+/* ========================================
+   CONFIGURACIÓN LOGÍSTICA
+======================================== */
+
+setLogisticaMotoDias(
+  profile?.logistica_moto_dias ?? ['MONDAY']
+)
+
+setLogisticaMotoHoraCorte(
+  profile?.logistica_moto_hora_corte ?? '18:00'
+)
+
+
+
+setLogisticaMotoLimitar(
+  profile?.logistica_moto_limitar ?? false
+)
+
+setLogisticaMotoCupo(
+  profile?.logistica_moto_cupo ?? 0
+)
+
+setLogisticaAgenciasDias(
+  profile?.logistica_agencias_dias ?? ['MONDAY']
+)
+
+setLogisticaAgenciasHoraCorte(
+  profile?.logistica_agencias_hora_corte ?? '18:00'
+)
+
+setLogisticaAgenciasLimitar(
+  profile?.logistica_agencias_limitar ?? false
+)
+
+setLogisticaAgenciasCupo(
+  profile?.logistica_agencias_cupo ?? 0
+)
+
 
       const { data } = await supabase
         .from('envios')
@@ -909,6 +1181,34 @@ async function guardarConfiguracion() {
         whatsapp_url:
           whatsappUrl,
 
+          metodo_motorizado:
+  metodoMotorizado,
+
+metodo_shalom:
+  metodoShalom,
+
+metodo_olva:
+  metodoOlva,
+
+metodo_marvisur:
+  metodoMarvisur,
+
+metodo_flores:
+  metodoFlores,
+
+metodo_otro:
+  metodoOtro,
+
+nombre_metodo_otro:
+  nombreMetodoOtro,
+
+  logistica_moto_usa_hora_corte:
+  logisticaMotoUsaHoraCorte,
+
+logistica_agencias_usa_hora_corte:
+  logisticaAgenciasUsaHoraCorte,
+  
+
       })
       .eq(
         'id',
@@ -920,6 +1220,7 @@ async function guardarConfiguracion() {
     return
   }
 
+  
 // ========================================
 // GUARDAR TARIFAS
 // ========================================
@@ -1027,10 +1328,13 @@ const todosMoto =
           ? true
           : envio.estado === filtroEstado
 
-      const coincideMetodo =
-        filtroMetodo === 'TODOS'
-          ? true
-          : envio.metodo === filtroMetodo
+const metodoEnvio =
+  envio.nombre_metodo || envio.metodo
+
+const coincideMetodo =
+  filtroMetodo === 'TODOS'
+    ? true
+    : metodoEnvio === filtroMetodo
 
       return (
         coincideBusqueda &&
@@ -1289,45 +1593,41 @@ transition
 
     </select>
 
-    <select
-      value={filtroMetodo}
-      onChange={(e) =>
-        setFiltroMetodo(e.target.value)
-      }
-     className="
-bg-gray-50
-border
-border-gray-200
+   <select
+  value={filtroMetodo}
+  onChange={(e) =>
+    setFiltroMetodo(e.target.value)
+  }
+  className="
+    bg-gray-50
+    border
+    border-gray-200
+    rounded-2xl
+    px-5
+    py-4
+    focus:outline-none
+    focus:ring-2
+    focus:ring-cyan-500
+    transition
+  "
+>
 
-rounded-2xl
+  <option value="TODOS">
+    Todos los métodos
+  </option>
 
-px-5
-py-4
+  {metodosDisponibles.map((metodo) => (
 
-focus:outline-none
-focus:ring-2
-focus:ring-cyan-500
-
-transition
-"
+    <option
+      key={metodo.value}
+      value={metodo.value}
     >
-      <option value="TODOS">
-        Todos los métodos
-      </option>
+      {metodo.label}
+    </option>
 
-      <option value="SHALOM">
-        Shalom
-      </option>
+  ))}
 
-      <option value="OLVA">
-        Olva
-      </option>
-
-      <option value="MOTORIZADO">
-        Motorizado
-      </option>
-
-    </select>
+</select>
 
   </div>
 
@@ -1831,7 +2131,7 @@ text-gray-700
   font-semibold
 "
           >
-            {envio.metodo}
+            {envio.nombre_metodo || envio.metodo}
           </div>
 
         </div>
@@ -2435,56 +2735,391 @@ En unos segundos te llevaremos a nuestro canal oficial.
   vistaConfig ===
   'LOGISTICA' && (
 
-    <>
+    <div
+      className="
+        space-y-6
+      "
+    >
+<ConfiguracionMetodos
 
-      <div
-        className="
-          p-5
-          border
-          rounded-2xl
-        "
-      >
+  metodoMotorizado={metodoMotorizado}
+  setMetodoMotorizado={setMetodoMotorizado}
 
-        <h3
-          className="
-            text-lg
-            font-bold
-            mb-4
-          "
-        >
-          Logística
-        </h3>
+  metodoShalom={metodoShalom}
+  setMetodoShalom={setMetodoShalom}
 
-        <label
-          className="
-            block
-            mb-2
-            font-medium
-          "
-        >
-          Origen Shalom
-        </label>
+  metodoOlva={metodoOlva}
+  setMetodoOlva={setMetodoOlva}
 
-        <input
-          type="text"
-          value={nuevoOrigen}
-          onChange={(e) =>
-            setNuevoOrigen(
-              e.target.value
-            )
-          }
-          className="
-            w-full
-            border
-            rounded-xl
-            px-4
-            py-3
-          "
-        />
+  metodoMarvisur={metodoMarvisur}
+  setMetodoMarvisur={setMetodoMarvisur}
 
-      </div>
+  metodoFlores={metodoFlores}
+  setMetodoFlores={setMetodoFlores}
 
-    </>
+  metodoOtro={metodoOtro}
+  setMetodoOtro={setMetodoOtro}
+
+  nombreMetodoOtro={nombreMetodoOtro}
+  setNombreMetodoOtro={setNombreMetodoOtro}
+
+/>
+  <div
+  className="
+    space-y-8
+  "
+>
+
+  <div
+    className="
+      bg-white
+      border
+      rounded-3xl
+      p-8
+      shadow-sm
+    "
+  >
+
+    <h2
+      className="
+        text-xl
+        font-bold
+      "
+    >
+      Métodos de envío
+    </h2>
+
+    <p
+      className="
+        text-sm
+        text-gray-500
+        mt-2
+      "
+    >
+      Activa los métodos que ofrecerás a tus clientes y
+      configura su comportamiento.
+    </p>
+
+    <div
+  className="
+    mt-8
+    space-y-6
+  "
+>
+
+  {/* MOTORIZADO */}
+
+  <label
+    className="
+      flex
+      items-center
+      gap-3
+      cursor-pointer
+    "
+  >
+
+    <input
+      type="checkbox"
+      checked={metodoMotorizado}
+      onChange={(e)=>
+
+        setMetodoMotorizado(
+          e.target.checked
+        )
+
+      }
+    />
+
+    <span
+      className="
+        font-semibold
+        text-lg
+      "
+    >
+      Motorizado
+    </span>
+
+  </label>
+
+{metodoMotorizado && (
+
+  <ConfiguracionMetodo
+
+  dias={logisticaMotoDias}
+  setDias={setLogisticaMotoDias}
+
+  usaHora={logisticaMotoUsaHoraCorte}
+  setUsaHora={setLogisticaMotoUsaHoraCorte}
+
+  hora={logisticaMotoHoraCorte}
+  setHora={setLogisticaMotoHoraCorte}
+
+  limitar={logisticaMotoLimitar}
+  setLimitar={setLogisticaMotoLimitar}
+
+  cupo={logisticaMotoCupo}
+  setCupo={setLogisticaMotoCupo}
+
+/>
+
+)}
+
+  {/* SHALOM */}
+
+  <label
+    className="
+      flex
+      items-center
+      gap-3
+      cursor-pointer
+    "
+  >
+
+    <input
+      type="checkbox"
+      checked={metodoShalom}
+      onChange={(e)=>
+
+        setMetodoShalom(
+          e.target.checked
+        )
+
+      }
+    />
+
+    <span
+      className="
+        font-semibold
+        text-lg
+      "
+    >
+      Shalom
+    </span>
+
+  </label>
+
+{metodoShalom && (
+
+  <div
+    className="
+      ml-8
+      mt-4
+      rounded-2xl
+      border
+      bg-slate-50
+      p-6
+    "
+  >
+
+    <label
+      className="
+        block
+        font-semibold
+        mb-3
+      "
+    >
+      Agencia de origen
+    </label>
+
+    <select
+
+  value={nuevoOrigen}
+
+  onChange={(e)=>
+
+    setNuevoOrigen(
+      e.target.value
+    )
+
+  }
+
+  className="
+    w-full
+    border
+    rounded-xl
+    px-4
+    py-3
+    bg-white
+  "
+
+>
+
+  <option value="">
+    Selecciona una agencia
+  </option>
+
+  {agenciasShalom.map((agencia) => (
+
+    <option
+
+      key={agencia}
+
+      value={agencia}
+
+    >
+
+      {agencia}
+
+    </option>
+
+  ))}
+
+</select>
+  </div>
+
+)}
+
+  {/* AGENCIAS */}
+
+ <p
+  className="
+    mt-8
+    mb-4
+    font-semibold
+    text-lg
+  "
+>
+  Agencias
+</p>
+
+<div
+  className="
+    ml-4
+    space-y-4
+  "
+>
+
+  <label
+    className="
+      flex
+      items-center
+      gap-3
+      cursor-pointer
+    "
+  >
+
+    <input
+      type="checkbox"
+      checked={metodoOlva}
+      onChange={(e)=>
+
+        setMetodoOlva(
+          e.target.checked
+        )
+
+      }
+    />
+
+    <span>Olva</span>
+
+  </label>
+
+  <label
+    className="
+      flex
+      items-center
+      gap-3
+      cursor-pointer
+    "
+  >
+
+    <input
+      type="checkbox"
+      checked={metodoMarvisur}
+      onChange={(e)=>
+
+        setMetodoMarvisur(
+          e.target.checked
+        )
+
+      }
+    />
+
+    <span>Marvisur</span>
+
+  </label>
+
+  <label
+    className="
+      flex
+      items-center
+      gap-3
+      cursor-pointer
+    "
+  >
+
+    <input
+      type="checkbox"
+      checked={metodoFlores}
+      onChange={(e)=>
+
+        setMetodoFlores(
+          e.target.checked
+        )
+
+      }
+    />
+
+    <span>Flores</span>
+
+  </label>
+
+  <label
+    className="
+      flex
+      items-center
+      gap-3
+      cursor-pointer
+    "
+  >
+
+    <input
+      type="checkbox"
+      checked={metodoOtro}
+      onChange={(e)=>
+
+        setMetodoOtro(
+          e.target.checked
+        )
+
+      }
+    />
+
+    <span>Otro método</span>
+
+  </label>
+
+</div>
+
+{hayAgenciasActivas && (
+
+  <ConfiguracionMetodo
+
+  dias={logisticaAgenciasDias}
+  setDias={setLogisticaAgenciasDias}
+
+  usaHora={logisticaAgenciasUsaHoraCorte}
+  setUsaHora={setLogisticaAgenciasUsaHoraCorte}
+
+  hora={logisticaAgenciasHoraCorte}
+  setHora={setLogisticaAgenciasHoraCorte}
+
+  limitar={logisticaAgenciasLimitar}
+  setLimitar={setLogisticaAgenciasLimitar}
+
+  cupo={logisticaAgenciasCupo}
+  setCupo={setLogisticaAgenciasCupo}
+
+/>
+
+)}
+
+</div>
+
+  </div>
+
+</div>
+    </div>
 
   )
 }
@@ -3888,7 +4523,7 @@ En unos segundos te llevaremos a nuestro canal oficial.
       tracking-wide
     "
   >
-    {envio.metodo}
+    {envio.nombre_metodo || envio.metodo}
   </div>
 
   <div
@@ -4100,7 +4735,7 @@ En unos segundos te llevaremos a nuestro canal oficial.
         tracking-wide
       "
     >
-      {envio.metodo}
+      {envio.nombre_metodo || envio.metodo}
     </div>
 
     <div
