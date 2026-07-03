@@ -1,21 +1,27 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import EstadoSelect from '@/components/EstadoSelect'
 import TamanoSelect from '@/components/TamanoSelect'
-import { exportarShalom } from '@/lib/shalomExport'
+import { exportarShalom } from 'app/f/[slug]/lib/shalomExport'
 import { toast } from 'sonner'
 import agenciasShalom
 from '@/data/agencias-shalom.json'
 import ConfiguracionLogistica
 from '@/components/ConfiguracionLogistica'
-import ConfiguracionMetodos
-from '@/components/ConfiguracionMetodos'
 import SelectorDias
 from '@/components/SelectorDias'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
+
+import { obtenerConfiguracionLogistica } from '@/lib/logistica/guardarConfiguracionLogistica'
+
+
+import EtiquetasImpresion from '../../src/components/EtiquetasImpresion'
+import ModalEtiquetas from '@/components/ModalEtiquetas'
+
+import ModalCambioMasivo from '@/components/ModalCambioMasivo'
 /* ========================================
    COPIAR DATOS
 ======================================== */
@@ -345,7 +351,7 @@ const [
 const [
   soloSeleccionados,
   setSoloSeleccionados,
-] = useState(true)
+] = useState(false)
 
 const [envioDetalle, setEnvioDetalle] =
   useState<any>(null)
@@ -474,12 +480,12 @@ const [
 const [
   logisticaMotoUsaHoraCorte,
   setLogisticaMotoUsaHoraCorte,
-] = useState(true)
+] = useState(false)
 
 const [
   logisticaAgenciasUsaHoraCorte,
   setLogisticaAgenciasUsaHoraCorte,
-] = useState(true)
+] = useState(false)
 
 const [
   logisticaAgenciasLimitar,
@@ -788,7 +794,9 @@ setLogisticaMotoHoraCorte(
   profile?.logistica_moto_hora_corte ?? '18:00'
 )
 
-
+setLogisticaMotoUsaHoraCorte(
+  profile?.logistica_moto_usa_hora_corte ?? false
+)
 
 setLogisticaMotoLimitar(
   profile?.logistica_moto_limitar ?? false
@@ -804,6 +812,10 @@ setLogisticaAgenciasDias(
 
 setLogisticaAgenciasHoraCorte(
   profile?.logistica_agencias_hora_corte ?? '18:00'
+)
+
+setLogisticaAgenciasUsaHoraCorte(
+  profile?.logistica_agencias_usa_hora_corte ?? false
 )
 
 setLogisticaAgenciasLimitar(
@@ -1202,12 +1214,21 @@ metodo_otro:
 nombre_metodo_otro:
   nombreMetodoOtro,
 
-  logistica_moto_usa_hora_corte:
-  logisticaMotoUsaHoraCorte,
+  ...obtenerConfiguracionLogistica({
 
-logistica_agencias_usa_hora_corte:
+  logisticaMotoDias,
+  logisticaMotoUsaHoraCorte,
+  logisticaMotoHoraCorte,
+  logisticaMotoLimitar,
+  logisticaMotoCupo,
+
+  logisticaAgenciasDias,
   logisticaAgenciasUsaHoraCorte,
-  
+  logisticaAgenciasHoraCorte,
+  logisticaAgenciasLimitar,
+  logisticaAgenciasCupo,
+
+}),
 
       })
       .eq(
@@ -1314,48 +1335,90 @@ const todosMoto =
       'MOTORIZADO'
   )
 
-  const enviosFiltrados = useMemo(() => {
-    return envios.filter((envio) => {
-      const coincideBusqueda =
-        envio.nombre
-          ?.toLowerCase()
-          .includes(busqueda.toLowerCase()) ||
-        envio.dni?.includes(busqueda) ||
-        envio.telefono?.includes(busqueda)
+ const enviosFiltrados = useMemo(() => {
+  return envios.filter((envio) => {
+    const coincideBusqueda =
+      envio.nombre
+        ?.toLowerCase()
+        .includes(busqueda.toLowerCase()) ||
+      envio.dni?.includes(busqueda) ||
+      envio.telefono?.includes(busqueda)
 
-      const coincideEstado =
-        filtroEstado === 'TODOS'
-          ? true
-          : envio.estado === filtroEstado
+    const coincideEstado =
+      filtroEstado === 'TODOS'
+        ? true
+        : envio.estado === filtroEstado
 
-const metodoEnvio =
-  envio.nombre_metodo || envio.metodo
+    const metodoEnvio =
+      envio.nombre_metodo || envio.metodo
 
-const coincideMetodo =
-  filtroMetodo === 'TODOS'
-    ? true
-    : metodoEnvio === filtroMetodo
+    const coincideMetodo =
+      filtroMetodo === 'TODOS'
+        ? true
+        : metodoEnvio === filtroMetodo
 
-      return (
-        coincideBusqueda &&
-        coincideEstado &&
-        coincideMetodo
-      )
-    })
-  }, [
-    envios,
-    busqueda,
-    filtroEstado,
-    filtroMetodo,
-  ])
-
-  if (loading) {
     return (
-      <div className="p-10">
-        Cargando...
-      </div>
+      coincideBusqueda &&
+      coincideEstado &&
+      coincideMetodo
     )
+  })
+}, [
+  envios,
+  busqueda,
+  filtroEstado,
+  filtroMetodo,
+])
+
+// ========================================
+// AGRUPAR POR FECHA PROGRAMADA
+// ========================================
+
+const enviosAgrupados = enviosFiltrados.reduce(
+  (acc, envio) => {
+
+    const fecha =
+      envio.fecha_programada
+        ? new Date(envio.fecha_programada)
+            .toISOString()
+            .split('T')[0]
+        : 'SIN_FECHA'
+
+    if (!acc[fecha]) {
+      acc[fecha] = []
+    }
+
+    acc[fecha].push(envio)
+
+    return acc
+
+  },
+  {} as Record<string, typeof enviosFiltrados>
+)
+
+const fechasAgrupadas = Object.keys(
+  enviosAgrupados
+).sort(
+  (a, b) => {
+
+    if (a === 'SIN_FECHA') return 1
+    if (b === 'SIN_FECHA') return -1
+
+    return (
+      new Date(a).getTime() -
+      new Date(b).getTime()
+    )
+
   }
+)
+
+if (loading) {
+  return (
+    <div className="p-10">
+      Cargando...
+    </div>
+  )
+}
 const gruposEtiquetas = []
 
 for (
@@ -1919,47 +1982,66 @@ hover:scale-[1.02]
 "
 >
 
-{enviosFiltrados.map(
-  (envio) => {
+{fechasAgrupadas.map((fecha) => (
+  <div key={fecha} className="space-y-4 mb-10">
 
-    const colorEstado =
-      envio.estado === 'ENVIADO'
-        ? 'border-l-green-500'
-        : envio.estado === 'EMPACADO'
-        ? 'border-l-yellow-500'
-        : 'border-l-red-500'
+    <div className="flex items-center gap-3">
 
-    return (
+      <div className="text-xl font-bold text-gray-800">
+        {fecha === 'SIN_FECHA'
+          ? 'Sin fecha programada'
+          : new Date(fecha).toLocaleDateString(
+              'es-PE',
+              {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              }
+            )}
+      </div>
 
-      <div
-        key={envio.id}
-        onDoubleClick={() =>
-          setEnvioDetalle(envio)
-        }
-        className={`
-  bg-white
-  rounded-[28px]
-  border
-  border-gray-100
-  border-l-4
-  ${colorEstado}
+      <div className="h-px flex-1 bg-gray-200" />
 
-  p-6
+    </div>
 
-  cursor-pointer
+    {enviosAgrupados[fecha].map(
+       (
+    envio: (typeof enviosFiltrados)[number]
+  ) => {
 
-  hover:shadow-xl
-  hover:border-cyan-200
+      const colorEstado =
+        envio.estado === 'ENVIADO'
+          ? 'border-l-green-500'
+          : envio.estado === 'EMPACADO'
+          ? 'border-l-yellow-500'
+          : 'border-l-red-500'
 
-  transition-all
-  duration-300
+      return (
 
-  flex
-  items-center
-  justify-between
-  gap-8
-`}
-      >
+        <div
+          key={envio.id}
+          onDoubleClick={() =>
+            setEnvioDetalle(envio)
+          }
+          className={`
+            bg-white
+            rounded-[28px]
+            border
+            border-gray-100
+            border-l-4
+            ${colorEstado}
+            p-6
+            cursor-pointer
+            hover:shadow-xl
+            hover:border-cyan-200
+            transition-all
+            duration-300
+            flex
+            items-center
+            justify-between
+            gap-8
+          `}
+        >
 
        {/* CLIENTE */}
 
@@ -2272,10 +2354,12 @@ mb-2
 
       </div>
 
-    )
+       )
 
-  }
-)}
+    })}
+
+  </div>
+))}
 
   </div>
 
@@ -2740,30 +2824,8 @@ En unos segundos te llevaremos a nuestro canal oficial.
         space-y-6
       "
     >
-<ConfiguracionMetodos
 
-  metodoMotorizado={metodoMotorizado}
-  setMetodoMotorizado={setMetodoMotorizado}
 
-  metodoShalom={metodoShalom}
-  setMetodoShalom={setMetodoShalom}
-
-  metodoOlva={metodoOlva}
-  setMetodoOlva={setMetodoOlva}
-
-  metodoMarvisur={metodoMarvisur}
-  setMetodoMarvisur={setMetodoMarvisur}
-
-  metodoFlores={metodoFlores}
-  setMetodoFlores={setMetodoFlores}
-
-  metodoOtro={metodoOtro}
-  setMetodoOtro={setMetodoOtro}
-
-  nombreMetodoOtro={nombreMetodoOtro}
-  setNombreMetodoOtro={setNombreMetodoOtro}
-
-/>
   <div
   className="
     space-y-8
@@ -2864,7 +2926,29 @@ En unos segundos te llevaremos a nuestro canal oficial.
 
 )}
 
-  {/* SHALOM */}
+ 
+
+  {/* AGENCIAS */}
+
+ <p
+  className="
+    mt-8
+    mb-4
+    font-semibold
+    text-lg
+  "
+>
+  Agencias
+</p>
+
+<div
+  className="
+    ml-4
+    space-y-4
+  "
+>
+
+ {/* SHALOM */}
 
   <label
     className="
@@ -2968,27 +3052,6 @@ En unos segundos te llevaremos a nuestro canal oficial.
   </div>
 
 )}
-
-  {/* AGENCIAS */}
-
- <p
-  className="
-    mt-8
-    mb-4
-    font-semibold
-    text-lg
-  "
->
-  Agencias
-</p>
-
-<div
-  className="
-    ml-4
-    space-y-4
-  "
->
-
   <label
     className="
       flex
@@ -3089,6 +3152,53 @@ En unos segundos te llevaremos a nuestro canal oficial.
 
   </label>
 
+{metodoOtro && (
+
+  <div
+    className="
+      ml-8
+      mt-4
+      mb-6
+      rounded-2xl
+      border
+      bg-slate-50
+      p-6
+    "
+  >
+
+    <label
+      className="
+        block
+        font-semibold
+        mb-3
+      "
+    >
+      Nombre del método
+    </label>
+
+    <input
+      type="text"
+      value={nombreMetodoOtro}
+      onChange={(e)=>
+        setNombreMetodoOtro(
+          e.target.value
+        )
+      }
+      placeholder="Ej. Cruz del Sur"
+      className="
+        w-full
+        border
+        rounded-xl
+        px-4
+        py-3
+        bg-white
+      "
+    />
+
+  </div>
+
+)}
+
 </div>
 
 {hayAgenciasActivas && (
@@ -3109,6 +3219,10 @@ En unos segundos te llevaremos a nuestro canal oficial.
 
   cupo={logisticaAgenciasCupo}
   setCupo={setLogisticaAgenciasCupo}
+
+  nombreMetodoOtro={nombreMetodoOtro}
+  setNombreMetodoOtro={setNombreMetodoOtro}
+  mostrarNombreMetodo={metodoOtro}
 
 />
 
@@ -3861,1047 +3975,50 @@ En unos segundos te llevaremos a nuestro canal oficial.
 
 {/* MODAL PARA CAMBIO DE ESTADOS  */}
 
-{mostrarModalEstado && (
-  <div
-    className="
-      fixed
-      inset-0
-      bg-black/40
-      flex
-      items-center
-      justify-center
-      z-50
-    "
-  >
-    <div
-      className="
-        bg-white
-        rounded-[32px]
-        w-full
-        max-w-xl
-        overflow-hidden
-        border
-        border-gray-200
-        shadow-2xl
-      "
-    >
-      {/* Header */}
+<ModalCambioMasivo
+  abierto={mostrarModalEstado}
 
-      <div
-        className="
-          p-8
-          border-b
-          border-gray-100
-        "
-      >
-        <h2
-          className="
-            text-4xl
-            font-extrabold
-            text-slate-900
-          "
-        >
-          Cambio Masivo
-        </h2>
+  metodoMasivo={metodoMasivo}
+  setMetodoMasivo={setMetodoMasivo}
 
-        <p
-          className="
-            mt-2
-            text-gray-500
-          "
-        >
-          Cambia el estado de múltiples pedidos al mismo tiempo.
-        </p>
-      </div>
+  estadoOrigenMasivo={estadoOrigenMasivo}
+  setEstadoOrigenMasivo={setEstadoOrigenMasivo}
 
-      {/* Contenido */}
+  estadoDestinoMasivo={estadoDestinoMasivo}
+  setEstadoDestinoMasivo={setEstadoDestinoMasivo}
 
-      <div
-        className="
-          p-8
-          space-y-6
-        "
-      >
-        {/* Método */}
+  soloSeleccionados={soloSeleccionados}
+  setSoloSeleccionados={setSoloSeleccionados}
 
-        <div
-          className="
-            bg-slate-50
-            border
-            border-gray-200
-            rounded-2xl
-            p-5
-          "
-        >
-          <label
-            className="
-              block
-              text-sm
-              font-semibold
-              text-gray-700
-              mb-3
-            "
-          >
-            Método
-          </label>
+  seleccionados={seleccionados}
 
-          <select
-            value={metodoMasivo}
-            onChange={(e) =>
-              setMetodoMasivo(e.target.value)
-            }
-            disabled={soloSeleccionados}
-            className="
-              w-full
-              rounded-2xl
-              border
-              border-gray-300
-              px-4
-              py-3
-              bg-white
-              focus:outline-none
-              focus:ring-2
-              focus:ring-cyan-500
-            "
-          >
-            <option value="TODOS">Todos</option>
-            <option value="SHALOM">SHALOM</option>
-            <option value="OLVA">OLVA</option>
-            <option value="MOTORIZADO">MOTORIZADO</option>
-          </select>
-        </div>
+  metodosDisponibles={metodosDisponibles}
 
-        {/* Estado actual */}
+  aplicarCambioMasivo={aplicarCambioMasivo}
 
-        <div
-          className="
-            bg-slate-50
-            border
-            border-gray-200
-            rounded-2xl
-            p-5
-          "
-        >
-          <label
-            className="
-              block
-              text-sm
-              font-semibold
-              text-gray-700
-              mb-3
-            "
-          >
-            Estado actual
-          </label>
-
-          <select
-            value={estadoOrigenMasivo}
-            onChange={(e) =>
-              setEstadoOrigenMasivo(
-                e.target.value
-              )
-            }
-            disabled={soloSeleccionados}
-            className="
-              w-full
-              rounded-2xl
-              border
-              border-gray-300
-              px-4
-              py-3
-              bg-white
-              focus:outline-none
-              focus:ring-2
-              focus:ring-cyan-500
-            "
-          >
-            <option value="NO_EMPACADO">
-              No Empacado
-            </option>
-
-            <option value="EMPACADO">
-              Empacado
-            </option>
-
-            <option value="ENVIADO">
-              Enviado
-            </option>
-          </select>
-        </div>
-
-        {/* Nuevo estado */}
-
-        <div
-          className="
-            bg-slate-50
-            border
-            border-gray-200
-            rounded-2xl
-            p-5
-          "
-        >
-          <label
-            className="
-              block
-              text-sm
-              font-semibold
-              text-gray-700
-              mb-3
-            "
-          >
-            Nuevo estado
-          </label>
-
-          <select
-            value={estadoDestinoMasivo}
-            onChange={(e) =>
-              setEstadoDestinoMasivo(
-                e.target.value
-              )
-            }
-            className="
-              w-full
-              rounded-2xl
-              border
-              border-gray-300
-              px-4
-              py-3
-              bg-white
-              focus:outline-none
-              focus:ring-2
-              focus:ring-cyan-500
-            "
-          >
-            <option value="NO_EMPACADO">
-              No Empacado
-            </option>
-
-            <option value="EMPACADO">
-              Empacado
-            </option>
-
-            <option value="ENVIADO">
-              Enviado
-            </option>
-          </select>
-        </div>
-
-        {/* Checkbox */}
-
-        <div
-          className="
-            flex
-            items-center
-            gap-4
-            bg-slate-50
-            border
-            border-gray-200
-            rounded-2xl
-            p-5
-          "
-        >
-          <input
-            type="checkbox"
-            checked={soloSeleccionados}
-            onChange={(e) =>
-              setSoloSeleccionados(
-                e.target.checked
-              )
-            }
-            className="
-              w-5
-              h-5
-              accent-cyan-600
-            "
-          />
-
-          <label
-            className="
-              text-sm
-              text-gray-700
-              leading-relaxed
-              select-none
-            "
-          >
-            Aplicar solamente a los pedidos
-            seleccionados.
-          </label>
-        </div>
-
-        {/* Resumen */}
-
-        <div
-          className="
-            bg-slate-50
-            border
-            border-gray-200
-            rounded-2xl
-            p-6
-          "
-        >
-          <div
-            className="
-              text-sm
-              uppercase
-              tracking-wider
-              text-gray-500
-              font-semibold
-              mb-4
-            "
-          >
-            Resumen
-          </div>
-
-          {soloSeleccionados ? (
-            <div className="text-gray-700">
-              Se modificarán{" "}
-              <span className="font-bold text-slate-900">
-                {seleccionados.length}
-              </span>{" "}
-              pedidos seleccionados.
-            </div>
-          ) : (
-            <div
-              className="
-                space-y-2
-                text-sm
-                text-gray-600
-              "
-            >
-              <div>
-                <span className="font-semibold text-gray-800">
-                  Método:
-                </span>{" "}
-                {metodoMasivo}
-              </div>
-
-              <div>
-                <span className="font-semibold text-gray-800">
-                  Estado actual:
-                </span>{" "}
-                {estadoOrigenMasivo}
-              </div>
-
-              <div>
-                <span className="font-semibold text-gray-800">
-                  Nuevo estado:
-                </span>{" "}
-                <span className="text-blue-700 font-bold">
-                  {estadoDestinoMasivo}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Footer */}
-
-      <div
-        className="
-          border-t
-          border-gray-100
-          p-6
-          flex
-          justify-end
-          gap-4
-        "
-      >
-        <button
-          onClick={() =>
-            setMostrarModalEstado(false)
-          }
-          className="
-            px-7
-            py-3
-            rounded-2xl
-            border
-            border-gray-300
-            font-semibold
-            hover:bg-gray-100
-            transition-all
-          "
-        >
-          Cancelar
-        </button>
-
-        <button
-          onClick={aplicarCambioMasivo}
-          className="
-            bg-black
-            text-white
-            px-7
-            py-3
-            rounded-2xl
-            font-semibold
-            hover:bg-gray-900
-            transition-all
-          "
-        >
-          Aplicar cambios
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+  onCerrar={() =>
+    setMostrarModalEstado(false)
+  }
+/>
 
 {/* =======================================
-    MODAL ETIQUETAS
+   <ModalEtiquetas Y <EtiquetasImpresion
 ======================================= */}
 
-{mostrarEtiquetas && (
-
-  <div
-    className="
-      fixed
-      inset-0
-      bg-black/50
-      z-50
-      flex
-      items-center
-      justify-center
-      p-4
-    "
-  >
-
-    <div
-      className="
-        bg-white
-        rounded-2xl
-        w-full
-        max-w-lg
-        shadow-xl
-      "
-    >
-
-      {/* TÍTULO */}
-
-      <div
-        className="
-          px-6
-          py-5
-          border-b
-        "
-      >
-
-        <h2
-          className="
-            text-2xl
-            font-bold
-          "
-        >
-          Generar etiquetas
-        </h2>
-
-        <p
-          className="
-            text-gray-500
-            mt-1
-          "
-        >
-          Selecciona el formato.
-        </p>
-
-      </div>
-
-      {/* OPCIONES */}
-
-      <div
-        className="
-          p-6
-          space-y-4
-        "
-      >
-
-        <label
-          className="
-            flex
-            gap-3
-            border
-            rounded-xl
-            p-4
-            cursor-pointer
-          "
-        >
-
-          <input
-            type="radio"
-            checked={
-              tipoEtiqueta === 'A4'
-            }
-            onChange={() =>
-              setTipoEtiqueta('A4')
-            }
-          />
-
-          <div>
-
-            <div
-              className="
-                font-semibold
-              "
-            >
-              4 etiquetas por hoja
-            </div>
-
-            <div
-              className="
-                text-sm
-                text-gray-500
-              "
-            >
-              Distribución 2 x 2
-            </div>
-
-          </div>
-
-        </label>
-
-        <label
-          className="
-            flex
-            gap-3
-            border
-            rounded-xl
-            p-4
-            cursor-pointer
-          "
-        >
-
-          <input
-            type="radio"
-            checked={
-              tipoEtiqueta ===
-              'INDIVIDUAL'
-            }
-            onChange={() =>
-              setTipoEtiqueta(
-                'INDIVIDUAL'
-              )
-            }
-          />
-
-          <div>
-
-            <div
-              className="
-                font-semibold
-              "
-            >
-              Etiqueta individual
-            </div>
-
-            <div
-              className="
-                text-sm
-                text-gray-500
-              "
-            >
-              Una etiqueta por página
-            </div>
-
-          </div>
-
-        </label>
-
-      </div>
-
-      {/* BOTONES */}
-
-      <div
-        className="
-          border-t
-          px-6
-          py-4
-          flex
-          justify-end
-          gap-3
-        "
-      >
-
-        <button
-          onClick={() =>
-            setMostrarEtiquetas(false)
-          }
-          className="
-            px-4
-            py-2
-            rounded-xl
-            bg-gray-100
-          "
-        >
-          Cancelar
-        </button>
-
-        <button
-          onClick={() => {
-
-            setMostrarEtiquetas(
-              false
-            )
-
-            setTimeout(() => {
-              window.print()
-            }, 300)
-
-          }}
-          className="
-            px-5
-            py-2
-            rounded-xl
-            bg-black
-            text-white
-          "
-        >
-          Imprimir
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-)}
-
-{/* =======================================
-    ZONA DE IMPRESIÓN
-======================================= */}
-
-<div
-  id="zona-impresion"
-   className="fixed -left-[99999px] top-0"
->
-
-  {/* 4 ETIQUETAS POR HOJA */}
-
-  {tipoEtiqueta === 'A4' && (
-
-  <>
-
-    {gruposEtiquetas.map(
-      (grupo, pagina) => (
-
-        <div
-          key={pagina}
-          className="
-            grid
-            grid-cols-2
-            gap-2
-            min-h-screen
-            break-after-page
-            p-2
-          "
-        >
-
-          {grupo.map(
-            (envio) => (
-
-   <div
-  key={envio.id}
-  className="
-  border-2
-  border-gray-300
-  rounded-xl
-  overflow-hidden
-  bg-white
-  flex
-  flex-col
-  min-h-[46vh]
-"
->
-
-  {/* CABECERA */}
-
-  <div
-    className="
-      bg-black
-      text-white
-      text-center
-      py-2
-      font-bold
-      tracking-wide
-    "
-  >
-    {envio.nombre_metodo || envio.metodo}
-  </div>
-
-  <div
-    className="
-      p-4
-      flex
-      flex-col
-      flex-1
-    "
-  >
-
-    {/* LOGO */}
-
-    <div
-      className="
-        flex
-        justify-center
-        pb-3
-        border-b
-      "
-    >
-
-      {logoUrl && (
-
-        <img
-          src={logoUrl}
-          alt="Logo"
-          className="
-            h-12
-            object-contain
-          "
-        />
-
-      )}
-
-    </div>
-
-    {/* CLIENTE */}
-
-    <div className="mt-4">
-
-      <div
-        className="
-          text-[10px]
-          uppercase
-          text-gray-500
-          font-bold
-        "
-      >
-        Cliente
-      </div>
-
-      <div
-        className="
-          text-2xl
-          font-bold
-          leading-tight
-        "
-      >
-        {envio.nombre}
-      </div>
-
-    </div>
-
-    {/* DNI */}
-
-    <div className="mt-3">
-
-      <div
-        className="
-          text-[10px]
-          uppercase
-          text-gray-500
-          font-bold
-        "
-      >
-        DNI
-      </div>
-
-      <div
-        className="
-          font-medium
-        "
-      >
-        {envio.dni}
-      </div>
-
-    </div>
-
-    {/* TELÉFONO */}
-
-    <div className="mt-2">
-
-      <div
-        className="
-          text-[10px]
-          uppercase
-          text-gray-500
-          font-bold
-        "
-      >
-        Teléfono
-      </div>
-
-      <div
-        className="
-          font-medium
-        "
-      >
-        {envio.telefono}
-      </div>
-
-    </div>
-
-    {/* DETALLE */}
-
-    <div
-      className="
-        mt-4
-        pt-3
-        border-t
-        flex-1
-      "
-    >
-
-      <div
-        className="
-          text-[10px]
-          uppercase
-          text-gray-500
-          font-bold
-          mb-2
-        "
-      >
-        Detalle de entrega
-      </div>
-
-      <div
-        className="
-          text-sm
-          whitespace-pre-line
-          leading-snug
-        "
-      >
-        {envio.detalle}
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-)
-          )}
-
-        </div>
-
-      )
-    )}
-
-  </>
-
-)}
-
-  {/* INDIVIDUAL */}
-
-  {tipoEtiqueta ===
-    'INDIVIDUAL' && (
-
-    <div>
-
-      {enviosEtiquetas.map(
-        (envio) => (
-
-  <div
-  key={envio.id}
-  className="
-    min-h-screen
-    p-4
-    break-after-page
-    bg-white
-  "
->
-
-  <div
-    className="
-      h-[95vh]
-      border-2
-      border-gray-300
-      rounded-xl
-      overflow-hidden
-      bg-white
-      flex
-      flex-col
-    "
-  >
-
-    {/* CABECERA */}
-
-    <div
-      className="
-        bg-black
-        text-white
-        text-center
-        py-4
-        text-3xl
-        font-bold
-        tracking-wide
-      "
-    >
-      {envio.nombre_metodo || envio.metodo}
-    </div>
-
-    <div
-      className="
-        p-8
-        flex
-        flex-col
-        flex-1
-      "
-    >
-
-      {/* LOGO */}
-
-      <div
-        className="
-          flex
-          justify-center
-          pb-6
-          border-b
-        "
-      >
-
-        {logoUrl && (
-
-          <img
-            src={logoUrl}
-            alt="Logo"
-            className="
-              h-24
-              object-contain
-            "
-          />
-
-        )}
-
-      </div>
-
-      {/* CLIENTE */}
-
-      <div className="mt-8">
-
-        <div
-          className="
-            text-sm
-            uppercase
-            text-gray-500
-            font-bold
-          "
-        >
-          Cliente
-        </div>
-
-        <div
-          className="
-            text-5xl
-            font-bold
-            leading-tight
-          "
-        >
-          {envio.nombre}
-        </div>
-
-      </div>
-
-      {/* DNI */}
-
-      <div className="mt-8">
-
-        <div
-          className="
-            text-sm
-            uppercase
-            text-gray-500
-            font-bold
-          "
-        >
-          DNI
-        </div>
-
-        <div
-          className="
-            text-3xl
-            font-medium
-          "
-        >
-          {envio.dni}
-        </div>
-
-      </div>
-
-      {/* TELÉFONO */}
-
-      <div className="mt-6">
-
-        <div
-          className="
-            text-sm
-            uppercase
-            text-gray-500
-            font-bold
-          "
-        >
-          Teléfono
-        </div>
-
-        <div
-          className="
-            text-3xl
-            font-medium
-          "
-        >
-          {envio.telefono}
-        </div>
-
-      </div>
-
-      {/* DETALLE */}
-
-      <div
-        className="
-          mt-8
-          pt-6
-          border-t
-          flex-1
-        "
-      >
-
-        <div
-          className="
-            text-sm
-            uppercase
-            text-gray-500
-            font-bold
-            mb-3
-          "
-        >
-          Detalle de entrega
-        </div>
-
-        <div
-          className="
-            text-2xl
-            whitespace-pre-line
-            leading-relaxed
-          "
-        >
-          {envio.detalle}
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-        )
-      )}
-
-    </div>
-
-  )}
-
-</div>
-
+<ModalEtiquetas
+  abierto={mostrarEtiquetas}
+  tipoEtiqueta={tipoEtiqueta}
+  onCambiarTipo={setTipoEtiqueta}
+  onCerrar={() => setMostrarEtiquetas(false)}
+/>
+
+
+<EtiquetasImpresion
+  tipoEtiqueta={tipoEtiqueta}
+  gruposEtiquetas={gruposEtiquetas}
+  enviosEtiquetas={enviosEtiquetas}
+  logoUrl={logoUrl}
+/>
 
 {mensajeToast && (
 

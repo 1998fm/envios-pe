@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabase/server'
+import { supabaseServer } from 'app/f/[slug]/lib/supabase/server'
 import PublicForm from '@/components/PublicForm'
 
 export default async function FormPage({

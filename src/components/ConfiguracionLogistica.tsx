@@ -16,16 +16,12 @@ interface Props {
 
 export default function ConfiguracionLogistica({
   titulo,
-
   dias,
   setDias,
-
   hora,
   setHora,
-
   limitar,
   setLimitar,
-
   cupo,
   setCupo,
 }: Props) {
@@ -61,50 +57,21 @@ export default function ConfiguracionLogistica({
   ]
 
   return (
-    <div
-      className="
-        p-5
-        border
-        rounded-2xl
-        bg-slate-50
-      "
-    >
-      <h3
-        className="
-          text-lg
-          font-bold
-          mb-6
-        "
-      >
+    <div className="p-5 border rounded-2xl bg-slate-50">
+      <h3 className="text-lg font-bold mb-6">
         {titulo}
       </h3>
 
       <div className="mt-6">
-        <p
-          className="
-            font-medium
-            mb-3
-          "
-        >
+        <p className="font-medium mb-3">
           Días de atención
         </p>
 
-        <div
-          className="
-            grid
-            grid-cols-2
-            gap-3
-          "
-        >
+        <div className="grid grid-cols-2 gap-3">
           {diasSemana.map((dia) => (
             <label
               key={dia.value}
-              className="
-                flex
-                items-center
-                gap-3
-                cursor-pointer
-              "
+              className="flex items-center gap-3 cursor-pointer"
             >
               <input
                 type="checkbox"
@@ -132,100 +99,44 @@ export default function ConfiguracionLogistica({
       </div>
 
       <div className="mt-8">
-        <label
-          className="
-            block
-            font-medium
-            mb-3
-          "
-        >
+        <label className="block font-medium mb-3">
           Hora de corte
         </label>
 
         <input
           type="time"
           value={hora}
-          onChange={(e) =>
-            setHora(e.target.value)
-          }
-          className="
-            w-full
-            border
-            rounded-xl
-            px-4
-            py-3
-            bg-white
-          "
+          onChange={(e) => setHora(e.target.value)}
+          className="w-full border rounded-xl px-4 py-3 bg-white"
         />
 
-        <p
-          className="
-            text-sm
-            text-gray-500
-            mt-2
-          "
-        >
-          Después de esta hora los nuevos pedidos
-          pasarán automáticamente al siguiente
-          día disponible.
+        <p className="text-sm text-gray-500 mt-2">
+          Después de esta hora los nuevos pedidos pasarán
+          automáticamente al siguiente día disponible.
         </p>
       </div>
 
-      <div
-        className="
-          mt-8
-          border-t
-          pt-6
-        "
-      >
-        <label
-          className="
-            flex
-            items-center
-            gap-3
-            cursor-pointer
-          "
-        >
+      <div className="mt-8 border-t pt-6">
+        <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
             checked={limitar}
-            onChange={(e) =>
-              setLimitar(e.target.checked)
-            }
+            onChange={(e) => setLimitar(e.target.checked)}
           />
 
-          <span
-            className="
-              font-medium
-            "
-          >
+          <span className="font-medium">
             Limitar envíos por día
           </span>
         </label>
 
-        <p
-          className="
-            text-sm
-            text-gray-500
-            mt-2
-            mb-4
-          "
-        >
-          Si se alcanza el límite diario,
-          los siguientes pedidos se moverán
-          automáticamente al siguiente día
-          disponible.
+        <p className="text-sm text-gray-500 mt-2 mb-4">
+          Si se alcanza el límite diario, los siguientes pedidos se
+          moverán automáticamente al siguiente día disponible.
         </p>
 
         {limitar && (
           <div>
-            <label
-              className="
-                block
-                font-medium
-                mb-2
-              "
-            >
+            <label className="block font-medium mb-2">
               Cupo máximo por día
             </label>
 
@@ -236,14 +147,7 @@ export default function ConfiguracionLogistica({
               onChange={(e) =>
                 setCupo(Number(e.target.value))
               }
-              className="
-                w-40
-                border
-                rounded-xl
-                px-4
-                py-3
-                bg-white
-              "
+              className="w-40 border rounded-xl px-4 py-3 bg-white"
             />
           </div>
         )}
