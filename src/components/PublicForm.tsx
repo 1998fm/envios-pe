@@ -85,6 +85,8 @@ nombreMetodoOtro,
     
   const [loading, setLoading] = useState(false)
   const [enviado, setEnviado] = useState(false)
+  const [fechaProgramada, setFechaProgramada] =
+  useState('')
 
 const [error, setError] = useState('')
 
@@ -166,6 +168,11 @@ nombreOtro.trim()
 
   const [provincia, setProvincia] = useState('')
   const [distrito, setDistrito] = useState('')
+  const [tarifaMotorizado, setTarifaMotorizado] =
+  useState<number | null>(null)
+
+const [cargandoTarifa, setCargandoTarifa] =
+  useState(false)
   const [direccion, setDireccion] = useState('')
   const [referencia, setReferencia] = useState('')
 
@@ -447,19 +454,31 @@ async function handleSubmit() {
 
   if (!res.ok) {
 
-    const errorData =
-      await res.json()
+  const errorData =
+    await res.json()
 
-    console.log(errorData)
+  console.log(errorData)
 
-    setError(
-      'Ocurrió un error al registrar el pedido.'
-    )
+  setError(
+    'Ocurrió un error al registrar el pedido.'
+  )
 
-    return
-  }
+  return
+}
 
-  setEnviado(true)
+const resultado =
+  await res.json()
+
+console.log(
+  'Fecha recibida:',
+  resultado.envio.fecha_programada
+)
+
+setFechaProgramada(
+  resultado.envio.fecha_programada
+)
+
+setEnviado(true)
 }
 
   if (enviado) {
@@ -522,17 +541,63 @@ async function handleSubmit() {
         </h2>
 
         <p
-          className="
-            mt-4
-            text-gray-600
-            whitespace-pre-line
-          "
-        >
-          {
-            redirectMessage ||
-            'Gracias por tu solicitud.'
-          }
-        </p>
+  className="
+    mt-4
+    text-gray-600
+    whitespace-pre-line
+  "
+>
+  {
+    redirectMessage ||
+    'Gracias por tu solicitud.'
+  }
+</p>
+
+{fechaProgramada && (
+
+  <div
+    className="
+      mt-6
+      rounded-2xl
+      bg-cyan-50
+      border
+      border-cyan-200
+      p-4
+    "
+  >
+
+    <div
+      className="
+        text-sm
+        text-gray-500
+      "
+    >
+      Fecha programada
+    </div>
+
+    <div
+      className="
+        mt-1
+        text-lg
+        font-bold
+        text-cyan-700
+      "
+    >
+    {new Date(
+  fechaProgramada + 'T12:00:00'
+).toLocaleDateString(
+  'es-PE',
+  {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }
+)}
+    </div>
+
+  </div>
+
+)}
 
         {redirectUrl && (
 
@@ -864,12 +929,119 @@ async function handleSubmit() {
         <div className="space-y-3">
 
           <AutocompleteInput
-            value={distrito}
-            onChange={setDistrito}
-            options={distritosMoto}
-            placeholder="Distrito"
-          />
+  value={distrito}
+  onChange={async (nuevoDistrito) => {
 
+    setDistrito(nuevoDistrito)
+
+    if (!nuevoDistrito) {
+
+      setTarifaMotorizado(null)
+
+      return
+
+    }
+
+    setCargandoTarifa(true)
+
+    try {
+
+      const res =
+        await fetch(
+          `/api/tarifa-moto?distrito=${encodeURIComponent(
+            nuevoDistrito
+          )}`
+        )
+
+      const data =
+        await res.json()
+
+      setTarifaMotorizado(
+        data.precio
+      )
+
+    } catch {
+
+      setTarifaMotorizado(null)
+
+    }
+
+    setCargandoTarifa(false)
+
+  }}
+  options={distritosMoto}
+  placeholder="Distrito"
+/>
+
+{distrito && (
+
+  <div
+    className="
+      flex
+      items-center
+      justify-between
+
+      px-4
+      py-3
+
+      rounded-xl
+
+      bg-gray-50
+      border
+      border-gray-200
+    "
+  >
+
+    <span
+      className="
+        text-sm
+        text-gray-500
+        font-medium
+      "
+    >
+      Costo del envío
+    </span>
+
+    {cargandoTarifa ? (
+
+      <span
+        className="
+          text-sm
+          text-gray-500
+        "
+      >
+        Consultando...
+      </span>
+
+    ) : tarifaMotorizado !== null ? (
+
+      <span
+        className="
+          text-lg
+          font-bold
+          text-cyan-700
+        "
+      >
+        S/ {Number(tarifaMotorizado).toFixed(2)}
+      </span>
+
+    ) : (
+
+      <span
+        className="
+          text-sm
+          font-medium
+          text-red-500
+        "
+      >
+        Sin tarifa
+      </span>
+
+    )}
+
+  </div>
+
+)}
           <input
             placeholder="Dirección exacta"
             value={direccion}

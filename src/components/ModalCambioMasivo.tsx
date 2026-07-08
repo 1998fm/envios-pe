@@ -1,6 +1,10 @@
 'use client'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import Checkbox from '@/components/ui/Checkbox'
+import Select from '@/components/ui/Select'
+import FieldGroup from '@/components/ui/FieldGroup'
+import Field from '@/components/ui/Field'
 type Props = {
 
   abierto: boolean
@@ -75,13 +79,16 @@ aplicarCambioMasivo,
   "
 >
 
-  <Card
-    className="
-      w-full
-      max-w-xl
-      overflow-hidden
-    "
-  >
+<Card
+  className="
+    w-full
+    max-w-xl
+    max-h-[90vh]
+    flex
+    flex-col
+    overflow-hidden
+  "
+>
 
     {/* Header */}
 
@@ -115,250 +122,154 @@ aplicarCambioMasivo,
     </div>
 
     {/* Contenido */}
-
-    <div
-      className="
-        p-8
-        space-y-6
-      "
-    >
+<div
+  className="
+    flex-1
+    overflow-y-auto
+    p-8
+    space-y-6
+  "
+>
 
       {/* Método */}
 
-      <div
-        className="
-          bg-slate-50
-          border
-          border-gray-200
-          rounded-2xl
-          p-5
-        "
-      >
+      <FieldGroup>
 
-        <label
-          className="
-            block
-            text-sm
-            font-semibold
-            text-gray-700
-            mb-3
-          "
-        >
-          Método
-        </label>
+         <Field label="Metodo">
 
-        <select
-          value={metodoMasivo}
-          onChange={(e) =>
-            setMetodoMasivo(e.target.value)
-          }
-          disabled={soloSeleccionados}
-          className="
-            w-full
-            rounded-2xl
-            border
-            border-gray-300
-            px-4
-            py-3
-            bg-white
-            focus:outline-none
-            focus:ring-2
-            focus:ring-cyan-500
-          "
-        >
-          <option value="TODOS">
-  Todos
-</option>
+      <Select
 
-{metodosDisponibles.map((metodo) => (
+  value={metodoMasivo}
 
-  <option
-    key={metodo.value}
-    value={metodo.value}
-  >
-    {metodo.label}
+  onChange={(e)=>
+    setMetodoMasivo(
+      e.target.value
+    )
+  }
+
+  disabled={soloSeleccionados}
+
+>
+
+  <option value="TODOS">
+    Todos
   </option>
 
-))}
-        </select>
+  {metodosDisponibles.map((metodo)=>(
 
-      </div>
+    <option
+      key={metodo.value}
+      value={metodo.value}
+    >
+      {metodo.label}
+    </option>
+
+  ))}
+
+</Select>
+</Field>
+</FieldGroup>
 
       {/* Estado actual */}
 
-      <div
-        className="
-          bg-slate-50
-          border
-          border-gray-200
-          rounded-2xl
-          p-5
-        "
-      >
+      <FieldGroup>
 
-        <label
-          className="
-            block
-            text-sm
-            font-semibold
-            text-gray-700
-            mb-3
-          "
-        >
-          Estado actual
-        </label>
+   <Field label="Estado actual">
 
-        <select
-          value={estadoOrigenMasivo}
-          onChange={(e) =>
-            setEstadoOrigenMasivo(
-              e.target.value
-            )
-          }
-          disabled={soloSeleccionados}
-          className="
-            w-full
-            rounded-2xl
-            border
-            border-gray-300
-            px-4
-            py-3
-            bg-white
-            focus:outline-none
-            focus:ring-2
-            focus:ring-cyan-500
-          "
-        >
-          <option value="NO_EMPACADO">
-            No Empacado
-          </option>
+  <Select
+    value={estadoOrigenMasivo}
+    onChange={(e) =>
+      setEstadoOrigenMasivo(
+        e.target.value
+      )
+    }
+    disabled={soloSeleccionados}
+  >
+    <option value="NO_EMPACADO">
+      No Empacado
+    </option>
 
-          <option value="EMPACADO">
-            Empacado
-          </option>
+    <option value="EMPACADO">
+      Empacado
+    </option>
 
-          <option value="ENVIADO">
-            Enviado
-          </option>
+    <option value="ENVIADO">
+      Enviado
+    </option>
 
-        </select>
-
-      </div>
+  </Select>
+ </Field>
+</FieldGroup>
 
       {/* Nuevo estado */}
 
-      <div
-        className="
-          bg-slate-50
-          border
-          border-gray-200
-          rounded-2xl
-          p-5
-        "
-      >
+      <FieldGroup>
 
-        <label
-          className="
-            block
-            text-sm
-            font-semibold
-            text-gray-700
-            mb-3
-          "
-        >
-          Nuevo estado
-        </label>
+        <Field label="Nuevo estado">
 
-        <select
-          value={estadoDestinoMasivo}
-          onChange={(e) =>
-            setEstadoDestinoMasivo(
-              e.target.value
-            )
-          }
-          className="
-            w-full
-            rounded-2xl
-            border
-            border-gray-300
-            px-4
-            py-3
-            bg-white
-            focus:outline-none
-            focus:ring-2
-            focus:ring-cyan-500
-          "
-        >
-          <option value="NO_EMPACADO">
-            No Empacado
-          </option>
+        <Select
+  value={estadoDestinoMasivo}
+  onChange={(e) =>
+    setEstadoDestinoMasivo(
+      e.target.value
+    )
+  }
+>
+  <option value="NO_EMPACADO">
+    No Empacado
+  </option>
 
-          <option value="EMPACADO">
-            Empacado
-          </option>
+  <option value="EMPACADO">
+    Empacado
+  </option>
 
-          <option value="ENVIADO">
-            Enviado
-          </option>
+  <option value="ENVIADO">
+    Enviado
+  </option>
 
-        </select>
-
-      </div>
+</Select>
+  </Field>
+</FieldGroup>
 
       {/* Checkbox */}
 
-      <div
-        className="
-          flex
-          items-center
-          gap-4
-          bg-slate-50
-          border
-          border-gray-200
-          rounded-2xl
-          p-5
-        "
-      >
+      <FieldGroup>
 
-        <input
-          type="checkbox"
-          checked={soloSeleccionados}
-          onChange={(e) =>
-            setSoloSeleccionados(
-              e.target.checked
-            )
-          }
-          className="
-            w-5
-            h-5
-            accent-cyan-600
-          "
-        />
+  <div
+    className="
+      flex
+      items-center
+      gap-4
+    "
+  >
 
-        <label
-          className="
-            text-sm
-            text-gray-700
-            leading-relaxed
-            select-none
-          "
-        >
-          Aplicar solamente a los pedidos seleccionados.
-        </label>
+    <Checkbox
+      checked={soloSeleccionados}
+      onChange={(e) =>
+        setSoloSeleccionados(
+          e.target.checked
+        )
+      }
+    />
 
-      </div>
+    <label
+      className="
+        text-sm
+        text-gray-700
+        leading-relaxed
+        select-none
+      "
+    >
+      Aplicar solamente a los pedidos seleccionados.
+    </label>
+
+  </div>
+
+</FieldGroup>
 
       {/* Resumen */}
 
-      <div
-        className="
-          bg-slate-50
-          border
-          border-gray-200
-          rounded-2xl
-          p-6
-        "
-      >
+     <FieldGroup>
 
         <div
           className="
@@ -434,22 +345,24 @@ aplicarCambioMasivo,
 
         )}
 
-      </div>
+      </FieldGroup>
 
     </div>
 
     {/* Footer */}
 
     <div
-      className="
-        border-t
-        border-gray-100
-        p-6
-        flex
-        justify-end
-        gap-4
-      "
-    >
+  className="
+    border-t
+    border-gray-100
+    p-6
+    flex
+    justify-end
+    gap-4
+    bg-white
+    shrink-0
+  "
+>
 
       <Button
         type="secondary"
@@ -459,7 +372,6 @@ aplicarCambioMasivo,
       </Button>
 
       <Button
-      type="secondary"
         onClick={aplicarCambioMasivo}
       >
         Aplicar cambios

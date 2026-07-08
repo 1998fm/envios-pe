@@ -1,14 +1,12 @@
-import { ReactNode } from 'react'
-
 interface Props {
 
-  children: ReactNode
+  children: React.ReactNode
 
   className?: string
 
 }
 
-export default function Card({
+export default function FieldGroup({
 
   children,
 
@@ -20,11 +18,11 @@ export default function Card({
 
     <div
       className={`
-        bg-white
+        bg-slate-50
         border
-        border-gray-100
-        rounded-[28px]
-        shadow-sm
+        border-gray-200
+        rounded-2xl
+        p-5
         ${className}
       `}
     >

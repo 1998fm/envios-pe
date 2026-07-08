@@ -1,6 +1,11 @@
 'use client'
 
+import Button from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
+import FieldGroup from '@/components/ui/FieldGroup'
+
 type Props = {
+
   abierto: boolean
 
   tipoEtiqueta: 'A4' | 'INDIVIDUAL'
@@ -10,13 +15,19 @@ type Props = {
   ) => void
 
   onCerrar: () => void
+
 }
 
 export default function ModalEtiquetas({
+
   abierto,
+
   tipoEtiqueta,
+
   onCambiarTipo,
+
   onCerrar,
+
 }: Props) {
 
   if (!abierto) return null
@@ -27,39 +38,38 @@ export default function ModalEtiquetas({
       className="
         fixed
         inset-0
-        bg-black/50
-        z-50
+        bg-black/40
         flex
         items-center
         justify-center
         p-4
+        z-50
       "
     >
 
-      <div
+      <Card
         className="
-          bg-white
-          rounded-2xl
           w-full
           max-w-lg
-          shadow-xl
+          overflow-hidden
         "
       >
 
-        {/* TÍTULO */}
+        {/* HEADER */}
 
         <div
           className="
-            px-6
-            py-5
+            p-8
             border-b
+            border-gray-100
           "
         >
 
           <h2
             className="
-              text-2xl
-              font-bold
+              text-4xl
+              font-extrabold
+              text-slate-900
             "
           >
             Generar etiquetas
@@ -67,166 +77,170 @@ export default function ModalEtiquetas({
 
           <p
             className="
+              mt-2
               text-gray-500
-              mt-1
             "
           >
-            Selecciona el formato.
+            Selecciona el formato que deseas imprimir.
           </p>
 
         </div>
 
-        {/* OPCIONES */}
+        {/* CONTENIDO */}
 
         <div
           className="
-            p-6
-            space-y-4
+            p-8
+            space-y-5
           "
         >
 
-          <label
-            className="
-              flex
-              gap-3
-              border
-              rounded-xl
-              p-4
-              cursor-pointer
-            "
-          >
+          <FieldGroup>
 
-            <input
-              type="radio"
-              checked={
-                tipoEtiqueta === 'A4'
-              }
-              onChange={() =>
-                onCambiarTipo('A4')
-              }
-            />
+            <label
+              className="
+                flex
+                items-start
+                gap-4
+                cursor-pointer
+              "
+            >
 
-            <div>
-
-              <div
+              <input
+                type="radio"
+                checked={
+                  tipoEtiqueta === 'A4'
+                }
+                onChange={() =>
+                  onCambiarTipo('A4')
+                }
                 className="
-                  font-semibold
+                  mt-1
                 "
-              >
-                4 etiquetas por hoja
+              />
+
+              <div>
+
+                <div
+                  className="
+                    font-semibold
+                    text-slate-900
+                  "
+                >
+                  4 etiquetas por hoja
+                </div>
+
+                <div
+                  className="
+                    text-sm
+                    text-gray-500
+                    mt-1
+                  "
+                >
+                  Distribución 2 × 2 para impresión en A4.
+                </div>
+
               </div>
 
-              <div
-                className="
-                  text-sm
-                  text-gray-500
-                "
-              >
-                Distribución 2 × 2
-              </div>
+            </label>
 
-            </div>
+          </FieldGroup>
 
-          </label>
+          <FieldGroup>
 
-          <label
-            className="
-              flex
-              gap-3
-              border
-              rounded-xl
-              p-4
-              cursor-pointer
-            "
-          >
+            <label
+              className="
+                flex
+                items-start
+                gap-4
+                cursor-pointer
+              "
+            >
 
-            <input
-              type="radio"
-              checked={
-                tipoEtiqueta ===
-                'INDIVIDUAL'
-              }
-              onChange={() =>
-                onCambiarTipo(
+              <input
+                type="radio"
+                checked={
+                  tipoEtiqueta ===
                   'INDIVIDUAL'
-                )
-              }
-            />
-
-            <div>
-
-              <div
+                }
+                onChange={() =>
+                  onCambiarTipo(
+                    'INDIVIDUAL'
+                  )
+                }
                 className="
-                  font-semibold
+                  mt-1
                 "
-              >
-                Etiqueta individual
+              />
+
+              <div>
+
+                <div
+                  className="
+                    font-semibold
+                    text-slate-900
+                  "
+                >
+                  Etiqueta individual
+                </div>
+
+                <div
+                  className="
+                    text-sm
+                    text-gray-500
+                    mt-1
+                  "
+                >
+                  Una etiqueta por página.
+                </div>
+
               </div>
 
-              <div
-                className="
-                  text-sm
-                  text-gray-500
-                "
-              >
-                Una etiqueta por página
-              </div>
+            </label>
 
-            </div>
-
-          </label>
+          </FieldGroup>
 
         </div>
 
-        {/* BOTONES */}
+        {/* FOOTER */}
 
         <div
           className="
             border-t
-            px-6
-            py-4
+            border-gray-100
+            p-6
             flex
             justify-end
-            gap-3
+            gap-4
           "
         >
 
-          <button
+          <Button
+            type="secondary"
             onClick={onCerrar}
-            className="
-              px-4
-              py-2
-              rounded-xl
-              bg-gray-100
-            "
           >
             Cancelar
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={() => {
 
               onCerrar()
 
               setTimeout(() => {
+
                 window.print()
+
               }, 300)
 
             }}
-            className="
-              px-5
-              py-2
-              rounded-xl
-              bg-black
-              text-white
-            "
           >
             Imprimir
-          </button>
+          </Button>
 
         </div>
 
-      </div>
+      </Card>
 
     </div>
 

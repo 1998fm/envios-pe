@@ -22,6 +22,8 @@ import EtiquetasImpresion from '../../src/components/EtiquetasImpresion'
 import ModalEtiquetas from '@/components/ModalEtiquetas'
 
 import ModalCambioMasivo from '@/components/ModalCambioMasivo'
+import Input from '@/components/ui/Input'
+import Modal from '@/components/ui/Modal'
 /* ========================================
    COPIAR DATOS
 ======================================== */
@@ -544,13 +546,10 @@ nombreMetodoOtro.trim() && {
 ======================================== */
 
 const hayAgenciasActivas =
-
+  metodoShalom ||
   metodoOlva ||
-
   metodoMarvisur ||
-
   metodoFlores ||
-
   metodoOtro
 /* ========================================
    ENVÍOS MOTO SELECCIONADOS
@@ -1588,33 +1587,18 @@ hover:scale-[1.02]
   "
 >
 
-    <input
-      type="text"
-      placeholder="Buscar nombre, DNI o teléfono..."
-      value={busqueda}
-      onChange={(e) =>
-        setBusqueda(e.target.value)
-      }
-     className="
-flex-1
-min-w-[320px]
-
-bg-gray-50
-border
-border-gray-200
-
-rounded-2xl
-
-px-5
-py-4
-
-focus:outline-none
-focus:ring-2
-focus:ring-cyan-500
-
-transition
-"
-    />
+    <Input
+  type="text"
+  placeholder="Buscar nombre, DNI o teléfono..."
+  value={busqueda}
+  onChange={(e) =>
+    setBusqueda(e.target.value)
+  }
+  className="
+    flex-1
+    min-w-[320px]
+  "
+/>
 
     <select
       value={filtroEstado}
@@ -2371,46 +2355,51 @@ mb-2
 
 {/* MODAL DE CONFIGURACION */}
 
-{mostrarConfig && (
+<Modal
+  open={mostrarConfig}
+  maxWidth="max-w-4xl"
+>
 
-  <div
+<div
+  className="
+    flex
+    flex-col
+    h-[90vh]
+  "
+>
+
+ <div
+  className="
+    p-6
+    border-b
+    shrink-0
+    bg-white
+  "
+>
+
+  <h2
     className="
-      fixed
-      inset-0
-      bg-black/50
-      flex
-      items-center
-      justify-center
-      z-50
+      text-2xl
+      font-bold
     "
   >
+    Configuración
+  </h2>
 
-    <div
-      className="
-        bg-white
-        rounded-2xl
-        p-6
-        w-full
-        max-w-2xl
-max-h-[90vh]
-overflow-y-auto
-        shadow-xl
-      "
-    >
+</div>
 
-      <h2
-        className="
-          text-2xl
-          font-bold
-          mb-5
-        "
-      >
-        Configuración
-      </h2>
+
 
 {/* ========================================
     MENU CONFIGURACION
 ======================================== */}
+<div
+  className="
+    flex-1
+    overflow-y-auto
+    p-6
+  "
+>
 
 <div
   className="
@@ -3365,53 +3354,54 @@ En unos segundos te llevaremos a nuestro canal oficial.
 
   )
 }
+</div>
 
+  <div
+  className="
+    border-t
+    bg-white
+    p-6
+    shrink-0
+    flex
+    justify-end
+    gap-3
+  "
+>
 
-      <div
-        className="
-          flex
-          justify-end
-          gap-3
-          mt-6
-        "
-      >
+  <button
+    onClick={() =>
+      setMostrarConfig(false)
+    }
+    className="
+      border
+      px-4
+      py-2
+      rounded-xl
+    "
+  >
+    Cancelar
+  </button>
 
-        <button
-          onClick={() =>
-            setMostrarConfig(false)
-          }
-          className="
-            border
-            px-4
-            py-2
-            rounded-xl
-          "
-        >
-          Cancelar
-        </button>
+  <button
+    onClick={guardarConfiguracion}
+    className="
+      bg-black
+      text-white
+      px-4
+      py-2
+      rounded-xl
+    "
+  >
+    Guardar
+  </button>
 
-        <button
-          onClick={
-            guardarConfiguracion
-          }
-          className="
-            bg-black
-            text-white
-            px-4
-            py-2
-            rounded-xl
-          "
-        >
-          Guardar
-        </button>
-
-      </div>
+</div>
 
     </div>
 
-  </div>
+</Modal>
 
-)}
+
 
 {/* MODAL DE export */}
 
@@ -3428,17 +3418,18 @@ En unos segundos te llevaremos a nuestro canal oficial.
     "
   >
     <div
-      className="
-        bg-white
-        rounded-[32px]
-        w-full
-        max-w-xl
-        overflow-hidden
-        border
-        border-gray-200
-        shadow-2xl
-      "
-    >
+  className="
+    bg-white
+    rounded-2xl
+    w-full
+    max-w-2xl
+    max-h-[90vh]
+    flex
+    flex-col
+    shadow-xl
+    overflow-hidden
+  "
+>
       <div
         className="
           p-8

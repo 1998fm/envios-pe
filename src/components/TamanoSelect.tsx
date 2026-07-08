@@ -2,6 +2,8 @@
 
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { useEffect, useState } from 'react'
+import Select from '@/components/ui/Select'
+
 
 type Props = {
   envioId: string
@@ -46,40 +48,17 @@ export default function TamanoSelect({
 
   }
 
-  const colorClase =
-    tamano === 'PAQUETE XS'
-      ? 'bg-sky-50 text-sky-700 border-sky-200'
-      : tamano === 'PAQUETE S'
-      ? 'bg-green-50 text-green-700 border-green-200'
-      : tamano === 'PAQUETE M'
-      ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-      : tamano === 'PAQUETE L'
-      ? 'bg-red-50 text-red-700 border-red-200'
-      : 'bg-slate-50 text-slate-700 border-slate-200'
 
   return (
 
-    <select
-      value={tamano}
-      onChange={(e) =>
-        actualizarTamano(
-          e.target.value
-        )
-      }
-      className={`
-        text-xs
-        font-bold
-        rounded-xl
-        px-3
-        py-1.5
-        border
-        cursor-pointer
-        outline-none
-        transition-all
-        hover:opacity-90
-        ${colorClase}
-      `}
-    >
+    <Select
+  value={tamano}
+  onChange={(e) =>
+    actualizarTamano(
+      e.target.value
+    )
+  }
+>
 
       <option value="">
         Sin definir
@@ -101,7 +80,7 @@ export default function TamanoSelect({
         PAQUETE L
       </option>
 
-    </select>
+    </Select>
 
   )
 

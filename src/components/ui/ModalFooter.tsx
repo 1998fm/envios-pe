@@ -1,3 +1,5 @@
+'use client'
+
 import { ReactNode } from 'react'
 
 interface Props {
@@ -8,7 +10,7 @@ interface Props {
 
 }
 
-export default function Card({
+export default function ModalFooter({
 
   children,
 
@@ -20,11 +22,19 @@ export default function Card({
 
     <div
       className={`
-        bg-white
-        border
+        shrink-0
+
+        border-t
         border-gray-100
-        rounded-[28px]
-        shadow-sm
+
+        bg-white
+
+        p-6
+
+        flex
+        justify-end
+        gap-4
+
         ${className}
       `}
     >

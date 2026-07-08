@@ -1,3 +1,5 @@
+'use client'
+
 import { ReactNode } from 'react'
 
 interface Props {
@@ -8,7 +10,7 @@ interface Props {
 
 }
 
-export default function Card({
+export default function ModalBody({
 
   children,
 
@@ -20,11 +22,11 @@ export default function Card({
 
     <div
       className={`
-        bg-white
-        border
-        border-gray-100
-        rounded-[28px]
-        shadow-sm
+        flex-1
+        overflow-y-auto
+
+        p-8
+
         ${className}
       `}
     >
