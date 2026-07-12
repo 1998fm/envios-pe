@@ -601,7 +601,7 @@ export default function LandingPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {[
               { icon: Smartphone, title: 'Formulario con tu marca', desc: 'Tus clientes ven tu logo, tus colores y tu identidad. No más plantillas genéricas.' },
-              { icon: Zap, title: 'Envíos masivos', desc: 'Genera 50 pedidos en 10 segundos desde un Excel. Ideal para días de alto volumen.' },
+              { icon: Zap, title: 'Envíos masivos', desc: 'Genera 50 pedidos en 10 segundos. Ideal para días de alto volumen.' },
               { icon: Truck, title: 'Fecha de entrega automática', desc: 'Calculamos la fecha programada según tus horarios de corte y días de atención.' },
               { icon: BarChart3, title: 'Dashboard en tiempo real', desc: 'Nunca vuelvas a preguntar "¿dónde está el pedido?". Filtra y exporta con un clic.' },
               { icon: Settings, title: 'Control de logística', desc: 'Define horarios de corte, cupo diario y días de atención para cada método de envío.' },
