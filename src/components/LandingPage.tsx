@@ -114,7 +114,7 @@ export default function LandingPage() {
                 <BarChart3 size={14} />
                 Más de 200 negocios peruanos ya ordenaron sus envíos
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1]">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1]">
                 Deja de buscar direcciones en{' '}
                 <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                   WhatsApp.
@@ -168,40 +168,40 @@ export default function LandingPage() {
             >
               <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-2xl overflow-hidden">
                 {/* Dashboard Header */}
-                <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-800">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs">
+                <div className="px-4 sm:px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-800 gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold text-[10px] sm:text-xs shrink-0">
                       T
                     </div>
-                    <span className="text-lg font-extrabold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                    <span className="text-base sm:text-lg font-extrabold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent whitespace-nowrap">
                       Tori
                     </span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 whitespace-nowrap">
                       Pro · Trial 28d
                     </span>
                   </div>
-                  <div className="flex gap-2">
-                    <div className="w-16 sm:w-20 h-8 rounded-xl bg-slate-100 dark:bg-slate-700" />
-                    <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-700" />
+                  <div className="flex gap-2 shrink-0">
+                    <div className="w-14 sm:w-20 h-7 sm:h-8 rounded-xl bg-slate-100 dark:bg-slate-700" />
+                    <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-xl bg-slate-100 dark:bg-slate-700" />
                   </div>
                 </div>
 
                 {/* Filter Bar */}
-                <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700">
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex-1">
-                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <div className="w-full pl-9 pr-4 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-400">
+                <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100 dark:border-slate-700">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <div className="relative flex-1 min-w-[140px]">
+                      <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <div className="w-full pl-9 pr-3 py-2 rounded-xl text-[11px] sm:text-xs bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-400 truncate">
                         Buscar por nombre, DNI o teléfono...
                       </div>
                     </div>
-                    <div className="w-24 h-9 rounded-xl bg-slate-100 dark:bg-slate-700" />
-                    <div className="w-24 h-9 rounded-xl bg-slate-100 dark:bg-slate-700" />
+                    <div className="w-20 sm:w-24 h-8 sm:h-9 rounded-xl bg-slate-100 dark:bg-slate-700 shrink-0" />
+                    <div className="w-20 sm:w-24 h-8 sm:h-9 rounded-xl bg-slate-100 dark:bg-slate-700 shrink-0" />
                   </div>
                 </div>
 
                 {/* Envio Cards */}
-                <div className="p-5 space-y-3">
+                <div className="p-4 sm:p-5 space-y-3">
                   {[
                     { initial: 'M', name: 'María García', dni: '76543210', tel: '999 888 777', metodo: 'Motorizado', estado: 'ENVIADO', border: 'border-l-emerald-500', badgeClass: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' },
                     { initial: 'C', name: 'Carlos López', dni: '71234567', tel: '988 777 666', metodo: 'Shalom', estado: 'EMPACADO', border: 'border-l-amber-500', badgeClass: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' },
@@ -209,30 +209,30 @@ export default function LandingPage() {
                   ].map((item, i) => (
                     <div
                       key={i}
-                      className={`${item.border} bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 border-l-4 p-4`}
+                      className={`${item.border} bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 border-l-4 p-3 sm:p-4`}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2 sm:gap-3">
                         {/* Checkbox */}
-                        <div className="w-5 h-5 mt-1 rounded border-2 border-slate-300 dark:border-slate-600 shrink-0" />
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 mt-1 rounded border-2 border-slate-300 dark:border-slate-600 shrink-0" />
                         {/* Avatar */}
-                        <div className="w-10 h-10 rounded-xl shrink-0 bg-gradient-to-r from-sky-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl shrink-0 bg-gradient-to-r from-sky-600 to-indigo-600 text-white flex items-center justify-center font-bold text-[10px] sm:text-sm shadow-sm">
                           {item.initial}
                         </div>
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold text-sm text-slate-900 dark:text-slate-100 truncate">{item.name}</div>
-                          <div className="flex gap-3 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">{item.name}</div>
+                          <div className="flex flex-col sm:flex-row sm:gap-3 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             <span>DNI {item.dni}</span>
-                            <span>TLF {item.tel}</span>
+                            <span className="sm:inline">TLF {item.tel}</span>
                           </div>
                         </div>
                         {/* Badges */}
-                        <div className="flex items-center gap-2 self-center shrink-0">
-                          <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                            {item.metodo}
+                        <div className="flex items-center gap-1.5 sm:gap-2 self-center shrink-0">
+                          <span className="px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                            {item.metodo === 'Motorizado' ? 'Moto' : item.metodo}
                           </span>
-                          <span className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${item.badgeClass}`}>
-                            {item.estado === 'ENVIADO' ? 'Enviado' : item.estado === 'EMPACADO' ? 'Empacado' : 'No Emp.'}
+                          <span className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold whitespace-nowrap ${item.badgeClass}`}>
+                            {item.estado === 'ENVIADO' ? 'Enviado' : item.estado === 'EMPACADO' ? 'Empac.' : 'No Emp.'}
                           </span>
                         </div>
                       </div>
@@ -241,15 +241,15 @@ export default function LandingPage() {
                 </div>
 
                 {/* Bottom summary */}
-                <div className="px-5 py-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
-                  <div className="text-xs text-slate-400 dark:text-slate-500">Hoy · 3 pedidos</div>
-                  <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-500">
-                    <span className="flex items-center gap-1.5">
-                      <BarChart3 size={12} className="text-emerald-500" />
+                <div className="px-4 sm:px-5 py-3 sm:py-4 border-t border-slate-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900/50">
+                  <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">Hoy · 3 pedidos</div>
+                  <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <BarChart3 size={10} className="text-emerald-500 shrink-0" />
                       +40% menos reclamos
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <CheckCircle size={12} className="text-emerald-500" />
+                    <span className="flex items-center gap-1">
+                      <CheckCircle size={10} className="text-emerald-500 shrink-0" />
                       100% ordenado
                     </span>
                   </div>

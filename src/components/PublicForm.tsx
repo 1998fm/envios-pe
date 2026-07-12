@@ -208,7 +208,7 @@ export default function PublicForm({
 
   if (enviado) {
     return (
-      <div className="max-w-xl mx-auto mt-10 px-4">
+      <div className="max-w-xl mx-auto mt-6 sm:mt-10 px-3 sm:px-4">
         <SuccessScreen
           logoUrl={logoUrl}
           redirectMessage={redirectMessage}
@@ -220,12 +220,12 @@ export default function PublicForm({
   }
 
   return (
-    <div className="max-w-xl mx-auto mt-6 px-4">
+    <div className="max-w-xl mx-auto mt-4 sm:mt-6 px-3 sm:px-4">
       <div className="
         bg-white dark:bg-slate-800/95
         rounded-2xl shadow-xl dark:shadow-slate-900/50
         border border-slate-100 dark:border-slate-700/50
-        p-6 sm:p-8
+        p-4 sm:p-8
         relative overflow-hidden
         animate-fade-in-up
       ">
