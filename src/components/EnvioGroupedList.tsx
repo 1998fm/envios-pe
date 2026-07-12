@@ -53,7 +53,7 @@ export default function EnvioGroupedList({
 
   return (
     <div data-tour="envio-list" className="bg-white dark:bg-slate-800/95 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm overflow-hidden">
-      <div className="flex justify-between items-center px-5 py-4 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 px-5 py-4 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
         <div className="flex items-center gap-3">
           <input
             type="checkbox"

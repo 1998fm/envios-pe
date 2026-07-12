@@ -28,7 +28,7 @@ export default function ModalHeader({
       className="
         shrink-0
 
-        p-8
+        p-4 sm:p-8
 
         border-b
         border-gray-100
@@ -37,7 +37,7 @@ export default function ModalHeader({
 
       <h2
         className="
-          text-4xl
+          text-2xl sm:text-4xl
           font-extrabold
           text-slate-900
         "

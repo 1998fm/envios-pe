@@ -9,7 +9,7 @@ type Props = {
 
 export default function EstadisticasCards({ hoy, semana, mes, metodoPopular, mostrarGraficos, onToggleGraficos }: Props) {
   return (
-    <div className="inline-flex items-center gap-x-4 text-xs text-slate-500 dark:text-slate-400">
+    <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-2 sm:gap-x-4 text-xs text-slate-500 dark:text-slate-400">
       <span>Hoy: <strong className="text-slate-800 dark:text-slate-200">{hoy}</strong></span>
       <span>Semana: <strong className="text-slate-800 dark:text-slate-200">{semana}</strong></span>
       <span>Mes: <strong className="text-slate-800 dark:text-slate-200">{mes}</strong></span>

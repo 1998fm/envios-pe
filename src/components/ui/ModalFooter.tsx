@@ -29,11 +29,12 @@ export default function ModalFooter({
 
         bg-white
 
-        p-6
+        p-4 sm:p-6
 
         flex
+        flex-col sm:flex-row
         justify-end
-        gap-4
+        gap-2 sm:gap-4
 
         ${className}
       `}

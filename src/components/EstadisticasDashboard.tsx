@@ -81,8 +81,8 @@ export default function EstadisticasDashboard({ userId }: Props) {
 
       <div className="mb-5 space-y-2">
         {mostrarGraficos && (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
               {presets.map((p) => (
                 <button
                   key={p.days}
@@ -96,19 +96,19 @@ export default function EstadisticasDashboard({ userId }: Props) {
                   {p.label}
                 </button>
               ))}
-              <div className="flex items-center gap-1 ml-1">
+              <div className="flex items-center gap-1 ml-1 flex-wrap">
                 <input
                   type="date"
                   value={customDesde}
                   onChange={(e) => { setCustomDesde(e.target.value); setPreset(0) }}
-                  className="w-24 px-1.5 py-0.5 rounded text-[10px] border border-slate-200 dark:border-slate-700 bg-transparent text-slate-600 dark:text-slate-400"
+                  className="w-20 sm:w-24 px-1.5 py-0.5 rounded text-[10px] border border-slate-200 dark:border-slate-700 bg-transparent text-slate-600 dark:text-slate-400"
                 />
                 <span className="text-[10px] text-slate-300">→</span>
                 <input
                   type="date"
                   value={customHasta}
                   onChange={(e) => { setCustomHasta(e.target.value); setPreset(0) }}
-                  className="w-24 px-1.5 py-0.5 rounded text-[10px] border border-slate-200 dark:border-slate-700 bg-transparent text-slate-600 dark:text-slate-400"
+                  className="w-20 sm:w-24 px-1.5 py-0.5 rounded text-[10px] border border-slate-200 dark:border-slate-700 bg-transparent text-slate-600 dark:text-slate-400"
                 />
                 <button
                   onClick={aplicarCustom}

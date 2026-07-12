@@ -234,7 +234,7 @@ export default function PublicForm({
           bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600
         " />
 
-        <ThemeToggle />
+        <ThemeToggle className="absolute top-4 right-4 z-10" />
 
         <div className="space-y-6 mt-2">
           <FormHeader logoUrl={logoUrl} />

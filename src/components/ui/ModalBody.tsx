@@ -25,7 +25,7 @@ export default function ModalBody({
         flex-1
         overflow-y-auto
 
-        p-8
+        p-4 sm:p-8
 
         ${className}
       `}

@@ -22,8 +22,8 @@ export default function ModalDetalle({ envio, onCerrar }: Props) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-slate-800 rounded-[28px] border border-slate-100 dark:border-slate-700 shadow-2xl overflow-hidden w-full max-w-xl">
-        <div className="border-b border-slate-100 dark:border-slate-700 px-8 py-6">
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+        <div className="border-b border-slate-100 dark:border-slate-700 px-4 sm:px-8 py-4 sm:py-6">
+          <h2 className="text-xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
             Detalle del pedido
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -31,12 +31,12 @@ export default function ModalDetalle({ envio, onCerrar }: Props) {
           </p>
         </div>
 
-        <div className="p-7 space-y-6">
+        <div className="p-4 sm:p-7 space-y-6">
           <div>
             <div className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold mb-2">
               Cliente
             </div>
-            <div className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+            <div className="text-xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
               {envio.nombre}
             </div>
           </div>
@@ -64,10 +64,10 @@ export default function ModalDetalle({ envio, onCerrar }: Props) {
           </div>
         </div>
 
-        <div className="border-t border-slate-100 dark:border-slate-700 p-6 flex justify-end bg-white dark:bg-slate-800">
+        <div className="border-t border-slate-100 dark:border-slate-700 p-4 sm:p-6 flex justify-end bg-white dark:bg-slate-800">
           <button
             onClick={onCerrar}
-            className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:shadow-lg hover:shadow-sky-500/20 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200"
+            className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:shadow-lg hover:shadow-sky-500/20 text-white px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl font-semibold transition-all duration-200"
           >
             Cerrar
           </button>

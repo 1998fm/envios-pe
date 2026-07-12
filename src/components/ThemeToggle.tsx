@@ -19,7 +19,7 @@ function subscribe(callback: () => void) {
   return () => observer.disconnect()
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ className = '' }: { className?: string }) {
   const dark = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   const toggle = useCallback(() => {
@@ -35,8 +35,7 @@ export default function ThemeToggle() {
       type="button"
       onClick={toggle}
       whileTap={{ scale: 0.9 }}
-      className="
-        absolute top-4 right-4 z-10
+      className={`
         w-9 h-9 flex items-center justify-center
         rounded-full
         bg-white/80 dark:bg-slate-800/80
@@ -46,7 +45,8 @@ export default function ThemeToggle() {
         hover:border-slate-300 dark:hover:border-slate-600
         shadow-sm transition-colors backdrop-blur-sm
         cursor-pointer
-      "
+        ${className}
+      `}
       aria-label={dark ? 'Activar modo claro' : 'Activar modo oscuro'}
     >
       <motion.div
