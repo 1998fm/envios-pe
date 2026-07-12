@@ -41,7 +41,7 @@ export default function LogoTori({ className, size = 40 }: Props) {
 
   return (
     <img
-      src="/images/tori/tori-logo.png"
+      src="/images/tori/tori-logo.webp"
       alt="Tori"
       width={size}
       height={size}

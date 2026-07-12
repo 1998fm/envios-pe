@@ -292,7 +292,7 @@ export default function PublicForm({
           className="inline-flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
         >
           <img
-            src="/images/tori/tori-logo.png"
+            src="/images/tori/tori-logo.webp"
             alt="Tori"
             className="w-5 h-5 object-contain opacity-60"
           />

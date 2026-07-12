@@ -51,7 +51,7 @@ const motionConfig: Record<ToriVariant, { animate: Record<string, any>; transiti
 export default function ToriMascot({ variant = 'logo', size = 40, animate = true, className = '' }: Props) {
   const [imgError, setImgError] = useState(false)
 
-  const imgSrc = `/images/tori/tori-${variant}.png`
+  const imgSrc = `/images/tori/tori-${variant}.webp`
   const config = motionConfig[variant]
 
   return (
