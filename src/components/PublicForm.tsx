@@ -88,25 +88,9 @@ export default function PublicForm({
   const [referencia, setReferencia] = useState('')
 
   const [escogerDia, setEscogerDia] = useState(false)
-  const [fechasDisponibles, setFechasDisponibles] = useState<Date[]>([])
+  const [fechasDisponibles, setFechasDisponibles] = useState<string[]>([])
   const [fechaSeleccionada, setFechaSeleccionada] = useState('')
   const [cargandoFechas, setCargandoFechas] = useState(false)
-
-  function calcularProximasFechas(dias: string[], limite = 3): Date[] {
-    const fechas: Date[] = []
-    const hoy = new Date()
-    const candidata = new Date(hoy)
-    candidata.setDate(candidata.getDate() + 1)
-    const diasSemana = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
-    while (fechas.length < limite) {
-      const nombreDia = diasSemana[candidata.getDay()]
-      if (dias.includes(nombreDia)) {
-        fechas.push(new Date(candidata))
-      }
-      candidata.setDate(candidata.getDate() + 1)
-    }
-    return fechas
-  }
 
   async function activarEscogerDia() {
     setEscogerDia(true)
@@ -114,8 +98,7 @@ export default function PublicForm({
     try {
       const res = await fetch(`/api/logistica/moto?userId=${userId}`)
       const data = await res.json()
-      const dias: string[] = data.logistica_moto_dias ?? ['MONDAY']
-      setFechasDisponibles(calcularProximasFechas(dias))
+      setFechasDisponibles(data.fechasDisponibles ?? [])
     } catch {
       setFechasDisponibles([])
     }
@@ -134,13 +117,10 @@ export default function PublicForm({
     }
   }, [metodo])
 
-  function formatearFecha(fecha: Date): string {
+  function formatearFecha(fechaStr: string): string {
+    const [y, m, d] = fechaStr.split('-').map(Number)
+    const fecha = new Date(y, m - 1, d)
     return fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' })
-  }
-
-  function diaSemanaValido(dia: string): boolean {
-    const fecha = new Date(dia + 'T12:00:00')
-    return fecha.getTime() > Date.now()
   }
 
   const handleDistritoChange = useCallback(async (nuevoDistrito: string) => {
@@ -328,8 +308,8 @@ export default function PublicForm({
           />
 
           {metodo === 'MOTORIZADO' && (
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600 dark:text-slate-400">
                 <input
                   type="checkbox"
                   checked={escogerDia}
@@ -342,38 +322,35 @@ export default function PublicForm({
                   }}
                   className="w-4 h-4 accent-sky-500 rounded"
                 />
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  📅 Escoger día de entrega
-                </span>
+                Escoger día de entrega
               </label>
 
               {escogerDia && (
                 <div className="ml-6">
                   {cargandoFechas ? (
-                    <p className="text-xs text-slate-400">Cargando fechas disponibles...</p>
+                    <p className="text-xs text-slate-400">Cargando fechas...</p>
                   ) : fechasDisponibles.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {fechasDisponibles.map((fecha) => {
-                        const key = fecha.toISOString().split('T')[0]
-                        const seleccionada = fechaSeleccionada === key
+                      {fechasDisponibles.map((fechaStr) => {
+                        const seleccionada = fechaSeleccionada === fechaStr
                         return (
                           <button
-                            key={key}
+                            key={fechaStr}
                             type="button"
-                            onClick={() => setFechaSeleccionada(key)}
-                            className={`px-3 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 ${
+                            onClick={() => setFechaSeleccionada(fechaStr)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 ${
                               seleccionada
-                                ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white border-transparent shadow'
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-sky-400'
+                                ? 'bg-sky-600 text-white border-sky-600'
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-sky-400'
                             }`}
                           >
-                            {formatearFecha(fecha)}
+                            {formatearFecha(fechaStr)}
                           </button>
                         )
                       })}
                     </div>
                   ) : (
-                    <p className="text-xs text-red-400">No se pudieron cargar las fechas.</p>
+                    <p className="text-xs text-slate-400">No hay fechas disponibles.</p>
                   )}
                 </div>
               )}
