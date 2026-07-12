@@ -5,6 +5,7 @@ import Checkbox from '@/components/ui/Checkbox'
 import Select from '@/components/ui/Select'
 import FieldGroup from '@/components/ui/FieldGroup'
 import Field from '@/components/ui/Field'
+import type { Envio } from '@/types/envio'
 type Props = {
 
   abierto: boolean
@@ -12,11 +13,11 @@ type Props = {
   metodoMasivo: string
   setMetodoMasivo: (value: string) => void
 
-  estadoOrigenMasivo: string
-  setEstadoOrigenMasivo: (value: string) => void
+  estadoOrigenMasivo: Envio['estado']
+  setEstadoOrigenMasivo: (value: Envio['estado']) => void
 
-  estadoDestinoMasivo: string
-  setEstadoDestinoMasivo: (value: string) => void
+  estadoDestinoMasivo: Envio['estado']
+  setEstadoDestinoMasivo: (value: Envio['estado']) => void
 
   soloSeleccionados: boolean
   setSoloSeleccionados: (value: boolean) => void
@@ -173,7 +174,7 @@ aplicarCambioMasivo,
     value={estadoOrigenMasivo}
     onChange={(e) =>
       setEstadoOrigenMasivo(
-        e.target.value
+        e.target.value as Envio['estado']
       )
     }
     disabled={soloSeleccionados}
@@ -204,7 +205,7 @@ aplicarCambioMasivo,
   value={estadoDestinoMasivo}
   onChange={(e) =>
     setEstadoDestinoMasivo(
-      e.target.value
+      e.target.value as Envio['estado']
     )
   }
 >

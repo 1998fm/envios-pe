@@ -1,18 +1,9 @@
 'use client'
 
-type EnvioDetalle = {
-  nombre: string
-  dni: string
-  telefono: string
-  metodo: string
-  estado: string
-  tamano: string
-  fecha_registro: string
-  detalle: string
-}
+import type { Envio } from '@/types/envio'
 
 type Props = {
-  envio: EnvioDetalle | null
+  envio: Envio | null
   onCerrar: () => void
 }
 

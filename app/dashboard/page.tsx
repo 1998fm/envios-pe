@@ -39,13 +39,14 @@ from '@/data/distritos-moto.json'
 import ModalUpgrade from '@/components/ModalUpgrade'
 import EstadisticasDashboard from '@/components/EstadisticasDashboard'
 import { ConfigState, initialConfigState } from '@/types/config'
+import type { Envio } from '@/types/envio'
 import DashboardOnboarding from '@/components/DashboardOnboarding'
 
 export default function DashboardPage() {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
-  const [envios, setEnvios] = useState<any[]>([])
+  const [envios, setEnvios] = useState<Envio[]>([])
 const [userId, setUserId] = useState<string | null>(null)
 const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -88,7 +89,7 @@ const [
 const [
   enviosEtiquetas,
   setEnviosEtiquetas,
-] = useState<any[]>([])
+] = useState<Envio[]>([])
 
 const [
   mostrarModalCopiar,
@@ -105,11 +106,7 @@ const [
 
   setCobrarEnvios
 
-] = useState<{
-
-  [id:number]: boolean
-
-}>({})
+] = useState<Record<string, boolean>>({})
 /*======================================== */
 
 /* ========================================
@@ -121,7 +118,7 @@ const [
 
 function abrirModalCopiar() {
 
-  const estadoInicial: Record<number, boolean> = {}
+  const estadoInicial: Record<string, boolean> = {}
 
   enviosMotoSeleccionados.forEach((envio) => {
 
@@ -137,7 +134,7 @@ function abrirModalCopiar() {
 /*======================================== */
 function cambiarCobro(
 
-  id:number
+  id:string
 
 ){
 
@@ -197,13 +194,13 @@ function cambiarCobro(
 }
 
 async function cambiarEstadoMasivo(
-  nuevoEstado: string
+  nuevoEstado: Envio['estado']
 ) {
 
   if (
     seleccionados.length === 0
   ) {
-    alert(
+    toast.error(
       'Selecciona al menos un envío'
     )
     return
@@ -218,7 +215,7 @@ async function cambiarEstadoMasivo(
       .in('id', seleccionados)
 
   if (error) {
-    alert(error.message)
+    toast.error(error.message)
     return
   }
 
@@ -240,7 +237,7 @@ async function cambiarEstadoMasivo(
     })
   )
 
-  alert(
+  toast.success(
     `${seleccionados.length} envíos actualizados`
   )
 }
@@ -272,12 +269,12 @@ const [
 const [
   estadoOrigenMasivo,
   setEstadoOrigenMasivo,
-] = useState('EMPACADO')
+] = useState<Envio['estado']>('EMPACADO')
 
 const [
   estadoDestinoMasivo,
   setEstadoDestinoMasivo,
-] = useState('ENVIADO')
+] = useState<Envio['estado']>('ENVIADO')
 
 const [
   soloSeleccionados,
@@ -285,7 +282,7 @@ const [
 ] = useState(false)
 
 const [envioDetalle, setEnvioDetalle] =
-  useState<any>(null)
+  useState<Envio | null>(null)
 
 const [
   vistaDashboard,
@@ -302,7 +299,7 @@ const [
 const [
   enviosExportar,
   setEnviosExportar,
-] = useState<any[]>([])
+] = useState<Envio[]>([])
 
 const metodosDisponibles = [
 
@@ -547,7 +544,7 @@ setLoading(false)
     }
   }, [])
 
-  async function fetchEnviosPage(offset: number): Promise<{ data: any[]; hasMore: boolean }> {
+  async function fetchEnviosPage(offset: number): Promise<{ data: Envio[]; hasMore: boolean }> {
     if (!userId) return { data: [], hasMore: false }
     const params = new URLSearchParams({
       user_id: userId,
@@ -593,7 +590,7 @@ setLoading(false)
 
 async function exportarSeleccionados() {
 
-  let lista: any[] = []
+  let lista: Envio[] = []
 
   if (seleccionados.length > 0) {
 
@@ -626,7 +623,7 @@ async function exportarSeleccionados() {
         .eq('estado', 'EMPACADO')
 
     if (error) {
-      alert(error.message)
+      toast.error(error.message)
       return
     }
 
@@ -640,7 +637,7 @@ async function exportarSeleccionados() {
 
   if (lista.length === 0) {
 
-    alert(
+    toast.error(
       'No existen envíos SHALOM para exportar.'
     )
 
@@ -657,7 +654,7 @@ async function confirmarExportacion() {
 
   if (!origenShalom) {
 
-    alert(
+    toast.error(
       'Configura primero tu origen Shalom.'
     )
 
@@ -728,7 +725,7 @@ async function aplicarCambioMasivo() {
       seleccionados.length === 0
     ) {
 
-      alert(
+      toast.error(
         'Selecciona al menos un envío.'
       )
 
@@ -766,7 +763,7 @@ async function aplicarCambioMasivo() {
 
   if (ids.length === 0) {
 
-    alert(
+    toast.error(
       'No existen pedidos para actualizar.'
     )
 
@@ -784,7 +781,7 @@ async function aplicarCambioMasivo() {
 
   if (error) {
 
-    alert(error.message)
+    toast.error(error.message)
 
     return
   }
@@ -856,7 +853,7 @@ async function guardarConfiguracion() {
       )
 
     if (uploadError) {
-      alert(
+      toast.error(
         uploadError.message
       )
       return
@@ -890,7 +887,7 @@ async function guardarConfiguracion() {
     .maybeSingle()
 
   if (slugExistente) {
-    alert('Ya existe otro negocio con ese nombre. Elige un nombre diferente.')
+    toast.error('Ya existe otro negocio con ese nombre. Elige un nombre diferente.')
     return
   }
 
@@ -978,9 +975,13 @@ nombre_metodo_otro:
       )
 
   if (error) {
-    alert(error.message)
+    toast.error(error.message)
     return
   }
+
+  setOrigenShalom(
+    config.nuevoOrigen
+  )
 
   
 // ========================================
@@ -1101,7 +1102,7 @@ const enviosAgrupados = envios.reduce(
     return acc
 
   },
-  {} as Record<string, any[]>
+  {} as Record<string, Envio[]>
 )
 
 const fechasAgrupadas = Object.keys(
@@ -1181,7 +1182,7 @@ for (
         onCambioMasivo={() => setMostrarModalEstado(true)}
         onGenerarEtiquetas={() => {
           if (seleccionados.length === 0) {
-            alert('Selecciona al menos un envío')
+            toast.error('Selecciona al menos un envío')
             return
           }
           const pedidos = envios.filter((envio) =>

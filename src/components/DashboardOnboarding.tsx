@@ -9,7 +9,7 @@ type Step = {
 }
 
 const DASHBOARD_STEPS: Step[] = [
-  { target: 'main', text: '¡Bienvenido soy Tori! Te guiaré por tu dashboard para que no te pierdas nada.' },
+  { target: '#dashboard-content', text: '¡Bienvenido soy Tori! Te guiaré por tu dashboard para que no te pierdas nada.' },
   { target: '#stats-portal', text: 'Aquí ves tu resumen: pedidos hoy, esta semana, ingresos. Todo en un vistazo.' },
   { target: '[data-tour="compartir"]', text: 'Este botón copia el link de tu formulario. Compártelo con tus clientes y los pedidos llegarán solos.' },
   { target: '[data-tour="filter-bar"]', text: 'Busca pedidos por nombre, DNI o teléfono. También filtra por estado o método de envío.' },
@@ -18,7 +18,7 @@ const DASHBOARD_STEPS: Step[] = [
   { target: '[data-tour="generar-etiquetas"]', text: 'Imprime etiquetas con los datos del pedido para pegarlas en los paquetes.' },
   { target: '[data-tour="copiar-datos"]', text: 'Copia direcciones de pedidos Motorizado para enviarlas al repartidor.' },
   { target: '[data-tour="envio-list"]', text: 'Aquí aparecen todos tus pedidos, agrupados por fecha programada o registro.' },
-  { target: 'main', text: '¡Y eso es todo por ahora! Si necesitas ayuda, hazme clic —siempre estaré aquí.' },
+  { target: '#dashboard-content', text: '¡Y eso es todo por ahora! Si necesitas ayuda, hazme clic —siempre estaré aquí.' },
 ]
 
 const CARD_STEPS: Step[] = [
@@ -77,34 +77,39 @@ export default function DashboardOnboarding({ tieneEnvios }: { tieneEnvios: bool
       el.classList.remove('tour-highlight')
     )
 
-    // Encontrar target
-    const target = document.querySelector(current.target) as HTMLElement | null
-    if (!target) {
-      // Si no encuentra el target, avanzar
-      handleNext()
-      return
-    }
-
-    // Highlight
-    target.classList.add('tour-highlight')
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' })
-
-    // Posicionar tooltip
-    requestAnimationFrame(() => {
-      const rect = target.getBoundingClientRect()
-      const gap = 12
-      const tw = 320
-      const th = 200
-
-      let top = rect.bottom + gap
-      let left = Math.max(12, Math.min(rect.left + rect.width / 2 - tw / 2, window.innerWidth - tw - 12))
-
-      if (top + th > window.innerHeight) {
-        top = Math.max(12, rect.top - gap - th)
+    // Pequeño delay para asegurar DOM listo
+    const timer = setTimeout(() => {
+      // Encontrar target
+      const target = document.querySelector(current.target) as HTMLElement | null
+      if (!target) {
+        // Si no encuentra el target, avanzar
+        handleNext()
+        return
       }
 
-      setStyle({ top, left, position: 'fixed', zIndex: 50 })
-    })
+      // Highlight
+      target.classList.add('tour-highlight')
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      // Posicionar tooltip
+      requestAnimationFrame(() => {
+        const rect = target.getBoundingClientRect()
+        const gap = 12
+        const tw = 320
+        const th = 200
+
+        let top = rect.bottom + gap
+        let left = Math.max(12, Math.min(rect.left + rect.width / 2 - tw / 2, window.innerWidth - tw - 12))
+
+        if (top + th > window.innerHeight) {
+          top = Math.max(12, rect.top - gap - th)
+        }
+
+        setStyle({ top, left, position: 'fixed', zIndex: 50 })
+      })
+    }, 300)
+
+    return () => clearTimeout(timer)
   }, [tourType, step])
 
   function handleNext() {

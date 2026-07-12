@@ -28,7 +28,7 @@ export default function ModalCopiarDatos({
   const cobrarTodos = total > 0 && cobrar === total
 
   function cambiarTodos() {
-    const nuevoEstado: Record<number, boolean> = {}
+    const nuevoEstado: Record<string, boolean> = {}
     envios.forEach((envio) => {
       nuevoEstado[envio.id] = !cobrarTodos
     })

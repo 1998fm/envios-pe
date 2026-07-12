@@ -4,7 +4,7 @@
 
 export interface EnvioMoto {
 
-  id: number
+  id: string
 
   nombre: string
 
@@ -12,9 +12,9 @@ export interface EnvioMoto {
 
   destino: string
 
-  direccion: string | null
+  direccion?: string | null
 
-  referencia: string | null
+  referencia?: string | null
 
   detalle: string
 
@@ -38,7 +38,7 @@ export interface TarifaMoto {
 
 export interface CobroEnvio {
 
-  [id: number]: boolean
+  [id: string]: boolean
 
 }
 
@@ -63,7 +63,7 @@ export interface ModalCopiarDatosProps {
   onCerrar: () => void
 
   onCambiarCobro: (
-    id: number
+    id: string
   ) => void
 
 

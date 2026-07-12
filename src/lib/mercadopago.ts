@@ -1,9 +1,14 @@
 import MercadoPagoConfig, { PreApproval } from 'mercadopago'
 
-const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN!
+function getClient() {
+  const token = process.env.MP_ACCESS_TOKEN
+  if (!token) throw new Error('MP_ACCESS_TOKEN no configurado')
+  return new MercadoPagoConfig({ accessToken: token })
+}
 
-const client = new MercadoPagoConfig({ accessToken: ACCESS_TOKEN })
-const preApproval = new PreApproval(client)
+function getPreApproval() {
+  return new PreApproval(getClient())
+}
 
 export type Periodo = 'mensual' | 'trimestral'
 
@@ -19,6 +24,7 @@ export async function crearSuscripcion(params: {
   backUrl: string
 }) {
   const precio = PRECIOS[params.periodo]
+  const preApproval = getPreApproval()
 
   const result = await preApproval.create({
     body: {
@@ -39,6 +45,7 @@ export async function crearSuscripcion(params: {
 }
 
 export async function obtenerSuscripcion(id: string) {
+  const preApproval = getPreApproval()
   const result = await preApproval.get({ id })
   return result
 }

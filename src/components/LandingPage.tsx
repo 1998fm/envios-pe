@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import {
-  Package, ClipboardList, Truck, Settings, Smartphone, Zap, DollarSign, Clock,
+  ClipboardList, Truck, Settings, Smartphone, Zap, DollarSign, Clock,
   ShieldCheck, BarChart3, ArrowRight, CheckCircle, Store, ShoppingBag,
   Warehouse, ArrowUpRight, Menu, X, Globe, Search,
 } from 'lucide-react'
