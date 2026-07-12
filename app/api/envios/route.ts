@@ -195,6 +195,46 @@ export async function POST(req: Request) {
       )
     }
 
+    // Guardar/actualizar persona (cliente final)
+    const { data: personaExistente } = await supabaseAdmin
+      .from('personas')
+      .select('id, telefono')
+      .eq('dni', dni)
+      .maybeSingle()
+
+    let personaId: string
+
+    if (personaExistente) {
+      personaId = personaExistente.id
+      if (personaExistente.telefono !== telefono) {
+        await supabaseAdmin
+          .from('personas')
+          .update({ telefono, updated_at: new Date().toISOString() })
+          .eq('id', personaId)
+      }
+    } else {
+      const { data: newPersona } = await supabaseAdmin
+        .from('personas')
+        .insert({ dni, nombre, telefono })
+        .select('id')
+        .single()
+      personaId = newPersona!.id
+    }
+
+    // Vincular con este negocio (si no existe ya)
+    const { data: vinculoExistente } = await supabaseAdmin
+      .from('cliente_de')
+      .select('id')
+      .eq('persona_id', personaId)
+      .eq('profile_id', user_id)
+      .maybeSingle()
+
+    if (!vinculoExistente) {
+      await supabaseAdmin
+        .from('cliente_de')
+        .insert({ persona_id: personaId, profile_id: user_id })
+    }
+
     return NextResponse.json({
       success: true,
       envio: data,
