@@ -82,8 +82,8 @@ export default function DashboardOnboarding({ tieneEnvios }: { tieneEnvios: bool
       // Encontrar target
       const target = document.querySelector(current.target) as HTMLElement | null
       if (!target) {
-        // Si no encuentra el target, avanzar
-        handleNext()
+        // Si no encuentra el target, mostrar tooltip centrado abajo en vez de saltar
+        setStyle({ top: window.innerHeight - 220, left: 12, position: 'fixed', zIndex: 50 })
         return
       }
 
