@@ -99,7 +99,7 @@ export default function PublicForm({
 
     try {
       const res = await fetch(
-        `/api/tarifa-moto?distrito=${encodeURIComponent(nuevoDistrito)}`
+        `/api/tarifa-moto?userId=${userId}&distrito=${encodeURIComponent(nuevoDistrito)}`
       )
       const data = await res.json()
       setTarifaMotorizado(data.precio)
@@ -108,7 +108,7 @@ export default function PublicForm({
     }
 
     setCargandoTarifa(false)
-  }, [])
+  }, [userId])
 
   useEffect(() => {
     if (enviado && redirectUrl) {

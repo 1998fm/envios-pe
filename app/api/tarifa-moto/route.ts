@@ -5,12 +5,14 @@ export async function GET(req: NextRequest) {
 
   const distrito =
     req.nextUrl.searchParams.get('distrito')
+  const userId =
+    req.nextUrl.searchParams.get('userId')
 
-  if (!distrito) {
+  if (!distrito || !userId) {
 
     return NextResponse.json(
       {
-        error: 'Distrito requerido',
+        error: 'Distrito y userId requeridos',
       },
       {
         status: 400,
@@ -23,8 +25,9 @@ export async function GET(req: NextRequest) {
     await supabaseAdmin
       .from('tarifas_moto')
       .select('precio')
+      .eq('profile_id', userId)
       .eq('distrito', distrito)
-      .single()
+      .maybeSingle()
 
   if (error || !data) {
 
