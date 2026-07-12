@@ -98,19 +98,19 @@ export default function LandingPage() {
       {/* ============================================
           HERO
       ============================================ */}
-      <section className="relative pt-20 pb-16 sm:pt-28 sm:pb-24 overflow-hidden">
+      <section className="relative pt-14 pb-12 sm:pt-28 sm:pb-24 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky-100/60 via-transparent to-indigo-100/30 dark:from-sky-900/20 dark:via-transparent dark:to-indigo-900/10 pointer-events-none" />
         <div className="absolute top-1/3 left-1/4 w-72 h-72 bg-sky-400/10 dark:bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-400/10 dark:bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 relative">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, ease: 'easeOut' }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 text-xs font-semibold mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 text-[10px] sm:text-xs font-semibold mb-4 sm:mb-6">
                 <BarChart3 size={14} />
                 Más de 200 negocios peruanos ya ordenaron sus envíos
               </div>
@@ -122,10 +122,10 @@ export default function LandingPage() {
                 <br />
                 Recibe todo ordenado.
               </h1>
-              <p className="mt-3 text-sm font-medium text-sky-600 dark:text-sky-400 font-semibold">
+              <p className="mt-2 sm:mt-3 text-[10px] sm:text-sm font-semibold text-sky-600 dark:text-sky-400">
                 Tori — el sistema que ordena tus envíos automáticamente
               </p>
-              <p className="mt-5 text-lg sm:text-xl text-slate-600 dark:text-slate-400 leading-relaxed max-w-lg">
+              <p className="mt-3 sm:mt-5 text-sm sm:text-xl text-slate-600 dark:text-slate-400 leading-relaxed max-w-lg">
                 Tus clientes llenan tus datos en tu formulario y todo aparece ordenado en tu dashboard: 
                 dirección, método, pago. Tú solo abres, revisas y despachas. Sin chats perdidos, sin hojas sueltas.
               </p>
@@ -263,9 +263,9 @@ export default function LandingPage() {
       {/* ============================================
           MÉTRICAS
       ============================================ */}
-      <section className="py-12 sm:py-16 bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800">
+      <section className="py-8 sm:py-16 bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
             {[
               { number: '+200', label: 'negocios registrados', icon: Store },
               { number: '30', label: 'segundos en crear pedido', suffix: 's', icon: Zap },
@@ -295,18 +295,18 @@ export default function LandingPage() {
       {/* ============================================
           PROBLEMA
       ============================================ */}
-      <section id="problema" className="py-16 sm:py-24 bg-white dark:bg-slate-900">
+      <section id="problema" className="py-10 sm:py-24 bg-white dark:bg-slate-900">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               ¿Te suena familiar?
             </h2>
-            <p className="mt-3 text-slate-600 dark:text-slate-400">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
               El 90% de negocios que empiezan a hacer envíos terminan con estos problemas.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
             {[
               {
                 number: '01',
@@ -372,10 +372,10 @@ export default function LandingPage() {
       {/* ============================================
           ANTES / DESPUÉS
       ============================================ */}
-      <section className="py-16 sm:py-24 bg-sky-50/50 dark:bg-sky-950/10">
+      <section className="py-10 sm:py-24 bg-sky-50/50 dark:bg-sky-950/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Antes de Tori vs.{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                 Después de Tori
@@ -442,21 +442,21 @@ export default function LandingPage() {
       {/* ============================================
           CÓMO FUNCIONA
       ============================================ */}
-      <section id="como-funciona" className="py-16 sm:py-24">
+      <section id="como-funciona" className="py-10 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Comienza en{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                 3 pasos
               </span>
             </h2>
-            <p className="mt-3 text-slate-600 dark:text-slate-400">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
               Configura tu negocio, comparte tu link y empieza a recibir pedidos en minutos.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
             {[
               {
                 step: '01',
@@ -501,30 +501,30 @@ export default function LandingPage() {
       {/* ============================================
           CTA TRIAL (mitad del landing)
       ============================================ */}
-      <section className="py-16 sm:py-24">
+      <section className="py-10 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-600 via-sky-600 to-indigo-700 px-6 sm:px-12 py-12 sm:py-16 text-center text-white"
+            className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-sky-600 via-sky-600 to-indigo-700 px-5 sm:px-12 py-8 sm:py-16 text-center text-white"
           >
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_white_0%,_transparent_60%)] opacity-10 pointer-events-none" />
             <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-indigo-300/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
                 Prueba Pro gratis 30 días
               </h2>
-              <p className="mt-4 text-lg sm:text-xl text-sky-100 max-w-lg mx-auto">
+              <p className="mt-3 sm:mt-4 text-sm sm:text-xl text-sky-100 max-w-lg mx-auto">
                 Crea tu cuenta en 30 segundos. Sin tarjeta, sin compromiso.
                 Disfruta de todas las funciones Pro sin pagar un sol.
               </p>
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 mt-8 px-8 py-4 rounded-2xl text-sm font-semibold bg-white text-sky-700 hover:bg-sky-50 hover:shadow-2xl hover:scale-[1.02] transition-all duration-200"
+                className="inline-flex items-center gap-2 mt-5 sm:mt-8 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-sm font-semibold bg-white text-sky-700 hover:bg-sky-50 hover:shadow-2xl hover:scale-[1.02] transition-all duration-200"
               >
                 Empezar prueba gratis
                 <ArrowUpRight size={16} />
@@ -538,16 +538,16 @@ export default function LandingPage() {
       {/* ============================================
           EL SISTEMA
       ============================================ */}
-      <section className="py-16 sm:py-24">
+      <section className="py-10 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               El sistema que{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                 ordena tus envíos
               </span>
             </h2>
-            <p className="mt-3 text-slate-600 dark:text-slate-400">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
               Métodos de entrega, tarifas por zona, horarios inteligentes. 
               Todo lo que tu negocio necesita para enviar sin dolor de cabeza.
             </p>
@@ -584,16 +584,16 @@ export default function LandingPage() {
       {/* ============================================
           FEATURES
       ============================================ */}
-      <section className="py-16 sm:py-24 bg-white dark:bg-slate-900">
+      <section className="py-10 sm:py-24 bg-white dark:bg-slate-900">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Todo lo que necesitas para{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                 vender más
               </span>
             </h2>
-            <p className="mt-3 text-slate-600 dark:text-slate-400">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
               Herramientas diseñadas para que tu negocio de envíos funcione sin complicaciones.
             </p>
           </motion.div>
@@ -629,10 +629,10 @@ export default function LandingPage() {
       {/* ============================================
           PARA QUIÉN ES
       ============================================ */}
-      <section className="py-16 sm:py-24">
+      <section className="py-10 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Ideal para{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                 tu negocio
@@ -668,10 +668,10 @@ export default function LandingPage() {
       {/* ============================================
           TESTIMONIOS
       ============================================ */}
-      <section className="py-16 sm:py-24 bg-slate-50 dark:bg-slate-950">
+      <section className="py-10 sm:py-24 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Lo que dicen los{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                 negocios
@@ -733,16 +733,16 @@ export default function LandingPage() {
       {/* ============================================
           PLANES
       ============================================ */}
-      <section id="planes" className="py-16 sm:py-24 bg-white dark:bg-slate-900">
+      <section id="planes" className="py-10 sm:py-24 bg-white dark:bg-slate-900">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Planes{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                 simples y claros
               </span>
             </h2>
-            <p className="mt-3 text-slate-600 dark:text-slate-400">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
               30 días Pro gratis, sin tarjeta, sin compromiso. Después decide si sigues.
             </p>
           </motion.div>
