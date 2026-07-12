@@ -1,14 +1,47 @@
 'use client'
 
+import { useState } from 'react'
+import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import type { Envio } from '@/types/envio'
 
 type Props = {
   envio: Envio | null
   onCerrar: () => void
+  onUpdate?: (envio: Envio) => void
 }
 
-export default function ModalDetalle({ envio, onCerrar }: Props) {
+export default function ModalDetalle({ envio, onCerrar, onUpdate }: Props) {
+  const supabase = createClient()
+  const [fechaProgramada, setFechaProgramada] = useState('')
+  const [guardando, setGuardando] = useState(false)
+  const [mensaje, setMensaje] = useState('')
+
   if (!envio) return null
+
+  const current = envio
+
+  const fechaInicial = fechaProgramada || current.fecha_programada?.split('T')[0] || ''
+
+  async function guardarFecha() {
+    if (!fechaProgramada || fechaProgramada === current.fecha_programada?.split('T')[0]) return
+    setGuardando(true)
+    setMensaje('')
+
+    const nuevaFecha = new Date(fechaProgramada + 'T12:00:00').toISOString()
+    const { error } = await supabase
+      .from('envios')
+      .update({ fecha_programada: nuevaFecha })
+      .eq('id', current.id)
+
+    if (error) {
+      setMensaje('Error al guardar: ' + error.message)
+    } else {
+      setMensaje('✅ Fecha actualizada')
+      const actualizado: Envio = { ...current, fecha_programada: nuevaFecha }
+      onUpdate?.(actualizado)
+    }
+    setGuardando(false)
+  }
 
   const campos = [
     { label: 'Documento', value: envio.dni },
@@ -52,6 +85,32 @@ export default function ModalDetalle({ envio, onCerrar }: Props) {
                 </p>
               </div>
             ))}
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-5">
+            <p className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold mb-3">
+              Fecha programada
+            </p>
+            <div className="flex items-center gap-3">
+              <input
+                type="date"
+                value={fechaInicial}
+                onChange={(e) => setFechaProgramada(e.target.value)}
+                className="flex-1 px-3 py-2 rounded-xl text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+              <button
+                onClick={guardarFecha}
+                disabled={guardando || !fechaProgramada || fechaProgramada === envio.fecha_programada?.split('T')[0]}
+                className="px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white disabled:opacity-40 hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200 shrink-0"
+              >
+                {guardando ? '...' : 'Guardar'}
+              </button>
+            </div>
+            {mensaje && (
+              <p className={`mt-2 text-xs font-semibold ${mensaje.includes('Error') ? 'text-red-500' : 'text-emerald-600'}`}>
+                {mensaje}
+              </p>
+            )}
           </div>
 
           <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-5">

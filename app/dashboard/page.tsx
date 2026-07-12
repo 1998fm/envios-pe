@@ -1250,7 +1250,15 @@ for (
   onConfirmar={confirmarExportacion}
 />
 
-<ModalDetalle envio={envioDetalle} onCerrar={() => setEnvioDetalle(null)} />
+<ModalDetalle
+  envio={envioDetalle}
+  onCerrar={() => setEnvioDetalle(null)}
+  onUpdate={(actualizado) =>
+    setEnvios((prev) =>
+      prev.map((e) => (e.id === actualizado.id ? actualizado : e))
+    )
+  }
+/>
 
 {/* MODAL PARA CAMBIO DE ESTADOS  */}
 
