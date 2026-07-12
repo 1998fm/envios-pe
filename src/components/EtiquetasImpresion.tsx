@@ -31,7 +31,7 @@ export default function EtiquetasImpresion({
           key={pagina}
           className="
             grid
-            grid-cols-2
+            grid-cols-1 sm:grid-cols-2
             gap-2
             min-h-screen
             break-after-page

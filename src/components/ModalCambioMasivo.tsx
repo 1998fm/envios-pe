@@ -69,13 +69,8 @@ aplicarCambioMasivo,
      
   <div
   className="
-    fixed
-    inset-0
-    bg-black/40
-    flex
-    items-center
-    justify-center
-    z-50
+    fixed inset-0 bg-black/40 backdrop-blur-sm
+    flex items-center justify-center z-50 p-4
   "
 >
 
@@ -95,16 +90,15 @@ aplicarCambioMasivo,
     <div
       className="
         p-8
-        border-b
-        border-gray-100
+        border-b border-slate-100 dark:border-slate-700
       "
     >
 
       <h2
         className="
-          text-4xl
+          text-3xl
           font-extrabold
-          text-slate-900
+          text-slate-900 dark:text-slate-100
         "
       >
         Cambio Masivo
@@ -112,8 +106,7 @@ aplicarCambioMasivo,
 
       <p
         className="
-          mt-2
-          text-gray-500
+          mt-2 text-sm text-slate-500 dark:text-slate-400
         "
       >
         Cambia el estado de múltiples pedidos al mismo tiempo.
@@ -255,7 +248,7 @@ aplicarCambioMasivo,
     <label
       className="
         text-sm
-        text-gray-700
+        text-slate-700 dark:text-slate-300
         leading-relaxed
         select-none
       "
@@ -269,14 +262,14 @@ aplicarCambioMasivo,
 
       {/* Resumen */}
 
-     <FieldGroup>
+      <FieldGroup>
 
         <div
           className="
             text-sm
             uppercase
             tracking-wider
-            text-gray-500
+            text-slate-400 dark:text-slate-500
             font-semibold
             mb-4
           "
@@ -286,11 +279,11 @@ aplicarCambioMasivo,
 
         {soloSeleccionados ? (
 
-          <div className="text-gray-700">
+          <div className="text-slate-600 dark:text-slate-400 text-sm">
 
             Se modificarán
 
-            <span className="font-bold text-slate-900">
+            <span className="font-bold text-slate-900 dark:text-slate-100">
               {" "}
               {seleccionados.length}
             </span>
@@ -305,13 +298,13 @@ aplicarCambioMasivo,
             className="
               space-y-2
               text-sm
-              text-gray-600
+              text-slate-500 dark:text-slate-400
             "
           >
 
             <div>
 
-              <span className="font-semibold text-gray-800">
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
                 Método:
               </span>{" "}
 
@@ -321,7 +314,7 @@ aplicarCambioMasivo,
 
             <div>
 
-              <span className="font-semibold text-gray-800">
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
                 Estado actual:
               </span>{" "}
 
@@ -331,11 +324,11 @@ aplicarCambioMasivo,
 
             <div>
 
-              <span className="font-semibold text-gray-800">
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
                 Nuevo estado:
               </span>{" "}
 
-              <span className="text-cyan-700 font-bold">
+              <span className="text-sky-600 dark:text-sky-400 font-bold">
                 {estadoDestinoMasivo}
               </span>
 
@@ -353,13 +346,12 @@ aplicarCambioMasivo,
 
     <div
   className="
-    border-t
-    border-gray-100
+    border-t border-slate-100 dark:border-slate-700
     p-6
     flex
     justify-end
     gap-4
-    bg-white
+    bg-white dark:bg-slate-800
     shrink-0
   "
 >

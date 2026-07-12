@@ -1,143 +1,39 @@
-/* ========================================
-   PROPS
-======================================== */
+import { Check, ClipboardCopy, FileSpreadsheet } from 'lucide-react'
 
 interface Props {
-
   onCopiar: () => void
-
   onExportar: () => void
-
   onCerrar: () => void
-
   copiado: boolean
-
 }
 
-/* ========================================
-   BOTONES DEL MODAL
-======================================== */
-
-export default function BotonesModal({
-
-  onCopiar,
-
-  onExportar,
-
-  onCerrar,
-
-  copiado
-
-}: Props) {
+export default function BotonesModal({ onCopiar, onExportar, onCerrar, copiado }: Props) {
+  const btnClass = `
+    inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold
+    bg-white dark:bg-slate-700
+    border border-slate-200 dark:border-slate-600
+    text-slate-700 dark:text-slate-300
+    hover:bg-gradient-to-r hover:from-sky-600 hover:to-indigo-600
+    hover:text-white hover:border-transparent
+    hover:shadow-lg hover:shadow-sky-500/20
+    transition-all duration-200
+  `
 
   return (
-
-    <div
-  className="
-    border-t
-    border-gray-100
-    px-8
-    py-6
-    flex
-    justify-end
-    gap-4
-    flex-wrap
-  "
->
-
-      {/* ========================================
-          COPIAR
-      ======================================== */}
-
-      <button
-
-        onClick={onCopiar}
-
-       className="
-  bg-gradient-to-r
-  from-cyan-600
-  to-blue-600
-  text-white
-  px-6
-  py-3
-  rounded-2xl
-  font-semibold
-  shadow-lg
-  hover:scale-[1.02]
-  transition-all
-"
-
-      >
-
-        {
-
-  copiado
-
-    ? '✅ Copiado'
-
-    : '📋 Copiar datos'
-
-}
-
+    <div className="shrink-0 border-t border-slate-200 dark:border-slate-700 px-6 sm:px-8 py-5 flex justify-end gap-3 flex-wrap bg-white dark:bg-slate-800">
+      <button onClick={onCerrar} className={btnClass}>
+        Cancelar
       </button>
 
-      {/* ========================================
-          EXPORTAR
-      ======================================== */}
-
-      <button
-
-        onClick={onExportar}
-
-       className="
-  bg-gradient-to-r
-  from-cyan-600
-  to-blue-600
-  text-white
-  px-6
-  py-3
-  rounded-2xl
-  font-semibold
-  shadow-lg
-  hover:scale-[1.02]
-  transition-all
-"
-
-      >
-
-        📊 Exportar Excel
-
+      <button onClick={onExportar} className={btnClass}>
+        <FileSpreadsheet size={16} />
+        Exportar Excel
       </button>
 
-      {/* ========================================
-          CERRAR
-      ======================================== */}
-
-      <button
-
-        onClick={onCerrar}
-
-       className="
-  bg-gray-100
-  border
-  border-gray-200
-  text-gray-700
-  px-6
-  py-3
-  rounded-2xl
-  font-semibold
-  hover:bg-gray-200
-  transition-all
-"
-
-      >
-
-        Cerrar
-
+      <button onClick={onCopiar} disabled={copiado} className={`${btnClass} disabled:opacity-60 disabled:hover:bg-none disabled:hover:text-slate-700 dark:disabled:hover:text-slate-300`}>
+        {copiado ? <Check size={16} /> : <ClipboardCopy size={16} />}
+        {copiado ? 'Copiado' : 'Copiar datos'}
       </button>
-
     </div>
-
   )
-
 }

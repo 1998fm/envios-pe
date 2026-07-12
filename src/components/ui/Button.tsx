@@ -38,13 +38,12 @@ export default function Button({
     `,
 
     secondary: `
-      bg-white
-      border
-      border-gray-200
-      text-gray-700
-      hover:bg-slate-50
-      hover:border-cyan-500
-      hover:text-cyan-700
+      bg-white dark:bg-slate-700
+      border border-slate-200 dark:border-slate-600
+      text-slate-700 dark:text-slate-300
+      hover:bg-slate-50 dark:hover:bg-slate-600
+      hover:border-sky-500
+      hover:text-sky-700 dark:hover:text-sky-400
     `,
 
     danger: `

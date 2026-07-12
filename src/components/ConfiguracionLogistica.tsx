@@ -67,7 +67,7 @@ export default function ConfiguracionLogistica({
           Días de atención
         </p>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {diasSemana.map((dia) => (
             <label
               key={dia.value}

@@ -1,87 +1,41 @@
 'use client'
 
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
-import { useEffect, useState } from 'react'
-import Select from '@/components/ui/Select'
-
+import { useState } from 'react'
+import MenuSelect from '@/components/ui/MenuSelect'
 
 type Props = {
   envioId: string
   tamanoActual: string | null
 }
 
-export default function TamanoSelect({
-  envioId,
-  tamanoActual,
-}: Props) {
+const options = [
+  { value: '', label: 'Sin definir' },
+  { value: 'PAQUETE XS', label: 'Paquete XS' },
+  { value: 'PAQUETE S', label: 'Paquete S' },
+  { value: 'PAQUETE M', label: 'Paquete M' },
+  { value: 'PAQUETE L', label: 'Paquete L' },
+]
 
+export default function TamanoSelect({ envioId, tamanoActual }: Props) {
   const supabase = createClient()
+  const [tamano, setTamano] = useState(tamanoActual || '')
 
-  const [tamano, setTamano] =
-    useState(tamanoActual || '')
-
-  useEffect(() => {
-
-    setTamano(
-      tamanoActual || ''
-    )
-
-  }, [tamanoActual])
-
-  async function actualizarTamano(
-    nuevoTamano: string
-  ) {
-
+  async function actualizarTamano(nuevoTamano: string) {
     setTamano(nuevoTamano)
-
-    const { error } =
-      await supabase
-        .from('envios')
-        .update({
-          tamano: nuevoTamano,
-        })
-        .eq('id', envioId)
-
-    if (error) {
-      alert(error.message)
-    }
-
+    const { error } = await supabase
+      .from('envios')
+      .update({ tamano: nuevoTamano })
+      .eq('id', envioId)
+    if (error) alert(error.message)
   }
-
 
   return (
-
-    <Select
-  value={tamano}
-  onChange={(e) =>
-    actualizarTamano(
-      e.target.value
-    )
-  }
->
-
-      <option value="">
-        Sin definir
-      </option>
-
-      <option value="PAQUETE XS">
-        PAQUETE XS
-      </option>
-
-      <option value="PAQUETE S">
-        PAQUETE S
-      </option>
-
-      <option value="PAQUETE M">
-        PAQUETE M
-      </option>
-
-      <option value="PAQUETE L">
-        PAQUETE L
-      </option>
-
-    </Select>
-
+    <MenuSelect
+      value={tamano}
+      onChange={actualizarTamano}
+      options={options}
+      align="right"
+    />
   )
-
 }

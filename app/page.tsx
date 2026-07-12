@@ -1,13 +1,12 @@
-export default function Home() {
-  return (
-    <main className="p-10">
-      <h1 className="text-4xl font-bold">
-        Envios.pe 🚚
-      </h1>
+import LandingPage from '@/components/LandingPage'
+import type { Metadata } from 'next'
 
-      <p className="mt-4">
-        Conexión lista para Supabase.
-      </p>
-    </main>
-  );
+export const metadata: Metadata = {
+  title: 'Tori — Tu ayudante fiel para gestionar envíos',
+  description:
+    'Tori organiza tus envíos en un solo lugar. Crea tu formulario de pedidos, recibe solicitudes de clientes y gestiona todo desde un dashboard moderno. El mejor amigo de tu negocio.',
+}
+
+export default function Home() {
+  return <LandingPage />
 }

@@ -1,6 +1,55 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { calcularFechaEntrega } from '@/lib/logistica/calcularFechaEntrega'
+import { checkEnvioLimit } from '@/lib/planLimits'
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const userId = searchParams.get('user_id')
+  const offset = parseInt(searchParams.get('offset') || '0')
+  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
+  const busqueda = searchParams.get('busqueda') || ''
+  const estados = searchParams.get('estados')?.split(',').filter(Boolean) || []
+  const metodos = searchParams.get('metodos')?.split(',').filter(Boolean) || []
+
+  if (!userId) {
+    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
+  }
+
+  let query = supabaseAdmin
+    .from('envios')
+    .select('*', { count: 'exact' })
+    .eq('user_id', userId)
+
+  if (busqueda) {
+    query = query.or(
+      `nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%,telefono.ilike.%${busqueda}%`
+    )
+  }
+
+  if (estados.length > 0) {
+    query = query.in('estado', estados)
+  }
+
+  if (metodos.length > 0) {
+    query = query.in('metodo', metodos)
+  }
+
+  const { data, count, error } = await query
+    .order('fecha_registro', { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({
+    data,
+    total: count ?? 0,
+    offset,
+    limit,
+  })
+}
 
 export async function POST(req: Request) {
   try {
@@ -52,6 +101,11 @@ export async function POST(req: Request) {
           status: 400,
         }
       )
+    }
+
+    const { allowed, reason } = await checkEnvioLimit(user_id)
+    if (!allowed) {
+      return NextResponse.json({ error: reason }, { status: 403 })
     }
 
     const tipoMetodo =

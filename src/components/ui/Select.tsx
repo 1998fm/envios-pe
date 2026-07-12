@@ -19,16 +19,15 @@ const Select = forwardRef<HTMLSelectElement, Props>(
           px-4
           py-3
           rounded-2xl
-          border
-          border-gray-200
-          bg-gray-50
-          text-slate-900
+          border border-slate-200 dark:border-slate-600
+          bg-gray-50 dark:bg-slate-700
+          text-slate-900 dark:text-slate-100
           shadow-sm
           transition-all
           focus:outline-none
           focus:ring-2
-          focus:ring-cyan-500
-          focus:border-cyan-500
+          focus:ring-sky-500
+          focus:border-sky-500
           ${className}
         `}
       >
