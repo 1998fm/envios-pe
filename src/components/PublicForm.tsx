@@ -87,6 +87,62 @@ export default function PublicForm({
   const [direccion, setDireccion] = useState('')
   const [referencia, setReferencia] = useState('')
 
+  const [escogerDia, setEscogerDia] = useState(false)
+  const [fechasDisponibles, setFechasDisponibles] = useState<Date[]>([])
+  const [fechaSeleccionada, setFechaSeleccionada] = useState('')
+  const [cargandoFechas, setCargandoFechas] = useState(false)
+
+  function calcularProximasFechas(dias: string[], limite = 3): Date[] {
+    const fechas: Date[] = []
+    const hoy = new Date()
+    const candidata = new Date(hoy)
+    candidata.setDate(candidata.getDate() + 1)
+    const diasSemana = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+    while (fechas.length < limite) {
+      const nombreDia = diasSemana[candidata.getDay()]
+      if (dias.includes(nombreDia)) {
+        fechas.push(new Date(candidata))
+      }
+      candidata.setDate(candidata.getDate() + 1)
+    }
+    return fechas
+  }
+
+  async function activarEscogerDia() {
+    setEscogerDia(true)
+    setCargandoFechas(true)
+    try {
+      const res = await fetch(`/api/logistica/moto?userId=${userId}`)
+      const data = await res.json()
+      const dias: string[] = data.logistica_moto_dias ?? ['MONDAY']
+      setFechasDisponibles(calcularProximasFechas(dias))
+    } catch {
+      setFechasDisponibles([])
+    }
+    setCargandoFechas(false)
+  }
+
+  function desactivarEscogerDia() {
+    setEscogerDia(false)
+    setFechasDisponibles([])
+    setFechaSeleccionada('')
+  }
+
+  useEffect(() => {
+    if (metodo !== 'MOTORIZADO') {
+      desactivarEscogerDia()
+    }
+  }, [metodo])
+
+  function formatearFecha(fecha: Date): string {
+    return fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' })
+  }
+
+  function diaSemanaValido(dia: string): boolean {
+    const fecha = new Date(dia + 'T12:00:00')
+    return fecha.getTime() > Date.now()
+  }
+
   const handleDistritoChange = useCallback(async (nuevoDistrito: string) => {
     setDistrito(nuevoDistrito)
 
@@ -188,6 +244,7 @@ export default function PublicForm({
         referencia,
         detalle,
         observaciones: '',
+        ...(fechaSeleccionada ? { fecha_programada: new Date(fechaSeleccionada + 'T12:00:00').toISOString() } : {}),
       }),
     })
 
@@ -204,7 +261,7 @@ export default function PublicForm({
     console.log('Fecha recibida:', resultado.envio.fecha_programada)
     setFechaProgramada(resultado.envio.fecha_programada)
     setEnviado(true)
-  }, [nombre, dni, telefono, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro])
+  }, [nombre, dni, telefono, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada])
 
   if (enviado) {
     return (
@@ -269,6 +326,59 @@ export default function PublicForm({
             tarifaMotorizado={tarifaMotorizado}
             cargandoTarifa={cargandoTarifa}
           />
+
+          {metodo === 'MOTORIZADO' && (
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={escogerDia}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      activarEscogerDia()
+                    } else {
+                      desactivarEscogerDia()
+                    }
+                  }}
+                  className="w-4 h-4 accent-sky-500 rounded"
+                />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  📅 Escoger día de entrega
+                </span>
+              </label>
+
+              {escogerDia && (
+                <div className="ml-6">
+                  {cargandoFechas ? (
+                    <p className="text-xs text-slate-400">Cargando fechas disponibles...</p>
+                  ) : fechasDisponibles.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {fechasDisponibles.map((fecha) => {
+                        const key = fecha.toISOString().split('T')[0]
+                        const seleccionada = fechaSeleccionada === key
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setFechaSeleccionada(key)}
+                            className={`px-3 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 ${
+                              seleccionada
+                                ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white border-transparent shadow'
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-sky-400'
+                            }`}
+                          >
+                            {formatearFecha(fecha)}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-red-400">No se pudieron cargar las fechas.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <ErrorBanner error={error} />
 

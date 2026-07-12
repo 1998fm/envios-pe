@@ -71,6 +71,8 @@ export async function POST(req: Request) {
 
       detalle,
       observaciones,
+
+      fecha_programada: fechaProgramadaBody,
     } = body
 
     const { data: perfil, error: perfilError } =
@@ -108,48 +110,54 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: reason }, { status: 403 })
     }
 
-    const tipoMetodo =
-      metodo === 'MOTORIZADO'
-        ? 'MOTO'
-        : 'AGENCIA'
+    let fechaProgramada: Date
 
-    const fechaProgramada =
-      await calcularFechaEntrega(
-        supabaseAdmin,
-        user_id,
-        {
-          logisticaMotoDias:
-            perfil.logistica_moto_dias ?? ['MONDAY'],
+    if (fechaProgramadaBody) {
+      fechaProgramada = new Date(fechaProgramadaBody)
+    } else {
+      const tipoMetodo =
+        metodo === 'MOTORIZADO'
+          ? 'MOTO'
+          : 'AGENCIA'
 
-          logisticaMotoUsaHoraCorte:
-            perfil.logistica_moto_usa_hora_corte ?? false,
+      fechaProgramada =
+        await calcularFechaEntrega(
+          supabaseAdmin,
+          user_id,
+          {
+            logisticaMotoDias:
+              perfil.logistica_moto_dias ?? ['MONDAY'],
 
-          logisticaMotoHoraCorte:
-            perfil.logistica_moto_hora_corte ?? '18:00',
+            logisticaMotoUsaHoraCorte:
+              perfil.logistica_moto_usa_hora_corte ?? false,
 
-          logisticaMotoLimitar:
-            perfil.logistica_moto_limitar ?? false,
+            logisticaMotoHoraCorte:
+              perfil.logistica_moto_hora_corte ?? '18:00',
 
-          logisticaMotoCupo:
-            perfil.logistica_moto_cupo ?? 0,
+            logisticaMotoLimitar:
+              perfil.logistica_moto_limitar ?? false,
 
-          logisticaAgenciasDias:
-            perfil.logistica_agencias_dias ?? ['MONDAY'],
+            logisticaMotoCupo:
+              perfil.logistica_moto_cupo ?? 0,
 
-          logisticaAgenciasUsaHoraCorte:
-            perfil.logistica_agencias_usa_hora_corte ?? false,
+            logisticaAgenciasDias:
+              perfil.logistica_agencias_dias ?? ['MONDAY'],
 
-          logisticaAgenciasHoraCorte:
-            perfil.logistica_agencias_hora_corte ?? '18:00',
+            logisticaAgenciasUsaHoraCorte:
+              perfil.logistica_agencias_usa_hora_corte ?? false,
 
-          logisticaAgenciasLimitar:
-            perfil.logistica_agencias_limitar ?? false,
+            logisticaAgenciasHoraCorte:
+              perfil.logistica_agencias_hora_corte ?? '18:00',
 
-          logisticaAgenciasCupo:
-            perfil.logistica_agencias_cupo ?? 0,
-        },
-        tipoMetodo
-      )
+            logisticaAgenciasLimitar:
+              perfil.logistica_agencias_limitar ?? false,
+
+            logisticaAgenciasCupo:
+              perfil.logistica_agencias_cupo ?? 0,
+          },
+          tipoMetodo
+        )
+    }
 
     const { data, error } =
       await supabaseAdmin
