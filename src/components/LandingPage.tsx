@@ -828,7 +828,7 @@ export default function LandingPage() {
                     { feature: 'Dashboard con filtros', basic: <CheckCircle size={16} className="text-emerald-500 mx-auto" />, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
                     { feature: 'Control de horarios', basic: <span className="text-slate-300 dark:text-slate-600 mx-auto block">—</span>, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
                     { feature: 'Envíos masivos Excel', basic: <span className="text-slate-300 dark:text-slate-600 mx-auto block">—</span>, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
-                    { feature: 'Exportación a Excel', basic: <CheckCircle size={16} className="text-emerald-500 mx-auto" />, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
+                    { feature: 'Formato para shalom masivo', basic: <CheckCircle size={16} className="text-emerald-500 mx-auto" />, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
                     { feature: 'Cambio masivo de estados', basic: <span className="text-slate-300 dark:text-slate-600 mx-auto block">—</span>, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
                   ].map((row, i) => (
                     <tr key={row.feature} className="border-b border-slate-100 dark:border-slate-700 last:border-0">
