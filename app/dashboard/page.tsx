@@ -568,6 +568,29 @@ setLoading(false)
     })
   }, [userId, busqueda, filtrosEstado, filtrosMetodo])
 
+  useEffect(() => {
+    if (!userId) return
+    const channel = supabase
+      .channel('envios-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'envios',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          fetchEnviosPage(0).then((result) => {
+            setEnvios(result.data)
+            setHasMore(result.hasMore)
+          })
+        },
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [userId])
+
   async function cargarMas() {
     const result = await fetchEnviosPage(envios.length)
     if (result.data.length > 0) {
