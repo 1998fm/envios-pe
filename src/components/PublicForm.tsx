@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 
-import ThemeToggle from '@/components/ThemeToggle'
 import FormHeader from '@/components/FormHeader'
 import PersonalDataSection from '@/components/PersonalDataSection'
 import ShippingMethodCards from '@/components/ShippingMethodCards'
@@ -270,8 +269,6 @@ export default function PublicForm({
           absolute top-0 left-0 right-0 h-1.5
           bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600
         " />
-
-        <ThemeToggle className="absolute top-4 right-4 z-10" />
 
         <div className="space-y-6 mt-2">
           <FormHeader logoUrl={logoUrl} />
