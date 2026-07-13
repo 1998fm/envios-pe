@@ -7,17 +7,11 @@ import type { ConfiguracionLogistica } from './types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export async function calcularFechaEntrega(
-
   supabase: SupabaseClient,
-
   userId: string,
-
   configuracion: ConfiguracionLogistica,
-
   metodo: 'MOTO' | 'AGENCIA',
-
   fechaActual = new Date(),
-
 ): Promise<Date> {
 
   const dias =
@@ -45,21 +39,19 @@ export async function calcularFechaEntrega(
       ? configuracion.logisticaMotoCupo
       : configuracion.logisticaAgenciasCupo
 
-let fechaEntrega = new Date(fechaActual)
+// Normalizar fechaActual a Perú (evita que UTC adelante el día)
+const peruStr = fechaActual.toLocaleString('en-CA', { timeZone: 'America/Lima' })
+const [y, m, d] = peruStr.split('-').map(Number)
+const hoyPeru = new Date(y, m - 1, d, 12, 0, 0, 0)
+
+let fechaEntrega = new Date(hoyPeru)
 
 const diasAgregar =
-
   usaHora && validarHoraCorte(horaCorte)
-
     ? 2
-
     : 1
 
-fechaEntrega.setDate(
-
-  fechaEntrega.getDate() + diasAgregar
-
-)
+fechaEntrega.setDate(fechaEntrega.getDate() + diasAgregar)
 
 while (true) {
 
@@ -67,9 +59,7 @@ while (true) {
     fechaEntrega
       .toLocaleDateString(
         'en-US',
-        {
-          weekday: 'long',
-        }
+        { weekday: 'long', timeZone: 'America/Lima' }
       )
       .toUpperCase()
 
@@ -95,8 +85,8 @@ if (limitar) {
 
     const fechaTexto =
       fechaEntrega
-        .toISOString()
-        .split('T')[0]
+        .toLocaleString('en-CA', { timeZone: 'America/Lima' })
+        .split(' ')[0]
 
     const cantidadProgramada =
       await contarEnviosDelDia(
