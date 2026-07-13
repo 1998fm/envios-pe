@@ -573,13 +573,21 @@ setLoading(false)
 
   useEffect(() => {
     if (!userId) return
-    const interval = setInterval(() => {
-      fetchEnviosRef.current(0).then((result) => {
-        setEnvios(result.data)
-        setHasMore(result.hasMore)
-      })
-    }, 15000)
-    return () => clearInterval(interval)
+    const channel = supabase
+      .channel('envios-realtime')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'envios' },
+        (payload) => {
+          if ((payload.new as any)?.user_id === userId) {
+            fetchEnviosRef.current(0).then((result) => {
+              setEnvios(result.data)
+              setHasMore(result.hasMore)
+            })
+          }
+        },
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
   }, [userId])
 
   async function cargarMas() {
