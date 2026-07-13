@@ -21,7 +21,7 @@ type Props = {
 export default function EstadisticasGraficos({ tendenciaDiaria, distribucionMetodo, distribucionEstado }: Props) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-      <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3 lg:col-span-2">
+      <div className="bg-white  border border-slate-100  rounded-2xl p-3 lg:col-span-2">
         <div className="h-28">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={tendenciaDiaria}>
@@ -44,7 +44,7 @@ export default function EstadisticasGraficos({ tendenciaDiaria, distribucionMeto
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3">
+      <div className="bg-white  border border-slate-100  rounded-2xl p-3">
         <div className="h-28">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={distribucionMetodo} layout="vertical">
@@ -61,7 +61,7 @@ export default function EstadisticasGraficos({ tendenciaDiaria, distribucionMeto
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3">
+      <div className="bg-white  border border-slate-100  rounded-2xl p-3">
         <div className="h-28 flex items-center justify-center">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>

@@ -9,13 +9,13 @@ type Props = {
 
 export default function ErrorPage({ error, reset }: Props) {
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-slate-50  flex items-center justify-center p-4">
       <div className="flex flex-col items-center gap-6 text-center max-w-sm">
         <ToriMascot variant="error" size={100} animate />
-        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
+        <h1 className="text-2xl font-extrabold text-slate-900 ">
           Algo salió mal
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-slate-500 ">
           Tori se disculpa. Ocurrió un error inesperado.
         </p>
         <button
@@ -25,7 +25,7 @@ export default function ErrorPage({ error, reset }: Props) {
           Intentar de nuevo
         </button>
         {error.digest && (
-          <p className="text-xs text-slate-400 dark:text-slate-500">
+          <p className="text-xs text-slate-400 ">
             Código: {error.digest}
           </p>
         )}

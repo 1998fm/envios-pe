@@ -22,7 +22,7 @@ export default function SubmitButton({ loading, onClick }: Props) {
         cursor-pointer
         ${
           loading
-            ? 'bg-sky-400 dark:bg-sky-500/50 text-white cursor-not-allowed'
+            ? 'bg-sky-400  text-white cursor-not-allowed'
             : 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-lg shadow-sky-500/20 hover:shadow-xl hover:shadow-sky-500/30 active:shadow-md'
         }
       `}

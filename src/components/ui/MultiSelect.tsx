@@ -59,10 +59,10 @@ export default function MultiSelect({ label, options, selected, onChange, allLab
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
         className={`
           flex items-center gap-2 px-4 py-3 rounded-xl text-sm
-          bg-white dark:bg-slate-800
-          border border-slate-200 dark:border-slate-700
-          text-slate-700 dark:text-slate-300
-          hover:border-sky-400 dark:hover:border-sky-500
+          bg-white 
+          border border-slate-200 
+          text-slate-700 
+          hover:border-sky-400 :border-sky-500
           focus:outline-none focus:ring-2 focus:ring-sky-500/50
           transition-all duration-200 min-w-[160px]
           ${open ? 'ring-2 ring-sky-500/50 border-sky-500' : ''}
@@ -73,13 +73,13 @@ export default function MultiSelect({ label, options, selected, onChange, allLab
       </button>
 
       {open && (
-        <div className="absolute z-30 mt-1 min-w-[200px] bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl shadow-xl py-1 overflow-hidden">
+        <div className="absolute z-30 mt-1 min-w-[200px] bg-white  border border-slate-200  rounded-xl shadow-xl py-1 overflow-hidden">
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); toggleAll() }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors border-b border-slate-100 dark:border-slate-600"
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-slate-600  hover:bg-slate-50 :bg-slate-600 transition-colors border-b border-slate-100 "
           >
-            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${allSelected ? 'bg-sky-500 border-sky-500' : 'border-slate-300 dark:border-slate-500'}`}>
+            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${allSelected ? 'bg-sky-500 border-sky-500' : 'border-slate-300 '}`}>
               {allSelected && <Check size={10} className="text-white" />}
             </div>
             Seleccionar todos
@@ -96,11 +96,11 @@ export default function MultiSelect({ label, options, selected, onChange, allLab
                   w-full flex items-center gap-3 px-4 py-2.5 text-sm
                   transition-colors
                   ${isSelected
-                    ? 'bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 font-semibold'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'}
+                    ? 'bg-sky-50  text-sky-700  font-semibold'
+                    : 'text-slate-700  hover:bg-slate-50 :bg-slate-600'}
                 `}
               >
-                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-sky-500 border-sky-500' : 'border-slate-300 dark:border-slate-500'}`}>
+                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-sky-500 border-sky-500' : 'border-slate-300 '}`}>
                   {isSelected && <Check size={10} className="text-white" />}
                 </div>
                 {opt.label}

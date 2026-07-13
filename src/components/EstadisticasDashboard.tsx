@@ -89,8 +89,8 @@ export default function EstadisticasDashboard({ userId }: Props) {
                   onClick={() => setPreset(p.days)}
                   className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
                     preset === p.days && !customDesde
-                      ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30'
-                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                      ? 'text-sky-600  bg-sky-50 '
+                      : 'text-slate-400  hover:text-slate-600 :text-slate-300'
                   }`}
                 >
                   {p.label}
@@ -101,19 +101,19 @@ export default function EstadisticasDashboard({ userId }: Props) {
                   type="date"
                   value={customDesde}
                   onChange={(e) => { setCustomDesde(e.target.value); setPreset(0) }}
-                  className="w-20 sm:w-24 px-1.5 py-0.5 rounded text-[10px] border border-slate-200 dark:border-slate-700 bg-transparent text-slate-600 dark:text-slate-400"
+                  className="w-20 sm:w-24 px-1.5 py-0.5 rounded text-[10px] border border-slate-200  bg-transparent text-slate-600 "
                 />
                 <span className="text-[10px] text-slate-300">→</span>
                 <input
                   type="date"
                   value={customHasta}
                   onChange={(e) => { setCustomHasta(e.target.value); setPreset(0) }}
-                  className="w-20 sm:w-24 px-1.5 py-0.5 rounded text-[10px] border border-slate-200 dark:border-slate-700 bg-transparent text-slate-600 dark:text-slate-400"
+                  className="w-20 sm:w-24 px-1.5 py-0.5 rounded text-[10px] border border-slate-200  bg-transparent text-slate-600 "
                 />
                 <button
                   onClick={aplicarCustom}
                   disabled={!customDesde || !customHasta}
-                  className="px-1.5 py-0.5 rounded text-[10px] font-medium text-sky-600 dark:text-sky-400 disabled:opacity-30"
+                  className="px-1.5 py-0.5 rounded text-[10px] font-medium text-sky-600  disabled:opacity-30"
                 >
                   ir
                 </button>
@@ -136,7 +136,7 @@ export default function EstadisticasDashboard({ userId }: Props) {
           ) : !loading && !data ? (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
               <ToriMascot variant="empty" size={48} animate />
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-400 ">
                 No hay datos estadísticos en este período.
               </p>
             </div>

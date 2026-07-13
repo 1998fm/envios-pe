@@ -258,9 +258,9 @@ export default function PublicForm({
   return (
     <div className="max-w-xl mx-auto mt-4 sm:mt-6 px-3 sm:px-4">
       <div className="
-        bg-white dark:bg-slate-800/95
-        rounded-2xl shadow-xl dark:shadow-slate-900/50
-        border border-slate-100 dark:border-slate-700/50
+        bg-white 
+        rounded-2xl shadow-xl 
+        border border-slate-100 
         p-4 sm:p-8
         relative overflow-hidden
         animate-fade-in-up
@@ -306,7 +306,7 @@ export default function PublicForm({
 
           {metodo === 'MOTORIZADO' && (
             <div className="space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600 dark:text-slate-400">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600 ">
                 <input
                   type="checkbox"
                   checked={escogerDia}
@@ -338,7 +338,7 @@ export default function PublicForm({
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 ${
                               seleccionada
                                 ? 'bg-sky-600 text-white border-sky-600'
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-sky-400'
+                                : 'bg-white  border-slate-200  text-slate-600  hover:border-sky-400'
                             }`}
                           >
                             {formatearFecha(fechaStr)}
@@ -373,7 +373,7 @@ export default function PublicForm({
           href="/"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
+          className="inline-flex items-center gap-2 text-xs text-slate-400  hover:text-sky-600 :text-sky-400 transition-colors"
         >
           <img
             src="/images/tori/tori-logo.webp"

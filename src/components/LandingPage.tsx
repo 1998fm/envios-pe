@@ -29,7 +29,7 @@ export default function LandingPage() {
 
   const nav = (
     <nav className="flex items-center gap-5 sm:gap-8">
-      <Link href="/login" className="text-base font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+      <Link href="/login" className="text-base font-semibold text-slate-600  hover:text-slate-900 :text-slate-100 transition-colors">
         Iniciar sesión
       </Link>
       <Link
@@ -43,11 +43,11 @@ export default function LandingPage() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50  text-slate-900  overflow-x-hidden">
       {/* ============================================
           HEADER
       ============================================ */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800">
+      <header className="sticky top-0 z-40 bg-white/80  backdrop-blur-md border-b border-slate-100 ">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <LogoTori size={60} />
@@ -62,7 +62,7 @@ export default function LandingPage() {
 
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="sm:hidden p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="sm:hidden p-2 rounded-xl text-slate-600  hover:bg-slate-100 :bg-slate-800 transition-colors"
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -72,13 +72,13 @@ export default function LandingPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="sm:hidden px-4 pb-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950"
+              className="sm:hidden px-4 pb-4 border-b border-slate-100  bg-white "
             >
               <div className="flex flex-col gap-3">
                 <Link
                   href="/login"
                   onClick={() => setMenuOpen(false)}
-                  className="text-base font-semibold text-slate-600 dark:text-slate-400 py-2"
+                  className="text-base font-semibold text-slate-600  py-2"
                 >
                   Iniciar sesión
                 </Link>
@@ -99,9 +99,9 @@ export default function LandingPage() {
           HERO
       ============================================ */}
       <section className="relative pt-14 pb-12 sm:pt-28 sm:pb-24 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky-100/60 via-transparent to-indigo-100/30 dark:from-sky-900/20 dark:via-transparent dark:to-indigo-900/10 pointer-events-none" />
-        <div className="absolute top-1/3 left-1/4 w-72 h-72 bg-sky-400/10 dark:bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-400/10 dark:bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky-100/60 via-transparent to-indigo-100/30    pointer-events-none" />
+        <div className="absolute top-1/3 left-1/4 w-72 h-72 bg-sky-400/10  rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-400/10  rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 relative">
           <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
@@ -110,7 +110,7 @@ export default function LandingPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, ease: 'easeOut' }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 text-[10px] sm:text-xs font-semibold mb-4 sm:mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100  text-sky-700  text-[10px] sm:text-xs font-semibold mb-4 sm:mb-6">
                 <BarChart3 size={14} />
                 Más de 200 negocios peruanos ya ordenaron sus envíos
               </div>
@@ -122,10 +122,10 @@ export default function LandingPage() {
                 <br />
                 Recibe todo ordenado.
               </h1>
-              <p className="mt-2 sm:mt-3 text-[10px] sm:text-sm font-semibold text-sky-600 dark:text-sky-400">
+              <p className="mt-2 sm:mt-3 text-[10px] sm:text-sm font-semibold text-sky-600 ">
                 Tori — el sistema que ordena tus envíos automáticamente
               </p>
-              <p className="mt-3 sm:mt-5 text-sm sm:text-xl text-slate-600 dark:text-slate-400 leading-relaxed max-w-lg">
+              <p className="mt-3 sm:mt-5 text-sm sm:text-xl text-slate-600  leading-relaxed max-w-lg">
                 Tus clientes llenan tus datos en tu formulario y todo aparece ordenado en tu dashboard: 
                 dirección, método, pago. Tú solo abres, revisas y despachas. Sin chats perdidos, sin hojas sueltas.
               </p>
@@ -139,12 +139,12 @@ export default function LandingPage() {
                 </Link>
                 <a
                   href="#como-funciona"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-sky-500 hover:text-sky-700 dark:hover:text-sky-300 transition-all duration-200"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-semibold bg-white  border border-slate-200  text-slate-700  hover:border-sky-500 hover:text-sky-700 :text-sky-300 transition-all duration-200"
                 >
                   Ver cómo funciona
                 </a>
               </div>
-              <div className="mt-6 flex items-center gap-6 text-xs text-slate-400 dark:text-slate-500">
+              <div className="mt-6 flex items-center gap-6 text-xs text-slate-400 ">
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck size={12} className="text-emerald-500" />
                   30 días Pro gratis
@@ -166,9 +166,9 @@ export default function LandingPage() {
               transition={{ duration: 0.6, delay: 0.15, ease: 'easeOut' }}
               className="relative"
             >
-              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-2xl overflow-hidden">
+              <div className="bg-white  border border-slate-200  rounded-3xl shadow-2xl overflow-hidden">
                 {/* Dashboard Header */}
-                <div className="px-4 sm:px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-800 gap-2">
+                <div className="px-4 sm:px-5 py-4 border-b border-slate-100  flex items-center justify-between bg-white  gap-2">
                   <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold text-[10px] sm:text-xs shrink-0">
                       T
@@ -176,59 +176,59 @@ export default function LandingPage() {
                     <span className="text-base sm:text-lg font-extrabold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent whitespace-nowrap">
                       Tori
                     </span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-amber-100  text-amber-700  whitespace-nowrap">
                       Pro · Trial 28d
                     </span>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <div className="w-14 sm:w-20 h-7 sm:h-8 rounded-xl bg-slate-100 dark:bg-slate-700" />
-                    <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-xl bg-slate-100 dark:bg-slate-700" />
+                    <div className="w-14 sm:w-20 h-7 sm:h-8 rounded-xl bg-slate-100 " />
+                    <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-xl bg-slate-100 " />
                   </div>
                 </div>
 
                 {/* Filter Bar */}
-                <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100 dark:border-slate-700">
+                <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100 ">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <div className="relative flex-1 min-w-[140px]">
                       <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <div className="w-full pl-9 pr-3 py-2 rounded-xl text-[11px] sm:text-xs bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-400 truncate">
+                      <div className="w-full pl-9 pr-3 py-2 rounded-xl text-[11px] sm:text-xs bg-slate-50  border border-slate-200  text-slate-400 truncate">
                         Buscar por nombre, DNI o teléfono...
                       </div>
                     </div>
-                    <div className="w-20 sm:w-24 h-8 sm:h-9 rounded-xl bg-slate-100 dark:bg-slate-700 shrink-0" />
-                    <div className="w-20 sm:w-24 h-8 sm:h-9 rounded-xl bg-slate-100 dark:bg-slate-700 shrink-0" />
+                    <div className="w-20 sm:w-24 h-8 sm:h-9 rounded-xl bg-slate-100  shrink-0" />
+                    <div className="w-20 sm:w-24 h-8 sm:h-9 rounded-xl bg-slate-100  shrink-0" />
                   </div>
                 </div>
 
                 {/* Envio Cards */}
                 <div className="p-4 sm:p-5 space-y-3">
                   {[
-                    { initial: 'M', name: 'María García', dni: '76543210', tel: '999 888 777', metodo: 'Motorizado', estado: 'ENVIADO', border: 'border-l-emerald-500', badgeClass: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' },
-                    { initial: 'C', name: 'Carlos López', dni: '71234567', tel: '988 777 666', metodo: 'Shalom', estado: 'EMPACADO', border: 'border-l-amber-500', badgeClass: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' },
-                    { initial: 'A', name: 'Ana Torres', dni: '70123456', tel: '977 666 555', metodo: 'Motorizado', estado: 'NO_EMPACADO', border: 'border-l-red-500', badgeClass: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' },
+                    { initial: 'M', name: 'María García', dni: '76543210', tel: '999 888 777', metodo: 'Motorizado', estado: 'ENVIADO', border: 'border-l-emerald-500', badgeClass: 'bg-emerald-100  text-emerald-700 ' },
+                    { initial: 'C', name: 'Carlos López', dni: '71234567', tel: '988 777 666', metodo: 'Shalom', estado: 'EMPACADO', border: 'border-l-amber-500', badgeClass: 'bg-amber-100  text-amber-700 ' },
+                    { initial: 'A', name: 'Ana Torres', dni: '70123456', tel: '977 666 555', metodo: 'Motorizado', estado: 'NO_EMPACADO', border: 'border-l-red-500', badgeClass: 'bg-red-100  text-red-700 ' },
                   ].map((item, i) => (
                     <div
                       key={i}
-                      className={`${item.border} bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 border-l-4 p-3 sm:p-4`}
+                      className={`${item.border} bg-white  rounded-2xl border border-slate-100  border-l-4 p-3 sm:p-4`}
                     >
                       <div className="flex items-start gap-2 sm:gap-3">
                         {/* Checkbox */}
-                        <div className="w-4 h-4 sm:w-5 sm:h-5 mt-1 rounded border-2 border-slate-300 dark:border-slate-600 shrink-0" />
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 mt-1 rounded border-2 border-slate-300  shrink-0" />
                         {/* Avatar */}
                         <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl shrink-0 bg-gradient-to-r from-sky-600 to-indigo-600 text-white flex items-center justify-center font-bold text-[10px] sm:text-sm shadow-sm">
                           {item.initial}
                         </div>
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">{item.name}</div>
-                          <div className="flex flex-col sm:flex-row sm:gap-3 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <div className="font-bold text-xs sm:text-sm text-slate-900  truncate">{item.name}</div>
+                          <div className="flex flex-col sm:flex-row sm:gap-3 text-[10px] sm:text-xs text-slate-500  mt-0.5">
                             <span>DNI {item.dni}</span>
                             <span className="sm:inline">TLF {item.tel}</span>
                           </div>
                         </div>
                         {/* Badges */}
                         <div className="flex items-center gap-1.5 sm:gap-2 self-center shrink-0">
-                          <span className="px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                          <span className="px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold bg-slate-100  text-slate-700  whitespace-nowrap">
                             {item.metodo === 'Motorizado' ? 'Moto' : item.metodo}
                           </span>
                           <span className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold whitespace-nowrap ${item.badgeClass}`}>
@@ -241,9 +241,9 @@ export default function LandingPage() {
                 </div>
 
                 {/* Bottom summary */}
-                <div className="px-4 sm:px-5 py-3 sm:py-4 border-t border-slate-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900/50">
-                  <div className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">Hoy · 3 pedidos</div>
-                  <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
+                <div className="px-4 sm:px-5 py-3 sm:py-4 border-t border-slate-100  flex flex-wrap items-center justify-between gap-2 bg-slate-50 ">
+                  <div className="text-[10px] sm:text-xs text-slate-400 ">Hoy · 3 pedidos</div>
+                  <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-[10px] sm:text-xs text-slate-400 ">
                     <span className="flex items-center gap-1">
                       <BarChart3 size={10} className="text-emerald-500 shrink-0" />
                       +40% menos reclamos
@@ -263,7 +263,7 @@ export default function LandingPage() {
       {/* ============================================
           MÉTRICAS
       ============================================ */}
-      <section className="py-8 sm:py-16 bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800">
+      <section className="py-8 sm:py-16 bg-white  border-y border-slate-100 ">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
             {[
@@ -280,12 +280,12 @@ export default function LandingPage() {
                 transition={{ duration: 0.4, delay: i * 0.1 }}
                 className="text-center"
               >
-                <item.icon size={20} className="mx-auto text-sky-500 dark:text-sky-400 mb-2" />
-                <div className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100">
+                <item.icon size={20} className="mx-auto text-sky-500  mb-2" />
+                <div className="text-3xl sm:text-4xl font-extrabold text-slate-900 ">
                   {item.number}
                   {item.suffix}
                 </div>
-                <div className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">{item.label}</div>
+                <div className="mt-1 text-xs sm:text-sm text-slate-500 ">{item.label}</div>
               </motion.div>
             ))}
           </div>
@@ -295,13 +295,13 @@ export default function LandingPage() {
       {/* ============================================
           PROBLEMA
       ============================================ */}
-      <section id="problema" className="py-10 sm:py-24 bg-white dark:bg-slate-900">
+      <section id="problema" className="py-10 sm:py-24 bg-white ">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               ¿Te suena familiar?
             </h2>
-            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 ">
               El 90% de negocios que empiezan a hacer envíos terminan con estos problemas.
             </p>
           </motion.div>
@@ -313,24 +313,24 @@ export default function LandingPage() {
                 title: '¿Tus pedidos se pierden en los chats?',
                 desc: 'Te llegan direcciones por WhatsApp, Instagram y Messenger. Cuando abres el chat ya no encuentras el mensaje. Tu cliente se molesta y tú pierdes la venta.',
                 color: 'text-red-500',
-                bg: 'bg-red-50 dark:bg-red-900/10',
-                border: 'border-red-200 dark:border-red-900/30',
+                bg: 'bg-red-50 ',
+                border: 'border-red-200 ',
               },
               {
                 number: '02',
                 title: '¿Sigues anotando direcciones en papel?',
                 desc: 'Apuntas en una libreta, luego pasas a Excel, alguien borra una fila sin querer. A fin de mes no sabes cuántos envíos hiciste ni cuánto te deben.',
                 color: 'text-amber-500',
-                bg: 'bg-amber-50 dark:bg-amber-900/10',
-                border: 'border-amber-200 dark:border-amber-900/30',
+                bg: 'bg-amber-50 ',
+                border: 'border-amber-200 ',
               },
               {
                 number: '03',
                 title: '¿No sabes qué pedido va hoy?',
                 desc: 'El motorizado llama y no tienes la dirección lista. El cliente pregunta «¿ya salió mi pedido?» y no sabes qué responder. Tu operación te controla a ti.',
                 color: 'text-sky-600',
-                bg: 'bg-sky-50 dark:bg-sky-900/10',
-                border: 'border-sky-200 dark:border-sky-900/30',
+                bg: 'bg-sky-50 ',
+                border: 'border-sky-200 ',
               },
             ].map((item, i) => (
               <motion.div
@@ -344,10 +344,10 @@ export default function LandingPage() {
                 <span className={`text-6xl sm:text-7xl font-black ${item.color} opacity-20 leading-none`}>
                   {item.number}
                 </span>
-                <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
+                <h3 className="mt-2 text-lg font-bold text-slate-900  leading-snug">
                   {item.title}
                 </h3>
-                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                <p className="mt-3 text-sm text-slate-500  leading-relaxed">
                   {item.desc}
                 </p>
               </motion.div>
@@ -355,11 +355,11 @@ export default function LandingPage() {
           </div>
 
           <motion.div {...fadeUp} className="text-center mt-10">
-            <p className="text-base sm:text-lg font-semibold text-slate-600 dark:text-slate-400">
+            <p className="text-base sm:text-lg font-semibold text-slate-600 ">
               Perder un pedido no solo significa perder dinero.{' '}
               También pierdes la confianza del cliente.
             </p>
-            <p className="mt-2 text-lg font-semibold text-slate-700 dark:text-slate-300">
+            <p className="mt-2 text-lg font-semibold text-slate-700 ">
               Tori pone orden en tu operación.{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                 Y tus clientes vuelven a confiar.
@@ -372,7 +372,7 @@ export default function LandingPage() {
       {/* ============================================
           ANTES / DESPUÉS
       ============================================ */}
-      <section className="py-10 sm:py-24 bg-sky-50/50 dark:bg-sky-950/10">
+      <section className="py-10 sm:py-24 bg-sky-50/50 ">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
@@ -389,9 +389,9 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4 }}
-              className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-2xl p-6 sm:p-8"
+              className="bg-red-50  border border-red-200  rounded-2xl p-6 sm:p-8"
             >
-              <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-4">Antes de Tori</h3>
+              <h3 className="text-lg font-bold text-red-600  mb-4">Antes de Tori</h3>
               <ul className="space-y-3">
                 {[
                   'Direcciones perdidas en WhatsApp',
@@ -400,8 +400,8 @@ export default function LandingPage() {
                   'Clientes molestos esperando',
                   'Caos al crecer',
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
-                    <span className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                  <li key={item} className="flex items-center gap-3 text-sm text-slate-600 ">
+                    <span className="w-6 h-6 rounded-full bg-red-100  flex items-center justify-center shrink-0">
                       <span className="text-red-500 font-bold text-xs">✕</span>
                     </span>
                     {item}
@@ -415,9 +415,9 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.1 }}
-              className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-900/30 rounded-2xl p-6 sm:p-8"
+              className="bg-emerald-50  border border-emerald-200  rounded-2xl p-6 sm:p-8"
             >
-              <h3 className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mb-4">Después de Tori</h3>
+              <h3 className="text-lg font-bold text-emerald-600  mb-4">Después de Tori</h3>
               <ul className="space-y-3">
                 {[
                   'Todo llega ordenado al dashboard',
@@ -426,8 +426,8 @@ export default function LandingPage() {
                   'Menos reclamos y clientes felices',
                   'Tu negocio crece sin caos',
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
-                    <span className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                  <li key={item} className="flex items-center gap-3 text-sm text-slate-600 ">
+                    <span className="w-6 h-6 rounded-full bg-emerald-100  flex items-center justify-center shrink-0">
                       <span className="text-emerald-500 font-bold text-xs">✓</span>
                     </span>
                     {item}
@@ -451,7 +451,7 @@ export default function LandingPage() {
                 3 pasos
               </span>
             </h2>
-            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 ">
               Configura tu negocio, comparte tu link y empieza a recibir pedidos en minutos.
             </p>
           </motion.div>
@@ -483,15 +483,15 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.1, ease: 'easeOut' }}
-                className="relative bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 sm:p-8"
+                className="relative bg-slate-50  border border-slate-200  rounded-2xl p-6 sm:p-8"
               >
-                <span className="text-5xl sm:text-6xl font-black text-sky-100 dark:text-sky-900/40 leading-none">
+                <span className="text-5xl sm:text-6xl font-black text-sky-100  leading-none">
                   {item.step}
                 </span>
                 <div className="mt-2 w-12 h-0.5 bg-gradient-to-r from-sky-500 to-indigo-500 rounded-full" />
-                <item.icon size={24} className="mt-5 text-sky-600 dark:text-sky-400" />
-                <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-slate-100">{item.title}</h3>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+                <item.icon size={24} className="mt-5 text-sky-600 " />
+                <h3 className="mt-4 text-lg font-bold text-slate-900 ">{item.title}</h3>
+                <p className="mt-2 text-sm text-slate-500  leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -547,7 +547,7 @@ export default function LandingPage() {
                 ordena tus envíos
               </span>
             </h2>
-            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 ">
               Métodos de entrega, tarifas por zona, horarios inteligentes. 
               Todo lo que tu negocio necesita para enviar sin dolor de cabeza.
             </p>
@@ -568,13 +568,13 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 sm:p-6 hover:shadow-lg hover:border-sky-300 dark:hover:border-sky-700 transition-all duration-200"
+                className="bg-white  border border-slate-200  rounded-2xl p-5 sm:p-6 hover:shadow-lg hover:border-sky-300 :border-sky-700 transition-all duration-200"
               >
                 <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center`}>
                   <item.icon size={20} className="text-white" />
                 </div>
-                <h3 className="mt-4 font-bold text-slate-900 dark:text-slate-100">{item.title}</h3>
-                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+                <h3 className="mt-4 font-bold text-slate-900 ">{item.title}</h3>
+                <p className="mt-1.5 text-sm text-slate-500  leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -584,7 +584,7 @@ export default function LandingPage() {
       {/* ============================================
           FEATURES
       ============================================ */}
-      <section className="py-10 sm:py-24 bg-white dark:bg-slate-900">
+      <section className="py-10 sm:py-24 bg-white ">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
@@ -593,7 +593,7 @@ export default function LandingPage() {
                 vender más
               </span>
             </h2>
-            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 ">
               Herramientas diseñadas para que tu negocio de envíos funcione sin complicaciones.
             </p>
           </motion.div>
@@ -613,13 +613,13 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="group p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-sky-300 dark:hover:border-sky-700 transition-all duration-200"
+                className="group p-5 sm:p-6 rounded-2xl border border-slate-200  bg-white  hover:border-sky-300 :border-sky-700 transition-all duration-200"
               >
-                <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                  <item.icon size={20} className="text-sky-600 dark:text-sky-400" />
+                <div className="w-10 h-10 rounded-xl bg-sky-100  flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <item.icon size={20} className="text-sky-600 " />
                 </div>
-                <h3 className="mt-4 font-bold text-slate-900 dark:text-slate-100">{item.title}</h3>
-                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+                <h3 className="mt-4 font-bold text-slate-900 ">{item.title}</h3>
+                <p className="mt-1.5 text-sm text-slate-500  leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -654,11 +654,11 @@ export default function LandingPage() {
                 transition={{ duration: 0.4, delay: i * 0.1 }}
                 className="text-center p-6 sm:p-8"
               >
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-sky-100 to-indigo-100 dark:from-sky-900/30 dark:to-indigo-900/30 flex items-center justify-center">
-                  <item.icon size={28} className="text-sky-600 dark:text-sky-400" />
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-sky-100 to-indigo-100   flex items-center justify-center">
+                  <item.icon size={28} className="text-sky-600 " />
                 </div>
-                <h3 className="mt-5 text-lg font-bold text-slate-900 dark:text-slate-100">{item.title}</h3>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+                <h3 className="mt-5 text-lg font-bold text-slate-900 ">{item.title}</h3>
+                <p className="mt-2 text-sm text-slate-500  leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -668,7 +668,7 @@ export default function LandingPage() {
       {/* ============================================
           TESTIMONIOS
       ============================================ */}
-      <section className="py-10 sm:py-24 bg-slate-50 dark:bg-slate-950">
+      <section className="py-10 sm:py-24 bg-slate-50 ">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
@@ -710,18 +710,18 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.1 }}
-                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 sm:p-8"
+                className="bg-white  border border-slate-200  rounded-2xl p-6 sm:p-8"
               >
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${t.gradient} flex items-center justify-center text-white font-bold text-base shadow-sm`}>
                     {t.initials}
                   </div>
                   <div>
-                    <div className="font-semibold text-sm text-slate-900 dark:text-slate-100">{t.name}</div>
-                    <div className="text-xs text-slate-400 dark:text-slate-500">{t.role}</div>
+                    <div className="font-semibold text-sm text-slate-900 ">{t.name}</div>
+                    <div className="text-xs text-slate-400 ">{t.role}</div>
                   </div>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                <p className="text-sm text-slate-600  leading-relaxed">
                   &ldquo;{t.quote}&rdquo;
                 </p>
               </motion.div>
@@ -733,7 +733,7 @@ export default function LandingPage() {
       {/* ============================================
           PLANES
       ============================================ */}
-      <section id="planes" className="py-10 sm:py-24 bg-white dark:bg-slate-900">
+      <section id="planes" className="py-10 sm:py-24 bg-white ">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
@@ -742,7 +742,7 @@ export default function LandingPage() {
                 simples y claros
               </span>
             </h2>
-            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-600 ">
               30 días Pro gratis, sin tarjeta, sin compromiso. Después decide si sigues.
             </p>
           </motion.div>
@@ -754,19 +754,19 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4 }}
-              className="relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 sm:p-8"
+              className="relative rounded-2xl border border-slate-200  bg-white  p-6 sm:p-8"
             >
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-amber-100  text-amber-700  text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
                 30 días Pro gratis
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-4">Básico</h3>
+              <h3 className="text-lg font-bold text-slate-900  mt-4">Básico</h3>
               <div className="mt-3 flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-slate-900 dark:text-slate-100">Gratis</span>
+                <span className="text-4xl font-extrabold text-slate-900 ">Gratis</span>
               </div>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Después del trial, para siempre</p>
+              <p className="mt-1 text-sm text-slate-500 ">Después del trial, para siempre</p>
               <Link
                 href="/register"
-                className="mt-6 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:border-sky-500 hover:text-sky-700 dark:hover:text-sky-300 transition-all duration-200"
+                className="mt-6 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold border border-slate-200  text-slate-700  hover:border-sky-500 hover:text-sky-700 :text-sky-300 transition-all duration-200"
               >
                 Probar Pro gratis
               </Link>
@@ -778,17 +778,17 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.1 }}
-              className="relative rounded-2xl border-2 border-sky-500 bg-white dark:bg-slate-800 p-6 sm:p-8 shadow-xl shadow-sky-500/10"
+              className="relative rounded-2xl border-2 border-sky-500 bg-white  p-6 sm:p-8 shadow-xl shadow-sky-500/10"
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 text-white text-[11px] font-bold uppercase tracking-wider">
                 Más popular
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-2">Pro</h3>
+              <h3 className="text-lg font-bold text-slate-900  mt-2">Pro</h3>
               <div className="mt-3 flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-slate-900 dark:text-slate-100">S/ 29.90</span>
-                <span className="text-sm text-slate-500 dark:text-slate-400">/mes</span>
+                <span className="text-4xl font-extrabold text-slate-900 ">S/ 29.90</span>
+                <span className="text-sm text-slate-500 ">/mes</span>
               </div>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">30 días gratis, luego S/ 29.90/mes</p>
+              <p className="mt-1 text-sm text-slate-500 ">30 días gratis, luego S/ 29.90/mes</p>
               <Link
                 href="/register"
                 className="mt-6 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-sky-500/25 hover:scale-[1.02] transition-all duration-200"
@@ -807,32 +807,32 @@ export default function LandingPage() {
             transition={{ duration: 0.4, delay: 0.2 }}
             className="mt-10 max-w-3xl mx-auto"
           >
-            <h3 className="text-center text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+            <h3 className="text-center text-sm font-semibold text-slate-500  uppercase tracking-wider mb-4">
               Compara funciones
             </h3>
-            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
+            <div className="bg-white  border border-slate-200  rounded-2xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-                    <th className="text-left px-5 py-4 font-semibold text-slate-600 dark:text-slate-400">Función</th>
-                    <th className="text-center px-5 py-4 font-semibold text-slate-600 dark:text-slate-400">Básico</th>
-                    <th className="text-center px-5 py-4 font-semibold text-sky-600 dark:text-sky-400">Pro</th>
+                  <tr className="border-b border-slate-100  bg-slate-50 ">
+                    <th className="text-left px-5 py-4 font-semibold text-slate-600 ">Función</th>
+                    <th className="text-center px-5 py-4 font-semibold text-slate-600 ">Básico</th>
+                    <th className="text-center px-5 py-4 font-semibold text-sky-600 ">Pro</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[
                     { feature: 'Pedidos por mes', basic: '50', pro: 'Ilimitados' },
                     { feature: 'Formulario público', basic: <CheckCircle size={16} className="text-emerald-500 mx-auto" />, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
-                    { feature: 'Tu marca en el formulario', basic: <span className="text-slate-300 dark:text-slate-600 mx-auto block">—</span>, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
+                    { feature: 'Tu marca en el formulario', basic: <span className="text-slate-300  mx-auto block">—</span>, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
                     { feature: 'Métodos de envío', basic: '2', pro: 'Todos' },
                     { feature: 'Dashboard con filtros', basic: <CheckCircle size={16} className="text-emerald-500 mx-auto" />, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
-                    { feature: 'Control de horarios', basic: <span className="text-slate-300 dark:text-slate-600 mx-auto block">—</span>, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
-                    { feature: 'Envíos masivos Excel', basic: <span className="text-slate-300 dark:text-slate-600 mx-auto block">—</span>, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
+                    { feature: 'Control de horarios', basic: <span className="text-slate-300  mx-auto block">—</span>, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
+                    { feature: 'Envíos masivos Excel', basic: <span className="text-slate-300  mx-auto block">—</span>, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
                     { feature: 'Formato para shalom masivo', basic: <CheckCircle size={16} className="text-emerald-500 mx-auto" />, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
-                    { feature: 'Cambio masivo de estados', basic: <span className="text-slate-300 dark:text-slate-600 mx-auto block">—</span>, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
+                    { feature: 'Cambio masivo de estados', basic: <span className="text-slate-300  mx-auto block">—</span>, pro: <CheckCircle size={16} className="text-emerald-500 mx-auto" /> },
                   ].map((row, i) => (
-                    <tr key={row.feature} className="border-b border-slate-100 dark:border-slate-700 last:border-0">
-                      <td className="px-5 py-3.5 text-slate-700 dark:text-slate-300">{row.feature}</td>
+                    <tr key={row.feature} className="border-b border-slate-100  last:border-0">
+                      <td className="px-5 py-3.5 text-slate-700 ">{row.feature}</td>
                       <td className="px-5 py-3.5 text-center">{row.basic}</td>
                       <td className="px-5 py-3.5 text-center">{row.pro}</td>
                     </tr>
@@ -847,20 +847,20 @@ export default function LandingPage() {
       {/* ============================================
           FOOTER
       ============================================ */}
-      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+      <footer className="border-t border-slate-200  bg-white ">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm font-bold tracking-tight bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
             <LogoTori size={22} />
             Tori — tu ayudante fiel
           </div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">
+          <div className="text-xs text-slate-400 ">
             © {new Date().getFullYear()} Tori — Todos los derechos reservados.
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-xs text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+            <Link href="/login" className="text-xs text-slate-500  hover:text-slate-700 :text-slate-300 transition-colors">
               Iniciar sesión
             </Link>
-            <Link href="/register" className="text-xs text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+            <Link href="/register" className="text-xs text-slate-500  hover:text-slate-700 :text-slate-300 transition-colors">
               Crear cuenta
             </Link>
           </div>

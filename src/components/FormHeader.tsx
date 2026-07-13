@@ -24,11 +24,11 @@ export default function FormHeader({ logoUrl }: Props) {
         </div>
       )}
 
-      <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+      <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 ">
         Registra tu envío
       </h1>
 
-      <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm sm:text-base">
+      <p className="mt-2 text-slate-500  text-sm sm:text-base">
         Completa tus datos para coordinar tu entrega.
       </p>
     </motion.div>

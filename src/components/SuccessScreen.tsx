@@ -65,8 +65,8 @@ export default function SuccessScreen({
       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
     >
       <div className="
-        bg-white dark:bg-slate-800
-        border border-slate-200 dark:border-slate-700
+        bg-white 
+        border border-slate-200 
         rounded-2xl shadow-xl
         p-8 sm:p-10
         text-center
@@ -88,17 +88,17 @@ export default function SuccessScreen({
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 400, damping: 15, delay: 0.15 }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30"
+            className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 "
           >
-            <CheckCircle2 size={36} className="text-emerald-600 dark:text-emerald-400" />
+            <CheckCircle2 size={36} className="text-emerald-600 " />
           </motion.div>
         </div>
 
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+        <h2 className="text-2xl font-bold text-slate-900 ">
           Pedido registrado correctamente
         </h2>
 
-        <p className="mt-3 text-slate-500 dark:text-slate-400 whitespace-pre-line">
+        <p className="mt-3 text-slate-500  whitespace-pre-line">
           {redirectMessage || 'Gracias por tu solicitud.'}
         </p>
 
@@ -107,13 +107,13 @@ export default function SuccessScreen({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-6 rounded-xl bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 p-4"
+            className="mt-6 rounded-xl bg-sky-50  border border-sky-200  p-4"
           >
-            <div className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-1">
+            <div className="flex items-center justify-center gap-2 text-sm text-slate-500  mb-1">
               <Calendar size={14} />
               <span>Fecha programada</span>
             </div>
-            <div className="text-lg font-bold text-sky-700 dark:text-sky-400">
+            <div className="text-lg font-bold text-sky-700 ">
               {new Date(fechaProgramada + 'T12:00:00').toLocaleDateString('es-PE', {
                 weekday: 'long',
                 day: 'numeric',
@@ -128,7 +128,7 @@ export default function SuccessScreen({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="mt-5 text-xs text-slate-400 dark:text-slate-500"
+            className="mt-5 text-xs text-slate-400 "
           >
             Redireccionando...
           </motion.p>

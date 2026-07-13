@@ -30,7 +30,7 @@ export default function ShippingMethodCards({ metodos, selected, onSelect }: Pro
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.15 }}
     >
-      <h2 className="text-xs uppercase tracking-widest text-slate-400 dark:text-slate-500 font-semibold mb-3">
+      <h2 className="text-xs uppercase tracking-widest text-slate-400  font-semibold mb-3">
         Información de envío
       </h2>
 
@@ -57,8 +57,8 @@ export default function ShippingMethodCards({ metodos, selected, onSelect }: Pro
                 cursor-pointer
                 ${
                   isActive
-                    ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 shadow-sm'
-                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
+                    ? 'border-sky-500 bg-sky-50  text-sky-700  shadow-sm'
+                    : 'border-slate-200  bg-white  text-slate-600  hover:border-slate-300 :border-slate-600'
                 }
               `}
             >

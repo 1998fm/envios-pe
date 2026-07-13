@@ -1166,7 +1166,7 @@ for (
 
   return (
   <main id="dashboard-content"
-    className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8"
+    className="min-h-screen bg-slate-50  p-4 sm:p-6 lg:p-8"
   >
     <DashboardOnboarding tieneEnvios={tieneEnvios} />
 
@@ -1238,7 +1238,7 @@ for (
       <div className="flex justify-center pt-4 pb-8">
         <button
           onClick={cargarMas}
-          className="px-6 py-3 rounded-xl text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-sky-500 hover:text-sky-700 dark:hover:text-sky-300 transition-all duration-200"
+          className="px-6 py-3 rounded-xl text-sm font-semibold bg-white  border border-slate-200  text-slate-700  hover:border-sky-500 hover:text-sky-700 :text-sky-300 transition-all duration-200"
         >
           Cargar más envíos
         </button>

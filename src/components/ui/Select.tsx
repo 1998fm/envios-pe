@@ -19,9 +19,9 @@ const Select = forwardRef<HTMLSelectElement, Props>(
           px-4
           py-3
           rounded-2xl
-          border border-slate-200 dark:border-slate-600
-          bg-gray-50 dark:bg-slate-700
-          text-slate-900 dark:text-slate-100
+          border border-slate-200 
+          bg-gray-50 
+          text-slate-900 
           shadow-sm
           transition-all
           focus:outline-none

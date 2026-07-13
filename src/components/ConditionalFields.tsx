@@ -25,11 +25,11 @@ type Props = {
 
 const inputClass = `
   w-full px-4 py-3.5
-  bg-white dark:bg-slate-900/50
-  border border-slate-200 dark:border-slate-700
+  bg-white 
+  border border-slate-200 
   rounded-xl
-  text-slate-900 dark:text-slate-100
-  placeholder:text-slate-400 dark:placeholder:text-slate-500
+  text-slate-900 
+  placeholder:text-slate-400 :text-slate-500
   focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500
   transition-all duration-200
   text-sm
@@ -96,21 +96,21 @@ export default function ConditionalFields(props: Props) {
           />
 
           {props.distrito && (
-            <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
-              <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-white  border border-slate-200 ">
+              <span className="text-sm text-slate-500  font-medium">
                 Costo del envío
               </span>
               {props.cargandoTarifa ? (
-                <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <span className="text-sm text-slate-500  flex items-center gap-1.5">
                   <Loader2 size={14} className="animate-spin" />
                   Consultando...
                 </span>
               ) : props.tarifaMotorizado !== null ? (
-                <span className="text-lg font-bold text-sky-700 dark:text-sky-400">
+                <span className="text-lg font-bold text-sky-700 ">
                   S/ {Number(props.tarifaMotorizado).toFixed(2)}
                 </span>
               ) : (
-                <span className="text-sm font-medium text-red-500 dark:text-red-400">
+                <span className="text-sm font-medium text-red-500 ">
                   Sin tarifa
                 </span>
               )}

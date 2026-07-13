@@ -48,12 +48,12 @@ export default function ModalCopiarDatos({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 sm:p-6">
-      <div className="relative overflow-hidden bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col">
-        <div className="shrink-0 px-6 sm:px-8 pt-8 sm:pt-10 pb-6 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+      <div className="relative overflow-hidden bg-white  rounded-2xl border border-slate-200  shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+        <div className="shrink-0 px-6 sm:px-8 pt-8 sm:pt-10 pb-6 border-b border-slate-200 ">
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 ">
             Copiar datos para Motorizado
           </h2>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm text-slate-500 ">
             Revisa los envíos antes de copiar o exportar la información.
           </p>
         </div>
@@ -76,8 +76,8 @@ export default function ModalCopiarDatos({
             })}
           </div>
 
-          <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex items-center justify-between">
-            <span className="font-semibold text-slate-700 dark:text-slate-300 text-sm">
+          <div className="bg-slate-50  border border-slate-200  rounded-2xl p-5 flex items-center justify-between">
+            <span className="font-semibold text-slate-700  text-sm">
               Cobrar todos los envíos
             </span>
             <input

@@ -23,18 +23,18 @@ export default function OnboardingStep3Logistica({ config, upd }: Props) {
 
   return (
     <div className="space-y-8">
-      <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-3xl p-8 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+      <div className="bg-white  border border-slate-200  rounded-3xl p-8 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900 ">
           Control logístico
         </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+        <p className="text-sm text-slate-500  mt-2">
           Configura días de atención, horarios de corte y cupo diario para que los pedidos se programen automáticamente.
         </p>
 
         <div className="mt-8 space-y-6">
           {config.metodoMotorizado && (
             <div>
-              <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mb-4">Motorizado</h3>
+              <h3 className="font-semibold text-lg text-slate-900  mb-4">Motorizado</h3>
               <ConfiguracionMetodo
                 dias={config.logisticaMotoDias}
                 setDias={setter(upd, 'logisticaMotoDias', config)}
@@ -52,7 +52,7 @@ export default function OnboardingStep3Logistica({ config, upd }: Props) {
 
           {hayAgencias && (
             <div>
-              <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100 mb-4">Agencias</h3>
+              <h3 className="font-semibold text-lg text-slate-900  mb-4">Agencias</h3>
               <ConfiguracionMetodo
                 dias={config.logisticaAgenciasDias}
                 setDias={setter(upd, 'logisticaAgenciasDias', config)}

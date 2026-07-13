@@ -18,11 +18,11 @@ const options = [
 function badge(value: string) {
   switch (value) {
     case 'ENVIADO':
-      return { label: 'Enviado', className: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700' }
+      return { label: 'Enviado', className: 'bg-emerald-100  text-emerald-700  border-emerald-200 ' }
     case 'EMPACADO':
-      return { label: 'Empacado', className: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700' }
+      return { label: 'Empacado', className: 'bg-amber-100  text-amber-700  border-amber-200 ' }
     default:
-      return { label: 'No Emp.', className: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700' }
+      return { label: 'No Emp.', className: 'bg-red-100  text-red-700  border-red-200 ' }
   }
 }
 

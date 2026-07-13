@@ -41,7 +41,7 @@ export default function MenuSelect({ value, onChange, options, badge, align = 'l
           transition-all duration-150 border
           ${display
             ? display.className
-            : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:border-sky-400'}
+            : 'bg-white  border-slate-200  text-slate-700  hover:border-sky-400'}
           ${open ? 'ring-2 ring-sky-500/40' : ''}
         `}
       >
@@ -54,8 +54,8 @@ export default function MenuSelect({ value, onChange, options, badge, align = 'l
       {open && (
         <div className={`
           absolute z-20 mt-1 min-w-[140px]
-          bg-white dark:bg-slate-700
-          border border-slate-200 dark:border-slate-600
+          bg-white 
+          border border-slate-200 
           rounded-xl shadow-lg
           py-1 overflow-hidden
           ${align === 'right' ? 'right-0' : 'left-0'}
@@ -71,8 +71,8 @@ export default function MenuSelect({ value, onChange, options, badge, align = 'l
                   w-full text-left px-4 py-2 text-xs font-semibold
                   transition-colors
                   ${value === opt.value
-                    ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'}
+                    ? 'bg-sky-50  text-sky-700 '
+                    : 'text-slate-700  hover:bg-slate-100 :bg-slate-600'}
                 `}
               >
                 {optDisplay ? (

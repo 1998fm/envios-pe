@@ -16,12 +16,12 @@ type Props = {
 const btnClass = `
   flex items-center gap-2
   px-4 py-2.5 rounded-xl text-sm font-semibold
-  border border-slate-200 dark:border-slate-700
-  bg-white dark:bg-slate-800
-  text-slate-700 dark:text-slate-300
-  hover:bg-slate-50 dark:hover:bg-slate-700
-  hover:border-sky-500 dark:hover:border-sky-500
-  hover:text-sky-700 dark:hover:text-sky-300
+  border border-slate-200 
+  bg-white 
+  text-slate-700 
+  hover:bg-slate-50 :bg-slate-700
+  hover:border-sky-500 :border-sky-500
+  hover:text-sky-700 :text-sky-300
   hover:shadow-sm
   transition-all duration-200
   cursor-pointer

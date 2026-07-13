@@ -35,7 +35,7 @@ export default function SocialLinks(props: Props) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.3, duration: 0.4 }}
-      className="pt-6 border-t border-slate-100 dark:border-slate-800"
+      className="pt-6 border-t border-slate-100 "
     >
       <div className="flex justify-center flex-wrap gap-3">
         {links.map(
@@ -51,8 +51,8 @@ export default function SocialLinks(props: Props) {
                 className="
                   flex items-center gap-1.5
                   text-xs font-medium
-                  text-slate-400 dark:text-slate-500
-                  hover:text-slate-700 dark:hover:text-slate-300
+                  text-slate-400 
+                  hover:text-slate-700 :text-slate-300
                   transition-colors duration-200
                 "
               >

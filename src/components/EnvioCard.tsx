@@ -47,11 +47,11 @@ export default function EnvioCard({
       onDoubleClick={() => onDoubleClick(envio)}
       className={`
         ${colorBorder(envio.estado)}
-        bg-white dark:bg-slate-800
-        rounded-2xl border border-slate-100 dark:border-slate-700 border-l-4
+        bg-white 
+        rounded-2xl border border-slate-100  border-l-4
         p-4 sm:p-5
         cursor-pointer
-        hover:shadow-md hover:border-sky-200 dark:hover:border-sky-700
+        hover:shadow-md hover:border-sky-200 :border-sky-700
         transition-all duration-200
       `}
     >
@@ -73,15 +73,15 @@ export default function EnvioCard({
 
           {/* Left: nombre + datos + fecha programada (inline on mobile) */}
           <div data-tour="info" className="min-w-0 flex-1 sm:w-[200px] sm:shrink-0">
-            <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
+            <div className="font-bold text-slate-900  truncate">
               {envio.nombre}
             </div>
-            <div className="flex flex-wrap gap-x-2 sm:gap-x-4 gap-y-0.5 mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap gap-x-2 sm:gap-x-4 gap-y-0.5 mt-0.5 text-xs text-slate-500 ">
               <span>DNI {envio.dni}</span>
               <span>TLF {envio.telefono}</span>
             </div>
             {mostrarFechaProgramada && envio.fecha_programada && (
-              <div className="mt-1 text-[11px] text-slate-400 dark:text-slate-500 truncate">
+              <div className="mt-1 text-[11px] text-slate-400  truncate">
                 {new Date(envio.fecha_programada + 'T12:00:00').toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' })}
               </div>
             )}
@@ -89,13 +89,13 @@ export default function EnvioCard({
         </div>
 
         {/* Center: destino - hidden on mobile, visible on sm+ */}
-        <div className="hidden sm:block flex-1 text-center text-xs text-slate-600 dark:text-slate-400 leading-relaxed min-w-0 self-center">
+        <div className="hidden sm:block flex-1 text-center text-xs text-slate-600  leading-relaxed min-w-0 self-center">
           {envio.detalle || '—'}
         </div>
 
         {/* Right: badges + selects - full width on mobile */}
         <div className="flex items-center gap-2 self-center w-full sm:w-auto">
-          <span data-tour="metodo" className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 whitespace-nowrap truncate max-w-[100px] sm:max-w-none shrink-0">
+          <span data-tour="metodo" className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100  text-slate-700  whitespace-nowrap truncate max-w-[100px] sm:max-w-none shrink-0">
             {envio.nombre_metodo || envio.metodo}
           </span>
           <div onClick={(e) => e.stopPropagation()} className="shrink-0">

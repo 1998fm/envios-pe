@@ -154,9 +154,9 @@ export default function OnboardingWizard() {
   ]
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-slate-50  flex flex-col">
       {/* HEADER */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800">
+      <header className="sticky top-0 z-40 bg-white/80  backdrop-blur-md border-b border-slate-100 ">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <LogoTori size={28} />
@@ -166,7 +166,7 @@ export default function OnboardingWizard() {
           </div>
           <button
             onClick={saltar}
-            className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            className="text-sm font-semibold text-slate-500  hover:text-slate-700 :text-slate-200 transition-colors"
           >
             Configurar después
           </button>
@@ -174,7 +174,7 @@ export default function OnboardingWizard() {
       </header>
 
       {/* PROGRESS */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+      <div className="bg-white  border-b border-slate-100 ">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
           {step <= 4 && (
             <div className="flex items-center justify-center gap-1 sm:gap-2">
@@ -188,15 +188,15 @@ export default function OnboardingWizard() {
                         isActive
                           ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow'
                           : isDone
-                          ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                          ? 'bg-emerald-100  text-emerald-700 '
+                          : 'bg-slate-100  text-slate-400'
                       }`}
                     >
                       {isDone ? <Check size={12} /> : <span>{p.num}</span>}
                       <span className="hidden sm:inline">{p.label}</span>
                     </div>
                     {p.num < 4 && (
-                      <div className={`w-4 sm:w-8 h-0.5 ${p.num < step ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                      <div className={`w-4 sm:w-8 h-0.5 ${p.num < step ? 'bg-emerald-400' : 'bg-slate-200 '}`} />
                     )}
                   </div>
                 )
@@ -219,7 +219,7 @@ export default function OnboardingWizard() {
                 className="hidden lg:flex flex-col items-center gap-4 sticky top-28 pt-4"
               >
                 <ToriMascot variant={tips[step].icon} size={120} animate />
-                <p className="text-sm text-slate-500 dark:text-slate-400 text-center leading-relaxed max-w-[220px]">
+                <p className="text-sm text-slate-500  text-center leading-relaxed max-w-[220px]">
                   {tips[step].tip}
                 </p>
               </motion.div>
@@ -229,7 +229,7 @@ export default function OnboardingWizard() {
                 key={`form-${step}`}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-6 sm:p-8"
+                className="bg-white  border border-slate-200  rounded-2xl shadow-sm p-6 sm:p-8"
               >
                 <AnimatePresence mode="wait">
                   {step === 1 && <OnboardingStep1Empresa key="s1" config={config} upd={upd} />}
@@ -239,7 +239,7 @@ export default function OnboardingWizard() {
                 </AnimatePresence>
 
                 {error && (
-                  <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 flex items-start gap-2">
+                  <div className="mt-4 bg-red-50  border border-red-200  rounded-xl px-4 py-3 text-sm text-red-700  flex items-start gap-2">
                     <X size={14} className="mt-0.5 shrink-0" />
                     <span>{error}</span>
                   </div>
@@ -250,7 +250,7 @@ export default function OnboardingWizard() {
                   <button
                     onClick={() => setStep((s) => Math.max(1, s - 1))}
                     disabled={step === 1}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:border-sky-500 hover:text-sky-700 dark:hover:text-sky-300 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold border border-slate-200  text-slate-700  hover:border-sky-500 hover:text-sky-700 :text-sky-300 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ArrowLeft size={16} />
                     Atrás
@@ -276,7 +276,7 @@ export default function OnboardingWizard() {
               animate={{ opacity: 1, scale: 1 }}
               className="max-w-lg mx-auto text-center"
             >
-              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-8 sm:p-10">
+              <div className="bg-white  border border-slate-200  rounded-2xl shadow-sm p-8 sm:p-10">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -286,29 +286,29 @@ export default function OnboardingWizard() {
                   <ToriMascot variant="happy" size={100} animate />
                 </motion.div>
 
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 ">
                   ¡Todo listo{config.empresa ? `, ${config.empresa}` : ''}!
                 </h2>
-                <p className="mt-3 text-slate-500 dark:text-slate-400">
+                <p className="mt-3 text-slate-500 ">
                   Tu negocio ya está configurado para recibir pedidos.
                 </p>
 
                 <div className="mt-8 space-y-3">
-                  <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl px-5 py-3 flex items-center justify-between text-sm">
-                    <span className="text-slate-500 dark:text-slate-400">Métodos activados</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                  <div className="bg-slate-50  rounded-xl px-5 py-3 flex items-center justify-between text-sm">
+                    <span className="text-slate-500 ">Métodos activados</span>
+                    <span className="font-bold text-slate-900 ">
                       {[config.metodoMotorizado, config.metodoShalom, config.metodoOlva, config.metodoMarvisur, config.metodoFlores, config.metodoOtro].filter(Boolean).length}
                     </span>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl px-5 py-3 flex items-center justify-between text-sm">
-                    <span className="text-slate-500 dark:text-slate-400">Distritos con tarifa</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                  <div className="bg-slate-50  rounded-xl px-5 py-3 flex items-center justify-between text-sm">
+                    <span className="text-slate-500 ">Distritos con tarifa</span>
+                    <span className="font-bold text-slate-900 ">
                       {Object.entries(config.tarifas).filter(([, v]) => v !== '').length}
                     </span>
                   </div>
-                  <div className="bg-gradient-to-r from-sky-50 to-indigo-50 dark:from-sky-900/20 dark:to-indigo-900/20 rounded-xl px-5 py-3 flex items-center justify-between text-sm">
-                    <span className="text-sky-700 dark:text-sky-300">Plan</span>
-                    <span className="font-bold text-sky-700 dark:text-sky-300">Pro · 30 días gratis</span>
+                  <div className="bg-gradient-to-r from-sky-50 to-indigo-50   rounded-xl px-5 py-3 flex items-center justify-between text-sm">
+                    <span className="text-sky-700 ">Plan</span>
+                    <span className="font-bold text-sky-700 ">Pro · 30 días gratis</span>
                   </div>
                 </div>
 

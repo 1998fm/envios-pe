@@ -25,50 +25,50 @@ export default function ModalExportShalom({
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
-        <div className="p-8 border-b border-slate-100 dark:border-slate-700">
-          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+      <div className="bg-white  rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
+        <div className="p-8 border-b border-slate-100 ">
+          <h2 className="text-3xl font-extrabold text-slate-900 ">
             Exportar Shalom
           </h2>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 whitespace-pre-line">
+          <p className="mt-2 text-sm text-slate-500  whitespace-pre-line">
             {mensaje}
           </p>
         </div>
 
         <div className="p-8 space-y-6 overflow-y-auto">
-          <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-6">
-            <div className="text-sm uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">
+          <div className="bg-slate-50  border border-slate-200  rounded-2xl p-6">
+            <div className="text-sm uppercase tracking-wider text-slate-400  font-semibold">
               Envíos a exportar
             </div>
 
-            <div className="text-5xl font-extrabold text-slate-900 dark:text-slate-100 mt-2 mb-5">
+            <div className="text-5xl font-extrabold text-slate-900  mt-2 mb-5">
               {envios.length}
             </div>
 
-            <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+            <div className="space-y-2 text-sm text-slate-600 ">
               <div>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="font-semibold text-slate-800 ">
                   Método:
                 </span> SHALOM
               </div>
               <div>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="font-semibold text-slate-800 ">
                   Origen:
                 </span> {origen}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
+          <div className="flex items-center gap-4 bg-slate-50  border border-slate-200  rounded-2xl p-5">
             <input
               type="checkbox"
               checked={marcarEnviado}
               onChange={(e) => onCambiarMarcarEnviado(e.target.checked)}
               className="w-5 h-5 accent-sky-600 cursor-pointer shrink-0"
             />
-            <label className="text-sm text-slate-700 dark:text-slate-300 select-none leading-relaxed">
+            <label className="text-sm text-slate-700  select-none leading-relaxed">
               Marcar automáticamente los pedidos como{' '}
-              <span className="font-semibold text-green-600 dark:text-green-400">
+              <span className="font-semibold text-green-600 ">
                 ENVIADO
               </span>{' '}
               después de exportarlos.
@@ -76,10 +76,10 @@ export default function ModalExportShalom({
           </div>
         </div>
 
-        <div className="border-t border-slate-100 dark:border-slate-700 p-6 flex justify-end gap-4 bg-white dark:bg-slate-800">
+        <div className="border-t border-slate-100  p-6 flex justify-end gap-4 bg-white ">
           <button
             onClick={onCerrar}
-            className="px-7 py-3 rounded-xl border border-slate-300 dark:border-slate-600 font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+            className="px-7 py-3 rounded-xl border border-slate-300  font-semibold text-slate-700  hover:bg-slate-100 :bg-slate-700 transition-all"
           >
             Cancelar
           </button>

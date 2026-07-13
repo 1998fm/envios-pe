@@ -54,7 +54,7 @@ export default function ModalEtiquetas({
         <div
           className="
             p-8
-            border-b border-slate-100 dark:border-slate-700
+            border-b border-slate-100 
           "
         >
 
@@ -62,7 +62,7 @@ export default function ModalEtiquetas({
             className="
               text-3xl
               font-extrabold
-              text-slate-900 dark:text-slate-100
+              text-slate-900 
             "
           >
             Generar etiquetas
@@ -70,7 +70,7 @@ export default function ModalEtiquetas({
 
           <p
             className="
-              mt-2 text-sm text-slate-500 dark:text-slate-400
+              mt-2 text-sm text-slate-500 
             "
           >
             Selecciona el formato que deseas imprimir.
@@ -116,7 +116,7 @@ export default function ModalEtiquetas({
                 <div
                   className="
                     font-semibold
-                    text-slate-900 dark:text-slate-100
+                    text-slate-900 
                   "
                 >
                   4 etiquetas por hoja
@@ -125,7 +125,7 @@ export default function ModalEtiquetas({
                 <div
                   className="
                     text-sm
-                    text-slate-500 dark:text-slate-400
+                    text-slate-500 
                     mt-1
                   "
                 >
@@ -170,7 +170,7 @@ export default function ModalEtiquetas({
                 <div
                   className="
                     font-semibold
-                    text-slate-900 dark:text-slate-100
+                    text-slate-900 
                   "
                 >
                   Etiqueta individual
@@ -179,7 +179,7 @@ export default function ModalEtiquetas({
                 <div
                   className="
                     text-sm
-                    text-slate-500 dark:text-slate-400
+                    text-slate-500 
                     mt-1
                   "
                 >
@@ -198,12 +198,12 @@ export default function ModalEtiquetas({
 
         <div
           className="
-            border-t border-slate-100 dark:border-slate-700
+            border-t border-slate-100 
             p-6
             flex
             justify-end
             gap-4
-            bg-white dark:bg-slate-800
+            bg-white 
           "
         >
 

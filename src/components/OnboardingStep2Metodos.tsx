@@ -18,11 +18,11 @@ const metodos = [
 
 export default function OnboardingStep2Metodos({ config, upd }: Props) {
   return (
-    <div className="p-5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
-      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">
+    <div className="p-5 border border-slate-200  rounded-2xl bg-slate-50 ">
+      <h3 className="text-lg font-bold text-slate-900  mb-2">
         Métodos de envío
       </h3>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+      <p className="text-sm text-slate-500  mb-6">
         Activa todos los métodos de envío que ofrece tu negocio. Tus clientes elegirán el que prefieran al hacer su pedido.
       </p>
 
@@ -38,13 +38,13 @@ export default function OnboardingStep2Metodos({ config, upd }: Props) {
               onChange={(e) => upd(item.key, e.target.checked)}
               className="accent-sky-600 w-4 h-4"
             />
-            <span className="font-semibold text-slate-900 dark:text-slate-100">{item.label}</span>
+            <span className="font-semibold text-slate-900 ">{item.label}</span>
           </label>
         ))}
 
         {config.metodoOtro && (
-          <div className="ml-7 mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700 p-6">
-            <label className="block font-semibold text-slate-900 dark:text-slate-100 mb-3">
+          <div className="ml-7 mt-4 rounded-2xl border border-slate-200  bg-white  p-6">
+            <label className="block font-semibold text-slate-900  mb-3">
               Nombre del método
             </label>
             <input
@@ -52,7 +52,7 @@ export default function OnboardingStep2Metodos({ config, upd }: Props) {
               value={config.nombreMetodoOtro}
               onChange={(e) => upd('nombreMetodoOtro', e.target.value)}
               placeholder="Ej. Cruz del Sur"
-              className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400"
+              className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400"
             />
           </div>
         )}

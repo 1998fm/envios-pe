@@ -36,34 +36,34 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 gap-8">
+    <main className="min-h-screen flex items-center justify-center bg-slate-50  p-4 gap-8">
       <div className="hidden lg:flex flex-col items-center gap-4">
         <ToriMascot variant="guide" size={120} animate />
-        <p className="text-sm text-slate-400 dark:text-slate-500 max-w-[200px] text-center">
+        <p className="text-sm text-slate-400  max-w-[200px] text-center">
           Tu ayudante fiel te espera
         </p>
       </div>
       <form
         onSubmit={handleLogin}
-        className="w-full max-w-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 space-y-5 shadow-sm"
+        className="w-full max-w-sm bg-white  border border-slate-200  rounded-2xl p-8 space-y-5 shadow-sm"
       >
         <div className="text-center">
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
+          <h1 className="text-2xl font-extrabold text-slate-900 ">
             Iniciar sesión
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-slate-500  mt-1">
             Accede a tu panel de Tori
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400">
+          <div className="bg-red-50  border border-red-200  rounded-xl px-4 py-3 text-sm text-red-700 ">
             {error}
           </div>
         )}
 
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-semibold text-slate-700 ">
             Correo electrónico
           </label>
           <input
@@ -72,12 +72,12 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
+            className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
           />
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-semibold text-slate-700 ">
             Contraseña
           </label>
           <input
@@ -86,7 +86,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
+            className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
           />
         </div>
 
@@ -98,9 +98,9 @@ export default function LoginPage() {
           {loading ? 'Ingresando...' : 'Ingresar'}
         </button>
 
-        <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-center text-sm text-slate-500 ">
           ¿No tienes cuenta?{' '}
-          <Link href="/register" className="text-sky-600 dark:text-sky-400 hover:underline font-semibold">
+          <Link href="/register" className="text-sky-600  hover:underline font-semibold">
             Regístrate
           </Link>
         </p>

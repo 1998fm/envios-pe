@@ -29,24 +29,24 @@ export default function FilterBar({
 }: Props) {
   return (
     <div data-tour="filter-bar" className="
-      bg-white dark:bg-slate-800/95
-      border border-slate-100 dark:border-slate-700/50
+      bg-white 
+      border border-slate-100 
       rounded-2xl shadow-sm
       p-4 sm:p-5
       flex flex-col sm:flex-row gap-3
     ">
       <div className="relative flex-1">
-        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 " />
         <input
           placeholder="Buscar por nombre, DNI o teléfono..."
           value={busqueda}
           onChange={(e) => onBusquedaChange(e.target.value)}
           className="
             w-full pl-10 pr-4 py-3 rounded-xl text-sm
-            bg-white dark:bg-slate-900/50
-            border border-slate-200 dark:border-slate-700
-            text-slate-900 dark:text-slate-100
-            placeholder:text-slate-400 dark:placeholder:text-slate-500
+            bg-white 
+            border border-slate-200 
+            text-slate-900 
+            placeholder:text-slate-400 :text-slate-500
             focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500
             transition-all duration-200
           "

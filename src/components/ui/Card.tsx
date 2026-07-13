@@ -20,10 +20,10 @@ export default function Card({
 
     <div
       className={`
-        bg-white dark:bg-slate-800
-        border border-slate-100 dark:border-slate-700
+        bg-white 
+        border border-slate-100 
         rounded-[28px]
-        shadow-sm dark:shadow-slate-900/50
+        shadow-sm 
         ${className}
       `}
     >

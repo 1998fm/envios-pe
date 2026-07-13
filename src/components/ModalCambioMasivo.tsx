@@ -91,7 +91,7 @@ aplicarCambioMasivo,
     <div
       className="
         p-8
-        border-b border-slate-100 dark:border-slate-700
+        border-b border-slate-100 
       "
     >
 
@@ -99,7 +99,7 @@ aplicarCambioMasivo,
         className="
           text-3xl
           font-extrabold
-          text-slate-900 dark:text-slate-100
+          text-slate-900 
         "
       >
         Cambio Masivo
@@ -107,7 +107,7 @@ aplicarCambioMasivo,
 
       <p
         className="
-          mt-2 text-sm text-slate-500 dark:text-slate-400
+          mt-2 text-sm text-slate-500 
         "
       >
         Cambia el estado de múltiples pedidos al mismo tiempo.
@@ -249,7 +249,7 @@ aplicarCambioMasivo,
     <label
       className="
         text-sm
-        text-slate-700 dark:text-slate-300
+        text-slate-700 
         leading-relaxed
         select-none
       "
@@ -270,7 +270,7 @@ aplicarCambioMasivo,
             text-sm
             uppercase
             tracking-wider
-            text-slate-400 dark:text-slate-500
+            text-slate-400 
             font-semibold
             mb-4
           "
@@ -280,11 +280,11 @@ aplicarCambioMasivo,
 
         {soloSeleccionados ? (
 
-          <div className="text-slate-600 dark:text-slate-400 text-sm">
+          <div className="text-slate-600  text-sm">
 
             Se modificarán
 
-            <span className="font-bold text-slate-900 dark:text-slate-100">
+            <span className="font-bold text-slate-900 ">
               {" "}
               {seleccionados.length}
             </span>
@@ -299,13 +299,13 @@ aplicarCambioMasivo,
             className="
               space-y-2
               text-sm
-              text-slate-500 dark:text-slate-400
+              text-slate-500 
             "
           >
 
             <div>
 
-              <span className="font-semibold text-slate-800 dark:text-slate-200">
+              <span className="font-semibold text-slate-800 ">
                 Método:
               </span>{" "}
 
@@ -315,7 +315,7 @@ aplicarCambioMasivo,
 
             <div>
 
-              <span className="font-semibold text-slate-800 dark:text-slate-200">
+              <span className="font-semibold text-slate-800 ">
                 Estado actual:
               </span>{" "}
 
@@ -325,11 +325,11 @@ aplicarCambioMasivo,
 
             <div>
 
-              <span className="font-semibold text-slate-800 dark:text-slate-200">
+              <span className="font-semibold text-slate-800 ">
                 Nuevo estado:
               </span>{" "}
 
-              <span className="text-sky-600 dark:text-sky-400 font-bold">
+              <span className="text-sky-600  font-bold">
                 {estadoDestinoMasivo}
               </span>
 
@@ -347,12 +347,12 @@ aplicarCambioMasivo,
 
     <div
   className="
-    border-t border-slate-100 dark:border-slate-700
+    border-t border-slate-100 
     p-6
     flex
     justify-end
     gap-4
-    bg-white dark:bg-slate-800
+    bg-white 
     shrink-0
   "
 >

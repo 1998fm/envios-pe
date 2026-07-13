@@ -64,41 +64,41 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-[28px] border border-slate-100 dark:border-slate-700 shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
-        <div className="border-b border-slate-100 dark:border-slate-700 px-4 sm:px-8 py-3 sm:py-4 shrink-0">
-          <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+      <div className="bg-white  rounded-[28px] border border-slate-100  shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
+        <div className="border-b border-slate-100  px-4 sm:px-8 py-3 sm:py-4 shrink-0">
+          <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900 ">
             Detalle del pedido
           </h2>
-          <p className="mt-0.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-xs sm:text-sm text-slate-500 ">
             Información completa del envío seleccionado.
           </p>
         </div>
 
         <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-4">
           <div>
-            <div className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold mb-1">
+            <div className="text-xs uppercase tracking-wider text-slate-400  font-bold mb-1">
               Cliente
             </div>
-            <div className="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+            <div className="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900 ">
               {envio.nombre}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {campos.map((item) => (
-              <div key={item.label} className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3">
-                <p className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold mb-1">
+              <div key={item.label} className="bg-slate-50  rounded-2xl p-3">
+                <p className="text-xs uppercase tracking-wider text-slate-400  font-bold mb-1">
                   {item.label}
                 </p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
+                <p className="font-semibold text-slate-900  text-sm">
                   {item.value}
                 </p>
               </div>
             ))}
           </div>
 
-          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold mb-2">
+          <div className="bg-slate-50  rounded-2xl p-4">
+            <p className="text-xs uppercase tracking-wider text-slate-400  font-bold mb-2">
               Fecha programada
             </p>
             <div className="flex items-center gap-2">
@@ -106,7 +106,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                 type="date"
                 value={fechaInicial}
                 onChange={(e) => setFechaProgramada(e.target.value)}
-                className="flex-1 px-3 py-1.5 rounded-xl text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="flex-1 px-3 py-1.5 rounded-xl text-sm border border-slate-200  bg-white  text-slate-900  focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
               <button
                 onClick={guardarFecha}
@@ -123,17 +123,17 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
             )}
           </div>
 
-          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4">
-            <p className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold mb-2">
+          <div className="bg-slate-50  rounded-2xl p-4">
+            <p className="text-xs uppercase tracking-wider text-slate-400  font-bold mb-2">
               Destino
             </p>
-            <div className="text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line text-sm">
+            <div className="text-slate-800  leading-relaxed whitespace-pre-line text-sm">
               {envio.detalle}
             </div>
           </div>
         </div>
 
-        <div className="border-t border-slate-100 dark:border-slate-700 p-3 sm:p-4 flex items-center justify-between shrink-0 bg-white dark:bg-slate-800 rounded-b-[28px]">
+        <div className="border-t border-slate-100  p-3 sm:p-4 flex items-center justify-between shrink-0 bg-white  rounded-b-[28px]">
           {confirmandoEliminar ? (
             <div className="flex items-center gap-2">
               <span className="text-xs text-red-600 font-semibold">¿Eliminar este pedido?</span>

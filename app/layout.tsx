@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
-import ThemeScript from "@/components/ThemeScript";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const geistSans = Geist({
@@ -113,7 +112,6 @@ export default function RootLayout({
     <html
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      suppressHydrationWarning
     >
       <head>
         <script
@@ -121,10 +119,9 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      <body className="min-h-full flex flex-col bg-slate-50">
 
         <GoogleAnalytics />
-        <ThemeScript />
 
         {children}
 

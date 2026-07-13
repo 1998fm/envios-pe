@@ -3,11 +3,11 @@ import ToriMascot from '@/components/ToriMascot'
 
 export default function NotFoundPage() {
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-slate-50  flex items-center justify-center p-4">
       <div className="flex flex-col items-center gap-6 text-center max-w-sm">
         <ToriMascot variant="notfound" size={120} animate />
-        <h1 className="text-4xl font-extrabold text-slate-900 dark:text-slate-100">404</h1>
-        <p className="text-slate-500 dark:text-slate-400">
+        <h1 className="text-4xl font-extrabold text-slate-900 ">404</h1>
+        <p className="text-slate-500 ">
           Tori no encuentra esta página. Parece que se perdió como el mapa que tiene.
         </p>
         <Link
