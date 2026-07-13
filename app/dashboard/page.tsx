@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import EstadoSelect from '@/components/EstadoSelect'
@@ -568,27 +568,18 @@ setLoading(false)
     })
   }, [userId, busqueda, filtrosEstado, filtrosMetodo])
 
+  const fetchEnviosRef = useRef(fetchEnviosPage)
+  useEffect(() => { fetchEnviosRef.current = fetchEnviosPage })
+
   useEffect(() => {
     if (!userId) return
-    const channel = supabase
-      .channel('envios-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'envios',
-          filter: `user_id=eq.${userId}`,
-        },
-        () => {
-          fetchEnviosPage(0).then((result) => {
-            setEnvios(result.data)
-            setHasMore(result.hasMore)
-          })
-        },
-      )
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    const interval = setInterval(() => {
+      fetchEnviosRef.current(0).then((result) => {
+        setEnvios(result.data)
+        setHasMore(result.hasMore)
+      })
+    }, 15000)
+    return () => clearInterval(interval)
   }, [userId])
 
   async function cargarMas() {
