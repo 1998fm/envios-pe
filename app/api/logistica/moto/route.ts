@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { validarHoraCorte } from '@/lib/logistica/validarHoraCorte'
 
 const DIAS_SEMANA = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
 
@@ -15,20 +16,6 @@ async function contarEnviosDelDia(userId: string, fecha: string): Promise<number
   return count ?? 0
 }
 
-function calcularProximasFechas(dias: string[], limite = 3): Date[] {
-  const fechas: Date[] = []
-  const candidata = new Date()
-  candidata.setDate(candidata.getDate() + 1)
-  while (fechas.length < limite) {
-    const nombreDia = DIAS_SEMANA[candidata.getDay()]
-    if (dias.includes(nombreDia)) {
-      fechas.push(new Date(candidata))
-    }
-    candidata.setDate(candidata.getDate() + 1)
-  }
-  return fechas
-}
-
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get('userId')
   if (!userId) {
@@ -37,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   const { data: perfil, error } = await supabaseAdmin
     .from('profiles')
-    .select('logistica_moto_dias, logistica_moto_limitar, logistica_moto_cupo')
+    .select('logistica_moto_dias, logistica_moto_usa_hora_corte, logistica_moto_hora_corte, logistica_moto_limitar, logistica_moto_cupo')
     .eq('id', userId)
     .single()
 
@@ -46,18 +33,26 @@ export async function GET(request: NextRequest) {
   }
 
   const diasDisponibles: string[] = perfil?.logistica_moto_dias ?? ['MONDAY']
+  const usaHora = perfil?.logistica_moto_usa_hora_corte ?? false
+  const horaCorte = perfil?.logistica_moto_hora_corte ?? '18:00'
   const limitar = perfil?.logistica_moto_limitar ?? false
   const cupo = perfil?.logistica_moto_cupo ?? 0
 
-  // Calcular fechas respetando cupo diario
+  // Normalizar a Perú y determinar offset según hora de corte
+  const peruStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+  const [y, m, d] = peruStr.split('-').map(Number)
+  const hoyPeru = new Date(y, m - 1, d, 12, 0, 0, 0)
+
+  const offset = usaHora && validarHoraCorte(horaCorte) ? 2 : 1
+
   const fechasDisponibles: string[] = []
-  const candidata = new Date()
-  candidata.setDate(candidata.getDate() + 1)
+  const candidata = new Date(hoyPeru)
+  candidata.setDate(candidata.getDate() + offset)
 
   while (fechasDisponibles.length < 3) {
     const nombreDia = DIAS_SEMANA[candidata.getDay()]
     if (diasDisponibles.includes(nombreDia)) {
-      const fechaStr = candidata.toISOString().split('T')[0]
+      const fechaStr = candidata.toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
       const count = limitar ? await contarEnviosDelDia(userId, fechaStr) : 0
       if (!limitar || count < cupo) {
         fechasDisponibles.push(fechaStr)
