@@ -52,7 +52,7 @@ const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const [busqueda, setBusqueda] = useState('')
-  const [filtrosEstado, setFiltrosEstado] = useState<string[]>([])
+  const [filtrosEstado, setFiltrosEstado] = useState<string[]>(['NO_EMPACADO', 'EMPACADO'])
   const [filtrosMetodo, setFiltrosMetodo] = useState<string[]>([])
 
   const [seleccionados, setSeleccionados] =
