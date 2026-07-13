@@ -40,7 +40,7 @@ export async function calcularFechaEntrega(
       : configuracion.logisticaAgenciasCupo
 
 // Normalizar fechaActual a Perú (evita que UTC adelante el día)
-const peruStr = fechaActual.toLocaleString('en-CA', { timeZone: 'America/Lima' })
+const peruStr = fechaActual.toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
 const [y, m, d] = peruStr.split('-').map(Number)
 const hoyPeru = new Date(y, m - 1, d, 12, 0, 0, 0)
 
@@ -85,8 +85,7 @@ if (limitar) {
 
     const fechaTexto =
       fechaEntrega
-        .toLocaleString('en-CA', { timeZone: 'America/Lima' })
-        .split(' ')[0]
+        .toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
 
     const cantidadProgramada =
       await contarEnviosDelDia(
