@@ -1258,6 +1258,9 @@ for (
       prev.map((e) => (e.id === actualizado.id ? actualizado : e))
     )
   }
+  onDelete={(id) =>
+    setEnvios((prev) => prev.filter((e) => e.id !== id))
+  }
 />
 
 {/* MODAL PARA CAMBIO DE ESTADOS  */}

@@ -8,13 +8,15 @@ type Props = {
   envio: Envio | null
   onCerrar: () => void
   onUpdate?: (envio: Envio) => void
+  onDelete?: (id: string) => void
 }
 
-export default function ModalDetalle({ envio, onCerrar, onUpdate }: Props) {
+export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Props) {
   const supabase = createClient()
   const [fechaProgramada, setFechaProgramada] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState('')
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false)
 
   if (!envio) return null
 
@@ -37,6 +39,18 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate }: Props) {
       onUpdate?.({ ...current, fecha_programada: nuevaFecha } as Envio)
     }
     setGuardando(false)
+  }
+
+  async function eliminarEnvio() {
+    const { error } = await supabase
+      .from('envios')
+      .delete()
+      .eq('id', current.id)
+    if (!error) {
+      onDelete?.(current.id)
+      onCerrar()
+    }
+    setConfirmandoEliminar(false)
   }
 
   const campos = [
@@ -119,7 +133,31 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate }: Props) {
           </div>
         </div>
 
-        <div className="border-t border-slate-100 dark:border-slate-700 p-3 sm:p-4 flex justify-end shrink-0 bg-white dark:bg-slate-800 rounded-b-[28px]">
+        <div className="border-t border-slate-100 dark:border-slate-700 p-3 sm:p-4 flex items-center justify-between shrink-0 bg-white dark:bg-slate-800 rounded-b-[28px]">
+          {confirmandoEliminar ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-red-600 font-semibold">¿Eliminar este pedido?</span>
+              <button
+                onClick={eliminarEnvio}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Sí, eliminar
+              </button>
+              <button
+                onClick={() => setConfirmandoEliminar(false)}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmandoEliminar(true)}
+              className="text-xs font-semibold text-red-400 hover:text-red-600 transition-colors"
+            >
+              Eliminar
+            </button>
+          )}
           <button
             onClick={onCerrar}
             className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:shadow-lg hover:shadow-sky-500/20 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
