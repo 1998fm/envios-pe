@@ -784,13 +784,17 @@ export default function LandingPage() {
                 Más popular
               </div>
               <h3 className="text-lg font-bold text-slate-900  mt-2">Pro</h3>
-              <div className="mt-3 flex items-baseline gap-2 justify-center">
-                <span className="text-2xl line-through text-slate-400">S/ 39.90</span>
-                <span className="text-4xl font-extrabold text-slate-900">S/ 29.90</span>
-                <span className="text-sm text-slate-500">/mes</span>
+              <div className="mt-3 text-center">
+                <p className="text-sm line-through text-slate-400 mb-1">S/ 39.90</p>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-5xl font-extrabold text-slate-900">S/ 29.90</span>
+                  <span className="text-sm text-slate-500 font-medium">/mes</span>
+                </div>
               </div>
-              <p className="mt-1 text-sm text-amber-600 font-semibold">Promoción por tiempo limitado</p>
-              <p className="text-sm text-slate-500">30 días gratis, luego S/ 29.90/mes</p>
+              <div className="text-center mt-2">
+                <span className="text-sm font-semibold text-amber-600 bg-amber-50 inline-block px-3 py-0.5 rounded-full">Promoción por tiempo limitado</span>
+              </div>
+              <p className="mt-2 text-sm text-slate-500">30 días gratis, luego S/ 29.90/mes</p>
               <Link
                 href="/register"
                 className="mt-6 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-sky-500/25 hover:scale-[1.02] transition-all duration-200"
