@@ -152,14 +152,22 @@ export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpr
                 )}
               </div>
               <div>
-                <p className="text-2xl font-extrabold text-slate-900 ">
-                  {periodo === 'mensual' ? 'S/ 29.90' : 'S/ 79.90'}
-                </p>
-                <p className="text-xs text-slate-500 ">
-                  {periodo === 'mensual' ? 'por mes' : 'cada 3 meses'}
-                </p>
+                <div className="flex items-baseline gap-2">
+                  {periodo === 'mensual' && (
+                    <span className="text-base line-through text-slate-400">S/ 39.90</span>
+                  )}
+                  <p className="text-2xl font-extrabold text-slate-900 ">
+                    {periodo === 'mensual' ? 'S/ 29.90' : 'S/ 79.90'}
+                  </p>
+                  <p className="text-xs text-slate-500 ">
+                    {periodo === 'mensual' ? '/mes' : 'cada 3 meses'}
+                  </p>
+                </div>
+                {periodo === 'mensual' && (
+                  <p className="text-[11px] text-amber-600 font-semibold mt-1">Promoción por tiempo limitado</p>
+                )}
                 {periodo === 'trimestral' && (
-                  <p className="text-[11px] text-green-600  font-semibold mt-1">Ahorras S/ 9.80</p>
+                  <p className="text-[11px] text-green-600 font-semibold mt-1">Ahorras S/ 9.80</p>
                 )}
               </div>
               <div className="mt-5 space-y-3">
