@@ -83,7 +83,7 @@ export default function OnboardingStep3Logistica({ config, upd }: Props) {
 
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
         <p className="font-semibold">¿Cómo funciona?</p>
-        <p className="text-xs mt-1">Si un cliente pide después de tu hora de corte, el pedido se programa para el siguiente día disponible. Así siempre cumples los plazos.</p>
+        <p className="text-xs mt-1">La hora de corte es del <strong>día anterior</strong> al día de envío. Ej: si envías lunes con corte 10am, los pedidos después de las 10am del domingo se programan para el martes (siguiente día disponible). Así siempre cumples los plazos.</p>
       </div>
     </div>
   )
