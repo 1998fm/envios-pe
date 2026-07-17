@@ -159,11 +159,15 @@ export default function OnboardingWizard() {
     }
   }
 
-  function saltar() {
+  function irAlDashboard() {
+    localStorage.removeItem('tori_dashboard_tour_done')
+    localStorage.removeItem('tori_card_tour_done')
     router.push('/dashboard')
   }
 
-  function irAlDashboard() {
+  function saltar() {
+    localStorage.removeItem('tori_dashboard_tour_done')
+    localStorage.removeItem('tori_card_tour_done')
     router.push('/dashboard')
   }
 
