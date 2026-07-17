@@ -46,145 +46,63 @@ export default function ConfiguracionMetodo({
   mostrarNombreMetodo = false,
 }: Props) {
   return (
-    <div
-      className="
-        ml-8
-        mt-4
-        rounded-2xl
-        border
-        bg-slate-50
-        p-6
-        space-y-6
-      "
-    >
-      {/* DÍAS */}
-
+    <div className="space-y-5">
       <div>
-        <p
-          className="
-            font-semibold
-            mb-3
-          "
-        >
-          Días de atención
-        </p>
-
-        <SelectorDias
-          value={dias}
-          onChange={setDias}
-        />
+        <p className="text-sm font-semibold text-slate-700 mb-2">¿Qué días atiendes?</p>
+        <SelectorDias value={dias} onChange={setDias} />
       </div>
 
-
-      {/* HORA DE CORTE */}
-
-      <div
-        className="
-          space-y-4
-        "
-      >
-        <label
-          className="
-            flex
-            items-center
-            gap-3
-            cursor-pointer
-          "
-        >
+      <div className="space-y-3">
+        <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
             checked={usaHora}
-            onChange={(e) =>
-              setUsaHora(
-                e.target.checked
-              )
-            }
+            onChange={(e) => setUsaHora(e.target.checked)}
+            className="accent-sky-600 w-4 h-4"
           />
-
-          <span>
-            Usar hora de corte
-          </span>
+          <div>
+            <p className="text-sm font-semibold text-slate-700">Tengo hora de corte</p>
+            <p className="text-xs text-slate-500">Los pedidos después de esta hora pasan al siguiente día</p>
+          </div>
         </label>
 
         {usaHora && (
-          <input
-            type="time"
-            value={hora}
-            onChange={(e) =>
-              setHora(
-                e.target.value
-              )
-            }
-            className="
-              border
-              rounded-xl
-              px-4
-              py-2
-              bg-white
-            "
-          />
+          <div className="flex items-center gap-3 ml-7">
+            <input
+              type="time"
+              value={hora}
+              onChange={(e) => setHora(e.target.value)}
+              className="border border-slate-200 rounded-xl px-4 py-2 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+            />
+            <span className="text-xs text-slate-400">Ej: 18:00 = pedidos después de las 6pm van al día siguiente</span>
+          </div>
         )}
       </div>
 
-      {/* LÍMITE */}
-
-      <label
-        className="
-          flex
-          items-center
-          gap-3
-          cursor-pointer
-        "
-      >
+      <label className="flex items-center gap-3 cursor-pointer">
         <input
           type="checkbox"
           checked={limitar}
-          onChange={(e) =>
-            setLimitar(
-              e.target.checked
-            )
-          }
+          onChange={(e) => setLimitar(e.target.checked)}
+          className="accent-sky-600 w-4 h-4"
         />
-
-        <span>
-          Limitar envíos por día
-        </span>
+        <div>
+          <p className="text-sm font-semibold text-slate-700">Limitar envíos por día</p>
+          <p className="text-xs text-slate-500">¿Solo puedes enviar cierta cantidad de pedidos al día?</p>
+        </div>
       </label>
 
       {limitar && (
-        <div
-          className="
-            flex
-            items-center
-            justify-between
-            gap-6
-            flex-wrap
-          "
-        >
-          <label>
-            Cupo máximo
-          </label>
-
+        <div className="flex items-center gap-4 ml-7">
+          <label className="text-sm text-slate-700 font-medium">Cupo máximo diario</label>
           <input
             type="number"
             min={1}
             value={cupo}
-            onChange={(e) =>
-              setCupo(
-                Number(
-                  e.target.value
-                )
-              )
-            }
-            className="
-              w-28
-              border
-              rounded-xl
-              px-4
-              py-2
-              bg-white
-            "
+            onChange={(e) => setCupo(Number(e.target.value))}
+            className="w-24 border border-slate-200 rounded-xl px-4 py-2 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
           />
+          <span className="text-xs text-slate-400">pedidos por día</span>
         </div>
       )}
     </div>

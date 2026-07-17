@@ -9,25 +9,18 @@ type Step = {
 }
 
 const DASHBOARD_STEPS: Step[] = [
-  { target: '#dashboard-content', text: '¡Bienvenido soy Tori! Te guiaré por tu dashboard para que no te pierdas nada.' },
-  { target: '#stats-portal', text: 'Aquí ves tu resumen: pedidos hoy, esta semana, ingresos. Todo en un vistazo.' },
-  { target: '[data-tour="compartir"]', text: 'Este botón copia el link de tu formulario. Compártelo con tus clientes y los pedidos llegarán solos.' },
-  { target: '[data-tour="filter-bar"]', text: 'Busca pedidos por nombre, DNI o teléfono. También filtra por estado o método de envío.' },
-  { target: '[data-tour="exportar-shalom"]', text: 'Exporta tus pedidos empacados a Shalom con un clic. Se marcan como Enviado automáticamente.' },
-  { target: '[data-tour="cambio-masivo"]', text: 'Cambia el estado de varios pedidos a la vez. Ej: pasar todos de Empacado a Enviado.' },
-  { target: '[data-tour="generar-etiquetas"]', text: 'Imprime etiquetas con los datos del pedido para pegarlas en los paquetes.' },
-  { target: '[data-tour="copiar-datos"]', text: 'Copia direcciones de pedidos Motorizado para enviarlas al repartidor.' },
-  { target: '[data-tour="envio-list"]', text: 'Aquí aparecen todos tus pedidos, agrupados por fecha programada o registro.' },
-  { target: '#dashboard-content', text: '¡Y eso es todo por ahora! Si necesitas ayuda, hazme clic —siempre estaré aquí.' },
+  { target: '#dashboard-content', text: '¡Hola! Soy Tori. Bienvenido a tu dashboard. Aquí gestionas todos tus pedidos, productos y ventas. Te daré un paseo rápido.' },
+  { target: '[data-tour="topbar"]', text: 'Esta es la barra principal. Aquí ves el nombre de tu negocio, compartes tu formulario con clientes, y navegas entre Envíos, Productos, Compras y Ventas.' },
+  { target: '[data-tour="filter-bar"]', text: 'Busca pedidos por nombre o DNI, y filtra por estado o método de envío. Así encuentras lo que necesitas al instante.' },
+  { target: '[data-tour="actions"]', text: 'Acciones rápidas: exporta a Shalom, cambia estados masivamente, imprime etiquetas o copia direcciones para repartidores.' },
+  { target: '[data-tour="envio-list"]', text: 'Todos tus pedidos aparecen aquí, agrupados por fecha. Cada tarjeta muestra nombre, DNI, estado y método. Puedes cambiar el estado con un clic.' },
+  { target: '#dashboard-content', text: '¡Eso es todo! Revisa también las pestañas Productos, Compras y Ventas para gestionar tu inventario. Si necesitas ayuda, recárgame con ?tour=start en la URL. ¡A vender!' },
 ]
 
 const CARD_STEPS: Step[] = [
-  { target: '[data-tour="envio-card"]', text: 'Cada pedido es una tarjeta. Toda la información del cliente está aquí.' },
-  { target: '[data-tour="envio-card"] [data-tour="avatar"]', text: 'La inicial del cliente te ayuda a identificar los pedidos rápido.' },
-  { target: '[data-tour="envio-card"] [data-tour="info"]', text: 'Nombre, DNI y teléfono visibles de un vistazo. No más buscar en chats.' },
+  { target: '[data-tour="envio-card"]', text: 'Cada pedido es una tarjeta con toda la info del cliente.' },
   { target: '[data-tour="envio-card"] [data-tour="estado"]', text: 'Cambia el estado aquí: No Empacado → Empacado → Enviado. El color te guía.' },
-  { target: '[data-tour="envio-card"] [data-tour="metodo"]', text: 'El método de envío que el cliente eligió: Motorizado, Shalom, etc.' },
-  { target: '[data-tour="envio-card"] [data-tour="checkbox"]', text: 'Marca varios y usa acciones masivas. El borde de color indica el estado.' },
+  { target: '[data-tour="envio-card"] [data-tour="checkbox"]', text: 'Marca varios pedidos y usa acciones masivas arriba.' },
 ]
 
 export default function DashboardOnboarding({ tieneEnvios }: { tieneEnvios: boolean }) {
@@ -35,7 +28,6 @@ export default function DashboardOnboarding({ tieneEnvios }: { tieneEnvios: bool
   const [step, setStep] = useState(0)
   const [style, setStyle] = useState<React.CSSProperties | null>(null)
 
-  // Iniciar dashboard tour
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
     if (p.get('tour') === 'start') {
@@ -53,7 +45,6 @@ export default function DashboardOnboarding({ tieneEnvios }: { tieneEnvios: bool
     }
   }, [])
 
-  // Iniciar card tour (tras dashboard tour, cuando hay pedidos)
   useEffect(() => {
     if (!tieneEnvios || tourType !== null) return
     const dashDone = localStorage.getItem('tori_dashboard_tour_done')
@@ -64,7 +55,6 @@ export default function DashboardOnboarding({ tieneEnvios }: { tieneEnvios: bool
     }
   }, [tieneEnvios, tourType])
 
-  // Posicionar tooltip cuando cambia step
   useEffect(() => {
     if (tourType === null) return
 
@@ -72,26 +62,20 @@ export default function DashboardOnboarding({ tieneEnvios }: { tieneEnvios: bool
     const current = steps[step]
     if (!current) return
 
-    // Limpiar highlight anterior
     document.querySelectorAll('.tour-highlight').forEach(el =>
       el.classList.remove('tour-highlight')
     )
 
-    // Pequeño delay para asegurar DOM listo
     const timer = setTimeout(() => {
-      // Encontrar target
       const target = document.querySelector(current.target) as HTMLElement | null
       if (!target) {
-        // Si no encuentra el target, mostrar tooltip centrado abajo en vez de saltar
         setStyle({ top: window.innerHeight - 220, left: 12, position: 'fixed', zIndex: 50 })
         return
       }
 
-      // Highlight
       target.classList.add('tour-highlight')
       target.scrollIntoView({ behavior: 'smooth', block: 'center' })
 
-      // Posicionar tooltip
       requestAnimationFrame(() => {
         const rect = target.getBoundingClientRect()
         const gap = 12

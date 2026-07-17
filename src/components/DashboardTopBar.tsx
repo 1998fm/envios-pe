@@ -15,7 +15,7 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
   const isTrial = diasRestantes != null && plan === 'pro'
 
   return (
-    <div>
+    <div data-tour="topbar">
       <div className="flex items-center gap-4 mb-6 px-4 sm:px-6">
         <div className="flex items-center gap-3 shrink-0">
           {logoUrl ? (

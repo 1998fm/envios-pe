@@ -24,6 +24,7 @@ import DashboardActions from '@/components/DashboardActions'
 import EnvioGroupedList from '@/components/EnvioGroupedList'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import Toast from '@/components/Toast'
+import { HelpCircle } from 'lucide-react'
 /* ========================================
    COPIAR DATOS
 ======================================== */
@@ -1377,6 +1378,19 @@ for (
   nombreEmpresa={config.empresa}
   userId={userId}
 />
+
+<button
+  onClick={() => {
+    const p = new URLSearchParams(window.location.search)
+    if (!p.get('tour')) {
+      window.location.search = '?tour=start'
+    }
+  }}
+  className="fixed bottom-6 right-6 w-12 h-12 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-xl hover:shadow-sky-500/30 hover:scale-110 transition-all duration-200 flex items-center justify-center z-40"
+  title="Ayuda"
+>
+  <HelpCircle size={20} />
+</button>
     </main>
   )
 }
