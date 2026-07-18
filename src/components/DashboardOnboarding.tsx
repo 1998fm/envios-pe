@@ -9,7 +9,7 @@ type Step = {
 }
 
 const DASHBOARD_STEPS: Step[] = [
-  { target: '#dashboard-content', text: '¡Hola! Soy Tori. Bienvenido a tu dashboard. Aquí gestionas todos tus pedidos, productos y ventas. Te daré un paseo rápido.' },
+  { target: '#dashboard-content', text: '¡Hola! Soy Tori. Bienvenido a tu dashboard. Aquí gestionas todos tus envíos y pedidos. Te daré un paseo rápido.' },
   { target: '[data-tour="topbar"]', text: 'Esta es la barra principal. Aquí ves el nombre de tu negocio y compartes tu formulario con clientes para que lleguen pedidos solos.' },
   { target: '[data-tour="filter-bar"]', text: 'Busca pedidos por nombre o DNI, y filtra por estado o método de envío. Así encuentras lo que necesitas al instante.' },
   { target: '[data-tour="actions"]', text: 'Acciones rápidas: exporta a Shalom, cambia estados masivamente, imprime etiquetas o copia direcciones para repartidores.' },
