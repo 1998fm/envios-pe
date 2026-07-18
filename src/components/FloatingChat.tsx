@@ -13,11 +13,11 @@ type FAQ = {
 const FAQS: FAQ[] = [
   {
     q: '¿Cómo comparto mi formulario con clientes?',
-    a: 'En la barra superior del dashboard, haz clic en "Compartir formulario". Se copia automáticamente el link de tu formulario, puedes enviarlo por WhatsApp, redes sociales o donde prefieras. Tus clientes lo abren, llenan sus datos y el pedido llega directo a tu dashboard.',
+    a: 'Tienes un formulario público donde tus clientes llenan sus datos y ven el costo exacto según su distrito. Puedes personalizar el mensaje que ven después de pedir y redirigirlos a una URL de agradecimiento (en Configuración > Empresa). El link está en la barra superior del dashboard, se copia con un clic y puedes compartirlo por WhatsApp, redes o como código QR. Tus clientes no necesitan instalar nada.',
   },
   {
     q: '¿Qué plan tengo y cómo cambio?',
-    a: 'En la barra superior del dashboard ves tu plan actual: Básico, Pro o Pro · Trial. Si quieres cambiar de plan, haz clic en "Ver planes" desde la barra superior o en Configuración. Desde ahí puedes actualizar a Pro o ver los detalles de cada plan.',
+    a: 'Tu plan se muestra en la barra superior. Si estás en Pro Trial, cuando se cumplan los 30 días pasas automáticamente a Básico (gratis, 50 envíos/mes, 2 métodos). Al actualizar a Pro (S/29.90/mes) se desbloquea: métodos ilimitados, tarifas por distrito, cambio masivo, tu marca en el formulario, redes sociales, control de logística y más. El pago es vía MercadoPago y se activa al instante.',
   },
   {
     q: '¿Mis clientes necesitan una cuenta?',
@@ -45,11 +45,11 @@ const FAQS: FAQ[] = [
   },
   {
     q: '¿Puedo agregar o quitar métodos de envío?',
-    a: 'Ve a Configuración > Métodos. Puedes activar o desactivar Motorizado, Shalom, Olva, Marvisur, Flores, o agregar "Otro método" con el nombre de tu agencia favorita. Cada método tiene su propia configuración de horarios y precios.',
+    a: 'En Configuración > Métodos activas los que necesites. Los que están inactivos no aparecen en el formulario de tus clientes. Motorizado requiere que le configures tarifas por distrito y horarios para que funcione bien. Shalom necesita un origen registrado. "Otro método" es ideal para agencias locales específicas. Si estás en Básico, solo puedes tener 2 métodos activos a la vez.',
   },
   {
     q: '¿Cómo se calcula la fecha de entrega?',
-    a: 'Tori calcula automáticamente la fecha según los horarios y hora de corte que configuraste en Configuración > Logística. Si un cliente pide antes de tu hora de corte, el pedido se programa para el mismo día. Si pide después, pasa al siguiente día de atención.',
+    a: 'Tori revisa los días de atención que configuraste (ej: no atiendes domingos, un pedido del sábado se programa para el lunes). La hora de corte define el límite del día —si un cliente pide a las 6pm y tu corte es 5pm, pasa al siguiente día hábil. El cliente ve esa fecha estimada antes de confirmar su pedido. Si no configuras hora de corte, todos los pedidos se toman como "próximo día hábil".',
   },
   {
     q: '¿Puedo poner precio diferente por distrito?',
