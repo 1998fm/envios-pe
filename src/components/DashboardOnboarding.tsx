@@ -10,11 +10,11 @@ type Step = {
 
 const DASHBOARD_STEPS: Step[] = [
   { target: '#dashboard-content', text: '¡Hola! Soy Tori. Bienvenido a tu dashboard. Aquí gestionas todos tus pedidos, productos y ventas. Te daré un paseo rápido.' },
-  { target: '[data-tour="topbar"]', text: 'Esta es la barra principal. Aquí ves el nombre de tu negocio, compartes tu formulario con clientes, y navegas entre Envíos, Productos, Compras y Ventas.' },
+  { target: '[data-tour="topbar"]', text: 'Esta es la barra principal. Aquí ves el nombre de tu negocio y compartes tu formulario con clientes para que lleguen pedidos solos.' },
   { target: '[data-tour="filter-bar"]', text: 'Busca pedidos por nombre o DNI, y filtra por estado o método de envío. Así encuentras lo que necesitas al instante.' },
   { target: '[data-tour="actions"]', text: 'Acciones rápidas: exporta a Shalom, cambia estados masivamente, imprime etiquetas o copia direcciones para repartidores.' },
   { target: '[data-tour="envio-list"]', text: 'Todos tus pedidos aparecen aquí, agrupados por fecha. Cada tarjeta muestra nombre, DNI, estado y método. Puedes cambiar el estado con un clic.' },
-  { target: '#dashboard-content', text: '¡Eso es todo! Revisa también las pestañas Productos, Compras y Ventas para gestionar tu inventario. Si necesitas ayuda, recárgame con ?tour=start en la URL. ¡A vender!' },
+  { target: '#dashboard-content', text: '¡Eso es todo! Si necesitas ayuda, haz clic en el botón de ayuda (?) abajo a la derecha para verme de nuevo. ¡A vender!' },
 ]
 
 const CARD_STEPS: Step[] = [
