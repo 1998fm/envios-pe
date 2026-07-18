@@ -12,12 +12,12 @@ type FAQ = {
 
 const FAQS: FAQ[] = [
   {
-    q: '¿Cómo empiezo a usar Tori?',
-    a: 'Regístrate gratis, completa la configuración en 4 pasos —tu negocio, métodos de envío, horarios y precios— y comparte el link de tu formulario con tus clientes. Ellos llenan sus datos y los pedidos llegan solos a tu dashboard. Todo en menos de 5 minutos.',
+    q: '¿Cómo comparto mi formulario con clientes?',
+    a: 'En la barra superior del dashboard, haz clic en "Compartir formulario". Se copia automáticamente el link de tu formulario, puedes enviarlo por WhatsApp, redes sociales o donde prefieras. Tus clientes lo abren, llenan sus datos y el pedido llega directo a tu dashboard.',
   },
   {
-    q: '¿Es gratis?',
-    a: 'Tienes 30 días gratis del plan Pro, sin tarjeta de crédito. Después puedes seguir con el plan Básico (gratis, hasta 50 envíos al mes) o actualizar a Pro por S/29.90 al mes y disfrutar de todo sin límites.',
+    q: '¿Qué plan tengo y cómo cambio?',
+    a: 'En la barra superior del dashboard ves tu plan actual: Básico, Pro o Pro · Trial. Si quieres cambiar de plan, haz clic en "Ver planes" desde la barra superior o en Configuración. Desde ahí puedes actualizar a Pro o ver los detalles de cada plan.',
   },
   {
     q: '¿Mis clientes necesitan una cuenta?',
@@ -44,12 +44,12 @@ const FAQS: FAQ[] = [
     a: 'En la parte superior del dashboard puedes buscar pedidos por nombre, DNI o teléfono. También puedes filtrar por estado (No Empacado, Empacado, Enviado) o por método de envío. Las estadísticas muestran gráficos de tus pedidos por día, por método y por estado —puedes ver los últimos 7, 15, 30 o 90 días, o elegir fechas personalizadas.',
   },
   {
-    q: '¿Puedo usar mi propia agencia de envíos?',
-    a: 'Sí. Tori soporta Motorizado (delivery local), Shalom, Olva, Marvisur, Flores y también puedes agregar "Otro método" con el nombre de tu agencia favorita. Cada método tiene su propia configuración de horarios y precios.',
+    q: '¿Puedo agregar o quitar métodos de envío?',
+    a: 'Ve a Configuración > Métodos. Puedes activar o desactivar Motorizado, Shalom, Olva, Marvisur, Flores, o agregar "Otro método" con el nombre de tu agencia favorita. Cada método tiene su propia configuración de horarios y precios.',
   },
   {
-    q: '¿Cómo sé cuándo llega cada pedido?',
-    a: 'Tori calcula automáticamente la fecha de entrega según tus horarios de atención y hora de corte. Por ejemplo: si un cliente pide un lunes a las 3pm y tu hora de corte es las 5pm, el pedido se programa para el mismo día. Si pide después del corte, se programa para el siguiente día de atención.',
+    q: '¿Cómo se calcula la fecha de entrega?',
+    a: 'Tori calcula automáticamente la fecha según los horarios y hora de corte que configuraste en Configuración > Logística. Si un cliente pide antes de tu hora de corte, el pedido se programa para el mismo día. Si pide después, pasa al siguiente día de atención.',
   },
   {
     q: '¿Puedo poner precio diferente por distrito?',
