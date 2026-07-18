@@ -24,6 +24,7 @@ import DashboardActions from '@/components/DashboardActions'
 import EnvioGroupedList from '@/components/EnvioGroupedList'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import Toast from '@/components/Toast'
+import FloatingChat from '@/components/FloatingChat'
 /* ========================================
    COPIAR DATOS
 ======================================== */
@@ -1377,6 +1378,8 @@ for (
   nombreEmpresa={config.empresa}
   userId={userId}
 />
+
+<FloatingChat />
     </main>
   )
 }
