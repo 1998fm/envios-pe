@@ -14,6 +14,7 @@ const metodos = [
   { key: 'metodoMarvisur' as const, label: 'Marvisur' },
   { key: 'metodoFlores' as const, label: 'Flores' },
   { key: 'metodoOtro' as const, label: 'Otro método' },
+  { key: 'metodoRecojo' as const, label: 'Recojo en tienda' },
 ]
 
 export default function OnboardingStep2Metodos({ config, upd }: Props) {

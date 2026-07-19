@@ -42,6 +42,8 @@ const initialConfig: ConfigState = {
   metodoFlores: false,
   metodoOtro: false,
   nombreMetodoOtro: '',
+  metodoRecojo: false,
+  mensajeRecojo: 'Recoge tu pedido en nuestra tienda. Te esperamos!',
   logisticaMotoDias: ['MONDAY'],
   logisticaMotoHoraCorte: '18:00',
   logisticaMotoUsaHoraCorte: false,
@@ -297,7 +299,7 @@ export default function OnboardingWizard() {
                   <div className="bg-slate-50  rounded-xl px-5 py-3 flex items-center justify-between text-sm">
                     <span className="text-slate-500 ">Métodos activados</span>
                     <span className="font-bold text-slate-900 ">
-                      {[config.metodoMotorizado, config.metodoShalom, config.metodoOlva, config.metodoMarvisur, config.metodoFlores, config.metodoOtro].filter(Boolean).length}
+                      {[config.metodoMotorizado, config.metodoShalom, config.metodoOlva, config.metodoMarvisur, config.metodoFlores, config.metodoOtro, config.metodoRecojo].filter(Boolean).length}
                     </span>
                   </div>
                   <div className="bg-slate-50  rounded-xl px-5 py-3 flex items-center justify-between text-sm">

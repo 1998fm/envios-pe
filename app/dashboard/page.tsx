@@ -335,6 +335,11 @@ config.nombreMetodoOtro.trim() && {
   label: config.nombreMetodoOtro,
 },
 
+  config.metodoRecojo && {
+    value: 'RECOJO',
+    label: 'Recojo en tienda',
+  },
+
 ].filter(
   (
     item
@@ -428,8 +433,10 @@ if (crearPerfilError) {
  metodo_olva,
  metodo_marvisur,
  metodo_flores,
- metodo_otro,
- nombre_metodo_otro,
+  metodo_otro,
+  nombre_metodo_otro,
+  metodo_recojo,
+  mensaje_recojo,
  logistica_moto_dias,
  logistica_moto_hora_corte,
  logistica_moto_usa_hora_corte,
@@ -498,6 +505,8 @@ setConfig(prev => ({
   metodoFlores: profile?.metodo_flores ?? false,
   metodoOtro: profile?.metodo_otro ?? false,
   nombreMetodoOtro: profile?.nombre_metodo_otro || '',
+  metodoRecojo: profile?.metodo_recojo ?? false,
+  mensajeRecojo: profile?.mensaje_recojo || 'Recoge tu pedido en nuestra tienda. Te esperamos!',
   logisticaMotoDias: profile?.logistica_moto_dias ?? ['MONDAY'],
   logisticaMotoHoraCorte: profile?.logistica_moto_hora_corte ?? '18:00',
   logisticaMotoUsaHoraCorte: profile?.logistica_moto_usa_hora_corte ?? false,
@@ -974,6 +983,12 @@ metodo_otro:
 
 nombre_metodo_otro:
   config.nombreMetodoOtro,
+
+metodo_recojo:
+  config.metodoRecojo,
+
+mensaje_recojo:
+  config.mensajeRecojo,
 
   ...obtenerConfiguracionLogistica({
 

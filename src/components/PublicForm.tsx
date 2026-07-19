@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 
+import { Store } from 'lucide-react'
 import FormHeader from '@/components/FormHeader'
 import PersonalDataSection from '@/components/PersonalDataSection'
 import ShippingMethodCards from '@/components/ShippingMethodCards'
@@ -28,6 +29,8 @@ type Props = {
   metodoFlores?: boolean
   metodoOtro?: boolean
   nombreMetodoOtro?: string
+  metodoRecojo?: boolean
+  mensajeRecojo?: string
 }
 
 type MetodoDisponible = { value: string; label: string }
@@ -49,6 +52,8 @@ export default function PublicForm({
   metodoFlores,
   metodoOtro,
   nombreMetodoOtro,
+  metodoRecojo,
+  mensajeRecojo,
 }: Props) {
   const [loading, setLoading] = useState(false)
   const [enviado, setEnviado] = useState(false)
@@ -71,9 +76,10 @@ export default function PublicForm({
       metodoOtro && nombreOtro.trim()
         ? { value: 'OTRO', label: nombreOtro }
         : null,
+      metodoRecojo ? { value: 'RECOJO', label: 'Recojo en tienda' } : null,
     ]
     return all.filter((item): item is MetodoDisponible => item !== null)
-  }, [metodoMotorizado, metodoShalom, metodoOlva, metodoMarvisur, metodoFlores, metodoOtro, nombreOtro])
+  }, [metodoMotorizado, metodoShalom, metodoOlva, metodoMarvisur, metodoFlores, metodoOtro, nombreOtro, metodoRecojo])
 
   const [metodo, setMetodo] = useState(
     metodosDisponibles.length > 0 ? metodosDisponibles[0].value : ''
@@ -195,6 +201,7 @@ export default function PublicForm({
     }
 
     let detalle = ''
+    if (metodo === 'RECOJO') detalle = mensajeRecojo || 'Recojo en tienda'
     if (metodo === 'SHALOM') detalle = agencia
     if (['OLVA', 'MARVISUR', 'FLORES', 'OTRO'].includes(metodo)) {
       detalle = `Provincia: ${provincia}\nDirección: ${direccion}\nReferencia: ${referencia}`
@@ -218,6 +225,8 @@ export default function PublicForm({
             ? agencia
             : ['OLVA', 'MARVISUR', 'FLORES', 'OTRO'].includes(metodo)
             ? provincia
+            : metodo === 'RECOJO'
+            ? 'RECOJO'
             : distrito,
         direccion,
         referencia,
@@ -288,21 +297,37 @@ export default function PublicForm({
             onSelect={setMetodo}
           />
 
-          <ConditionalFields
-            metodo={metodo}
-            agencia={agencia}
-            setAgencia={setAgencia}
-            provincia={provincia}
-            setProvincia={setProvincia}
-            distrito={distrito}
-            setDistrito={handleDistritoChange}
-            direccion={direccion}
-            setDireccion={setDireccion}
-            referencia={referencia}
-            setReferencia={setReferencia}
-            tarifaMotorizado={tarifaMotorizado}
-            cargandoTarifa={cargandoTarifa}
-          />
+          {metodo === 'RECOJO' ? (
+            <div className="bg-sky-50 border border-sky-200 rounded-2xl p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center shrink-0">
+                  <Store size={18} className="text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900 text-sm">Recojo en tienda</p>
+                  <p className="text-sm text-slate-700 mt-1 leading-relaxed">
+                    {mensajeRecojo || 'Recoge tu pedido en nuestra tienda. Te esperamos!'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <ConditionalFields
+              metodo={metodo}
+              agencia={agencia}
+              setAgencia={setAgencia}
+              provincia={provincia}
+              setProvincia={setProvincia}
+              distrito={distrito}
+              setDistrito={handleDistritoChange}
+              direccion={direccion}
+              setDireccion={setDireccion}
+              referencia={referencia}
+              setReferencia={setReferencia}
+              tarifaMotorizado={tarifaMotorizado}
+              cargandoTarifa={cargandoTarifa}
+            />
+          )}
 
           {metodo === 'MOTORIZADO' && (
             <div className="space-y-2">

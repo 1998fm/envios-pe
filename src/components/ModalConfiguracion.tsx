@@ -197,6 +197,7 @@ export default function ModalConfiguracion({
                   { key: 'metodoMarvisur' as const, label: 'Marvisur' },
                   { key: 'metodoFlores' as const, label: 'Flores' },
                   { key: 'metodoOtro' as const, label: 'Otro método' },
+                  { key: 'metodoRecojo' as const, label: 'Recojo en tienda' },
                 ] as const).map((item) => {
                   const metodosActivos = [
                     config.metodoMotorizado,
@@ -205,6 +206,7 @@ export default function ModalConfiguracion({
                     config.metodoMarvisur,
                     config.metodoFlores,
                     config.metodoOtro,
+                    config.metodoRecojo,
                   ].filter(Boolean).length
 
                   const checked = config[item.key]
@@ -238,6 +240,21 @@ export default function ModalConfiguracion({
                       onChange={(e) => upd('nombreMetodoOtro', e.target.value)}
                       placeholder="Ej. Cruz del Sur"
                       className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400"
+                    />
+                  </div>
+                )}
+
+                {config.metodoRecojo && (
+                  <div className="ml-7 mt-4 rounded-2xl border border-slate-200  bg-white  p-6">
+                    <label className="block font-semibold text-slate-900  mb-3">
+                      Mensaje que verá el cliente al elegir Recojo en tienda
+                    </label>
+                    <textarea
+                      value={config.mensajeRecojo}
+                      onChange={(e) => upd('mensajeRecojo', e.target.value)}
+                      rows={3}
+                      className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400"
+                      placeholder="Recoge tu pedido en nuestra tienda. Te esperamos!"
                     />
                   </div>
                 )}

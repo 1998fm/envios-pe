@@ -76,6 +76,8 @@ export async function guardarPasoMetodos(
       metodo_flores: config.metodoFlores,
       metodo_otro: config.metodoOtro,
       nombre_metodo_otro: config.nombreMetodoOtro,
+      metodo_recojo: config.metodoRecojo,
+      mensaje_recojo: config.mensajeRecojo,
     })
     .eq('id', userId)
 
