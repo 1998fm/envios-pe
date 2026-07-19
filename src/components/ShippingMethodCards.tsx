@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Bike, Building2, Truck, Ship, Flower2, Package } from 'lucide-react'
+import { Bike, Building2, Truck, Ship, Flower2, Package, Store } from 'lucide-react'
 
 type Metodo = { value: string; label: string }
 
@@ -17,6 +17,7 @@ const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
   OLVA: Truck,
   MARVISUR: Ship,
   FLORES: Flower2,
+  RECOJO: Store,
 }
 
 const defaultIcon = Package

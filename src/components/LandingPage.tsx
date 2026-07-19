@@ -561,6 +561,7 @@ export default function LandingPage() {
               { icon: Clock, title: 'Control de horarios', desc: 'Nunca más recibirás un pedido después de que el motorizado salió.', gradient: 'from-amber-500 to-orange-500' },
               { icon: Smartphone, title: 'Sin complicaciones', desc: 'Tu cliente solicita sin registrarse, sin crear cuenta, sin bajar apps. Solo llena el formulario y ya.', gradient: 'from-rose-500 to-pink-500' },
               { icon: Warehouse, title: 'Tu propio método', desc: '¿Usas otra agencia? Agrega un método personalizado con el nombre que quieras.', gradient: 'from-slate-500 to-slate-600' },
+              { icon: Store, title: 'Recojo en tienda', desc: 'Tus clientes recogen su pedido directamente. Sin dirección, sin distrito — solo un mensaje personalizado.', gradient: 'from-emerald-500 to-teal-500' },
             ].map((item, i) => (
               <motion.div
                 key={item.title}

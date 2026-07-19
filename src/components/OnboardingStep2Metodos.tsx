@@ -2,7 +2,7 @@
 
 import type { ConfigState } from '@/types/config'
 import agenciasShalom from '@/data/agencias-shalom.json'
-import { Bike, Truck, Package, Ship, Flower2, Plus } from 'lucide-react'
+import { Bike, Truck, Package, Ship, Flower2, Plus, Store } from 'lucide-react'
 
 type Props = {
   config: ConfigState
@@ -16,6 +16,7 @@ const metodos = [
   { key: 'metodoMarvisur' as const, label: 'Marvisur', icon: Ship, desc: 'Envíos nacionales vía Marvisur' },
   { key: 'metodoFlores' as const, label: 'Flores', icon: Flower2, desc: 'Envíos nacionales vía Flores' },
   { key: 'metodoOtro' as const, label: 'Otro método', icon: Plus, desc: 'Cualquier otra agencia que uses' },
+  { key: 'metodoRecojo' as const, label: 'Recojo en tienda', icon: Store, desc: 'Tus clientes recogen en tu local' },
 ]
 
 export default function OnboardingStep2Metodos({ config, upd }: Props) {
@@ -65,6 +66,21 @@ export default function OnboardingStep2Metodos({ config, upd }: Props) {
             onChange={(e) => upd('nombreMetodoOtro', e.target.value)}
             placeholder="Ej: Cruz del Sur"
             className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+          />
+        </div>
+      )}
+
+      {config.metodoRecojo && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <label className="block font-semibold text-slate-900 mb-2 text-sm">
+            Mensaje para tus clientes al elegir Recojo en tienda
+          </label>
+          <textarea
+            value={config.mensajeRecojo}
+            onChange={(e) => upd('mensajeRecojo', e.target.value)}
+            rows={3}
+            className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+            placeholder="Recoge tu pedido en nuestra tienda. Te esperamos!"
           />
         </div>
       )}

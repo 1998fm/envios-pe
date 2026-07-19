@@ -22,6 +22,8 @@ export type ConfigState = {
   metodoFlores: boolean
   metodoOtro: boolean
   nombreMetodoOtro: string
+  metodoRecojo: boolean
+  mensajeRecojo: string
   logisticaMotoDias: string[]
   logisticaMotoHoraCorte: string
   logisticaMotoUsaHoraCorte: boolean
@@ -57,6 +59,8 @@ export const initialConfigState: ConfigState = {
   metodoFlores: false,
   metodoOtro: false,
   nombreMetodoOtro: '',
+  metodoRecojo: false,
+  mensajeRecojo: 'Recoge tu pedido en nuestra tienda. Te esperamos!',
   logisticaMotoDias: ['MONDAY'],
   logisticaMotoHoraCorte: '18:00',
   logisticaMotoUsaHoraCorte: false,
