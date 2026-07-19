@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ExternalLink, ArrowRight } from 'lucide-react'
+import { X, Maximize2, Minimize2, RefreshCw } from 'lucide-react'
 import ToriMascot from '@/components/ToriMascot'
 
 type Props = {
@@ -11,24 +11,20 @@ type Props = {
 }
 
 export default function ModalShalomPro({ abierto, onCerrar }: Props) {
-  const [abriendo, setAbriendo] = useState(false)
-
-  function abrirShalomPro() {
-    setAbriendo(true)
-    setTimeout(() => {
-      window.open('https://pro.shalom.pe/home', '_blank', 'noopener,noreferrer')
-      setTimeout(() => {
-        setAbriendo(false)
-        onCerrar()
-      }, 1200)
-    }, 600)
-  }
+  const [cargando, setCargando] = useState(true)
+  const [pantallaCompleta, setPantallaCompleta] = useState(false)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
-    if (!abierto) {
-      setAbriendo(false)
-    }
+    if (abierto) setCargando(true)
   }, [abierto])
+
+  function recargar() {
+    setCargando(true)
+    if (iframeRef.current) {
+      iframeRef.current.src = iframeRef.current.src
+    }
+  }
 
   return (
     <AnimatePresence>
@@ -38,71 +34,71 @@ export default function ModalShalomPro({ abierto, onCerrar }: Props) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4"
         >
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className={`bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col ${
+              pantallaCompleta
+                ? 'fixed inset-2 sm:inset-4 rounded-2xl'
+                : 'w-full max-w-5xl h-[85vh]'
+            }`}
           >
-            {/* Header con gradient */}
-            <div className="bg-gradient-to-r from-sky-600 to-indigo-600 px-6 pt-6 pb-8 text-center">
-              <div className="flex justify-center mb-3">
-                <ToriMascot variant="guide" size={72} animate />
+            {/* Header */}
+            <div className="bg-gradient-to-r from-sky-600 to-indigo-600 px-4 sm:px-6 py-3 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <ToriMascot variant="guide" size={32} animate />
+                <div>
+                  <h3 className="text-white font-bold text-sm">Shalom Pro</h3>
+                  <p className="text-white/60 text-[10px]">pro.shalom.pe</p>
+                </div>
               </div>
-              <h3 className="text-white font-bold text-lg">Shalom Pro</h3>
-              <p className="text-white/70 text-sm mt-1">Gestión de envíos nacionales</p>
-              <button onClick={onCerrar} className="absolute top-4 right-4 p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 space-y-5">
-              {abriendo ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-6 space-y-3"
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={recargar}
+                  className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                  title="Recargar"
                 >
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  >
-                    <ToriMascot variant="happy" size={56} animate />
-                  </motion.div>
-                  <p className="text-slate-700 font-semibold">Abriendo Shalom Pro...</p>
-                  <p className="text-xs text-slate-400">Se abrirá en una nueva ventana</p>
-                </motion.div>
-              ) : (
-                <>
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    Accede al panel de Shalom Pro para gestionar envíos nacionales, 
-                    imprimir guías y dar seguimiento a tus paquetes.
-                  </p>
-
-                  <div className="bg-sky-50 border border-sky-200 rounded-xl p-4 text-sm text-slate-700 space-y-2">
-                    <p className="font-semibold text-sky-800">¿Sabías que...?</p>
-                    <p>Puedes exportar tus pedidos a Shalom directamente desde el dashboard de Tori con un solo clic.</p>
-                  </div>
-
-                  <button
-                    onClick={abrirShalomPro}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 hover:scale-[1.02] transition-all duration-200"
-                  >
-                    <ExternalLink size={16} />
-                    Abrir Shalom Pro
-                    <ArrowRight size={16} />
-                  </button>
-
-                  <p className="text-xs text-slate-400 text-center">
-                    Se abrirá <strong>pro.shalom.pe</strong> en una nueva pestaña
-                  </p>
-                </>
-              )}
+                  <RefreshCw size={16} />
+                </button>
+                <button
+                  onClick={() => setPantallaCompleta(!pantallaCompleta)}
+                  className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                  title={pantallaCompleta ? 'Salir de pantalla completa' : 'Pantalla completa'}
+                >
+                  {pantallaCompleta ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </button>
+                <button
+                  onClick={onCerrar}
+                  className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
+
+            {/* Loader */}
+            {cargando && (
+              <div className="absolute inset-0 top-12 flex items-center justify-center bg-white z-10">
+                <div className="text-center space-y-3">
+                  <ToriMascot variant="loading" size={56} animate />
+                  <p className="text-sm text-slate-500 font-medium">Cargando Shalom Pro...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Iframe */}
+            <iframe
+              ref={iframeRef}
+              src="/api/proxy/shalom"
+              className="w-full flex-1 border-0"
+              title="Shalom Pro"
+              onLoad={() => setCargando(false)}
+              sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+            />
           </motion.div>
         </motion.div>
       )}
