@@ -66,6 +66,10 @@ metodoFlores={profile.metodo_flores}
 metodoOtro={profile.metodo_otro}
 
 nombreMetodoOtro={profile.nombre_metodo_otro}
+
+        metodoRecojo={profile.metodo_recojo}
+
+        mensajeRecojo={profile.mensaje_recojo}
       />
 
     </div>
