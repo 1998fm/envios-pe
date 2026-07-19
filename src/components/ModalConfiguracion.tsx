@@ -4,6 +4,7 @@ import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
 import agenciasShalom from '@/data/agencias-shalom.json'
 import { ConfigModalProps } from '@/types/config'
+import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store } from 'lucide-react'
 
 export default function ModalConfiguracion({
   abierto, onCerrar,
@@ -179,25 +180,25 @@ export default function ModalConfiguracion({
           )}
 
           {config.vistaConfig === 'METODOS' && (
-            <div className="p-5 border border-slate-200  rounded-2xl bg-slate-50 ">
-              <h3 className="text-lg font-bold text-slate-900  mb-2">
-                Métodos de envío
-              </h3>
-              <p className="text-sm text-slate-500  mb-6">
-                {isBasic
-                  ? 'Selecciona hasta 2 métodos de envío para ofrecer a tus clientes.'
-                  : 'Activa los métodos que ofrecerás a tus clientes.'}
-              </p>
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 mb-1">Métodos de envío</h3>
+                <p className="text-sm text-slate-500">
+                  {isBasic
+                    ? 'Selecciona hasta 2 métodos de envío para ofrecer a tus clientes.'
+                    : 'Activa los métodos que ofrecerás a tus clientes.'}
+                </p>
+              </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {([
-                  { key: 'metodoMotorizado' as const, label: 'Motorizado' },
-                  { key: 'metodoShalom' as const, label: 'Shalom' },
-                  { key: 'metodoOlva' as const, label: 'Olva' },
-                  { key: 'metodoMarvisur' as const, label: 'Marvisur' },
-                  { key: 'metodoFlores' as const, label: 'Flores' },
-                  { key: 'metodoOtro' as const, label: 'Otro método' },
-                  { key: 'metodoRecojo' as const, label: 'Recojo en tienda' },
+                  { key: 'metodoMotorizado' as const, label: 'Motorizado', icon: Bike, desc: 'Reparto local en moto' },
+                  { key: 'metodoShalom' as const, label: 'Shalom', icon: Building2, desc: 'Envíos nacionales vía Shalom' },
+                  { key: 'metodoOlva' as const, label: 'Olva', icon: Package, desc: 'Envíos nacionales vía Olva' },
+                  { key: 'metodoMarvisur' as const, label: 'Marvisur', icon: Ship, desc: 'Envíos nacionales vía Marvisur' },
+                  { key: 'metodoFlores' as const, label: 'Flores', icon: Flower2, desc: 'Envíos nacionales vía Flores' },
+                  { key: 'metodoOtro' as const, label: 'Otro método', icon: Plus, desc: 'Cualquier otra agencia que uses' },
+                  { key: 'metodoRecojo' as const, label: 'Recojo en tienda', icon: Store, desc: 'Tus clientes recogen en tu local' },
                 ] as const).map((item) => {
                   const metodosActivos = [
                     config.metodoMotorizado,
@@ -211,54 +212,65 @@ export default function ModalConfiguracion({
 
                   const checked = config[item.key]
                   const disabled = isBasic && !checked && metodosActivos >= 2
+                  const Icon = item.icon
 
                   return (
                     <label
                       key={item.key}
-                      className={`flex items-center gap-3 cursor-pointer ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
+                        disabled
+                          ? 'opacity-40 cursor-not-allowed border-slate-200 bg-white'
+                          : checked
+                          ? 'border-sky-500 bg-sky-50'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
                     >
                       <input
                         type="checkbox"
                         checked={checked}
                         disabled={disabled}
                         onChange={(e) => upd(item.key, e.target.checked)}
-                        className="accent-sky-600 w-4 h-4"
+                        className="accent-sky-600 w-4 h-4 shrink-0"
                       />
-                      <span className="font-semibold text-slate-900 ">{item.label}</span>
+                      <Icon size={22} className={`shrink-0 ${checked ? 'text-sky-600' : 'text-slate-400'}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-900">{item.label}</p>
+                        <p className="text-xs text-slate-500">{item.desc}</p>
+                      </div>
                     </label>
                   )
                 })}
-
-                {config.metodoOtro && (
-                  <div className="ml-7 mt-4 rounded-2xl border border-slate-200  bg-white  p-6">
-                    <label className="block font-semibold text-slate-900  mb-3">
-                      Nombre del método
-                    </label>
-                    <input
-                      type="text"
-                      value={config.nombreMetodoOtro}
-                      onChange={(e) => upd('nombreMetodoOtro', e.target.value)}
-                      placeholder="Ej. Cruz del Sur"
-                      className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400"
-                    />
-                  </div>
-                )}
-
-                {config.metodoRecojo && (
-                  <div className="ml-7 mt-4 rounded-2xl border border-slate-200  bg-white  p-6">
-                    <label className="block font-semibold text-slate-900  mb-3">
-                      Mensaje que verá el cliente al elegir Recojo en tienda
-                    </label>
-                    <textarea
-                      value={config.mensajeRecojo}
-                      onChange={(e) => upd('mensajeRecojo', e.target.value)}
-                      rows={3}
-                      className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400"
-                      placeholder="Recoge tu pedido en nuestra tienda. Te esperamos!"
-                    />
-                  </div>
-                )}
               </div>
+
+              {config.metodoOtro && (
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <label className="block font-semibold text-slate-900 mb-2 text-sm">
+                    Nombre del otro método
+                  </label>
+                  <input
+                    type="text"
+                    value={config.nombreMetodoOtro}
+                    onChange={(e) => upd('nombreMetodoOtro', e.target.value)}
+                    placeholder="Ej: Cruz del Sur"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400"
+                  />
+                </div>
+              )}
+
+              {config.metodoRecojo && (
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <label className="block font-semibold text-slate-900 mb-2 text-sm">
+                    Mensaje para tus clientes al elegir Recojo en tienda
+                  </label>
+                  <textarea
+                    value={config.mensajeRecojo}
+                    onChange={(e) => upd('mensajeRecojo', e.target.value)}
+                    rows={3}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400"
+                    placeholder="Recoge tu pedido en nuestra tienda. Te esperamos!"
+                  />
+                </div>
+              )}
             </div>
           )}
 
