@@ -47,7 +47,6 @@ export default function ModalShalomPro({ abierto, onCerrar }: Props) {
                 : 'w-full max-w-5xl h-[85vh]'
             }`}
           >
-            {/* Header */}
             <div className="bg-gradient-to-r from-sky-600 to-indigo-600 px-4 sm:px-6 py-3 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <ToriMascot variant="guide" size={32} animate />
@@ -57,30 +56,18 @@ export default function ModalShalomPro({ abierto, onCerrar }: Props) {
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
-                <button
-                  onClick={recargar}
-                  className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                  title="Recargar"
-                >
+                <button onClick={recargar} className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors" title="Recargar">
                   <RefreshCw size={16} />
                 </button>
-                <button
-                  onClick={() => setPantallaCompleta(!pantallaCompleta)}
-                  className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                  title={pantallaCompleta ? 'Salir de pantalla completa' : 'Pantalla completa'}
-                >
+                <button onClick={() => setPantallaCompleta(!pantallaCompleta)} className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors" title={pantallaCompleta ? 'Salir de pantalla completa' : 'Pantalla completa'}>
                   {pantallaCompleta ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                 </button>
-                <button
-                  onClick={onCerrar}
-                  className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                >
+                <button onClick={onCerrar} className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors">
                   <X size={18} />
                 </button>
               </div>
             </div>
 
-            {/* Loader */}
             {cargando && (
               <div className="absolute inset-0 top-12 flex items-center justify-center bg-white z-10">
                 <div className="text-center space-y-3">
@@ -90,10 +77,9 @@ export default function ModalShalomPro({ abierto, onCerrar }: Props) {
               </div>
             )}
 
-            {/* Iframe */}
             <iframe
               ref={iframeRef}
-              src="/api/proxy/shalom"
+              src="/api/proxy/shalom/"
               className="w-full flex-1 border-0"
               title="Shalom Pro"
               onLoad={() => setCargando(false)}
