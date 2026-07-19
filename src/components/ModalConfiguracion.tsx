@@ -4,7 +4,7 @@ import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
 import agenciasShalom from '@/data/agencias-shalom.json'
 import { ConfigModalProps } from '@/types/config'
-import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store } from 'lucide-react'
+import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store, Building, Phone, MapPin, Image, MessageCircle, Link2, Globe, Clock, DollarSign, Camera, Music, ExternalLink } from 'lucide-react'
 
 export default function ModalConfiguracion({
   abierto, onCerrar,
@@ -60,43 +60,46 @@ export default function ModalConfiguracion({
           </div>
 
           {config.vistaConfig === 'EMPRESA' && (
-            <>
-              <div className="mb-8 p-5 border border-slate-200  rounded-2xl bg-slate-50 ">
-                <h3 className="text-lg font-bold text-slate-900  mb-4">
-                  Datos de empresa
-                </h3>
-                <input
-                  type="text"
-                  placeholder="Nombre empresa"
-                  value={config.empresa}
-                  onChange={(e) => upd('empresa', e.target.value)}
-                  className="w-full border border-slate-200  rounded-xl px-4 py-3 mb-3 bg-white  text-slate-900  placeholder-slate-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Teléfono empresa"
-                  value={config.telefonoEmpresa}
-                  onChange={(e) => upd('telefonoEmpresa', e.target.value)}
-                  className="w-full border border-slate-200  rounded-xl px-4 py-3 mb-3 bg-white  text-slate-900  placeholder-slate-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Dirección empresa"
-                  value={config.direccionEmpresa}
-                  onChange={(e) => upd('direccionEmpresa', e.target.value)}
-                  className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400"
-                />
+            <div className="space-y-6">
+              <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center">
+                    <Building size={18} className="text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900">Datos del negocio</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="text" placeholder="Nombre del negocio" value={config.empresa}
+                      onChange={(e) => upd('empresa', e.target.value)}
+                      className="w-full border border-slate-200 rounded-xl pl-11 pr-4 py-3 bg-white text-slate-900 placeholder-slate-400" />
+                  </div>
+                  <div className="relative">
+                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="text" placeholder="Teléfono" value={config.telefonoEmpresa}
+                      onChange={(e) => upd('telefonoEmpresa', e.target.value)}
+                      className="w-full border border-slate-200 rounded-xl pl-11 pr-4 py-3 bg-white text-slate-900 placeholder-slate-400" />
+                  </div>
+                  <div className="relative">
+                    <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="text" placeholder="Dirección (opcional)" value={config.direccionEmpresa}
+                      onChange={(e) => upd('direccionEmpresa', e.target.value)}
+                      className="w-full border border-slate-200 rounded-xl pl-11 pr-4 py-3 bg-white text-slate-900 placeholder-slate-400" />
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-6 p-5 border border-slate-200  rounded-2xl bg-slate-50 ">
-                <label className="block font-semibold text-slate-900  mb-3">
-                  Agencia de origen (Shalom)
-                </label>
-                <select
-                  value={config.nuevoOrigen}
+              <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                    <Building2 size={18} className="text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900">Agencia de origen (Shalom)</h3>
+                </div>
+                <select value={config.nuevoOrigen}
                   onChange={(e) => upd('nuevoOrigen', e.target.value)}
-                  className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900 "
-                >
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900">
                   <option value="">Selecciona una agencia</option>
                   {agenciasShalom.map((agencia: string) => (
                     <option key={agencia} value={agencia}>{agencia}</option>
@@ -105,78 +108,84 @@ export default function ModalConfiguracion({
               </div>
 
               {!isBasic && (
-              <div className="mt-6">
-                <label className="block mb-2 font-medium text-slate-900 ">
-                  Logo del negocio
-                </label>
+                <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                      <Image size={18} className="text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900">Logo del negocio</h3>
+                  </div>
                   {config.logoUrl && (
-                    <img
-                      src={config.logoUrl}
-                      alt="Logo"
-                      className="h-20 object-contain mb-3 border border-slate-200  rounded-xl p-2 bg-white "
-                    />
+                    <img src={config.logoUrl} alt="Logo"
+                      className="h-20 object-contain mb-3 border border-slate-200 rounded-xl p-2 bg-white" />
                   )}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
+                  <input type="file" accept="image/png,image/jpeg,image/webp"
                     onChange={(e) => upd('logoFile', e.target.files?.[0] || null)}
-                    className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-sky-100 :bg-sky-900 file:text-sky-700 :text-sky-300 file:font-semibold file:text-sm"
-                  />
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-sky-100 file:text-sky-700 file:font-semibold file:text-sm" />
                 </div>
               )}
 
-              <label className="block mt-4 mb-2 font-medium text-slate-900 ">
-                Mensaje de éxito
-              </label>
-              <textarea
-                value={config.redirectMessage}
-                onChange={(e) => upd('redirectMessage', e.target.value)}
-                rows={4}
-                className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400"
-                placeholder="Gracias por tu compra.\n\nEn unos segundos te llevaremos a nuestro canal oficial."
-              />
+              <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                    <MessageCircle size={18} className="text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900">Mensaje de éxito</h3>
+                </div>
+                <p className="text-xs text-slate-500 mb-3">Este mensaje verán tus clientes después de hacer un pedido.</p>
+                <textarea value={config.redirectMessage}
+                  onChange={(e) => upd('redirectMessage', e.target.value)} rows={4}
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400"
+                  placeholder="Gracias por tu compra. En unos segundos te redirigiremos." />
+              </div>
 
               {!isBasic && (
-                <div className="mt-6">
-                  <label className="block mb-2 font-medium text-slate-900 ">
-                    URL de redirección
-                  </label>
-                  <input
-                    type="text"
-                    value={config.redirectUrl}
+                <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center">
+                      <Link2 size={18} className="text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900">URL de redirección</h3>
+                  </div>
+                  <p className="text-xs text-slate-500 mb-3">Después del pedido, redirige a tus clientes a esta página.</p>
+                  <input type="text" value={config.redirectUrl}
                     onChange={(e) => upd('redirectUrl', e.target.value)}
                     placeholder="https://mipagina.com"
-                    className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400"
-                  />
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400" />
                 </div>
               )}
 
               {!isBasic && (
-                <div className="mt-6">
-                  <h3 className="font-semibold text-slate-900  mb-3">
-                    Redes sociales
-                  </h3>
+                <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+                      <Globe size={18} className="text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900">Redes sociales</h3>
+                  </div>
+                  <p className="text-xs text-slate-500 mb-3">Aparecerán en el formulario de tus clientes.</p>
                   <div className="space-y-3">
                     {[
-                      { label: 'Instagram', key: 'instagramUrl' as const, value: config.instagramUrl },
-                      { label: 'Facebook', key: 'facebookUrl' as const, value: config.facebookUrl },
-                      { label: 'TikTok', key: 'tiktokUrl' as const, value: config.tiktokUrl },
-                      { label: 'Página web', key: 'webUrl' as const, value: config.webUrl },
-                      { label: 'WhatsApp', key: 'whatsappUrl' as const, value: config.whatsappUrl },
-                    ].map((field) => (
-                      <input
-                        key={field.key}
-                        type="text"
-                        placeholder={field.label}
-                        value={field.value}
-                        onChange={(e) => upd(field.key, e.target.value)}
-                        className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400"
-                      />
-                    ))}
+                      { icon: Camera, label: 'Instagram', key: 'instagramUrl' as const, value: config.instagramUrl },
+                      { icon: Globe, label: 'Facebook', key: 'facebookUrl' as const, value: config.facebookUrl },
+                      { icon: Music, label: 'TikTok', key: 'tiktokUrl' as const, value: config.tiktokUrl },
+                      { icon: ExternalLink, label: 'Página web', key: 'webUrl' as const, value: config.webUrl },
+                      { icon: MessageCircle, label: 'WhatsApp', key: 'whatsappUrl' as const, value: config.whatsappUrl },
+                    ].map((field) => {
+                      const Icon = field.icon
+                      return (
+                        <div key={field.key} className="relative">
+                          <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input type="text" placeholder={field.label} value={field.value}
+                            onChange={(e) => upd(field.key, e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl pl-11 pr-4 py-3 bg-white text-slate-900 placeholder-slate-400" />
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
-            </>
+            </div>
           )}
 
           {config.vistaConfig === 'METODOS' && (
@@ -275,19 +284,25 @@ export default function ModalConfiguracion({
           )}
 
           {config.vistaConfig === 'LOGISTICA' && !isBasic && (
-            <div className="space-y-8">
-              <div className="bg-white  border border-slate-200  rounded-3xl p-8 shadow-sm">
-                <h2 className="text-xl font-bold text-slate-900 ">
-                  Control logístico
-                </h2>
-                <p className="text-sm text-slate-500  mt-2">
-                  Configura días de atención, horarios de corte y cupo diario.
-                </p>
+            <div className="space-y-6">
+              <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                    <Clock size={18} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Control logístico</h3>
+                    <p className="text-xs text-slate-500">Configura días de atención, horarios de corte y cupo diario.</p>
+                  </div>
+                </div>
 
-                <div className="mt-8 space-y-6">
+                <div className="space-y-6">
                   {config.metodoMotorizado && (
-                    <div>
-                      <h3 className="font-semibold text-lg text-slate-900  mb-4">Motorizado</h3>
+                    <div className="bg-white border border-slate-200 rounded-2xl p-5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Bike size={18} className="text-sky-600" />
+                        <h4 className="font-semibold text-slate-900">Motorizado</h4>
+                      </div>
                       <ConfiguracionMetodo
                         dias={config.logisticaMotoDias}
                         setDias={setter('logisticaMotoDias')}
@@ -307,8 +322,11 @@ export default function ModalConfiguracion({
                     const hayAgencias =
                       config.metodoShalom || config.metodoOlva || config.metodoMarvisur || config.metodoFlores || config.metodoOtro
                     return hayAgencias && (
-                      <div>
-                        <h3 className="font-semibold text-lg text-slate-900  mb-4">Agencias</h3>
+                      <div className="bg-white border border-slate-200 rounded-2xl p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Truck size={18} className="text-indigo-600" />
+                          <h4 className="font-semibold text-slate-900">Agencias</h4>
+                        </div>
                         <ConfiguracionMetodo
                           dias={config.logisticaAgenciasDias}
                           setDias={setter('logisticaAgenciasDias')}
@@ -350,34 +368,27 @@ export default function ModalConfiguracion({
           )}
 
           {config.vistaConfig === 'TARIFAS' && (
-            <div className="p-5 border border-slate-200  rounded-2xl bg-slate-50 ">
-              <h3 className="text-lg font-bold text-slate-900  mb-2">
-                Tarifas motorizado
-              </h3>
-              <p className="text-sm text-slate-500  mb-6">
-                Define cuánto cobrar por cada distrito.
-              </p>
-              <div className="space-y-3">
+            <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                  <DollarSign size={18} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Tarifas motorizado</h3>
+                  <p className="text-xs text-slate-500">Define cuánto cobrar por cada distrito.</p>
+                </div>
+              </div>
+              <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                 {distritosMoto.map((distrito: string) => (
-                  <div
-                    key={distrito}
-                    className="flex items-center justify-between gap-4 bg-white  border border-slate-200  rounded-xl px-4 py-3"
-                  >
-                    <div className="font-medium text-slate-700 ">
-                      {distrito}
-                    </div>
+                  <div key={distrito}
+                    className="flex items-center justify-between gap-4 bg-white border border-slate-200 rounded-xl px-4 py-3 hover:border-sky-200 transition-colors">
+                    <div className="font-medium text-slate-700 text-sm">{distrito}</div>
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-500  text-sm">S/</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.50"
+                      <span className="text-slate-400 text-sm">S/</span>
+                      <input type="number" min="0" step="0.50"
                         value={config.tarifas[distrito] || ''}
-                        onChange={(e) =>
-                          upd('tarifas', { ...config.tarifas, [distrito]: e.target.value })
-                        }
-                        className="w-24 border border-slate-200  rounded-lg px-3 py-2 text-right bg-white  text-slate-900 "
-                      />
+                        onChange={(e) => upd('tarifas', { ...config.tarifas, [distrito]: e.target.value })}
+                        className="w-24 border border-slate-200 rounded-lg px-3 py-2 text-right bg-white text-slate-900" />
                     </div>
                   </div>
                 ))}
