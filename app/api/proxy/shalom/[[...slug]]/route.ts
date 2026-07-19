@@ -4,18 +4,19 @@ const TARGET = 'https://pro.shalom.pe'
 
 export const runtime = 'nodejs'
 
-export async function GET(req: NextRequest) {
-  return proxy(req)
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
+  const { slug } = await params
+  return proxy(req, slug)
 }
 
-export async function POST(req: NextRequest) {
-  return proxy(req)
+export async function POST(req: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
+  const { slug } = await params
+  return proxy(req, slug)
 }
 
-async function proxy(req: NextRequest) {
+async function proxy(req: NextRequest, slug?: string[]) {
   const url = new URL(req.url)
-  let targetPath = url.pathname.replace(/^\/api\/proxy\/shalom/, '') || '/'
-  if (!targetPath.startsWith('/')) targetPath = '/' + targetPath
+  const targetPath = slug ? '/' + slug.join('/') : '/'
   const targetUrl = `${TARGET}${targetPath}${url.search}`
 
   try {
