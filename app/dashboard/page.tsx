@@ -23,7 +23,7 @@ import FilterBar from '@/components/FilterBar'
 import DashboardActions from '@/components/DashboardActions'
 import EnvioGroupedList from '@/components/EnvioGroupedList'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import ModalShalomPro from '@/components/ModalShalomPro'
+
 import Toast from '@/components/Toast'
 import FloatingChat from '@/components/FloatingChat'
 /* ========================================
@@ -73,7 +73,6 @@ const [mensajeToast, setMensajeToast] =
 const [plan, setPlan] = useState('basic')
 const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
 const [mostrarUpgrade, setMostrarUpgrade] = useState(false)
-const [mostrarShalomPro, setMostrarShalomPro] = useState(false)
 const [agruparPor, setAgruparPor] = useState<'programada' | 'registro'>('programada')
 // ========================================
 // ETIQUETAS
@@ -1232,7 +1231,6 @@ for (
           setMostrarEtiquetas(true)
         }}
         onCopiarDatos={abrirModalCopiar}
-        onShalomPro={() => setMostrarShalomPro(true)}
         showCopiarDatos={mostrarBotonCopiar}
         tieneShalom={true}
       />
@@ -1398,11 +1396,6 @@ for (
 />
 
 <FloatingChat />
-
-<ModalShalomPro
-  abierto={mostrarShalomPro}
-  onCerrar={() => setMostrarShalomPro(false)}
-/>
     </main>
   )
 }

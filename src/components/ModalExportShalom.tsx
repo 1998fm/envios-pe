@@ -76,10 +76,10 @@ export default function ModalExportShalom({
           </div>
         </div>
 
-        <div className="border-t border-slate-100  p-6 flex justify-end gap-4 bg-white ">
+        <div className="border-t border-slate-100 p-6 flex justify-end gap-4 bg-white">
           <button
             onClick={onCerrar}
-            className="px-7 py-3 rounded-xl border border-slate-300  font-semibold text-slate-700  hover:bg-slate-100 :bg-slate-700 transition-all"
+            className="px-7 py-3 rounded-xl border border-slate-300 font-semibold text-slate-700 hover:bg-slate-100 transition-all"
           >
             Cancelar
           </button>
@@ -88,6 +88,23 @@ export default function ModalExportShalom({
             className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:shadow-lg hover:shadow-sky-500/20 text-white px-7 py-3 rounded-xl font-semibold transition-all"
           >
             {marcarEnviado ? 'Exportar y enviar' : 'Exportar'}
+          </button>
+        </div>
+
+        <div className="border-t border-slate-100 px-8 py-4 flex items-center justify-between bg-slate-50">
+          <p className="text-xs text-slate-400">
+            ¿Usas Shalom Pro?
+          </p>
+          <button
+            onClick={() => window.open('https://pro.shalom.pe', '_blank', 'noopener,noreferrer')}
+            className="text-sm font-medium text-sky-600 hover:text-sky-700 hover:underline transition-colors flex items-center gap-1.5"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            Abrir Shalom Pro
           </button>
         </div>
       </div>
