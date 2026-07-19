@@ -1,13 +1,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Download, Replace, Tag, Copy } from 'lucide-react'
+import { Download, Replace, Tag, Copy, ExternalLink } from 'lucide-react'
 
 type Props = {
   onExportShalom: () => void
   onCambioMasivo: () => void
   onGenerarEtiquetas: () => void
   onCopiarDatos: () => void
+  onShalomPro: () => void
   showCopiarDatos: boolean
   tieneShalom: boolean
   plan?: string
@@ -39,7 +40,7 @@ const btnGradient = `
 `
 
 export default function DashboardActions({
-  onExportShalom, onCambioMasivo, onGenerarEtiquetas, onCopiarDatos,
+  onExportShalom, onCambioMasivo, onGenerarEtiquetas, onCopiarDatos, onShalomPro,
   showCopiarDatos, tieneShalom, plan = 'basic',
 }: Props) {
   return (
@@ -55,6 +56,11 @@ export default function DashboardActions({
           Exportar Shalom
         </button>
       )}
+
+      <button onClick={onShalomPro} className={btnClass}>
+        <ExternalLink size={15} />
+        Shalom Pro
+      </button>
 
       {plan !== 'basic' && (
         <button data-tour="cambio-masivo" onClick={onCambioMasivo} className={btnClass}>
