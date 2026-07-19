@@ -53,7 +53,7 @@ export default function DashboardActions({
       {tieneShalom && (
         <button data-tour="exportar-shalom" onClick={onExportShalom} className={btnGradient}>
           <Download size={15} />
-          Exportar Shalom
+          Shalom Pro
         </button>
       )}
 
