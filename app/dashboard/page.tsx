@@ -1200,6 +1200,10 @@ for (
       }}
       onConfig={() => setMostrarConfig(true)}
       onUpgrade={() => setMostrarUpgrade(true)}
+      onLogout={async () => {
+        await supabase.auth.signOut()
+        router.push('/login')
+      }}
     />
 
     {userId && <EstadisticasDashboard userId={userId} />}

@@ -14,6 +14,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [mostrarReset, setMostrarReset] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [enviandoReset, setEnviandoReset] = useState(false)
+  const [resetEnviado, setResetEnviado] = useState(false)
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -33,6 +37,25 @@ export default function LoginPage() {
     }
 
     router.push('/dashboard')
+  }
+
+  async function handleResetPassword(e: React.FormEvent) {
+    e.preventDefault()
+    setEnviandoReset(true)
+    setError('')
+
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+
+    setEnviandoReset(false)
+
+    if (error) {
+      setError(error.message)
+      return
+    }
+
+    setResetEnviado(true)
   }
 
   return (
@@ -90,13 +113,61 @@ export default function LoginPage() {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200 disabled:opacity-60"
-        >
-          {loading ? 'Ingresando...' : 'Ingresar'}
-        </button>
+        {mostrarReset ? (
+          <form onSubmit={handleResetPassword} className="space-y-3">
+            {resetEnviado ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700 text-center">
+                Revisa tu correo. Te hemos enviado un enlace para restablecer tu contraseña.
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-slate-500">
+                  Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
+                </p>
+                <input
+                  type="email"
+                  placeholder="correo@ejemplo.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={enviandoReset}
+                  className="w-full py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200 disabled:opacity-60"
+                >
+                  {enviandoReset ? 'Enviando...' : 'Enviar enlace'}
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => { setMostrarReset(false); setResetEnviado(false) }}
+              className="w-full text-sm text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              Volver al inicio de sesión
+            </button>
+          </form>
+        ) : (
+          <>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200 disabled:opacity-60"
+            >
+              {loading ? 'Ingresando...' : 'Ingresar'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMostrarReset(true)}
+              className="w-full text-center text-sm text-sky-600 hover:text-sky-700 hover:underline font-medium"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </>
+        )}
 
         <p className="text-center text-sm text-slate-500 ">
           ¿No tienes cuenta?{' '}

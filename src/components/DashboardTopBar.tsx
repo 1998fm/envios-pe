@@ -1,5 +1,6 @@
 'use client'
 
+import { LogOut } from 'lucide-react'
 import LogoTori from '@/components/LogoTori'
 
 type Props = {
@@ -9,9 +10,10 @@ type Props = {
   onCompartir: () => void
   onConfig: () => void
   onUpgrade: () => void
+  onLogout: () => void
 }
 
-export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompartir, onConfig, onUpgrade }: Props) {
+export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompartir, onConfig, onUpgrade, onLogout }: Props) {
   const isTrial = diasRestantes != null && plan === 'pro'
 
   return (
@@ -83,6 +85,14 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
           >
             <span className="hidden sm:inline">Configuración</span>
             <span className="sm:hidden">Config</span>
+          </button>
+
+          <button
+            onClick={onLogout}
+            className="p-2.5 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200 shrink-0"
+            title="Cerrar sesión"
+          >
+            <LogOut size={18} />
           </button>
 
         </div>
