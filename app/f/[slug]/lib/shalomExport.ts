@@ -74,7 +74,7 @@ export function exportarShalom(
 
       'NRO GRR': '',
 
-      ORIGEN: origen,
+      ORIGEN: obtenerDestino(origen),
 
       DESTINO: obtenerDestino(
         envio.detalle
