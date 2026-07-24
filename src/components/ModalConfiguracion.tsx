@@ -2,6 +2,7 @@
 
 import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
+import AutocompleteInput from '@/components/AutocompleteInput'
 import agenciasShalom from '@/data/agencias-shalom.json'
 import { ConfigModalProps } from '@/types/config'
 import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store, Building, Phone, MapPin, Image, MessageCircle, Link2, Globe, Clock, DollarSign, Camera, Music, ExternalLink } from 'lucide-react'
@@ -97,14 +98,12 @@ export default function ModalConfiguracion({
                   </div>
                   <h3 className="text-lg font-bold text-slate-900">Agencia de origen (Shalom)</h3>
                 </div>
-                <select value={config.nuevoOrigen}
-                  onChange={(e) => upd('nuevoOrigen', e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900">
-                  <option value="">Selecciona una agencia</option>
-                  {agenciasShalom.map((agencia: string) => (
-                    <option key={agencia} value={agencia}>{agencia}</option>
-                  ))}
-                </select>
+                  <AutocompleteInput
+                    value={config.nuevoOrigen}
+                    onChange={(v) => upd('nuevoOrigen', v)}
+                    options={agenciasShalom}
+                    placeholder="Buscar agencia Shalom"
+                  />
               </div>
 
               {!isBasic && (

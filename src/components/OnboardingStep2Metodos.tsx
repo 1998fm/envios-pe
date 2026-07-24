@@ -1,5 +1,6 @@
 'use client'
 
+import AutocompleteInput from '@/components/AutocompleteInput'
 import type { ConfigState } from '@/types/config'
 import agenciasShalom from '@/data/agencias-shalom.json'
 import { Bike, Truck, Package, Ship, Flower2, Plus, Store } from 'lucide-react'
@@ -91,16 +92,12 @@ export default function OnboardingStep2Metodos({ config, upd }: Props) {
             Agencia Shalom de origen
           </label>
           <p className="text-xs text-slate-500 mb-3">¿Desde qué agencia Shalom envías tus pedidos?</p>
-          <select
+          <AutocompleteInput
             value={config.nuevoOrigen}
-            onChange={(e) => upd('nuevoOrigen', e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-          >
-            <option value="">Selecciona una agencia</option>
-            {agenciasShalom.map((agencia: string) => (
-              <option key={agencia} value={agencia}>{agencia}</option>
-            ))}
-          </select>
+            onChange={(v) => upd('nuevoOrigen', v)}
+            options={agenciasShalom}
+            placeholder="Buscar agencia Shalom"
+          />
         </div>
       )}
     </div>
