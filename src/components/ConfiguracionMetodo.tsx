@@ -96,10 +96,15 @@ export default function ConfiguracionMetodo({
         <div className="flex items-center gap-4 ml-7">
           <label className="text-sm text-slate-700 font-medium">Cupo máximo diario</label>
           <input
-            type="number"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            type="text"
             min={1}
-            value={cupo}
-            onChange={(e) => setCupo(Number(e.target.value))}
+            value={cupo || ''}
+            onChange={(e) => {
+              const val = parseInt(e.target.value, 10)
+              setCupo(isNaN(val) ? 0 : val)
+            }}
             className="w-24 border border-slate-200 rounded-xl px-4 py-2 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
           />
           <span className="text-xs text-slate-400">pedidos por día</span>
