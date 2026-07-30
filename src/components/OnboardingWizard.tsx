@@ -331,6 +331,12 @@ export default function OnboardingWizard() {
                   <div className="bg-slate-50 rounded-xl px-5 py-3 flex items-center justify-between text-sm">
                     <span className="text-slate-500">Métodos activados</span>
                     <span className="font-bold text-slate-900">
+=======
+                <div className="mt-8 space-y-3">
+                  <div className="bg-slate-50  rounded-xl px-5 py-3 flex items-center justify-between text-sm">
+                    <span className="text-slate-500 ">Métodos activados</span>
+                    <span className="font-bold text-slate-900 ">
+>>>>>>> inventario
                       {[config.metodoMotorizado, config.metodoShalom, config.metodoOlva, config.metodoMarvisur, config.metodoFlores, config.metodoOtro, config.metodoRecojo].filter(Boolean).length}
                     </span>
                   </div>
