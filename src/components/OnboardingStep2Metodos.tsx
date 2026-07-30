@@ -19,7 +19,6 @@ const metodos = [
   { key: 'metodoOtro' as const, label: 'Otro método', icon: Plus, desc: 'Cualquier otra agencia que uses' },
   { key: 'metodoRecojo' as const, label: 'Recojo en tienda', icon: Store, desc: 'Tus clientes recogen en tu local' },
 ]
-]
 
 export default function OnboardingStep2Metodos({ config, upd }: Props) {
   return (
