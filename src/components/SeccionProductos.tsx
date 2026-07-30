@@ -222,9 +222,11 @@ export default function SeccionProductos({ userId }: Props) {
                     <td className={`px-4 py-3 text-right font-mono ${bajoStock ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
                       {editando ? (
                         <input
-                          type="number"
-                          value={editForm.stock_actual ?? 0}
-                          onChange={(e) => setEditForm({ ...editForm, stock_actual: parseInt(e.target.value) || 0 })}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          type="text"
+                          value={String(editForm.stock_actual ?? 0)}
+                          onChange={(e) => setEditForm({ ...editForm, stock_actual: parseInt(e.target.value, 10) || 0 })}
                           className="w-20 px-2 py-1 rounded border border-sky-500 text-sm text-right focus:outline-none"
                         />
                       ) : (
@@ -237,9 +239,10 @@ export default function SeccionProductos({ userId }: Props) {
                     <td className="px-4 py-3 text-right text-slate-700">
                       {editando ? (
                         <input
-                          type="number"
-                          step="0.01"
-                          value={editForm.precio_venta ?? 0}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          type="text"
+                          value={String(editForm.precio_venta ?? 0)}
                           onChange={(e) => setEditForm({ ...editForm, precio_venta: parseFloat(e.target.value) || 0 })}
                           className="w-24 px-2 py-1 rounded border border-sky-500 text-sm text-right focus:outline-none"
                         />
@@ -250,9 +253,10 @@ export default function SeccionProductos({ userId }: Props) {
                     <td className="px-4 py-3 text-right text-slate-700">
                       {editando ? (
                         <input
-                          type="number"
-                          step="0.01"
-                          value={editForm.precio_compra ?? 0}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          type="text"
+                          value={String(editForm.precio_compra ?? 0)}
                           onChange={(e) => setEditForm({ ...editForm, precio_compra: parseFloat(e.target.value) || 0 })}
                           className="w-24 px-2 py-1 rounded border border-sky-500 text-sm text-right focus:outline-none"
                         />
@@ -321,46 +325,52 @@ export default function SeccionProductos({ userId }: Props) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Stock</label>
-                  <input
-                    type="number"
-                    value={nuevoForm.stock_actual}
-                    onChange={(e) => setNuevoForm({ ...nuevoForm, stock_actual: parseInt(e.target.value) || 0 })}
-                    className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Stock mín.</label>
-                  <input
-                    type="number"
-                    value={nuevoForm.stock_minimo}
-                    onChange={(e) => setNuevoForm({ ...nuevoForm, stock_minimo: parseInt(e.target.value) || 0 })}
-                    className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                  />
-                </div>
+                   <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Stock</label>
+                   <input
+                     inputMode="numeric"
+                     pattern="[0-9]*"
+                     type="text"
+                     value={nuevoForm.stock_actual || ''}
+                     onChange={(e) => setNuevoForm({ ...nuevoForm, stock_actual: parseInt(e.target.value, 10) || 0 })}
+                     className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                   />
+                 </div>
+                 <div>
+                   <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Stock mín.</label>
+                   <input
+                     inputMode="numeric"
+                     pattern="[0-9]*"
+                     type="text"
+                     value={nuevoForm.stock_minimo || ''}
+                     onChange={(e) => setNuevoForm({ ...nuevoForm, stock_minimo: parseInt(e.target.value, 10) || 0 })}
+                     className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                   />
+                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio venta (S/)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={nuevoForm.precio_venta}
-                    onChange={(e) => setNuevoForm({ ...nuevoForm, precio_venta: parseFloat(e.target.value) || 0 })}
-                    className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio compra (S/)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={nuevoForm.precio_compra}
-                    onChange={(e) => setNuevoForm({ ...nuevoForm, precio_compra: parseFloat(e.target.value) || 0 })}
-                    className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                  />
-                </div>
-              </div>
+               <div className="grid grid-cols-2 gap-3">
+                 <div>
+                   <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio venta (S/)</label>
+                   <input
+                     inputMode="numeric"
+                     pattern="[0-9]*"
+                     type="text"
+                     value={nuevoForm.precio_venta || ''}
+                     onChange={(e) => setNuevoForm({ ...nuevoForm, precio_venta: parseFloat(e.target.value) || 0 })}
+                     className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                   />
+                 </div>
+                 <div>
+                   <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio compra (S/)</label>
+                   <input
+                     inputMode="numeric"
+                     pattern="[0-9]*"
+                     type="text"
+                     value={nuevoForm.precio_compra || ''}
+                     onChange={(e) => setNuevoForm({ ...nuevoForm, precio_compra: parseFloat(e.target.value) || 0 })}
+                     className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                   />
+                 </div>
+               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Unidad</label>
                 <select

@@ -277,22 +277,22 @@ export default function SeccionCompras({ userId }: Props) {
                     {itemsCompra.map((it, i) => (
                       <div key={i} className="flex items-center gap-2 px-3 py-2 text-sm">
                         <span className="flex-1 font-medium text-slate-700 truncate">{it.nombre}</span>
-                        <input
-                          type="number"
-                          value={it.cantidad}
-                          onChange={(e) => cambiarCantidad(i, parseInt(e.target.value) || 1)}
-                          className="w-16 px-2 py-1 rounded border border-slate-200 text-sm text-center"
-                          min={1}
-                        />
-                        <span className="text-slate-400">×</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={it.precio}
-                          onChange={(e) => cambiarPrecio(i, parseFloat(e.target.value) || 0)}
-                          className="w-24 px-2 py-1 rounded border border-slate-200 text-sm text-right"
-                          min={0}
-                        />
+<input
+                           inputMode="numeric"
+                           pattern="[0-9]*"
+                           type="text"
+                           value={it.cantidad}
+                           onChange={(e) => cambiarCantidad(i, parseInt(e.target.value, 10) || 1)}
+                           className="w-16 px-2 py-1 rounded border border-slate-200 text-sm text-center"
+                         />
+                         <span className="text-slate-400">×</span>
+                         <input
+                           inputMode="numeric"
+                           pattern="[0-9]*"
+                           type="text"
+                           value={it.precio}
+                           onChange={(e) => cambiarPrecio(i, parseFloat(e.target.value) || 0)}
+                           className="w-24 px-2 py-1 rounded border border-slate-200 text-sm text-right"
                         <span className="text-slate-600 font-mono w-20 text-right">S/ {(it.cantidad * it.precio).toFixed(2)}</span>
                         <button onClick={() => quitarProducto(i)} className="p-1 rounded text-slate-400 hover:text-red-500">
                           <X size={14} />
