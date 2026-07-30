@@ -286,14 +286,15 @@ export default function SeccionCompras({ userId }: Props) {
                            className="w-16 px-2 py-1 rounded border border-slate-200 text-sm text-center"
                          />
                          <span className="text-slate-400">×</span>
-                         <input
-                           inputMode="numeric"
-                           pattern="[0-9]*"
-                           type="text"
-                           value={it.precio}
-                           onChange={(e) => cambiarPrecio(i, parseFloat(e.target.value) || 0)}
-                           className="w-24 px-2 py-1 rounded border border-slate-200 text-sm text-right"
-                        <span className="text-slate-600 font-mono w-20 text-right">S/ {(it.cantidad * it.precio).toFixed(2)}</span>
+<input
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            type="text"
+                            value={it.precio}
+                            onChange={(e) => cambiarPrecio(i, parseFloat(e.target.value) || 0)}
+                            className="w-24 px-2 py-1 rounded border border-slate-200 text-sm text-right"
+                          />
+                          <span className="text-slate-600 font-mono w-20 text-right">S/ {(it.cantidad * it.precio).toFixed(2)}</span>
                         <button onClick={() => quitarProducto(i)} className="p-1 rounded text-slate-400 hover:text-red-500">
                           <X size={14} />
                         </button>
