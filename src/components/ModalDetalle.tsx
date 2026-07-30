@@ -42,16 +42,16 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
   const [loadingVentas, setLoadingVentas] = useState(false)
   const [marcandoEnvio, setMarcandoEnvio] = useState(false)
 
+  useEffect(() => {
+    if (envio?.dni) {
+      cargarVentasCliente()
+    }
+  }, [envio?.id])
+
   if (!envio) return null
 
   const current = envio
   const fechaInicial = fechaProgramada || current.fecha_programada?.split('T')[0] || ''
-
-  useEffect(() => {
-    if (current.dni) {
-      cargarVentasCliente()
-    }
-  }, [current.id])
 
   async function cargarVentasCliente() {
     setLoadingVentas(true)
@@ -156,8 +156,9 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     setConfirmandoEliminar(false)
   }
 
-  function formatMoney(n: number) {
-    return 'S/ ' + n.toFixed(2)
+  function formatMoney(n: number | null | undefined) {
+    if (n == null) return 'S/ 0.00'
+    return 'S/ ' + Number(n).toFixed(2)
   }
 
   const totalProductosSinEnviar = ventasCliente.reduce(
