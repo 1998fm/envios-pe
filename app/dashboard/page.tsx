@@ -43,6 +43,9 @@ import EstadisticasDashboard from '@/components/EstadisticasDashboard'
 import { ConfigState, initialConfigState } from '@/types/config'
 import type { Envio } from '@/types/envio'
 import DashboardOnboarding from '@/components/DashboardOnboarding'
+import SeccionProductos from '@/components/SeccionProductos'
+import SeccionVentas from '@/components/SeccionVentas'
+import SeccionCompras from '@/components/SeccionCompras'
 
 export default function DashboardPage() {
   const supabase = useMemo(() => createClient(), [])
@@ -74,6 +77,7 @@ const [plan, setPlan] = useState('basic')
 const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
 const [mostrarUpgrade, setMostrarUpgrade] = useState(false)
 const [agruparPor, setAgruparPor] = useState<'programada' | 'registro'>('programada')
+const [pestañaActiva, setPestañaActiva] = useState<'envios' | 'productos' | 'ventas' | 'compras'>('envios')
 // ========================================
 // ETIQUETAS
 // ========================================
@@ -1237,35 +1241,69 @@ for (
         onCopiarDatos={abrirModalCopiar}
         showCopiarDatos={mostrarBotonCopiar}
         tieneShalom={true}
+        onVerProductos={() => setPestañaActiva('productos')}
+        onVerVentas={() => setPestañaActiva('ventas')}
+        onVerCompras={() => setPestañaActiva('compras')}
       />
-    </div> 
+       </div>
 
 
-    {/* TABLE / CARD LIST */}
+       {/* PESTAÑAS DE NAVEGACIÓN */}
 
-    <EnvioGroupedList
-      fechasAgrupadas={fechasAgrupadas}
-      enviosAgrupados={enviosAgrupados}
-      seleccionados={seleccionados}
-      onToggleSeleccionTodos={toggleSeleccionTodos}
-      onToggleSeleccion={toggleSeleccion}
-      onDoubleClick={setEnvioDetalle}
-      mostrarFechaProgramada={agruparPor === 'registro'}
-      agruparPor={agruparPor}
-      onCambiarAgruparPor={setAgruparPor}
-    />
+       <div className="flex gap-2 mb-4 bg-slate-100 p-1 rounded-2xl">
+         {[
+           { key: 'envios' as const, label: 'Envíos' },
+           { key: 'productos' as const, label: 'Productos' },
+           { key: 'ventas' as const, label: 'Ventas' },
+           { key: 'compras' as const, label: 'Compras' },
+         ].map((p) => (
+           <button
+             key={p.key}
+             onClick={() => setPestañaActiva(p.key)}
+             className={`flex-1 py-2 rounded-xl font-medium transition text-sm ${
+               pestañaActiva === p.key
+                 ? 'bg-white shadow text-slate-900'
+                 : 'text-slate-500 hover:text-slate-700'
+             }`}
+           >
+             {p.label}
+           </button>
+         ))}
+       </div>
 
-    {hasMore && (
-      <div className="flex justify-center pt-4 pb-8">
-        <button
-          onClick={cargarMas}
-          className="px-6 py-3 rounded-xl text-sm font-semibold bg-white  border border-slate-200  text-slate-700  hover:border-sky-500 hover:text-sky-700 :text-sky-300 transition-all duration-200"
-        >
-          Cargar más envíos
-        </button>
-      </div>
-    )}
 
+       {/* CONTENIDO POR PESTAÑA */}
+
+       {pestañaActiva === 'envios' && (
+         <>
+           <EnvioGroupedList
+             fechasAgrupadas={fechasAgrupadas}
+             enviosAgrupados={enviosAgrupados}
+             seleccionados={seleccionados}
+             onToggleSeleccionTodos={toggleSeleccionTodos}
+             onToggleSeleccion={toggleSeleccion}
+             onDoubleClick={setEnvioDetalle}
+             mostrarFechaProgramada={agruparPor === 'registro'}
+             agruparPor={agruparPor}
+             onCambiarAgruparPor={setAgruparPor}
+           />
+
+           {hasMore && (
+             <div className="flex justify-center pt-4 pb-8">
+               <button
+                 onClick={cargarMas}
+                 className="px-6 py-3 rounded-xl text-sm font-semibold bg-white  border border-slate-200  text-slate-700  hover:border-sky-500 hover:text-sky-700 :text-sky-300 transition-all duration-200"
+               >
+                 Cargar más envíos
+               </button>
+             </div>
+           )}
+         </>
+       )}
+
+       {pestañaActiva === 'productos' && <SeccionProductos userId={userId || ''} />}
+       {pestañaActiva === 'ventas' && <SeccionVentas userId={userId || ''} />}
+{pestañaActiva === 'compras' && <SeccionCompras userId={userId || ''} />}
 
 <ModalConfiguracion
   abierto={mostrarConfig}

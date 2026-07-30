@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Download, Replace, Tag, Copy } from 'lucide-react'
+import { Download, Replace, Tag, Copy, Package, ShoppingCart, Truck } from 'lucide-react'
 
 type Props = {
   onExportShalom: () => void
@@ -11,6 +11,9 @@ type Props = {
   showCopiarDatos: boolean
   tieneShalom: boolean
   plan?: string
+  onVerProductos?: () => void
+  onVerVentas?: () => void
+  onVerCompras?: () => void
 }
 
 const btnClass = `
@@ -41,6 +44,7 @@ const btnGradient = `
 export default function DashboardActions({
   onExportShalom, onCambioMasivo, onGenerarEtiquetas, onCopiarDatos,
   showCopiarDatos, tieneShalom, plan = 'basic',
+  onVerProductos, onVerVentas, onVerCompras,
 }: Props) {
   return (
     <motion.div
@@ -73,6 +77,27 @@ export default function DashboardActions({
         <button data-tour="copiar-datos" onClick={onCopiarDatos} className={btnGradient}>
           <Copy size={15} />
           Copiar datos
+        </button>
+      )}
+
+      {onVerProductos && (
+        <button data-tour="ver-productos" onClick={onVerProductos} className={btnClass}>
+          <Package size={15} />
+          Productos
+        </button>
+      )}
+
+      {onVerVentas && (
+        <button data-tour="ver-ventas" onClick={onVerVentas} className={btnClass}>
+          <ShoppingCart size={15} />
+          Ventas
+        </button>
+      )}
+
+      {onVerCompras && (
+        <button data-tour="ver-compras" onClick={onVerCompras} className={btnClass}>
+          <Truck size={15} />
+          Compras
         </button>
       )}
     </motion.div>
