@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, X, RotateCcw, Eye, Loader2 } from 'lucide-react'
+import { Plus, X, RotateCcw, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Compra, Producto } from '@/types/inventario'
 import ModalDetalleCompra from '@/components/ModalDetalleCompra'

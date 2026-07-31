@@ -3,12 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import EstadoSelect from '@/components/EstadoSelect'
-import TamanoSelect from '@/components/TamanoSelect'
 import { exportarShalom } from 'app/f/[slug]/lib/shalomExport'
 import { toast } from 'sonner'
-import agenciasShalom
-from '@/data/agencias-shalom.json'
 import { obtenerConfiguracionLogistica } from '@/lib/logistica/guardarConfiguracionLogistica'
 import { sincronizarVentasEnviadas } from '@/lib/sincronizarVentasEnviadas'
 
@@ -200,59 +196,6 @@ function cambiarCobro(
 
 }
 
-async function cambiarEstadoMasivo(
-  nuevoEstado: Envio['estado']
-) {
-
-  if (
-    seleccionados.length === 0
-  ) {
-    toast.error(
-      'Selecciona al menos un envío'
-    )
-    return
-  }
-
-  const { error } =
-    await supabase
-      .from('envios')
-      .update({
-        estado: nuevoEstado,
-      })
-      .in('id', seleccionados)
-
-  if (error) {
-    toast.error(error.message)
-    return
-  }
-
-  if (nuevoEstado === 'ENVIADO') {
-    sincronizarVentasEnviadas(seleccionados)
-  }
-
-  setEnvios((prev) =>
-    prev.map((envio) => {
-
-      if (
-        seleccionados.includes(
-          envio.id
-        )
-      ) {
-        return {
-          ...envio,
-          estado: nuevoEstado,
-        }
-      }
-
-      return envio
-    })
-  )
-
-  toast.success(
-    `${seleccionados.length} envíos actualizados`
-  )
-}
-
     const [origenShalom, setOrigenShalom] =
   useState('')
 const [slugEmpresa,
@@ -295,13 +238,6 @@ const [
 const [envioDetalle, setEnvioDetalle] =
   useState<Envio | null>(null)
 
-const [
-  vistaDashboard,
-  setVistaDashboard,
-] = useState<'CARDS'>(
-  
-)
-  
 const [
   mensajeExportar,
   setMensajeExportar,
@@ -1112,24 +1048,6 @@ if (
 
 }
 
-
-/* VALIDAR SI TODOS LOS SELECCIONADOS SON MOTORIZADO */
-
-const pedidosSeleccionados =
-  envios.filter(
-    (envio) =>
-      seleccionados.includes(
-        envio.id
-      )
-  )
-
-const todosMoto =
-  pedidosSeleccionados.length > 0 &&
-  pedidosSeleccionados.every(
-    (envio) =>
-      envio.metodo ===
-      'MOTORIZADO'
-  )
 
 // ========================================
 // AGRUPAR POR FECHA

@@ -154,31 +154,34 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
       return
     }
 
-    const ventasConItems: VentaConItems[] = []
-    for (const venta of ventas) {
-      const { data: itemsData } = await supabase
-        .from('venta_items')
-        .select('*')
-        .eq('venta_id', venta.id)
+    const ventaIds = ventas.map((v: any) => v.id)
+    const { data: itemsData } = await supabase
+      .from('venta_items')
+      .select('*')
+      .in('venta_id', ventaIds)
 
-      const items: VentaItemInfo[] = (itemsData || []).map((item: any) => ({
+    const itemsPorVenta = new Map<string, VentaItemInfo[]>()
+    for (const item of itemsData || []) {
+      const lista = itemsPorVenta.get(item.venta_id) || []
+      lista.push({
         id: item.id,
         venta_id: item.venta_id,
         producto_nombre: item.producto_nombre,
         cantidad: item.cantidad,
         precio_unitario: item.precio_unitario,
         subtotal: item.subtotal,
-      }))
-
-      ventasConItems.push({
-        id: venta.id,
-        estado: venta.estado,
-        estado_envio: venta.estado_envio || 'PENDIENTE',
-        total: venta.total,
-        persona_nombre: venta.persona_nombre,
-        items,
       })
+      itemsPorVenta.set(item.venta_id, lista)
     }
+
+    const ventasConItems: VentaConItems[] = ventas.map((venta: any) => ({
+      id: venta.id,
+      estado: venta.estado,
+      estado_envio: venta.estado_envio || 'PENDIENTE',
+      total: venta.total,
+      persona_nombre: venta.persona_nombre,
+      items: itemsPorVenta.get(venta.id) || [],
+    }))
 
     setVentasCliente(ventasConItems)
     setLoadingVentas(false)
