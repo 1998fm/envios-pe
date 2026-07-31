@@ -19,8 +19,8 @@ import ModalDetalle from '@/components/ModalDetalle'
 import ModalExportShalom from '@/components/ModalExportShalom'
 import ModalConfiguracion from '@/components/ModalConfiguracion'
 import DashboardTopBar from '@/components/DashboardTopBar'
+import DashboardMenu from '@/components/DashboardMenu'
 import FilterBar from '@/components/FilterBar'
-import DashboardActions from '@/components/DashboardActions'
 import EnvioGroupedList from '@/components/EnvioGroupedList'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
@@ -1202,74 +1202,52 @@ for (
         setMensajeToast('✅ Formulario copiado')
         setTimeout(() => setMensajeToast(''), 1500)
       }}
-      onConfig={() => setMostrarConfig(true)}
       onUpgrade={() => setMostrarUpgrade(true)}
       onLogout={async () => {
         await supabase.auth.signOut()
         router.push('/login')
       }}
+      menu={
+        <DashboardMenu
+          plan={plan}
+          tieneShalom={true}
+          showCopiarDatos={mostrarBotonCopiar}
+          pestañaActiva={pestañaActiva}
+          onNavegar={setPestañaActiva}
+          onExportShalom={exportarSeleccionados}
+          onCambioMasivo={() => setMostrarModalEstado(true)}
+          onGenerarEtiquetas={() => {
+            if (seleccionados.length === 0) {
+              toast.error('Selecciona al menos un envío')
+              return
+            }
+            const pedidos = envios.filter((envio) =>
+              seleccionados.includes(envio.id)
+            )
+            setEnviosEtiquetas(pedidos)
+            setMostrarEtiquetas(true)
+          }}
+          onCopiarDatos={abrirModalCopiar}
+          onConfig={() => setMostrarConfig(true)}
+        />
+      }
     />
 
     {userId && <EstadisticasDashboard userId={userId} />}
 
-    <div className="space-y-4 mb-8">
-      <FilterBar
-        busqueda={busqueda}
-        onBusquedaChange={setBusqueda}
-        filtrosEstado={filtrosEstado}
-        onFiltrosEstadoChange={setFiltrosEstado}
-        filtrosMetodo={filtrosMetodo}
-        onFiltrosMetodoChange={setFiltrosMetodo}
-        metodosDisponibles={metodosDisponibles}
-      />
-
-      <DashboardActions
-        plan={plan}
-        onExportShalom={exportarSeleccionados}
-        onCambioMasivo={() => setMostrarModalEstado(true)}
-        onGenerarEtiquetas={() => {
-          if (seleccionados.length === 0) {
-            toast.error('Selecciona al menos un envío')
-            return
-          }
-          const pedidos = envios.filter((envio) =>
-            seleccionados.includes(envio.id)
-          )
-          setEnviosEtiquetas(pedidos)
-          setMostrarEtiquetas(true)
-        }}
-        onCopiarDatos={abrirModalCopiar}
-        showCopiarDatos={mostrarBotonCopiar}
-        tieneShalom={true}
-        onVerProductos={() => setPestañaActiva('productos')}
-        onVerVentas={() => setPestañaActiva('ventas')}
-        onVerCompras={() => setPestañaActiva('compras')}
-      />
+    {pestañaActiva === 'envios' && (
+      <div className="space-y-4 mb-8">
+        <FilterBar
+          busqueda={busqueda}
+          onBusquedaChange={setBusqueda}
+          filtrosEstado={filtrosEstado}
+          onFiltrosEstadoChange={setFiltrosEstado}
+          filtrosMetodo={filtrosMetodo}
+          onFiltrosMetodoChange={setFiltrosMetodo}
+          metodosDisponibles={metodosDisponibles}
+        />
        </div>
-
-
-       {/* PESTAÑAS DE NAVEGACIÓN */}
-
-       <div className="flex gap-2 mb-4 bg-slate-100 p-1 rounded-2xl">
-         {[
-           { key: 'envios' as const, label: 'Envíos' },
-           { key: 'productos' as const, label: 'Productos' },
-           { key: 'ventas' as const, label: 'Ventas' },
-           { key: 'compras' as const, label: 'Compras' },
-         ].map((p) => (
-           <button
-             key={p.key}
-             onClick={() => setPestañaActiva(p.key)}
-             className={`flex-1 py-2 rounded-xl font-medium transition text-sm ${
-               pestañaActiva === p.key
-                 ? 'bg-white shadow text-slate-900'
-                 : 'text-slate-500 hover:text-slate-700'
-             }`}
-           >
-             {p.label}
-           </button>
-         ))}
-       </div>
+    )}
 
 
        {/* CONTENIDO POR PESTAÑA */}

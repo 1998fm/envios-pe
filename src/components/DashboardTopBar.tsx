@@ -2,18 +2,19 @@
 
 import { LogOut } from 'lucide-react'
 import LogoTori from '@/components/LogoTori'
+import type { ReactNode } from 'react'
 
 type Props = {
   logoUrl?: string | null
   plan?: string
   diasRestantes?: number | null
   onCompartir: () => void
-  onConfig: () => void
   onUpgrade: () => void
   onLogout: () => void
+  menu?: ReactNode
 }
 
-export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompartir, onConfig, onUpgrade, onLogout }: Props) {
+export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompartir, onUpgrade, onLogout, menu }: Props) {
   const isTrial = diasRestantes != null && plan === 'pro'
 
   return (
@@ -71,21 +72,7 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
             <span className="sm:hidden">Compartir</span>
           </button>
 
-          <button
-            onClick={onConfig}
-            className="
-              px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold
-              bg-gradient-to-r from-sky-600 to-indigo-600
-              text-white
-              hover:shadow-lg hover:shadow-sky-500/20
-              hover:scale-[1.02]
-              transition-all duration-200
-              shrink-0
-            "
-          >
-            <span className="hidden sm:inline">Configuración</span>
-            <span className="sm:hidden">Config</span>
-          </button>
+          {menu}
 
           <button
             onClick={onLogout}

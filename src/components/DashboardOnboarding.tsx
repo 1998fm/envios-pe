@@ -12,7 +12,7 @@ const DASHBOARD_STEPS: Step[] = [
   { target: '#dashboard-content', text: '¡Hola! Soy Tori. Bienvenido a tu dashboard. Aquí gestionas todos tus envíos y pedidos. Te daré un paseo rápido.' },
   { target: '[data-tour="topbar"]', text: 'Esta es la barra principal. Aquí ves el nombre de tu negocio y compartes tu formulario con clientes para que lleguen pedidos solos.' },
   { target: '[data-tour="filter-bar"]', text: 'Busca pedidos por nombre o DNI, y filtra por estado o método de envío. Así encuentras lo que necesitas al instante.' },
-  { target: '[data-tour="actions"]', text: 'Acciones rápidas: exporta a Shalom, cambia estados masivamente, imprime etiquetas o copia direcciones para repartidores.' },
+  { target: '[data-tour="actions"]', text: 'El menú central: exporta a Shalom, cambia estados masivamente, imprime etiquetas, copia direcciones, accede a productos, ventas y compras.' },
   { target: '[data-tour="envio-list"]', text: 'Todos tus pedidos aparecen aquí, agrupados por fecha. Cada tarjeta muestra nombre, DNI, estado y método. Puedes cambiar el estado con un clic.' },
   { target: '#dashboard-content', text: '¡Eso es todo! Si necesitas ayuda, haz clic en el botón de ayuda (?) abajo a la derecha para verme de nuevo. ¡A vender!' },
 ]
