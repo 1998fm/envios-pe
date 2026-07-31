@@ -48,8 +48,6 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
           )}
         </div>
 
-        <div id="stats-portal" className="flex-1 text-center" />
-
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             data-tour="compartir"

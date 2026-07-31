@@ -36,7 +36,7 @@ import {
 import distritosMoto
 from '@/data/distritos-moto.json'
 import ModalUpgrade from '@/components/ModalUpgrade'
-import EstadisticasDashboard from '@/components/EstadisticasDashboard'
+import PanelResumen from '@/components/PanelResumen'
 import { ConfigState, initialConfigState } from '@/types/config'
 import type { Envio } from '@/types/envio'
 import DashboardOnboarding from '@/components/DashboardOnboarding'
@@ -74,7 +74,7 @@ const [plan, setPlan] = useState('basic')
 const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
 const [mostrarUpgrade, setMostrarUpgrade] = useState(false)
 const [agruparPor, setAgruparPor] = useState<'programada' | 'registro'>('programada')
-const [pestañaActiva, setPestañaActiva] = useState<'envios' | 'productos' | 'ventas' | 'compras'>('envios')
+const [pestañaActiva, setPestañaActiva] = useState<'resumen' | 'envios' | 'productos' | 'ventas' | 'compras'>('resumen')
 // ========================================
 // ETIQUETAS
 // ========================================
@@ -1161,7 +1161,7 @@ for (
       onConfig={() => setMostrarConfig(true)}
     />
 
-    {userId && <EstadisticasDashboard userId={userId} />}
+    {userId && pestañaActiva === 'resumen' && <PanelResumen userId={userId} onNavegar={setPestañaActiva} />}
 
     {pestañaActiva === 'envios' && (
       <div className="space-y-4 mb-8">
