@@ -22,7 +22,7 @@ export default function SeccionCompras({ userId }: Props) {
 
   const [productos, setProductos] = useState<Producto[]>([])
   const [busquedaProd, setBusquedaProd] = useState('')
-  const [itemsCompra, setItemsCompra] = useState<{ producto_id: string; nombre: string; cantidad: number; precio: number }[]>([])
+  const [itemsCompra, setItemsCompra] = useState<{ producto_id: string; nombre: string; cantidad: string; precio: number }[]>([])
   const [creando, setCreando] = useState(false)
 
   async function cargarCompras() {
@@ -47,20 +47,20 @@ export default function SeccionCompras({ userId }: Props) {
     const existente = itemsCompra.find((it) => it.producto_id === prod.id)
     if (existente) {
       setItemsCompra(itemsCompra.map((it) =>
-        it.producto_id === prod.id ? { ...it, cantidad: it.cantidad + 1 } : it
+        it.producto_id === prod.id ? { ...it, cantidad: String((Number(it.cantidad) || 0) + 1) } : it
       ))
       return
     }
-    setItemsCompra([...itemsCompra, { producto_id: prod.id, nombre: prod.nombre, cantidad: 1, precio: prod.precio_compra }])
+    setItemsCompra([...itemsCompra, { producto_id: prod.id, nombre: prod.nombre, cantidad: '1', precio: prod.precio_compra }])
   }
 
   function quitarProducto(idx: number) {
     setItemsCompra(itemsCompra.filter((_, i) => i !== idx))
   }
 
-  function cambiarCantidad(idx: number, cant: number) {
+  function cambiarCantidad(idx: number, cant: string) {
     const nuevos = [...itemsCompra]
-    nuevos[idx].cantidad = Math.max(1, cant)
+    nuevos[idx].cantidad = cant
     setItemsCompra(nuevos)
   }
 
@@ -70,7 +70,7 @@ export default function SeccionCompras({ userId }: Props) {
     setItemsCompra(nuevos)
   }
 
-  const total = itemsCompra.reduce((sum, it) => sum + it.cantidad * it.precio, 0)
+  const total = itemsCompra.reduce((sum, it) => sum + (Number(it.cantidad) || 0) * it.precio, 0)
 
   async function crearCompra() {
     if (!proveedor.trim()) { toast.error('Ingresa el nombre del proveedor'); return }
@@ -85,7 +85,7 @@ export default function SeccionCompras({ userId }: Props) {
         items: itemsCompra.map((it) => ({
           producto_id: it.producto_id,
           producto_nombre: it.nombre,
-          cantidad: it.cantidad,
+          cantidad: Math.max(1, Number(it.cantidad) || 1),
           precio_unitario: it.precio,
         })),
       }),
@@ -282,7 +282,7 @@ export default function SeccionCompras({ userId }: Props) {
                            pattern="[0-9]*"
                            type="text"
                            value={it.cantidad}
-                           onChange={(e) => cambiarCantidad(i, parseInt(e.target.value, 10) || 1)}
+                           onChange={(e) => cambiarCantidad(i, e.target.value)}
                            className="w-16 px-2 py-1 rounded border border-slate-200 text-sm text-center"
                          />
                          <span className="text-slate-400">×</span>
@@ -294,7 +294,7 @@ export default function SeccionCompras({ userId }: Props) {
                             onChange={(e) => cambiarPrecio(i, parseFloat(e.target.value) || 0)}
                             className="w-24 px-2 py-1 rounded border border-slate-200 text-sm text-right"
                           />
-                          <span className="text-slate-600 font-mono w-20 text-right">S/ {(it.cantidad * it.precio).toFixed(2)}</span>
+                          <span className="text-slate-600 font-mono w-20 text-right">S/ {((Number(it.cantidad) || 0) * it.precio).toFixed(2)}</span>
                         <button onClick={() => quitarProducto(i)} className="p-1 rounded text-slate-400 hover:text-red-500">
                           <X size={14} />
                         </button>

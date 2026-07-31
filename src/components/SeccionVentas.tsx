@@ -33,7 +33,7 @@ export default function SeccionVentas({ userId }: Props) {
 
   const [productos, setProductos] = useState<Producto[]>([])
   const [busquedaProd, setBusquedaProd] = useState('')
-  const [itemsVenta, setItemsVenta] = useState<{ producto_id: string; nombre: string; cantidad: number; precio: number }[]>([])
+  const [itemsVenta, setItemsVenta] = useState<{ producto_id: string; nombre: string; cantidad: string; precio: number }[]>([])
   const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'YAPE_PLIN' | 'TARJETA'>('EFECTIVO')
   const [creando, setCreando] = useState(false)
 
@@ -98,16 +98,16 @@ export default function SeccionVentas({ userId }: Props) {
   }
 
   function agregarProducto(prod: Producto) {
-    setItemsVenta([...itemsVenta, { producto_id: prod.id, nombre: prod.nombre, cantidad: 1, precio: prod.precio_venta }])
+    setItemsVenta([...itemsVenta, { producto_id: prod.id, nombre: prod.nombre, cantidad: '1', precio: prod.precio_venta }])
   }
 
   function quitarProducto(idx: number) {
     setItemsVenta(itemsVenta.filter((_, i) => i !== idx))
   }
 
-  function cambiarCantidad(idx: number, cant: number) {
+  function cambiarCantidad(idx: number, cant: string) {
     const nuevos = [...itemsVenta]
-    nuevos[idx].cantidad = Math.max(1, cant)
+    nuevos[idx].cantidad = cant
     setItemsVenta(nuevos)
   }
 
@@ -117,7 +117,7 @@ export default function SeccionVentas({ userId }: Props) {
     setItemsVenta(nuevos)
   }
 
-  const total = itemsVenta.reduce((sum, it) => sum + it.cantidad * it.precio, 0)
+  const total = itemsVenta.reduce((sum, it) => sum + (Number(it.cantidad) || 0) * it.precio, 0)
 
   async function crearVenta() {
     if (!personaSel) { toast.error('Selecciona un cliente'); return }
@@ -135,7 +135,7 @@ export default function SeccionVentas({ userId }: Props) {
         items: itemsVenta.map((it) => ({
           producto_id: it.producto_id,
           producto_nombre: it.nombre,
-          cantidad: it.cantidad,
+          cantidad: Math.max(1, Number(it.cantidad) || 1),
           precio_unitario: it.precio,
         })),
       }),
@@ -430,7 +430,7 @@ export default function SeccionVentas({ userId }: Props) {
                            pattern="[0-9]*"
                            type="text"
                            value={it.cantidad}
-                           onChange={(e) => cambiarCantidad(i, parseInt(e.target.value, 10) || 1)}
+                           onChange={(e) => cambiarCantidad(i, e.target.value)}
                            className="w-16 px-2 py-1 rounded border border-slate-200 text-sm text-center"
                          />
                          <span className="text-slate-400">×</span>
@@ -442,7 +442,7 @@ export default function SeccionVentas({ userId }: Props) {
                             onChange={(e) => cambiarPrecio(i, parseFloat(e.target.value) || 0)}
                             className="w-24 px-2 py-1 rounded border border-slate-200 text-sm text-right"
                           />
-                          <span className="text-slate-600 font-mono w-20 text-right">S/ {(it.cantidad * it.precio).toFixed(2)}</span>
+                          <span className="text-slate-600 font-mono w-20 text-right">S/ {((Number(it.cantidad) || 0) * it.precio).toFixed(2)}</span>
                         <button onClick={() => quitarProducto(i)} className="p-1 rounded text-slate-400 hover:text-red-500">
                           <X size={14} />
                         </button>
