@@ -3,6 +3,7 @@
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { useState } from 'react'
 import MenuSelect from '@/components/ui/MenuSelect'
+import { toast } from 'sonner'
 
 type Props = {
   envioId: string
@@ -27,7 +28,7 @@ export default function TamanoSelect({ envioId, tamanoActual }: Props) {
       .from('envios')
       .update({ tamano: nuevoTamano })
       .eq('id', envioId)
-    if (error) alert(error.message)
+    if (error) toast.error(error.message)
   }
 
   return (

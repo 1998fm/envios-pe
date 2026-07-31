@@ -3,6 +3,7 @@
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { useState } from 'react'
 import MenuSelect from '@/components/ui/MenuSelect'
+import { toast } from 'sonner'
 import { sincronizarVentasEnviadas } from '@/lib/sincronizarVentasEnviadas'
 
 type Props = {
@@ -37,7 +38,7 @@ export default function EstadoSelect({ envioId, estadoActual }: Props) {
       .from('envios')
       .update({ estado: nuevoEstado })
       .eq('id', envioId)
-    if (error) alert(error.message)
+    if (error) toast.error(error.message)
     else if (nuevoEstado === 'ENVIADO') sincronizarVentasEnviadas([envioId])
   }
 

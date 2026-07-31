@@ -5,6 +5,7 @@ import { Plus, Search, Check, X, RotateCcw, Loader2, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Venta, Producto } from '@/types/inventario'
 import ModalDetalleVenta from '@/components/ModalDetalleVenta'
+import { useConfirm } from '@/components/ConfirmDialog'
 
 type Props = { userId: string }
 
@@ -17,6 +18,7 @@ const METODOS_PAGO = [
 ] as const
 
 export default function SeccionVentas({ userId }: Props) {
+  const confirmar = useConfirm()
   const [ventas, setVentas] = useState<Venta[]>([])
   const [filtroEstado, setFiltroEstado] = useState('')
   const [loading, setLoading] = useState(true)
@@ -162,7 +164,7 @@ export default function SeccionVentas({ userId }: Props) {
   }
 
   async function anularVenta(venta: Venta) {
-    if (!confirm('¿Estás seguro de anular esta venta? Se restaurará el stock.')) return
+    if (!(await confirmar({ message: '¿Estás seguro de anular esta venta? Se restaurará el stock.', danger: true, confirmLabel: 'Sí, anular' }))) return
     const res = await fetch(`/api/ventas/${venta.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -177,7 +179,7 @@ export default function SeccionVentas({ userId }: Props) {
   }
 
   async function confirmarVenta(venta: Venta) {
-    if (!confirm('¿Confirmar que el pago con tarjeta fue recibido?')) return
+    if (!(await confirmar({ message: '¿Confirmar que el pago con tarjeta fue recibido?', confirmLabel: 'Sí, confirmar' }))) return
     const res = await fetch(`/api/ventas/${venta.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -192,7 +194,7 @@ export default function SeccionVentas({ userId }: Props) {
   }
 
   async function eliminarVenta(id: string) {
-    if (!confirm('¿Eliminar esta venta definitivamente?')) return
+    if (!(await confirmar({ message: '¿Eliminar esta venta definitivamente?', danger: true, confirmLabel: 'Sí, eliminar' }))) return
     const res = await fetch(`/api/ventas/${id}`, { method: 'DELETE' })
     if (res.ok) {
       toast.success('Venta eliminada')

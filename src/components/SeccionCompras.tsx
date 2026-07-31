@@ -5,12 +5,14 @@ import { Plus, X, RotateCcw, Eye, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Compra, Producto } from '@/types/inventario'
 import ModalDetalleCompra from '@/components/ModalDetalleCompra'
+import { useConfirm } from '@/components/ConfirmDialog'
 
 type Props = { userId: string }
 
 const ESTADOS = ['COMPLETADA', 'ANULADA'] as const
 
 export default function SeccionCompras({ userId }: Props) {
+  const confirmar = useConfirm()
   const [compras, setCompras] = useState<Compra[]>([])
   const [filtroEstado, setFiltroEstado] = useState('')
   const [loading, setLoading] = useState(true)
@@ -108,7 +110,7 @@ export default function SeccionCompras({ userId }: Props) {
   }
 
   async function anularCompra(compra: Compra) {
-    if (!confirm('¿Estás seguro de anular esta compra? Se revertirá el stock.')) return
+    if (!(await confirmar({ message: '¿Estás seguro de anular esta compra? Se revertirá el stock.', danger: true, confirmLabel: 'Sí, anular' }))) return
     const res = await fetch(`/api/compras/${compra.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -123,7 +125,7 @@ export default function SeccionCompras({ userId }: Props) {
   }
 
   async function eliminarCompra(id: string) {
-    if (!confirm('¿Eliminar esta compra definitivamente?')) return
+    if (!(await confirmar({ message: '¿Eliminar esta compra definitivamente?', danger: true, confirmLabel: 'Sí, eliminar' }))) return
     const res = await fetch(`/api/compras/${id}`, { method: 'DELETE' })
     if (res.ok) {
       toast.success('Compra eliminada')

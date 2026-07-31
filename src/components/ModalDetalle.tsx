@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useConfirm } from '@/components/ConfirmDialog'
 
 type Props = {
   envio: Envio | null
@@ -89,6 +90,7 @@ function InfoTile({
 
 export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Props) {
   const supabase = createClient()
+  const confirmar = useConfirm()
   const [fechaProgramada, setFechaProgramada] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState('')
@@ -183,7 +185,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
   }
 
   async function validarContenido() {
-    if (!confirm('¿Está seguro que todo lo listado ha sido empacado?')) return
+    if (!(await confirmar({ message: '¿Está seguro que todo lo listado ha sido empacado?', confirmLabel: 'Sí, validar' }))) return
     setMarcandoEnvio(true)
 
     const ids = ventasCliente.map((v) => v.id)

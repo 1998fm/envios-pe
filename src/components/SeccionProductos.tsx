@@ -5,6 +5,7 @@ import { Plus, Search, Pencil, Trash2, Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Producto } from '@/types/inventario'
 import { UNIDADES_MEDIDA } from '@/types/inventario'
+import { useConfirm } from '@/components/ConfirmDialog'
 
 type Props = {
   userId: string
@@ -30,6 +31,7 @@ const EJEMPLOS = [
 ]
 
 export default function SeccionProductos({ userId }: Props) {
+  const confirmar = useConfirm()
   const [productos, setProductos] = useState<Producto[]>([])
   const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading] = useState(true)
@@ -80,7 +82,7 @@ export default function SeccionProductos({ userId }: Props) {
   }
 
   async function eliminarProducto(id: string, nombre: string) {
-    if (!confirm(`¿Eliminar "${nombre}"?`)) return
+    if (!(await confirmar({ message: `¿Eliminar "${nombre}"?`, danger: true, confirmLabel: 'Sí, eliminar' }))) return
     const res = await fetch(`/api/productos/${id}`, { method: 'DELETE' })
     if (res.ok) {
       toast.success('Producto eliminado')
