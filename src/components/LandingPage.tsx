@@ -2,9 +2,12 @@
 
 import { motion } from 'framer-motion'
 import {
+  AlertTriangle,
+  ArrowDown,
   ArrowRight,
   BarChart3,
   Boxes,
+  Brain,
   Check,
   CheckCircle2,
   ClipboardList,
@@ -12,20 +15,23 @@ import {
   Menu,
   Minus,
   Package,
+  PackageX,
   Palette,
   Plus,
   Settings,
   ShieldCheck,
   ShoppingCart,
   Smartphone,
+  Star,
   Store,
+  TrendingDown,
   Truck,
   UserRound,
   Warehouse,
   X,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import LogoTori from '@/components/LogoTori'
 
 const fadeUp = {
@@ -96,6 +102,7 @@ const testimonials = [
     quote: 'Tenía un WhatsApp lleno de pedidos y direcciones. Ahora cada cliente llena su pedido en mi formulario y yo solo reviso qué despachar.',
     name: 'Camila Rivas',
     role: 'Repostería — Lima',
+    result: 'Ahorro 2 horas al día respondiendo pedidos',
   },
   {
     initials: 'JM',
@@ -103,6 +110,7 @@ const testimonials = [
     quote: 'Antes usaba Excel y siempre se me escapaba algo. Ahora pedidos, stock y ventas están en un solo lugar y nada se pierde.',
     name: 'Jorge Manrique',
     role: 'Boutique de ropa — Lima',
+    result: 'Ya no se me olvida ningún pedido ni cobro',
   },
   {
     initials: 'AP',
@@ -110,6 +118,7 @@ const testimonials = [
     quote: 'El formulario con mi marca hizo que pedir sea facilísimo. Mis ventas crecieron y ya no se me escapa ningún pedido.',
     name: 'Andrea Paz',
     role: 'Distribuidora — Ate',
+    result: 'Vendió más en su primer mes con el formulario',
   },
 ]
 
@@ -204,6 +213,14 @@ const heroStats = [
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [faqAbierta, setFaqAbierta] = useState<number | null>(0)
+  const [showSticky, setShowSticky] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setShowSticky(window.scrollY > 600)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   const nav = (
     <nav className="flex items-center gap-5 sm:gap-8">
@@ -221,7 +238,17 @@ export default function LandingPage() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-900 overflow-x-hidden pb-20 lg:pb-0">
+      {/* ============ BANNER DE PROMOCIÓN ============ */}
+      <div className="bg-gradient-to-r from-sky-600 to-indigo-700 text-white text-center text-xs sm:text-sm font-semibold py-2 px-4">
+        <span className="inline-flex flex-wrap items-center justify-center gap-x-1.5">
+          30 días Pro gratis, sin tarjeta ·
+          <Link href="/register" className="underline underline-offset-2 font-bold hover:text-sky-100">
+            Empieza ahora
+          </Link>
+        </span>
+      </div>
+
       {/* ============ HEADER ============ */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -274,25 +301,25 @@ export default function LandingPage() {
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }}>
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-sky-200 text-sky-700 text-xs font-semibold mb-6">
                 <BarChart3 size={13} />
-                Pensado para emprendedores
+                Para emprendedores que venden por redes
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08]">
-                Organiza tus pedidos{' '}
+                Deja de{' '}
                 <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                  en un solo lugar.
-                </span>
+                  perder pedidos
+                </span>{' '}
+                en WhatsApp.
               </h1>
               <p className="mt-5 text-base sm:text-xl text-slate-600 leading-relaxed max-w-lg">
-                Tus clientes piden desde un formulario con tu logo. Tú ves todos los pedidos
-                juntos en un panel simple: qué falta despachar, qué cobrar y qué comprar.
-                Sin Excel, sin chats perdidos.
+                Tus clientes piden desde un formulario con tu logo y cada pedido llega ordenado:
+                qué despachar, qué cobrar y qué comprar. Sin chats revueltos, sin Excel.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <Link
                   href="/register"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-sky-500/25 hover:scale-[1.02] transition-all duration-200"
                 >
-                  Comenzar gratis
+                  Recibe tu primer pedido en 5 min
                   <ArrowRight size={16} />
                 </Link>
                 <a
@@ -315,6 +342,26 @@ export default function LandingPage() {
                   <ShieldCheck size={13} className="text-emerald-500" />
                   Cancela cuando quieras
                 </span>
+              </div>
+
+              {/* Prueba social */}
+              <div className="mt-8 flex items-center gap-3">
+                <div className="flex -space-x-2.5">
+                  {['from-sky-500 to-cyan-500', 'from-indigo-500 to-purple-500', 'from-emerald-500 to-teal-500', 'from-amber-500 to-orange-500'].map(
+                    (g, i) => (
+                      <div
+                        key={i}
+                        className={`w-9 h-9 rounded-full bg-gradient-to-br ${g} border-2 border-white flex items-center justify-center text-white text-[10px] font-bold shadow-sm`}
+                      >
+                        {['CM', 'JR', 'AP', 'DV'][i]}
+                      </div>
+                    ),
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 leading-snug">
+                  Emprendedores de repostería, ropa y comida{' '}
+                  <span className="font-semibold text-slate-700">ya lo usan</span>
+                </p>
               </div>
             </motion.div>
 
@@ -357,6 +404,12 @@ export default function LandingPage() {
                         >
                           <item.icon size={13} />
                           {item.label}
+                          {item.label === 'Pedidos' && (
+                            <span className="ml-auto relative flex w-2 h-2">
+                              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+                              <span className="relative inline-flex rounded-full w-2 h-2 bg-emerald-500" />
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -420,8 +473,93 @@ export default function LandingPage() {
                   <p className="text-[10px] text-slate-400">Yape · S/ 45.00 · hace 2 min</p>
                 </div>
               </motion.div>
+
+              {/* Toast de nuevo pedido en loop */}
+              <motion.div
+                animate={{ y: [20, 0, 0, -20], opacity: [0, 1, 1, 0] }}
+                transition={{ duration: 4, times: [0, 0.15, 0.8, 1], repeat: Infinity, repeatDelay: 1.2, delay: 2.5 }}
+                className="hidden md:flex absolute -top-6 -right-4 items-center gap-3 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-900/10 px-4 py-3"
+              >
+                <div className="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center">
+                  <ShoppingCart size={16} className="text-sky-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900">Nuevo pedido</p>
+                  <p className="text-[10px] text-slate-400">Lucía · 2 box de brownies · Motorizado</p>
+                </div>
+              </motion.div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* ============ EL DOLOR: ¿TE SUENA FAMILIAR? ============ */}
+      <section className="py-14 sm:py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">El día a día sin Tori</p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              ¿Te{' '}
+              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                suena
+              </span>{' '}
+              familiar?
+            </h2>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              {
+                icon: AlertTriangle,
+                title: 'Pedidos que se pierden',
+                desc: 'Uno pide por WhatsApp, otro por tu cuenta de Instagram y al final alguien se queda sin respuesta.',
+              },
+              {
+                icon: Brain,
+                title: 'Ventas en tu cabeza',
+                desc: 'No sabes cuánto vendiste hoy ni cuánto te deben. Todo depende de tu memoria.',
+              },
+              {
+                icon: PackageX,
+                title: 'Stock que se acaba',
+                desc: 'Se te agota el insumo justo cuando más vendes, y el cliente se va con otro.',
+              },
+              {
+                icon: TrendingDown,
+                title: 'No sabes si ganas',
+                desc: 'A fin de mes no sabes si tu negocio ganó o perdió dinero de verdad.',
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+                className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5 sm:p-6"
+              >
+                <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center">
+                  <item.icon size={20} className="text-red-500" />
+                </div>
+                <h3 className="mt-4 font-bold text-slate-900">{item.title}</h3>
+                <p className="mt-1.5 text-sm text-slate-500 leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div {...fadeUp} className="mt-10 sm:mt-12 text-center">
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-900">
+              Cada pedido perdido es{' '}
+              <span className="text-red-600">dinero que no vuelve.</span>
+            </p>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 mt-5 px-6 py-3 rounded-2xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-sky-500/25 hover:scale-[1.02] transition-all duration-200"
+            >
+              Empieza a ordenar tu negocio
+              <ArrowRight size={16} />
+            </Link>
+          </motion.div>
         </div>
       </section>
 
@@ -431,9 +569,9 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { number: '1', label: 'sola app para todo tu negocio' },
-              { number: '+200', label: 'emprendedores ya lo usan' },
               { number: '5 min', label: 'para empezar a vender' },
               { number: '0', label: 'pedidos perdidos en chats' },
+              { number: '24/7', label: 'tus clientes piden solos' },
             ].map((item, i) => (
               <motion.div
                 key={item.label}
@@ -447,6 +585,143 @@ export default function LandingPage() {
                 <div className="mt-1 text-xs sm:text-sm text-slate-500">{item.label}</div>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ ANTES Y DESPUÉS ============ */}
+      <section className="py-14 sm:py-20 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Antes y después</p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              Así es hoy… y así sería{' '}
+              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                con Tori
+              </span>
+            </h2>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-6 lg:gap-10 items-center max-w-4xl mx-auto">
+            {/* Así es hoy */}
+            <motion.div
+              initial={{ opacity: 0, x: -24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="relative bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-900/5 overflow-hidden">
+                <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-100">
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+                  <span className="ml-3 text-[10px] font-medium text-slate-400">WhatsApp · tu negocio</span>
+                </div>
+                <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-slate-100 bg-slate-50">
+                  <div className="w-8 h-8 rounded-full bg-slate-200" />
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">Chat desordenado</p>
+                    <p className="text-[10px] text-slate-400">127 mensajes sin leer</p>
+                  </div>
+                  <span className="ml-auto px-2 py-1 rounded-full bg-red-50 text-red-600 text-[9px] font-bold whitespace-nowrap">
+                    9 sin respuesta
+                  </span>
+                </div>
+                <div className="p-4 space-y-2.5">
+                  <div className="max-w-[85%] ml-auto bg-emerald-100 text-emerald-900 text-[11px] rounded-2xl rounded-br-sm px-3 py-2">
+                    Hola! me haces 1 box de brownies para el jueves?
+                  </div>
+                  <div className="max-w-[85%] bg-slate-100 text-slate-800 text-[11px] rounded-2xl rounded-bl-sm px-3 py-2">
+                    Claro! me pasas tu dirección?
+                  </div>
+                  <div className="max-w-[85%] ml-auto bg-emerald-100 text-emerald-900 text-[11px] rounded-2xl rounded-br-sm px-3 py-2">
+                    Av. Lima 123, San Borja
+                  </div>
+                  <div className="max-w-[85%] bg-slate-100 text-slate-800 text-[11px] rounded-2xl rounded-bl-sm px-3 py-2">
+                    Ya te confirmo el envío, un momento
+                  </div>
+                  <div className="max-w-[85%] ml-auto bg-emerald-100 text-emerald-900 text-[11px] rounded-2xl rounded-br-sm px-3 py-2">
+                    ... y mi pedido?
+                  </div>
+                </div>
+              </div>
+              <p className="mt-3 text-center text-xs font-semibold text-slate-500">
+                Hoy: el pedido se pierde entre 127 mensajes.
+              </p>
+            </motion.div>
+
+            {/* Conector */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.6 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="flex items-center justify-center"
+            >
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-sky-500/25">
+                <ArrowRight size={20} className="rotate-90 lg:rotate-0" />
+              </div>
+            </motion.div>
+
+            {/* Así es con Tori */}
+            <motion.div
+              initial={{ opacity: 0, x: 24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="relative bg-white border-2 border-sky-200 rounded-2xl shadow-xl shadow-sky-500/10 overflow-hidden">
+                <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-100">
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+                  <span className="ml-3 text-[10px] font-medium text-slate-400">app.tori.pe/dashboard</span>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <LogoTori size={26} />
+                    <span className="text-sm font-extrabold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                      Tori
+                    </span>
+                    <span className="ml-auto px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold whitespace-nowrap">
+                      Pedido confirmado
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-slate-100 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                        L
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">Lucía Fernández</p>
+                        <p className="text-[11px] text-slate-400">1 box de brownies · Motorizado</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-1.5">
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-slate-500">Distrito</span>
+                        <span className="font-semibold text-slate-800">Miraflores</span>
+                      </div>
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-slate-500">Envío</span>
+                        <span className="font-semibold text-slate-800">S/ 8.00</span>
+                      </div>
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-slate-500">Pago</span>
+                        <span className="font-semibold text-emerald-600">Confirmado</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-[11px] font-semibold text-emerald-600">
+                    <Check size={13} />
+                    Llega solo y ordenado, sin preguntar nada
+                  </div>
+                </div>
+              </div>
+              <p className="mt-3 text-center text-xs font-semibold text-sky-700">
+                Con Tori: entra a tu panel listo para despachar.
+              </p>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -581,9 +856,9 @@ export default function LandingPage() {
                   <div className="rounded-xl border border-slate-100 p-3.5">
                     <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Tus datos</p>
                     <div className="mt-2.5 space-y-2">
-                      <div className="h-2.5 w-full rounded-full bg-slate-100" />
-                      <div className="h-2.5 w-2/3 rounded-full bg-slate-100" />
-                      <div className="h-2.5 w-1/2 rounded-full bg-slate-100" />
+                      <div className="h-2.5 w-full rounded-full bg-slate-200 animate-pulse" />
+                      <div className="h-2.5 w-2/3 rounded-full bg-slate-200 animate-pulse" />
+                      <div className="h-2.5 w-1/2 rounded-full bg-slate-200 animate-pulse" />
                     </div>
                   </div>
 
@@ -632,9 +907,8 @@ export default function LandingPage() {
               {/* Notificación flotante: pedido recibido */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.5 }}
+                animate={{ y: [16, 0, 0, -16], opacity: [0, 1, 1, 0] }}
+                transition={{ duration: 4, times: [0, 0.15, 0.8, 1], repeat: Infinity, repeatDelay: 1.2, delay: 1.5 }}
                 className="hidden md:flex absolute -bottom-6 -left-10 items-center gap-3 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-900/5 px-4 py-3"
               >
                 <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
@@ -684,6 +958,14 @@ export default function LandingPage() {
               </motion.div>
             ))}
           </div>
+
+          <p className="mt-10 text-center text-sm text-slate-500">
+            Pensado para{' '}
+            <span className="font-semibold text-slate-700">
+              repostería, ropa, comida, regalos, artesanías
+            </span>{' '}
+            y más.
+          </p>
         </div>
       </section>
 
@@ -795,7 +1077,16 @@ export default function LandingPage() {
                     <div className="text-xs text-slate-400">{t.role}</div>
                   </div>
                 </div>
+                <div className="flex gap-0.5 mb-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
+                  ))}
+                </div>
                 <p className="text-sm text-slate-600 leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
+                <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                  <Check size={12} />
+                  {t.result}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -910,7 +1201,7 @@ export default function LandingPage() {
           >
             <div className="relative">
               <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                Empieza a ordenar tu negocio hoy
+                No pierdas otro pedido más.
               </h2>
               <p className="mt-3 sm:mt-4 text-sm sm:text-xl text-sky-100 max-w-lg mx-auto">
                 Crea tu cuenta, comparte tu link y recibe tu primer pedido
@@ -920,10 +1211,15 @@ export default function LandingPage() {
                 href="/register"
                 className="inline-flex items-center gap-2 mt-6 sm:mt-8 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-sm font-semibold bg-white text-sky-700 hover:bg-sky-50 hover:shadow-2xl hover:scale-[1.02] transition-all duration-200"
               >
-                Comenzar gratis
+                Recibe tu primer pedido en 5 min
                 <ArrowRight size={16} />
               </Link>
-              <p className="mt-3 text-xs text-sky-200/70">30 días de prueba · Sin tarjeta · Cancela cuando quieras</p>
+              <p className="mt-4 text-xs text-sky-200/70">
+                30 días de prueba · Sin tarjeta · Cancela cuando quieras
+              </p>
+              <p className="mt-2 text-xs text-sky-100/90 font-semibold">
+                Prueba gratis. Si no te sirve, sigues vendiendo como siempre.
+              </p>
             </div>
           </motion.div>
         </div>
@@ -949,6 +1245,30 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* ============ BARRA CTA FIJA (móvil) ============ */}
+      {showSticky && (
+        <motion.div
+          initial={{ y: 80 }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="fixed bottom-0 inset-x-0 z-50 lg:hidden bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 flex items-center justify-between gap-3 shadow-[0_-4px_20px_rgba(15,23,42,0.06)]"
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-extrabold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+              Tori
+            </p>
+            <p className="text-[10px] text-slate-500">30 días gratis · sin tarjeta</p>
+          </div>
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/25 transition-all duration-200"
+          >
+            Comenzar gratis
+            <ArrowRight size={14} />
+          </Link>
+        </motion.div>
+      )}
     </div>
   )
 }
