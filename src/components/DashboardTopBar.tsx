@@ -2,7 +2,6 @@
 
 import { LogOut } from 'lucide-react'
 import LogoTori from '@/components/LogoTori'
-import type { ReactNode } from 'react'
 
 type Props = {
   logoUrl?: string | null
@@ -11,10 +10,9 @@ type Props = {
   onCompartir: () => void
   onUpgrade: () => void
   onLogout: () => void
-  menu?: ReactNode
 }
 
-export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompartir, onUpgrade, onLogout, menu }: Props) {
+export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompartir, onUpgrade, onLogout }: Props) {
   const isTrial = diasRestantes != null && plan === 'pro'
 
   return (
@@ -71,8 +69,6 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
             <span className="hidden sm:inline">Compartir formulario</span>
             <span className="sm:hidden">Compartir</span>
           </button>
-
-          {menu}
 
           <button
             onClick={onLogout}

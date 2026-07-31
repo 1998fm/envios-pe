@@ -1207,30 +1207,29 @@ for (
         await supabase.auth.signOut()
         router.push('/login')
       }}
-      menu={
-        <DashboardMenu
-          plan={plan}
-          tieneShalom={true}
-          showCopiarDatos={mostrarBotonCopiar}
-          pestañaActiva={pestañaActiva}
-          onNavegar={setPestañaActiva}
-          onExportShalom={exportarSeleccionados}
-          onCambioMasivo={() => setMostrarModalEstado(true)}
-          onGenerarEtiquetas={() => {
-            if (seleccionados.length === 0) {
-              toast.error('Selecciona al menos un envío')
-              return
-            }
-            const pedidos = envios.filter((envio) =>
-              seleccionados.includes(envio.id)
-            )
-            setEnviosEtiquetas(pedidos)
-            setMostrarEtiquetas(true)
-          }}
-          onCopiarDatos={abrirModalCopiar}
-          onConfig={() => setMostrarConfig(true)}
-        />
-      }
+    />
+
+    <DashboardMenu
+      plan={plan}
+      tieneShalom={true}
+      showCopiarDatos={mostrarBotonCopiar}
+      pestañaActiva={pestañaActiva}
+      onNavegar={setPestañaActiva}
+      onExportShalom={exportarSeleccionados}
+      onCambioMasivo={() => setMostrarModalEstado(true)}
+      onGenerarEtiquetas={() => {
+        if (seleccionados.length === 0) {
+          toast.error('Selecciona al menos un envío')
+          return
+        }
+        const pedidos = envios.filter((envio) =>
+          seleccionados.includes(envio.id)
+        )
+        setEnviosEtiquetas(pedidos)
+        setMostrarEtiquetas(true)
+      }}
+      onCopiarDatos={abrirModalCopiar}
+      onConfig={() => setMostrarConfig(true)}
     />
 
     {userId && <EstadisticasDashboard userId={userId} />}
