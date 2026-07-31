@@ -2,9 +2,9 @@ import LandingPage from '@/components/LandingPage'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Tori — Envíos, stock y ventas en un solo lugar',
+  title: 'Tori — Organiza los pedidos de tu emprendimiento',
   description:
-    'Tori reúne tus pedidos, inventario, ventas y compras en un dashboard simple. Tus clientes piden por tu formulario con tu marca y todo llega ordenado para que solo despaches. 30 días Pro gratis, sin tarjeta.',
+    'Tus clientes piden desde un formulario con tu logo y tú ves todos los pedidos en un solo lugar: qué falta despachar, qué cobrar y qué comprar. Empieza gratis, sin tarjeta.',
 }
 
 export default function Home() {

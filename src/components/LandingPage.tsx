@@ -6,15 +6,18 @@ import {
   BarChart3,
   Boxes,
   Check,
+  CheckCircle2,
   ClipboardList,
   MapPin,
   Menu,
   Minus,
+  Package,
   Plus,
   Settings,
   ShieldCheck,
   ShoppingCart,
   Smartphone,
+  Store,
   Truck,
   Warehouse,
   X,
@@ -33,33 +36,33 @@ const fadeUp = {
 const features = [
   {
     icon: Truck,
-    title: 'Pedidos centralizados',
-    desc: 'Recibe todas tus solicitudes en una bandeja única, con estados claros y exportación lista para tu operador de envío.',
+    title: 'Recibe pedidos ordenados',
+    desc: 'Tus clientes llenan sus datos y eligen su envío. Todo llega a un solo lugar, sin desorden ni mensajes perdidos.',
   },
   {
     icon: Boxes,
-    title: 'Inventario en tiempo real',
-    desc: 'Registra productos, controla existencias y recibe alertas automáticas cuando un ítem llega a su stock mínimo.',
+    title: 'Controla tu stock',
+    desc: 'Registra tus productos y Tori te avisa cuando algo se está por acabar. Nunca más te quedas sin inventario.',
   },
   {
     icon: ShoppingCart,
-    title: 'Ventas y cobros',
-    desc: 'Registra pagos en efectivo, Yape/Plin o tarjeta. Las ventas por confirmar quedan señaladas hasta validar el cobro.',
+    title: 'Lleva tus ventas y cobros',
+    desc: 'Efectivo, Yape/Plin o tarjeta. Si un pago falta, te queda marcado para que no se te olvide.',
   },
   {
     icon: Warehouse,
-    title: 'Compras y proveedores',
-    desc: 'Consolida tus compras e inversión por proveedor sin salir de la plataforma.',
+    title: 'Registra compras y gastos',
+    desc: 'Proveedores, materiales, pasajes y delivery. Sabes cuánto entra y cuánto sale de tu negocio.',
   },
   {
     icon: MapPin,
-    title: 'Logística configurable',
-    desc: 'Tarifas por distrito, horarios de corte y cupo diario, calculados automáticamente según tus reglas.',
+    title: 'Define tu reparto',
+    desc: 'Precios por distrito, horarios de corte y cupo diario. Tori calcula por ti, sin hacer cuentas a mano.',
   },
   {
     icon: Smartphone,
     title: 'Formulario con tu marca',
-    desc: 'Tus clientes piden sin crear cuenta, viendo tu logo y tus colores desde el primer clic.',
+    desc: 'Tus clientes ven tu logo y tus colores. Piden desde el celular, sin registrarse y sin bajar apps.',
   },
 ]
 
@@ -67,20 +70,20 @@ const steps = [
   {
     step: '01',
     icon: Settings,
-    title: 'Configura tu negocio',
-    desc: 'Carga tu marca, tus métodos de envío y tus tarifas por distrito en una sola configuración.',
+    title: 'Crea tu cuenta',
+    desc: 'Ponle tu nombre y tu logo a tu negocio. Todo listo en menos de 5 minutos.',
   },
   {
     step: '02',
     icon: Smartphone,
-    title: 'Comparte tu enlace',
-    desc: 'Tu formulario público con tu logo y tus colores, listo para WhatsApp, redes o tu web.',
+    title: 'Comparte tu link',
+    desc: 'Tu formulario de pedidos, listo para WhatsApp, Instagram o tu web.',
   },
   {
     step: '03',
     icon: ClipboardList,
-    title: 'Gestiona con claridad',
-    desc: 'Cada pedido, venta y producto llega ordenado a tu dashboard, listo para despachar.',
+    title: 'Recibe y despacha',
+    desc: 'Cada pedido llega ordenado a tu panel. Tú solo revisas y despachas.',
   },
 ]
 
@@ -88,21 +91,21 @@ const testimonials = [
   {
     initials: 'CR',
     gradient: 'from-sky-500 to-cyan-500',
-    quote: 'Manejaba pedidos entre chats y hojas sueltas; los errores eran constantes. Hoy cada solicitud entra por un solo formulario y sé con claridad qué despachar cada día.',
+    quote: 'Tenía un WhatsApp lleno de pedidos y direcciones. Ahora cada cliente llena su pedido en mi formulario y yo solo reviso qué despachar.',
     name: 'Camila Rivas',
     role: 'Repostería — Lima',
   },
   {
     initials: 'JM',
     gradient: 'from-indigo-500 to-purple-500',
-    quote: 'Pasé de una hoja de cálculo frágil a un sistema con trazabilidad por pedido. El registro es confiable y ya no dependo de recordar qué anoté.',
+    quote: 'Antes usaba Excel y siempre se me escapaba algo. Ahora pedidos, stock y ventas están en un solo lugar y nada se pierde.',
     name: 'Jorge Manrique',
     role: 'Boutique de ropa — Lima',
   },
   {
     initials: 'AP',
     gradient: 'from-emerald-500 to-teal-500',
-    quote: 'El formulario público eliminó la fricción del pedido. Duplicamos el volumen de ventas coordinando los despachos desde un solo lugar.',
+    quote: 'El formulario con mi marca hizo que pedir sea facilísimo. Mis ventas crecieron y ya no se me escapa ningún pedido.',
     name: 'Andrea Paz',
     role: 'Distribuidora — Ate',
   },
@@ -110,36 +113,36 @@ const testimonials = [
 
 const faqs = [
   {
-    q: '¿Necesitan registrarse mis clientes para pedir?',
-    a: 'No. Ingresan a tu formulario, completan sus datos y generan su pedido sin crear cuenta ni instalar ninguna aplicación.',
+    q: '¿Mis clientes necesitan registrarse para pedir?',
+    a: 'No. Solo entran a tu link, llenan sus datos y listo. Sin cuenta, sin apps, sin complicaciones.',
   },
   {
     q: '¿Puedo usar mis propios métodos de envío?',
-    a: 'Sí. Activa motorizado, Shalom, Olva, una agencia específica o define un método personalizado; también puedes ofrecer recojo en tienda.',
+    a: 'Sí. Motorizado, Shalom, Olva, una agencia o el método que tú quieras. También puedes ofrecer recojo en tienda.',
   },
   {
-    q: '¿Cómo registro el pago de una venta?',
-    a: 'Efectivo y Yape/Plin quedan registrados como pagados al momento. Con tarjeta, la venta queda pendiente hasta que confirmes el cobro.',
+    q: '¿Cómo cobro a mis clientes?',
+    a: 'Puedes cobrar en efectivo, Yape/Plin o tarjeta. Si un pago falta, queda marcado para que no se te olvide.',
   },
   {
-    q: '¿La prueba es gratis y sin tarjeta?',
-    a: 'Sí. Son 30 días del plan Pro completos, sin registrar tarjeta ni adquirir ningún compromiso.',
+    q: '¿Probar Tori cuesta algo?',
+    a: 'No. Son 30 días gratis del plan Pro completo, sin registrar tarjeta ni compromiso.',
   },
   {
-    q: '¿Qué ocurre al terminar la prueba?',
-    a: 'Pasas al plan Básico, gratuito para siempre: formulario público, hasta 50 envíos al mes y el control esencial de tu operación.',
+    q: '¿Qué pasa cuando termina la prueba?',
+    a: 'Te quedas con el plan Básico gratis para siempre: tu formulario, tus pedidos y hasta 50 envíos al mes.',
   },
   {
-    q: '¿Puedo controlar el stock y las compras?',
-    a: 'Sí. Registras productos, monitoreas existencias, recibes alertas de stock mínimo y consolidas tus compras en el mismo sistema.',
+    q: '¿Puedo controlar el stock de mis productos?',
+    a: 'Sí. Registra tus productos y Tori te avisa cuando queda poco. Así nunca te quedas sin inventario.',
   },
   {
-    q: '¿Están seguros mis datos?',
-    a: 'Cada negocio opera en un espacio aislado. Solo tú accedes a tus pedidos, ventas y clientes.',
+    q: '¿Mis datos están seguros?',
+    a: 'Sí. Tu información está separada de la de otros negocios y solo tú puedes verla.',
   },
   {
-    q: '¿Puedo cambiar o cancelar el plan?',
-    a: 'En cualquier momento y sin penalidad. Cambia de plan o vuelve al Básico desde tu cuenta.',
+    q: '¿Puedo cancelar cuando quiera?',
+    a: 'Claro. Cambia o cancela tu plan cuando quieras, sin multas ni letra pequeña.',
   },
 ]
 
@@ -162,32 +165,18 @@ function FAQItem({ faq, open, onToggle }: { faq: (typeof faqs)[number]; open: bo
   )
 }
 
-const navItems = [
-  { icon: Truck, label: 'Pedidos' },
-  { icon: Boxes, label: 'Inventario' },
-  { icon: ShoppingCart, label: 'Ventas' },
-  { icon: Warehouse, label: 'Compras' },
-  { icon: MapPin, label: 'Logística' },
-]
-
-const pedidosHero = [
-  { initial: 'M', name: 'María García', sub: 'Cesta de regalo · Motorizado', badge: 'Enviado', badgeClass: 'bg-emerald-100 text-emerald-700' },
-  { initial: 'C', name: 'Carlos López', sub: 'Box de brownies · Shalom', badge: 'Por despachar', badgeClass: 'bg-amber-100 text-amber-700' },
-  { initial: 'A', name: 'Ana Torres', sub: 'Polos x3 · Recojo en tienda', badge: 'Pago confirmado', badgeClass: 'bg-sky-100 text-sky-700' },
-]
-
-const heroStats = [
-  { label: 'Stock bajo', value: '3', color: 'text-amber-600' },
-  { label: 'Cobros pendientes', value: '5', color: 'text-slate-700' },
-  { label: 'Envíos hoy', value: '12', color: 'text-sky-600' },
-]
-
 const bars = [38, 62, 45, 78, 52, 88, 70, 96, 64, 82]
 
 const stockCritico = [
   { name: 'Caja kraft M', qty: '18 / 40', pct: 45, color: 'bg-amber-500' },
   { name: 'Cinta adhesiva', qty: '6 / 40', pct: 15, color: 'bg-red-500' },
   { name: 'Etiquetas Tori', qty: '33 / 50', pct: 66, color: 'bg-sky-500' },
+]
+
+const metodosForm = [
+  { icon: Truck, label: 'Motorizado', active: true },
+  { icon: Package, label: 'Shalom', active: false },
+  { icon: Store, label: 'Recojo', active: false },
 ]
 
 export default function LandingPage() {
@@ -263,17 +252,18 @@ export default function LandingPage() {
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }}>
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-sky-200 text-sky-700 text-xs font-semibold mb-6">
                 <BarChart3 size={13} />
-                El sistema operativo de tu negocio
+                Pensado para emprendedores
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08]">
-                Centraliza la operación de tu negocio{' '}
+                Organiza tus pedidos{' '}
                 <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                  en un solo sistema.
+                  en un solo lugar.
                 </span>
               </h1>
               <p className="mt-5 text-base sm:text-xl text-slate-600 leading-relaxed max-w-lg">
-                Pedidos, inventario, ventas y compras sincronizados en una sola plataforma. Tus clientes
-                piden por un formulario con tu marca y tú gestionas cada entrega desde un dashboard claro.
+                Tus clientes piden desde un formulario con tu logo. Tú ves todos los pedidos
+                juntos en un panel simple: qué falta despachar, qué cobrar y qué comprar.
+                Sin Excel, sin chats perdidos.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <Link
@@ -293,7 +283,7 @@ export default function LandingPage() {
               <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-400">
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck size={13} className="text-emerald-500" />
-                  30 días de prueba Pro
+                  30 días gratis
                 </span>
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck size={13} className="text-emerald-500" />
@@ -306,7 +296,7 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Mockup del producto */}
+            {/* Mockup del formulario (lo que ve tu cliente) */}
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
@@ -316,80 +306,77 @@ export default function LandingPage() {
               <div className="absolute -top-8 -right-6 hidden md:block w-60 h-60 bg-gradient-to-br from-sky-100 to-indigo-100 rounded-full blur-3xl opacity-70" />
 
               <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-900/10 overflow-hidden">
-                {/* Barra de ventana */}
+                {/* Barra de navegador */}
                 <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-100">
                   <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
                   <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
                   <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
                   <span className="ml-3 hidden sm:block flex-1 max-w-xs text-center text-[10px] font-medium text-slate-400 bg-slate-50 rounded-lg px-3 py-1 truncate">
-                    app.tori.pe/dashboard
+                    dulcesdemaria.pe/pedido
                   </span>
                 </div>
 
-                <div className="flex">
-                  {/* Sidebar */}
-                  <div className="hidden sm:block w-40 border-r border-slate-100 p-3">
-                    <div className="flex items-center gap-1.5 mb-4 px-1.5">
-                      <LogoTori size={20} />
-                      <span className="text-sm font-extrabold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">Tori</span>
+                <div className="p-4 sm:p-6">
+                  {/* Header del formulario */}
+                  <div className="flex items-center gap-3 mb-5">
+                    <LogoTori size={40} />
+                    <div>
+                      <p className="text-base font-extrabold text-slate-900">Dulces de María</p>
+                      <p className="text-[11px] text-slate-400">Haz tu pedido en 1 minuto</p>
                     </div>
-                    <div className="space-y-1">
-                      {navItems.map((item) => (
+                  </div>
+
+                  {/* Datos del cliente */}
+                  <div className="rounded-xl border border-slate-100 p-3.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Tus datos</p>
+                    <div className="mt-2.5 space-y-2">
+                      <div className="h-2.5 w-full rounded-full bg-slate-100" />
+                      <div className="h-2.5 w-2/3 rounded-full bg-slate-100" />
+                      <div className="h-2.5 w-1/2 rounded-full bg-slate-100" />
+                    </div>
+                  </div>
+
+                  {/* Métodos de envío */}
+                  <div className="mt-3.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">¿Cómo lo recibes?</p>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {metodosForm.map((m, i) => (
                         <div
-                          key={item.label}
-                          className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold ${
-                            item.label === 'Pedidos' ? 'bg-sky-50 text-sky-700' : 'text-slate-400'
+                          key={i}
+                          className={`rounded-xl p-2.5 text-center ${
+                            m.active
+                              ? 'border-2 border-sky-500 bg-sky-50'
+                              : 'border border-slate-100 bg-white'
                           }`}
                         >
-                          <item.icon size={13} />
-                          {item.label}
+                          <m.icon size={15} className={`mx-auto ${m.active ? 'text-sky-600' : 'text-slate-400'}`} />
+                          <p className={`text-[9px] font-bold mt-1 ${m.active ? 'text-sky-700' : 'text-slate-500'}`}>
+                            {m.label}
+                          </p>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Contenido principal */}
-                  <div className="flex-1 p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Resumen del día</p>
-                        <p className="text-base font-extrabold text-slate-900">12 pedidos activos</p>
-                      </div>
-                      <div className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-sky-600 to-indigo-600 text-white text-[10px] font-bold">
-                        + Nuevo
-                      </div>
+                  {/* Tarifa */}
+                  <div className="mt-3.5 flex items-center justify-between rounded-xl border border-slate-100 p-3.5">
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Distrito: Miraflores</p>
+                      <p className="text-sm font-extrabold text-slate-900 mt-0.5">Envío S/ 8.00</p>
                     </div>
+                    <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <CheckCircle2 size={14} className="text-emerald-600" />
+                    </span>
+                  </div>
 
-                    <div className="space-y-2">
-                      {pedidosHero.map((item, i) => (
-                        <div key={i} className="flex items-center gap-2.5 rounded-xl border border-slate-100 p-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-sky-600 to-indigo-600 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
-                            {item.initial}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-xs text-slate-900 truncate">{item.name}</p>
-                            <p className="text-[10px] text-slate-400 truncate">{item.sub}</p>
-                          </div>
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap ${item.badgeClass}`}>
-                            {item.badge}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-3 gap-2">
-                      {heroStats.map((s, i) => (
-                        <div key={i} className="rounded-lg bg-slate-50 p-2">
-                          <p className="text-[8px] font-bold uppercase tracking-wider text-slate-400">{s.label}</p>
-                          <p className={`text-xs font-extrabold ${s.color}`}>{s.value}</p>
-                        </div>
-                      ))}
-                    </div>
+                  {/* Botón */}
+                  <div className="mt-4 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white text-center py-3 text-sm font-bold shadow-lg shadow-sky-500/20">
+                    Confirmar pedido
                   </div>
                 </div>
               </div>
 
-              {/* Tarjeta flotante */}
+              {/* Notificación flotante: pedido recibido */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -400,8 +387,8 @@ export default function LandingPage() {
                   <Check size={16} className="text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-900">Venta pagada</p>
-                  <p className="text-[10px] text-slate-400">Yape · S/ 45.00 · hace 2 min</p>
+                  <p className="text-xs font-bold text-slate-900">Nuevo pedido</p>
+                  <p className="text-[10px] text-slate-400">María García · Motorizado · hace 1 min</p>
                 </div>
               </motion.div>
             </motion.div>
@@ -414,10 +401,10 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { number: '1', label: 'plataforma para toda la operación' },
-              { number: '+200', label: 'negocios que gestionan con Tori' },
-              { number: '15 min', label: 'del registro al primer pedido' },
-              { number: '100%', label: 'pedidos centralizados, ninguno en chats' },
+              { number: '1', label: 'sola app para todo tu negocio' },
+              { number: '+200', label: 'emprendedores ya lo usan' },
+              { number: '5 min', label: 'para empezar a vender' },
+              { number: '0', label: 'pedidos perdidos en chats' },
             ].map((item, i) => (
               <motion.div
                 key={item.label}
@@ -441,13 +428,13 @@ export default function LandingPage() {
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
             <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Cómo funciona</p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Puesta en marcha en{' '}
+              Empieza en{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                minutos
+                3 pasos
               </span>
             </h2>
             <p className="mt-3 text-sm sm:text-base text-slate-600">
-              Sin implementación compleja ni tiempos de espera. De cero a tu primer pedido organizado.
+              No necesitas saber de tecnología ni de sistemas. Solo seguir estos pasos.
             </p>
           </motion.div>
 
@@ -478,13 +465,13 @@ export default function LandingPage() {
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
             <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Funcionalidades</p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Un módulo para cada parte{' '}
+              Todo lo que tu negocio{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                de tu operación
+                necesita
               </span>
             </h2>
             <p className="mt-3 text-sm sm:text-base text-slate-600">
-              Diseñado para negocios que atienden muchos pedidos al día, sin perder el control de nada.
+              Simple de usar, pensado para quienes recién empiezan y para los que ya crecieron.
             </p>
           </motion.div>
 
@@ -509,23 +496,23 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============ DASHBOARD ============ */}
+      {/* ============ PANEL DE RESUMEN ============ */}
       <section className="py-14 sm:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <motion.div {...fadeUp}>
-              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Visibilidad total</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Panel de resumen</p>
               <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-                Un dashboard para{' '}
+                Ves todo claro en{' '}
                 <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                  decidir con datos
+                  un solo panel
                 </span>
               </h2>
               <div className="mt-6 space-y-4">
                 {[
-                  'Resumen del día: pedidos activos, cobros pendientes y stock crítico a la vista.',
-                  'Historial completo y buscable de pedidos, ventas y compras.',
-                  'Exportación de datos para tu operador de envíos y tus registros.',
+                  'Cuánto vendes, cuánto gastas y tu saldo, de un vistazo.',
+                  'Pedidos por despachar y productos con stock bajo, marcados para que no se te olviden.',
+                  'Todo tu historial de pedidos, ventas y compras siempre a la mano.',
                 ].map((text, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div className="mt-0.5 w-5 h-5 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
@@ -548,7 +535,7 @@ export default function LandingPage() {
               <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-900/10 p-5 sm:p-6">
                 <div className="flex items-center justify-between mb-5">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Resumen semanal</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Resumen de la semana</p>
                     <p className="text-lg font-extrabold text-slate-900">Ventas · S/ 3,280</p>
                   </div>
                   <div className="px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-bold text-slate-500">
@@ -566,7 +553,7 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <div className="mt-6 pt-5 border-t border-slate-100">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">Stock crítico</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">Stock bajo</p>
                   <div className="space-y-3">
                     {stockCritico.map((s, i) => (
                       <div key={i} className="flex items-center gap-3">
@@ -589,11 +576,11 @@ export default function LandingPage() {
       <section className="py-14 sm:py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Resultados</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Testimonios</p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Lo que logran{' '}
+              Historias de{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                los negocios con Tori
+                emprendedores
               </span>
             </h2>
           </motion.div>
@@ -632,11 +619,11 @@ export default function LandingPage() {
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Planes{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                sin letra pequeña
+                simples y claros
               </span>
             </h2>
             <p className="mt-3 text-sm sm:text-base text-slate-600">
-              30 días de prueba Pro, sin tarjeta ni compromiso. Después, tú decides.
+              30 días gratis. Después, tú decides si sigues.
             </p>
           </motion.div>
 
@@ -649,7 +636,7 @@ export default function LandingPage() {
               className="relative rounded-2xl border border-slate-200 bg-white p-6 sm:p-8"
             >
               <h3 className="text-lg font-bold text-slate-900">Básico</h3>
-              <p className="mt-1 text-sm text-slate-500">Para comenzar a ordenar tu operación</p>
+              <p className="mt-1 text-sm text-slate-500">Para empezar a ordenarte</p>
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-4xl font-extrabold text-slate-900">Gratis</span>
               </div>
@@ -698,9 +685,9 @@ export default function LandingPage() {
       <section id="faq" className="py-14 sm:py-20 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Soporte</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Preguntas</p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Preguntas{' '}
+              Dudas{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                 frecuentes
               </span>
@@ -732,11 +719,11 @@ export default function LandingPage() {
           >
             <div className="relative">
               <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                Deja de perseguir tus pedidos
+                Empieza a ordenar tu negocio hoy
               </h2>
               <p className="mt-3 sm:mt-4 text-sm sm:text-xl text-sky-100 max-w-lg mx-auto">
-                Configura tu negocio, comparte tu enlace y recibe tu primer pedido
-                organizado hoy mismo.
+                Crea tu cuenta, comparte tu link y recibe tu primer pedido
+                organizado en minutos. Sin tarjeta, sin complicaciones.
               </p>
               <Link
                 href="/register"
@@ -756,7 +743,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm font-bold tracking-tight bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
             <LogoTori size={22} />
-            Tori — el sistema operativo de tu negocio
+            Tori — organiza los pedidos de tu emprendimiento
           </div>
           <div className="text-xs text-slate-400">
             © {new Date().getFullYear()} Tori — Todos los derechos reservados.
