@@ -8,7 +8,13 @@ import ModalDetalleVenta from '@/components/ModalDetalleVenta'
 
 type Props = { userId: string }
 
-const ESTADOS = ['COMPLETADA', 'ANULADA'] as const
+const ESTADOS = ['COMPLETADA', 'ANULADA', 'PENDIENTE'] as const
+
+const METODOS_PAGO = [
+  { key: 'EFECTIVO', label: 'Efectivo' },
+  { key: 'YAPE_PLIN', label: 'Yape / Plin' },
+  { key: 'TARJETA', label: 'Tarjeta' },
+] as const
 
 export default function SeccionVentas({ userId }: Props) {
   const [ventas, setVentas] = useState<Venta[]>([])
@@ -28,6 +34,7 @@ export default function SeccionVentas({ userId }: Props) {
   const [productos, setProductos] = useState<Producto[]>([])
   const [busquedaProd, setBusquedaProd] = useState('')
   const [itemsVenta, setItemsVenta] = useState<{ producto_id: string; nombre: string; cantidad: number; precio: number }[]>([])
+  const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'YAPE_PLIN' | 'TARJETA'>('EFECTIVO')
   const [creando, setCreando] = useState(false)
 
   async function cargarVentas() {
@@ -124,6 +131,7 @@ export default function SeccionVentas({ userId }: Props) {
         persona_id: personaSel.id,
         persona_nombre: personaSel.nombre,
         persona_dni: personaSel.dni,
+        metodo_pago: metodoPago,
         items: itemsVenta.map((it) => ({
           producto_id: it.producto_id,
           producto_nombre: it.nombre,
@@ -148,6 +156,7 @@ export default function SeccionVentas({ userId }: Props) {
     setBusquedaCli('')
     setItemsVenta([])
     setBusquedaProd('')
+    setMetodoPago('EFECTIVO')
     setMostrarNuevoCliente(false)
     setNuevoCliForm({ dni: '', nombre: '', telefono: '' })
   }
@@ -164,6 +173,21 @@ export default function SeccionVentas({ userId }: Props) {
       cargarVentas()
     } else {
       toast.error('Error al anular venta')
+    }
+  }
+
+  async function confirmarVenta(venta: Venta) {
+    if (!confirm('¿Confirmar que el pago con tarjeta fue recibido?')) return
+    const res = await fetch(`/api/ventas/${venta.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado: 'COMPLETADA' }),
+    })
+    if (res.ok) {
+      toast.success('Venta completada')
+      cargarVentas()
+    } else {
+      toast.error('Error al confirmar venta')
     }
   }
 
@@ -205,7 +229,7 @@ export default function SeccionVentas({ userId }: Props) {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              {e === 'COMPLETADA' ? 'Completadas' : 'Anuladas'}
+              {e === 'COMPLETADA' ? 'Completadas' : e === 'PENDIENTE' ? 'Pendientes' : 'Anuladas'}
             </button>
           ))}
         </div>
@@ -227,6 +251,7 @@ export default function SeccionVentas({ userId }: Props) {
                 <th className="px-4 py-3">DNI</th>
                 <th className="px-4 py-3 text-right">Productos</th>
                 <th className="px-4 py-3 text-right">Total</th>
+                <th className="px-4 py-3 text-center">Pago</th>
                 <th className="px-4 py-3 text-center">Estado Venta</th>
                 <th className="px-4 py-3 text-center">Envío</th>
                 <th className="px-4 py-3 text-right">Fecha</th>
@@ -238,6 +263,7 @@ export default function SeccionVentas({ userId }: Props) {
                 const badge = {
                   COMPLETADA: 'bg-emerald-100 text-emerald-700',
                   ANULADA: 'bg-red-100 text-red-700',
+                  PENDIENTE: 'bg-amber-100 text-amber-700',
                 }[v.estado]
                 return (
                   <tr key={v.id} className="hover:bg-slate-50 transition-colors">
@@ -245,6 +271,15 @@ export default function SeccionVentas({ userId }: Props) {
                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">{v.persona_dni}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{v.items?.length ?? 0} ítems</td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-900">S/ {v.total.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                        v.metodo_pago === 'TARJETA' ? 'bg-indigo-100 text-indigo-700' :
+                        v.metodo_pago === 'YAPE_PLIN' ? 'bg-purple-100 text-purple-700' :
+                        'bg-slate-100 text-slate-600'
+                      }`}>
+                        {v.metodo_pago === 'EFECTIVO' ? 'Efectivo' : v.metodo_pago === 'YAPE_PLIN' ? 'Yape / Plin' : 'Tarjeta'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${badge}`}>
                         {v.estado}
@@ -268,6 +303,11 @@ export default function SeccionVentas({ userId }: Props) {
                         <button onClick={() => setVentaDetalle(v)} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Ver detalle">
                           <Eye size={15} />
                         </button>
+                        {v.estado === 'PENDIENTE' && (
+                          <button onClick={() => confirmarVenta(v)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="Marcar como completada">
+                            <Check size={15} />
+                          </button>
+                        )}
                         {v.estado === 'COMPLETADA' && (
                           <button onClick={() => anularVenta(v)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors" title="Anular">
                             <RotateCcw size={15} />
@@ -411,6 +451,32 @@ export default function SeccionVentas({ userId }: Props) {
                   <div className="text-right mt-2 text-lg font-bold text-slate-900">
                     Total: S/ {total.toFixed(2)}
                   </div>
+                </div>
+              )}
+
+              {itemsVenta.length > 0 && (
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Método de pago</label>
+                  <div className="mt-1 grid grid-cols-3 gap-2">
+                    {METODOS_PAGO.map((m) => (
+                      <button
+                        key={m.key}
+                        onClick={() => setMetodoPago(m.key)}
+                        className={`px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                          metodoPago === m.key
+                            ? 'bg-sky-600 text-white border-sky-600 shadow-md shadow-sky-500/20'
+                            : 'bg-white text-slate-600 border-slate-200 hover:border-sky-400 hover:text-sky-700'
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                  {metodoPago === 'TARJETA' && (
+                    <p className="mt-1.5 text-xs text-amber-600">
+                      El pago con tarjeta se registrará como <strong>Pendiente</strong> hasta que se confirme el pago.
+                    </p>
+                  )}
                 </div>
               )}
             </div>

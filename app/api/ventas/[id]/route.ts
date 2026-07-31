@@ -6,7 +6,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const body = await request.json()
   const { estado } = body
 
-  if (estado !== 'ANULADA') {
+  if (estado !== 'ANULADA' && estado !== 'COMPLETADA') {
     return NextResponse.json({ error: 'Estado inválido' }, { status: 400 })
   }
 
@@ -20,23 +20,29 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: fetchError.message }, { status: 500 })
   }
 
-  if (venta.estado !== 'COMPLETADA') {
-    return NextResponse.json({ error: 'Solo se puede anular una venta completada' }, { status: 400 })
-  }
+  if (estado === 'ANULADA') {
+    if (venta.estado !== 'COMPLETADA' && venta.estado !== 'PENDIENTE') {
+      return NextResponse.json({ error: 'Solo se puede anular una venta completada o pendiente' }, { status: 400 })
+    }
 
-  // Restaurar stock de cada producto
-  for (const item of venta.items) {
-    if (!item.producto_id) continue
-    const { data: prod } = await supabaseAdmin
-      .from('productos')
-      .select('stock_actual')
-      .eq('id', item.producto_id)
-      .single()
-    if (prod) {
-      await supabaseAdmin
+    // Restaurar stock de cada producto
+    for (const item of venta.items) {
+      if (!item.producto_id) continue
+      const { data: prod } = await supabaseAdmin
         .from('productos')
-        .update({ stock_actual: prod.stock_actual + item.cantidad, updated_at: new Date().toISOString() })
+        .select('stock_actual')
         .eq('id', item.producto_id)
+        .single()
+      if (prod) {
+        await supabaseAdmin
+          .from('productos')
+          .update({ stock_actual: prod.stock_actual + item.cantidad, updated_at: new Date().toISOString() })
+          .eq('id', item.producto_id)
+      }
+    }
+  } else if (estado === 'COMPLETADA') {
+    if (venta.estado !== 'PENDIENTE') {
+      return NextResponse.json({ error: 'Solo se puede completar una venta pendiente' }, { status: 400 })
     }
   }
 

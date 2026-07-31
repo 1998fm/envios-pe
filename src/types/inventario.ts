@@ -18,6 +18,8 @@ export const UNIDADES_MEDIDA = [
   'pliego',
 ] as const
 
+export type MetodoPago = 'EFECTIVO' | 'YAPE_PLIN' | 'TARJETA'
+
 export type Venta = {
   id: string
   profile_id: string
@@ -25,7 +27,8 @@ export type Venta = {
   persona_nombre: string
   persona_dni: string
   total: number
-  estado: 'COMPLETADA' | 'ANULADA'
+  estado: 'COMPLETADA' | 'ANULADA' | 'PENDIENTE'
+  metodo_pago: MetodoPago
   estado_envio: 'PENDIENTE' | 'EMPACADO' | 'ENVIADO' | 'ENTREGADO'
   envio_id: string | null
   created_at: string
