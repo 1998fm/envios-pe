@@ -30,6 +30,20 @@ export async function GET(request: Request) {
     return (data ?? []).reduce((acc: number, v: any) => acc + Number(v.total || 0), 0)
   }
 
+  async function sumCompras(desde: Date, hasta?: Date, estados?: string[]) {
+    let q = supabaseAdmin
+      .from('compras')
+      .select('total')
+      .eq('profile_id', userId)
+      .gte('created_at', desde.toISOString())
+    if (hasta) q = q.lt('created_at', hasta.toISOString())
+    if (estados && estados.length) {
+      q = q.in('estado', estados)
+    }
+    const { data } = await q
+    return (data ?? []).reduce((acc: number, v: any) => acc + Number(v.total || 0), 0)
+  }
+
   async function countEnvios(desde: Date, hasta?: Date, estados?: string[]) {
     let q = supabaseAdmin
       .from('envios')
@@ -67,6 +81,8 @@ export async function GET(request: Request) {
     sinEmpacar,
     empacados,
     stockBajoCount,
+    totalVentas,
+    totalCompras,
   ] = await Promise.all([
     sumVentas(startOfMonth, startOfNextMonth, ['COMPLETADA', 'PENDIENTE']),
     sumVentas(startOfPrevMonth, startOfMonth, ['COMPLETADA', 'PENDIENTE']),
@@ -80,6 +96,8 @@ export async function GET(request: Request) {
     countEnvios(new Date(0), undefined, ['NO_EMPACADO']),
     countEnvios(new Date(0), undefined, ['EMPACADO']),
     countProductosStockBajo(supabaseAdmin, userId),
+    sumVentas(new Date(0), undefined, ['COMPLETADA', 'PENDIENTE']),
+    sumCompras(new Date(0), undefined, ['COMPLETADA']),
   ])
 
   const fechaInicio = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -171,6 +189,9 @@ export async function GET(request: Request) {
       pedidosPorDespachar: sinEmpacar + empacados,
       enviosMes,
       stockBajo: stockBajoCount,
+      totalVentas,
+      totalCompras,
+      saldoDisponible: totalVentas - totalCompras,
     },
     pendientes: {
       sinEmpacar,

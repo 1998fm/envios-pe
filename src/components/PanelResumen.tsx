@@ -38,6 +38,9 @@ type DashboardData = {
     pedidosPorDespachar: number
     enviosMes: number
     stockBajo: number
+    totalVentas: number
+    totalCompras: number
+    saldoDisponible: number
   }
   pendientes: {
     sinEmpacar: number
@@ -207,6 +210,41 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* ============ SALDO DISPONIBLE ============ */}
+      {data && (
+        <div
+          className={`rounded-2xl bg-gradient-to-r ${
+            data.kpis.saldoDisponible >= 0
+              ? 'from-sky-600 via-sky-600 to-indigo-700'
+              : 'from-red-500 via-red-500 to-rose-600'
+          } p-5 sm:p-6 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`}
+        >
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-white/70">
+              Saldo disponible
+            </p>
+            <p className="text-3xl sm:text-4xl font-extrabold mt-1 leading-none">
+              {fmtSoles(data.kpis.saldoDisponible)}
+            </p>
+            <p className="text-xs text-white/70 mt-1.5">Ventas totales − Compras totales</p>
+          </div>
+          <div className="flex items-center gap-6 sm:gap-8">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
+                Ventas
+              </p>
+              <p className="text-lg font-extrabold mt-0.5">{fmtSoles(data.kpis.totalVentas)}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
+                Compras
+              </p>
+              <p className="text-lg font-extrabold mt-0.5">{fmtSoles(data.kpis.totalCompras)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ============ KPIs ============ */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         {kpis.map((kpi, i) => (
