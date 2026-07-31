@@ -13,6 +13,7 @@ import {
   Boxes,
   PackageOpen,
   CheckCircle2,
+  Receipt,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -28,6 +29,7 @@ import {
   Pie,
 } from 'recharts'
 import ToriMascot from '@/components/ToriMascot'
+import { CATEGORIA_GASTO_LABEL, CATEGORIA_GASTO_STYLE } from '@/types/inventario'
 
 type DashboardData = {
   kpis: {
@@ -40,6 +42,8 @@ type DashboardData = {
     stockBajo: number
     totalVentas: number
     totalCompras: number
+    totalGastos: number
+    gastosMes: number
     saldoDisponible: number
   }
   pendientes: {
@@ -53,6 +57,7 @@ type DashboardData = {
     ventasMes: number | null
     enviosMes: number | null
     ventasHoy: number | null
+    gastosMes: number | null
   }
   graficos: {
     tendenciaDiaria: { fecha: string; count: number }[]
@@ -64,6 +69,7 @@ type DashboardData = {
   recientes: {
     envios: { id: string; nombre: string; estado: string; metodo: string; fecha_registro: string }[]
     ventas: { id: string; persona_nombre: string; total: number; estado: string; metodo_pago: string; created_at: string }[]
+    gastos: { id: string; categoria: string; concepto: string; monto: number; fecha: string }[]
   }
 }
 
@@ -173,6 +179,13 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
           delta: data.deltas.enviosMes,
         },
         {
+          label: 'Gastos del mes',
+          value: fmtSoles(data.kpis.gastosMes),
+          icon: Receipt,
+          iconClass: 'bg-rose-100 text-rose-600',
+          delta: data.deltas.gastosMes,
+        },
+        {
           label: 'Stock bajo',
           value: String(data.kpis.stockBajo),
           sub: 'productos por reabastecer',
@@ -185,11 +198,11 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           <div className="lg:col-span-2 h-64 animate-pulse rounded-2xl border border-slate-100 bg-white" />
           <div className="h-64 animate-pulse rounded-2xl border border-slate-100 bg-white" />
@@ -226,9 +239,9 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
             <p className="text-3xl sm:text-4xl font-extrabold mt-1 leading-none">
               {fmtSoles(data.kpis.saldoDisponible)}
             </p>
-            <p className="text-xs text-white/70 mt-1.5">Ventas totales − Compras totales</p>
+            <p className="text-xs text-white/70 mt-1.5">Ventas totales − Compras − Gastos</p>
           </div>
-          <div className="flex items-center gap-6 sm:gap-8">
+          <div className="flex items-center gap-5 sm:gap-8">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
                 Ventas
@@ -241,12 +254,18 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
               </p>
               <p className="text-lg font-extrabold mt-0.5">{fmtSoles(data.kpis.totalCompras)}</p>
             </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
+                Gastos
+              </p>
+              <p className="text-lg font-extrabold mt-0.5">{fmtSoles(data.kpis.totalGastos)}</p>
+            </div>
           </div>
         </div>
       )}
 
       {/* ============ KPIs ============ */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
         {kpis.map((kpi, i) => (
           <div
             key={kpi.label}
@@ -455,7 +474,7 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
           </div>
 
           {/* ============ RECIENTES ============ */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5">
               <h3 className="text-sm font-bold text-slate-900">Últimos pedidos</h3>
               {data.recientes.envios.length === 0 ? (
@@ -512,6 +531,36 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
                         }`}
                       >
                         {v.estado === 'PENDIENTE' ? 'Por cobrar' : v.estado}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5">
+              <h3 className="text-sm font-bold text-slate-900">Últimos gastos</h3>
+              {data.recientes.gastos.length === 0 ? (
+                <p className="text-xs text-slate-400 mt-3">Aún no hay gastos.</p>
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {data.recientes.gastos.map((g) => (
+                    <div key={g.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
+                      <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
+                        <Receipt size={14} className="text-rose-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">{g.concepto}</p>
+                        <p className="text-[10px] text-slate-400 truncate">
+                          {CATEGORIA_GASTO_LABEL[g.categoria] || g.categoria} · {fmtFecha(g.fecha)}
+                        </p>
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap ${
+                          CATEGORIA_GASTO_STYLE[g.categoria] || 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {fmtSoles(g.monto)}
                       </span>
                     </div>
                   ))}

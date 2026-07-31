@@ -82,6 +82,45 @@ export type CompraItem = {
   subtotal: number
 }
 
+export const CATEGORIAS_GASTO = [
+  'MATERIALES',
+  'PASAJES',
+  'DELIVERY',
+  'PUBLICIDAD',
+  'SERVICIOS',
+  'OTROS',
+] as const
+
+export const CATEGORIA_GASTO_LABEL: Record<string, string> = {
+  MATERIALES: 'Materiales',
+  PASAJES: 'Pasajes',
+  DELIVERY: 'Delivery',
+  PUBLICIDAD: 'Publicidad',
+  SERVICIOS: 'Servicios',
+  OTROS: 'Otros',
+}
+
+export const CATEGORIA_GASTO_STYLE: Record<string, string> = {
+  MATERIALES: 'bg-sky-100 text-sky-700',
+  PASAJES: 'bg-amber-100 text-amber-700',
+  DELIVERY: 'bg-indigo-100 text-indigo-700',
+  PUBLICIDAD: 'bg-purple-100 text-purple-700',
+  SERVICIOS: 'bg-emerald-100 text-emerald-700',
+  OTROS: 'bg-slate-100 text-slate-600',
+}
+
+export type Gasto = {
+  id: string
+  profile_id: string
+  categoria: string
+  concepto: string
+  monto: number
+  fecha: string
+  notas?: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type Producto = {
   id: string
   profile_id: string

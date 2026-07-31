@@ -15,14 +15,15 @@ import {
   ChevronLeft,
   Pin,
   LayoutDashboard,
+  Receipt,
 } from 'lucide-react'
 
 type Props = {
   plan?: string
   tieneShalom: boolean
   showCopiarDatos: boolean
-  pestañaActiva: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras'
-  onNavegar: (p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras') => void
+  pestañaActiva: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos'
+  onNavegar: (p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos') => void
   onExportShalom: () => void
   onCambioMasivo: () => void
   onGenerarEtiquetas: () => void
@@ -64,9 +65,10 @@ export default function DashboardMenu({
     { key: 'productos' as const, label: 'Productos', icon: Package },
     { key: 'ventas' as const, label: 'Ventas', icon: ShoppingCart },
     { key: 'compras' as const, label: 'Compras', icon: Truck },
+    { key: 'gastos' as const, label: 'Gastos', icon: Receipt },
   ]
 
-  function navegar(p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras') {
+  function navegar(p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos') {
     onNavegar(p)
     setHover(false)
     setFijado(false)

@@ -43,6 +43,7 @@ import DashboardOnboarding from '@/components/DashboardOnboarding'
 import SeccionProductos from '@/components/SeccionProductos'
 import SeccionVentas from '@/components/SeccionVentas'
 import SeccionCompras from '@/components/SeccionCompras'
+import SeccionGastos from '@/components/SeccionGastos'
 
 export default function DashboardPage() {
   const supabase = useMemo(() => createClient(), [])
@@ -74,7 +75,7 @@ const [plan, setPlan] = useState('basic')
 const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
 const [mostrarUpgrade, setMostrarUpgrade] = useState(false)
 const [agruparPor, setAgruparPor] = useState<'programada' | 'registro'>('programada')
-const [pestañaActiva, setPestañaActiva] = useState<'resumen' | 'envios' | 'productos' | 'ventas' | 'compras'>('resumen')
+const [pestañaActiva, setPestañaActiva] = useState<'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos'>('resumen')
 // ========================================
 // ETIQUETAS
 // ========================================
@@ -1209,7 +1210,8 @@ for (
 
        {pestañaActiva === 'productos' && <SeccionProductos userId={userId || ''} />}
        {pestañaActiva === 'ventas' && <SeccionVentas userId={userId || ''} />}
-{pestañaActiva === 'compras' && <SeccionCompras userId={userId || ''} />}
+       {pestañaActiva === 'compras' && <SeccionCompras userId={userId || ''} />}
+       {pestañaActiva === 'gastos' && <SeccionGastos userId={userId || ''} />}
 
 <ModalConfiguracion
   abierto={mostrarConfig}

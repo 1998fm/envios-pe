@@ -44,6 +44,17 @@ export async function GET(request: Request) {
     return (data ?? []).reduce((acc: number, v: any) => acc + Number(v.total || 0), 0)
   }
 
+  async function sumGastos(desde: Date, hasta?: Date) {
+    let q = supabaseAdmin
+      .from('gastos')
+      .select('monto')
+      .eq('profile_id', userId)
+      .gte('fecha', desde.toISOString().split('T')[0])
+    if (hasta) q = q.lt('fecha', hasta.toISOString().split('T')[0])
+    const { data } = await q
+    return (data ?? []).reduce((acc: number, v: any) => acc + Number(v.monto || 0), 0)
+  }
+
   async function countEnvios(desde: Date, hasta?: Date, estados?: string[]) {
     let q = supabaseAdmin
       .from('envios')
@@ -83,6 +94,9 @@ export async function GET(request: Request) {
     stockBajoCount,
     totalVentas,
     totalCompras,
+    gastosMes,
+    gastosMesAnterior,
+    totalGastos,
   ] = await Promise.all([
     sumVentas(startOfMonth, startOfNextMonth, ['COMPLETADA', 'PENDIENTE']),
     sumVentas(startOfPrevMonth, startOfMonth, ['COMPLETADA', 'PENDIENTE']),
@@ -98,6 +112,9 @@ export async function GET(request: Request) {
     countProductosStockBajo(supabaseAdmin, userId),
     sumVentas(new Date(0), undefined, ['COMPLETADA', 'PENDIENTE']),
     sumCompras(new Date(0), undefined, ['COMPLETADA']),
+    sumGastos(startOfMonth, startOfNextMonth),
+    sumGastos(startOfPrevMonth, startOfMonth),
+    sumGastos(new Date(0)),
   ])
 
   const fechaInicio = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -155,27 +172,35 @@ export async function GET(request: Request) {
     .map(([metodo, count]) => ({ metodo, count }))
     .sort((a, b) => b.count - a.count)
 
-  const [{ data: stockBajo }, { data: recientesEnvios }, { data: recientesVentas }] = await Promise.all([
-    supabaseAdmin
-      .from('productos')
-      .select('nombre, stock_actual, stock_minimo, unidad')
-      .eq('profile_id', userId)
-      .or('stock_actual.lte.stock_minimo')
-      .order('stock_actual', { ascending: true })
-      .limit(5),
-    supabaseAdmin
-      .from('envios')
-      .select('id, nombre, estado, metodo, fecha_registro')
-      .eq('user_id', userId)
-      .order('fecha_registro', { ascending: false })
-      .limit(5),
-    supabaseAdmin
-      .from('ventas')
-      .select('id, persona_nombre, total, estado, metodo_pago, created_at')
-      .eq('profile_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(5),
-  ])
+  const [{ data: stockBajo }, { data: recientesEnvios }, { data: recientesVentas }, { data: recientesGastos }] =
+    await Promise.all([
+      supabaseAdmin
+        .from('productos')
+        .select('nombre, stock_actual, stock_minimo, unidad')
+        .eq('profile_id', userId)
+        .or('stock_actual.lte.stock_minimo')
+        .order('stock_actual', { ascending: true })
+        .limit(5),
+      supabaseAdmin
+        .from('envios')
+        .select('id, nombre, estado, metodo, fecha_registro')
+        .eq('user_id', userId)
+        .order('fecha_registro', { ascending: false })
+        .limit(5),
+      supabaseAdmin
+        .from('ventas')
+        .select('id, persona_nombre, total, estado, metodo_pago, created_at')
+        .eq('profile_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabaseAdmin
+        .from('gastos')
+        .select('id, categoria, concepto, monto, fecha')
+        .eq('profile_id', userId)
+        .order('fecha', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(5),
+    ])
 
   const delta = (actual: number, anterior: number) =>
     anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : null
@@ -191,7 +216,9 @@ export async function GET(request: Request) {
       stockBajo: stockBajoCount,
       totalVentas,
       totalCompras,
-      saldoDisponible: totalVentas - totalCompras,
+      totalGastos,
+      gastosMes,
+      saldoDisponible: totalVentas - totalCompras - totalGastos,
     },
     pendientes: {
       sinEmpacar,
@@ -204,6 +231,7 @@ export async function GET(request: Request) {
       ventasMes: delta(ventasMes, ventasMesAnterior),
       enviosMes: delta(enviosMes, enviosMesAnterior),
       ventasHoy: delta(ventasHoy, ventasAyer),
+      gastosMes: delta(gastosMes, gastosMesAnterior),
     },
     graficos: {
       tendenciaDiaria,
@@ -215,6 +243,7 @@ export async function GET(request: Request) {
     recientes: {
       envios: recientesEnvios ?? [],
       ventas: recientesVentas ?? [],
+      gastos: recientesGastos ?? [],
     },
   })
 }
