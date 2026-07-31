@@ -35,7 +35,6 @@ type VentaItemInfo = {
   cantidad: number
   precio_unitario: number
   subtotal: number
-  enviado: boolean
 }
 
 type VentaConItems = {
@@ -57,6 +56,7 @@ const VENTA_ENVIO_STYLES: Record<string, string> = {
   ENVIADO: 'bg-emerald-100 text-emerald-700',
   EMPACADO: 'bg-amber-100 text-amber-700',
   ENTREGADO: 'bg-green-100 text-green-700',
+  COMPLETADO: 'bg-emerald-100 text-emerald-700',
 }
 
 function SectionTitle({ children }: { children: ReactNode }) {
@@ -120,6 +120,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
         .select('*')
         .eq('persona_dni', current.dni)
         .eq('estado', 'COMPLETADA')
+        .neq('estado_envio', 'COMPLETADO')
         .order('created_at', { ascending: false })
 
       if (!error && data) {
@@ -137,6 +138,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
           .select('*')
           .eq('persona_id', json.data.id)
           .eq('estado', 'COMPLETADA')
+          .neq('estado_envio', 'COMPLETADO')
           .order('created_at', { ascending: false })
 
         if (!error && data) {
@@ -157,13 +159,6 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
         .select('*')
         .eq('venta_id', venta.id)
 
-      const { data: envioItems } = await supabase
-        .from('envio_items')
-        .select('venta_item_id')
-        .eq('envio_id', current.id)
-
-      const enviadoIds = new Set((envioItems || []).map((ei: any) => ei.venta_item_id))
-
       const items: VentaItemInfo[] = (itemsData || []).map((item: any) => ({
         id: item.id,
         venta_id: item.venta_id,
@@ -171,7 +166,6 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
         cantidad: item.cantidad,
         precio_unitario: item.precio_unitario,
         subtotal: item.subtotal,
-        enviado: enviadoIds.has(item.id),
       }))
 
       ventasConItems.push({
@@ -188,22 +182,21 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     setLoadingVentas(false)
   }
 
-  async function toggleEnvioItem(ventaItemId: string, enviado: boolean) {
-    if (enviado) return
+  async function validarContenido() {
+    if (!confirm('¿Está seguro que todo lo listado ha sido empacado?')) return
     setMarcandoEnvio(true)
 
+    const ids = ventasCliente.map((v) => v.id)
+
     const { error } = await supabase
-      .from('envio_items')
-      .upsert({
-        envio_id: current.id,
-        venta_item_id: ventaItemId,
-        cantidad: 1,
-      })
+      .from('ventas')
+      .update({ estado_envio: 'EMPACADO', envio_id: current.id })
+      .in('id', ids)
 
     if (error) {
-      toast.error('Error al marcar producto')
+      toast.error('Error al validar el contenido')
     } else {
-      toast.success('Producto marcado para este envío')
+      toast.success('Contenido del pedido validado')
       cargarVentasCliente()
     }
     setMarcandoEnvio(false)
@@ -244,8 +237,9 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     return 'S/ ' + Number(n).toFixed(2)
   }
 
-  const totalProductosSinEnviar = ventasCliente.reduce(
-    (sum, v) => sum + v.items.filter((i) => !i.enviado).length,
+  const ventasPendientes = ventasCliente.filter((v) => v.estado_envio !== 'EMPACADO' && v.estado_envio !== 'COMPLETADO')
+  const totalProductosPendientes = ventasPendientes.reduce(
+    (sum, v) => sum + v.items.length,
     0
   )
 
@@ -389,9 +383,9 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
           <section>
             <div className="mb-2 flex items-center gap-2">
               <SectionTitle>Productos del cliente</SectionTitle>
-              {totalProductosSinEnviar > 0 && (
+              {totalProductosPendientes > 0 && (
                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-                  {totalProductosSinEnviar} sin enviar
+                  {totalProductosPendientes} por validar
                 </span>
               )}
             </div>
@@ -441,19 +435,9 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                                 x{item.cantidad} · {formatMoney(item.precio_unitario)}
                               </p>
                             </div>
-                            {item.enviado ? (
-                              <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
-                                <Check size={12} /> Enviado
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => toggleEnvioItem(item.id, false)}
-                                disabled={marcandoEnvio}
-                                className="flex shrink-0 items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 transition-colors hover:bg-sky-200 disabled:opacity-50"
-                              >
-                                <Truck size={12} /> Marcar envío
-                              </button>
-                            )}
+                            <span className="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500">
+                              <Package size={12} /> {item.cantidad} u
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -465,6 +449,21 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                   )
                 })}
               </div>
+            )}
+
+            {ventasCliente.length > 0 && ventasPendientes.length > 0 && (
+              <button
+                onClick={validarContenido}
+                disabled={marcandoEnvio}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-sm font-bold text-white transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50"
+              >
+                {marcandoEnvio ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Check size={16} />
+                )}
+                Validar contenido del pedido
+              </button>
             )}
           </section>
         </div>

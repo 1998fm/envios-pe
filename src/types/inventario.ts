@@ -29,7 +29,7 @@ export type Venta = {
   total: number
   estado: 'COMPLETADA' | 'ANULADA' | 'PENDIENTE'
   metodo_pago: MetodoPago
-  estado_envio: 'PENDIENTE' | 'EMPACADO' | 'ENVIADO' | 'ENTREGADO'
+  estado_envio: 'PENDIENTE' | 'EMPACADO' | 'ENVIADO' | 'ENTREGADO' | 'COMPLETADO'
   envio_id: string | null
   created_at: string
   updated_at: string
@@ -47,8 +47,8 @@ export type EnvioItem = {
 export const ENVIO_TO_VENTA_ESTADO: Record<string, Venta['estado_envio']> = {
   NO_EMPACADO: 'PENDIENTE',
   EMPACADO: 'EMPACADO',
-  ENVIADO: 'ENVIADO',
-  ENTREGADO: 'ENTREGADO',
+  ENVIADO: 'COMPLETADO',
+  ENTREGADO: 'COMPLETADO',
 }
 
 export type VentaItem = {

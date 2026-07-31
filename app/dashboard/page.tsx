@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import agenciasShalom
 from '@/data/agencias-shalom.json'
 import { obtenerConfiguracionLogistica } from '@/lib/logistica/guardarConfiguracionLogistica'
+import { sincronizarVentasEnviadas } from '@/lib/sincronizarVentasEnviadas'
 
 import EtiquetasImpresion from '../../src/components/EtiquetasImpresion'
 import ModalEtiquetas from '@/components/ModalEtiquetas'
@@ -223,6 +224,10 @@ async function cambiarEstadoMasivo(
   if (error) {
     toast.error(error.message)
     return
+  }
+
+  if (nuevoEstado === 'ENVIADO') {
+    sincronizarVentasEnviadas(seleccionados)
   }
 
   setEnvios((prev) =>
@@ -720,6 +725,8 @@ if (marcarComoEnviado) {
 
  if (!error) {
 
+  sincronizarVentasEnviadas(ids)
+
   const {
   data: { user },
 } = await supabase.auth.getUser()
@@ -821,6 +828,10 @@ async function aplicarCambioMasivo() {
     toast.error(error.message)
 
     return
+  }
+
+  if (estadoDestinoMasivo === 'ENVIADO') {
+    sincronizarVentasEnviadas(ids)
   }
 
   setEnvios((prev) =>

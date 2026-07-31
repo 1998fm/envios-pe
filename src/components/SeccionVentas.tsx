@@ -290,6 +290,7 @@ export default function SeccionVentas({ userId }: Props) {
                         v.estado_envio === 'ENVIADO' ? 'bg-emerald-100 text-emerald-700' :
                         v.estado_envio === 'EMPACADO' ? 'bg-amber-100 text-amber-700' :
                         v.estado_envio === 'ENTREGADO' ? 'bg-green-100 text-green-700' :
+                        v.estado_envio === 'COMPLETADO' ? 'bg-emerald-100 text-emerald-700' :
                         'bg-slate-100 text-slate-500'
                       }`}>
                         {v.estado_envio || 'PENDIENTE'}
