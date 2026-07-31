@@ -55,20 +55,48 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
 
   async function cargarVentasCliente() {
     setLoadingVentas(true)
-    const { data, error } = await supabase
-      .from('ventas')
-      .select('*')
-      .eq('persona_dni', current.dni)
-      .eq('estado', 'COMPLETADA')
-      .order('created_at', { ascending: false })
 
-    if (error) {
+    let ventas: any[] = []
+
+    // 1) Buscar por persona_dni (directo desde supabase — ventas tiene RLS)
+    if (current.dni) {
+      const { data, error } = await supabase
+        .from('ventas')
+        .select('*')
+        .eq('persona_dni', current.dni)
+        .eq('estado', 'COMPLETADA')
+        .order('created_at', { ascending: false })
+
+      if (!error && data) {
+        ventas = data
+      }
+    }
+
+    // 2) Si no encontró por DNI y el envío tiene teléfono, buscar persona por API y luego ventas por persona_id
+    if (ventas.length === 0 && current.telefono) {
+      const res = await fetch(`/api/personas?user_id=${current.user_id}&busqueda=${current.telefono}`)
+      const json = await res.json()
+      if (json.data?.id) {
+        const { data, error } = await supabase
+          .from('ventas')
+          .select('*')
+          .eq('persona_id', json.data.id)
+          .eq('estado', 'COMPLETADA')
+          .order('created_at', { ascending: false })
+
+        if (!error && data) {
+          ventas = data
+        }
+      }
+    }
+
+    if (ventas.length === 0) {
       setLoadingVentas(false)
       return
     }
 
     const ventasConItems: VentaConItems[] = []
-    for (const venta of (data || [])) {
+    for (const venta of ventas) {
       const { data: itemsData } = await supabase
         .from('venta_items')
         .select('*')

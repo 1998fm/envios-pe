@@ -204,26 +204,38 @@ export async function POST(req: Request) {
     }
 
     // Guardar/actualizar persona (cliente final)
-    const { data: personaExistente } = await supabaseAdmin
-      .from('personas')
-      .select('id, telefono')
-      .eq('dni', dni)
-      .maybeSingle()
+    // Buscar primero por DNI; si no hay DNI o no se encuentra, buscar por teléfono
+    let personaId: string | null = null
 
-    let personaId: string
+    if (dni) {
+      const { data: porDni } = await supabaseAdmin
+        .from('personas')
+        .select('id, nombre, telefono')
+        .eq('dni', dni)
+        .maybeSingle()
+      if (porDni) personaId = porDni.id
+    }
 
-    if (personaExistente) {
-      personaId = personaExistente.id
-      if (personaExistente.telefono !== telefono) {
-        await supabaseAdmin
-          .from('personas')
-          .update({ telefono, updated_at: new Date().toISOString() })
-          .eq('id', personaId)
-      }
+    if (!personaId && telefono) {
+      const { data: porTel } = await supabaseAdmin
+        .from('personas')
+        .select('id, nombre, dni')
+        .eq('telefono', telefono)
+        .maybeSingle()
+      if (porTel) personaId = porTel.id
+    }
+
+    if (personaId) {
+      // Actualizar datos que falten o sean diferentes
+      const updates: Record<string, any> = { updated_at: new Date().toISOString() }
+      if (dni) updates.dni = dni
+      if (nombre) updates.nombre = nombre
+      if (telefono) updates.telefono = telefono
+      await supabaseAdmin.from('personas').update(updates).eq('id', personaId)
     } else {
       const { data: newPersona } = await supabaseAdmin
         .from('personas')
-        .insert({ dni, nombre, telefono })
+        .insert({ dni: dni || null, nombre, telefono: telefono || null })
         .select('id')
         .single()
       personaId = newPersona!.id
