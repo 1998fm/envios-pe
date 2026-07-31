@@ -207,6 +207,7 @@ export async function POST(req: Request) {
     // Buscar primero por DNI; si no hay DNI o no se encuentra, buscar por teléfono
     let personaId: string | null = null
 
+    // 1) Buscar por DNI
     if (dni) {
       const { data: porDni } = await supabaseAdmin
         .from('personas')
@@ -216,13 +217,31 @@ export async function POST(req: Request) {
       if (porDni) personaId = porDni.id
     }
 
+    // 2) Buscar por teléfono como respaldo
     if (!personaId && telefono) {
-      const { data: porTel } = await supabaseAdmin
+      const { data: personasTel } = await supabaseAdmin
         .from('personas')
         .select('id, nombre, dni')
         .eq('telefono', telefono)
-        .maybeSingle()
-      if (porTel) personaId = porTel.id
+        .limit(10)
+
+      if (personasTel && personasTel.length > 0) {
+        // Preferir una persona ya vinculada a este negocio; si no, la primera
+        let match = personasTel[0]
+        for (const p of personasTel) {
+          const { data: vinculo } = await supabaseAdmin
+            .from('cliente_de')
+            .select('id')
+            .eq('persona_id', p.id)
+            .eq('profile_id', user_id)
+            .maybeSingle()
+          if (vinculo) {
+            match = p
+            break
+          }
+        }
+        personaId = match.id
+      }
     }
 
     if (personaId) {
@@ -231,7 +250,17 @@ export async function POST(req: Request) {
       if (dni) updates.dni = dni
       if (nombre) updates.nombre = nombre
       if (telefono) updates.telefono = telefono
-      await supabaseAdmin.from('personas').update(updates).eq('id', personaId)
+      const { error: updErr } = await supabaseAdmin
+        .from('personas')
+        .update(updates)
+        .eq('id', personaId)
+      // Si falla (ej: otro cliente ya tiene ese DNI), actualizar solo nombre/teléfono
+      if (updErr) {
+        const reUpdates: Record<string, any> = { updated_at: new Date().toISOString() }
+        if (nombre) reUpdates.nombre = nombre
+        if (telefono) reUpdates.telefono = telefono
+        await supabaseAdmin.from('personas').update(reUpdates).eq('id', personaId)
+      }
     } else {
       const { data: newPersona } = await supabaseAdmin
         .from('personas')
@@ -239,6 +268,22 @@ export async function POST(req: Request) {
         .select('id')
         .single()
       personaId = newPersona!.id
+    }
+
+    // Completar datos faltantes en las ventas de este cliente (backfill)
+    if (dni) {
+      await supabaseAdmin
+        .from('ventas')
+        .update({ persona_dni: dni })
+        .eq('persona_id', personaId)
+        .is('persona_dni', null)
+    }
+    if (nombre) {
+      await supabaseAdmin
+        .from('ventas')
+        .update({ persona_nombre: nombre })
+        .eq('persona_id', personaId)
+        .is('persona_nombre', null)
     }
 
     // Vincular con este negocio (si no existe ya)

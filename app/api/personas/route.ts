@@ -80,11 +80,27 @@ export async function POST(request: Request) {
 
   // Buscar por teléfono si no se encontró por DNI
   if (telefono) {
-    const { data: existing } = await supabaseAdmin
+    const { data: personasTel } = await supabaseAdmin
       .from('personas')
       .select('id, dni, nombre')
       .eq('telefono', telefono)
-      .maybeSingle()
+      .limit(10)
+
+    let existing = personasTel && personasTel.length > 0 ? personasTel[0] : null
+    if (personasTel && personasTel.length > 1) {
+      for (const p of personasTel) {
+        const { data: vinculo } = await supabaseAdmin
+          .from('cliente_de')
+          .select('id')
+          .eq('persona_id', p.id)
+          .eq('profile_id', user_id)
+          .maybeSingle()
+        if (vinculo) {
+          existing = p
+          break
+        }
+      }
+    }
 
     if (existing) {
       const updates: Record<string, any> = { updated_at: new Date().toISOString() }

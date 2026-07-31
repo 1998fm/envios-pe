@@ -310,6 +310,12 @@ export default function SeccionVentas({ userId }: Props) {
                     {buscandoPersona && <Loader2 size={14} className="animate-spin" />}
                     Buscar
                   </button>
+                  <button
+                    onClick={() => { setPersonaSel(null); setMostrarNuevoCliente(true) }}
+                    className="px-4 py-2 rounded-xl text-sm font-semibold bg-sky-600 text-white hover:bg-sky-700 flex items-center gap-2 shrink-0"
+                  >
+                    <Plus size={14} /> Registro rápido
+                  </button>
                 </div>
                 {personaSel && (
                   <div className="mt-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 flex items-center gap-2">
