@@ -43,7 +43,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       return
     }
 
-    const current = tour.steps[step]
+    const current = tour.steps[Math.min(step, tour.steps.length - 1)]
     if (!current) {
       finishTour(active)
       return
@@ -137,8 +137,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     setStyle(null)
   }, [active])
 
-  const tour = active ? getTour(active) : null
+   const tour = active ? getTour(active) : null
   const isActive = useCallback((id: TourId) => active === id, [active])
+  const safeStep = tour ? Math.min(step, Math.max(tour.steps.length - 1, 0)) : 0
 
   return (
     <OnboardingContext.Provider value={{ startTour, stopTour, isActive, active }}>
@@ -154,10 +155,10 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
               50% { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0.15); }
             }
           `}</style>
-          {style && (
+          {style && tour.steps[safeStep] && (
             <OnboardingTooltip
-              text={tour.steps[step].text}
-              step={step + 1}
+              text={tour.steps[safeStep].text}
+              step={safeStep + 1}
               totalSteps={tour.steps.length}
               onNext={handleNext}
               onSkip={handleSkip}
