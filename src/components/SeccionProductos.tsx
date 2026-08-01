@@ -6,6 +6,9 @@ import { toast } from 'sonner'
 import type { Producto } from '@/types/inventario'
 import { UNIDADES_MEDIDA } from '@/types/inventario'
 import { useConfirm } from '@/components/ConfirmDialog'
+import { useOnboarding } from '@/context/OnboardingContext'
+import { tourDone } from '@/lib/tours'
+import TourHelpButton from '@/components/TourHelpButton'
 
 type Props = {
   userId: string
@@ -32,6 +35,7 @@ const EJEMPLOS = [
 
 export default function SeccionProductos({ userId }: Props) {
   const confirmar = useConfirm()
+  const { startTour } = useOnboarding()
   const [productos, setProductos] = useState<Producto[]>([])
   const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading] = useState(true)
@@ -59,6 +63,13 @@ export default function SeccionProductos({ userId }: Props) {
   }
 
   useEffect(() => { cargarProductos() }, [userId, busqueda])
+
+  useEffect(() => {
+    if (showNuevo && !tourDone('modal-nuevo-producto')) {
+      const t = setTimeout(() => startTour('modal-nuevo-producto'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [showNuevo, startTour])
 
   function iniciarEdicion(p: Producto) {
     setEditandoId(p.id)
@@ -145,7 +156,7 @@ export default function SeccionProductos({ userId }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
+        <div data-tour="productos-buscar" className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -156,6 +167,7 @@ export default function SeccionProductos({ userId }: Props) {
           />
         </div>
         <button
+          data-tour="productos-nuevo"
           onClick={() => setShowNuevo(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200"
         >
@@ -163,6 +175,7 @@ export default function SeccionProductos({ userId }: Props) {
         </button>
         {productos.length === 0 && (
           <button
+            data-tour="productos-ejemplos"
             onClick={insertarEjemplos}
             disabled={insertandoEjemplos}
             className="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all"
@@ -173,14 +186,14 @@ export default function SeccionProductos({ userId }: Props) {
       </div>
 
       {productos.length === 0 && !loading && (
-        <div className="text-center py-16 text-slate-400">
+        <div data-tour="productos-vacio" className="text-center py-16 text-slate-400">
           <p className="text-lg font-semibold text-slate-500">No hay productos</p>
           <p className="text-sm mt-1">Agrega tu primer producto o inserta ejemplos para empezar</p>
         </div>
       )}
 
       {productos.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div data-tour="productos-tabla" className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -303,18 +316,23 @@ export default function SeccionProductos({ userId }: Props) {
       )}
 
       {showNuevo && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowNuevo(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-slate-900">Nuevo producto</h3>
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowNuevo(false)}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-900">Nuevo producto</h3>
+                <TourHelpButton tourId="modal-nuevo-producto" />
+              </div>
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</label>
+                <div data-tour="nuevo-producto-nombre">
                 <input
                   value={nuevoForm.nombre}
                   onChange={(e) => setNuevoForm({ ...nuevoForm, nombre: e.target.value, sku: generarSKU(e.target.value) })}
                   className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                   placeholder="Ej: Polera básica"
                 />
+                </div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">SKU</label>
@@ -325,7 +343,7 @@ export default function SeccionProductos({ userId }: Props) {
                   placeholder="Se genera automáticamente"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div data-tour="nuevo-producto-stock" className="grid grid-cols-2 gap-3">
                 <div>
                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Stock</label>
                    <input
@@ -349,7 +367,7 @@ export default function SeccionProductos({ userId }: Props) {
                    />
                  </div>
               </div>
-               <div className="grid grid-cols-2 gap-3">
+               <div data-tour="nuevo-producto-precios" className="grid grid-cols-2 gap-3">
                  <div>
                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio venta (S/)</label>
                    <input
@@ -390,9 +408,13 @@ export default function SeccionProductos({ userId }: Props) {
               <button onClick={() => setShowNuevo(false)} className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">
                 Cancelar
               </button>
-              <button onClick={crearProducto} className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg transition-all">
-                Crear
-              </button>
+               <button
+                 data-tour="nuevo-producto-crear"
+                 onClick={crearProducto}
+                 className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg transition-all"
+               >
+                 Crear
+               </button>
             </div>
           </div>
         </div>

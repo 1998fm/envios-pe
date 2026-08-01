@@ -6,6 +6,9 @@ import { toast } from 'sonner'
 import type { Compra, Producto } from '@/types/inventario'
 import ModalDetalleCompra from '@/components/ModalDetalleCompra'
 import { useConfirm } from '@/components/ConfirmDialog'
+import { useOnboarding } from '@/context/OnboardingContext'
+import { tourDone } from '@/lib/tours'
+import TourHelpButton from '@/components/TourHelpButton'
 
 type Props = { userId: string }
 
@@ -13,6 +16,7 @@ const ESTADOS = ['COMPLETADA', 'ANULADA'] as const
 
 export default function SeccionCompras({ userId }: Props) {
   const confirmar = useConfirm()
+  const { startTour } = useOnboarding()
   const [compras, setCompras] = useState<Compra[]>([])
   const [filtroEstado, setFiltroEstado] = useState('')
   const [loading, setLoading] = useState(true)
@@ -37,6 +41,20 @@ export default function SeccionCompras({ userId }: Props) {
   }
 
   useEffect(() => { cargarCompras() }, [userId, filtroEstado])
+
+  useEffect(() => {
+    if (showNueva && !tourDone('modal-nueva-compra')) {
+      const t = setTimeout(() => startTour('modal-nueva-compra'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [showNueva, startTour])
+
+  useEffect(() => {
+    if (compraDetalle && !tourDone('modal-detalle-compra')) {
+      const t = setTimeout(() => startTour('modal-detalle-compra'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [compraDetalle, startTour])
 
   useEffect(() => {
     if (showNueva) {
@@ -146,12 +164,13 @@ export default function SeccionCompras({ userId }: Props) {
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <button
+          data-tour="compras-nueva"
           onClick={() => setShowNueva(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200"
         >
           <Plus size={16} /> Nueva compra
         </button>
-        <div className="flex gap-1">
+        <div data-tour="compras-filtros" className="flex gap-1">
           {ESTADOS.map((e) => (
             <button
               key={e}
@@ -169,14 +188,14 @@ export default function SeccionCompras({ userId }: Props) {
       </div>
 
       {compras.length === 0 && (
-        <div className="text-center py-16 text-slate-400">
+        <div data-tour="compras-vacio" className="text-center py-16 text-slate-400">
           <p className="text-lg font-semibold text-slate-500">No hay compras</p>
           <p className="text-sm mt-1">Registra tu primera compra</p>
         </div>
       )}
 
       {compras.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div data-tour="compras-tabla" className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -209,7 +228,7 @@ export default function SeccionCompras({ userId }: Props) {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => setCompraDetalle(c)} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Ver detalle">
+                        <button data-tour="compras-detalle" onClick={() => setCompraDetalle(c)} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Ver detalle">
                           <Eye size={15} />
                         </button>
                         {c.estado === 'COMPLETADA' && (
@@ -235,8 +254,9 @@ export default function SeccionCompras({ userId }: Props) {
       {showNueva && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={cerrarNueva}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="shrink-0 p-6 pb-4 border-b border-slate-200">
+            <div className="shrink-0 p-6 pb-4 border-b border-slate-200 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Nueva compra</h3>
+              <TourHelpButton tourId="modal-nueva-compra" />
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-5">

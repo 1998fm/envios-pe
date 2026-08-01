@@ -1,5 +1,11 @@
 'use client'
 
+import { useEffect } from 'react'
+
+import TourHelpButton from '@/components/TourHelpButton'
+import { tourDone } from '@/lib/tours'
+import { useOnboarding } from '@/context/OnboardingContext'
+
 type Props = {
   abierto: boolean
   mensaje: string
@@ -22,17 +28,28 @@ export default function ModalExportShalom({
   onConfirmar,
 }: Props) {
   if (!abierto) return null
+  const { startTour } = useOnboarding()
+
+  useEffect(() => {
+    if (!tourDone('modal-exportar-shalom')) {
+      const t = setTimeout(() => startTour('modal-exportar-shalom'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [abierto, startTour])
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white  rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
-        <div className="p-8 border-b border-slate-100 ">
-          <h2 className="text-3xl font-extrabold text-slate-900 ">
-            Exportar Shalom
-          </h2>
-          <p className="mt-2 text-sm text-slate-500  whitespace-pre-line">
-            {mensaje}
-          </p>
+        <div className="p-8 border-b border-slate-100  flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-extrabold text-slate-900 ">
+              Exportar Shalom
+            </h2>
+            <p className="mt-2 text-sm text-slate-500  whitespace-pre-line">
+              {mensaje}
+            </p>
+          </div>
+          <TourHelpButton tourId="modal-exportar-shalom" />
         </div>
 
         <div className="p-8 space-y-6 overflow-y-auto">

@@ -39,15 +39,28 @@ import ModalUpgrade from '@/components/ModalUpgrade'
 import PanelResumen from '@/components/PanelResumen'
 import { ConfigState, initialConfigState } from '@/types/config'
 import type { Envio } from '@/types/envio'
-import DashboardOnboarding from '@/components/DashboardOnboarding'
 import SeccionProductos from '@/components/SeccionProductos'
 import SeccionVentas from '@/components/SeccionVentas'
 import SeccionCompras from '@/components/SeccionCompras'
 import SeccionGastos from '@/components/SeccionGastos'
+import { useOnboarding } from '@/context/OnboardingContext'
+import { tourDone, clearTour, TOURS, type TourId } from '@/lib/tours'
+
+const TAB_TOUR: Record<string, TourId> = {
+  resumen: 'tab-resumen',
+  envios: 'tab-envios',
+  productos: 'tab-productos',
+  ventas: 'tab-ventas',
+  compras: 'tab-compras',
+  gastos: 'tab-gastos',
+}
+
+const TOURS_IDS = TOURS.map((t) => t.id)
 
 export default function DashboardPage() {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
+  const { startTour, active } = useOnboarding()
 
   const [envios, setEnvios] = useState<Envio[]>([])
 const [userId, setUserId] = useState<string | null>(null)
@@ -238,6 +251,13 @@ const [
 
 const [envioDetalle, setEnvioDetalle] =
   useState<Envio | null>(null)
+
+  useEffect(() => {
+    if (envioDetalle && !tourDone('modal-detalle-envio')) {
+      const t = setTimeout(() => startTour('modal-detalle-envio'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [envioDetalle, startTour])
 
 const [
   mensajeExportar,
@@ -484,6 +504,26 @@ setLoading(false)
 
     cargar()
   }, [router, supabase])
+
+  // ========================================
+  // ONBOARDING POR PESTAÑA
+  // ========================================
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('tour') === 'start') {
+      TOURS_IDS.forEach(clearTour)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (loading || active) return
+    const id = TAB_TOUR[pestañaActiva]
+    if (!id || tourDone(id)) return
+    const timer = setTimeout(() => startTour(id), 600)
+    return () => clearTimeout(timer)
+  }, [pestañaActiva, loading, active, startTour])
 
   // Manejar retorno de MercadoPago
   useEffect(() => {
@@ -1119,8 +1159,6 @@ for (
   <main id="dashboard-content"
     className="min-h-screen bg-slate-50  p-4 sm:p-6 lg:p-8"
   >
-    <DashboardOnboarding tieneEnvios={tieneEnvios} />
-
     <DashboardTopBar
       logoUrl={config.logoUrl}
       plan={plan}

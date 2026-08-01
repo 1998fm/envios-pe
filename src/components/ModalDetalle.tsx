@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useConfirm } from '@/components/ConfirmDialog'
+import TourHelpButton from '@/components/TourHelpButton'
 
 type Props = {
   envio: Envio | null
@@ -264,13 +265,16 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
               Información del envío seleccionado.
             </p>
           </div>
-          <button
-            onClick={onCerrar}
-            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-            aria-label="Cerrar"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <TourHelpButton tourId="modal-detalle-envio" />
+            <button
+              onClick={onCerrar}
+              className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Cerrar"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* BODY */}

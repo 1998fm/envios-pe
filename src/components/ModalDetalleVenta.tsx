@@ -56,6 +56,7 @@ export default function ModalDetalleVenta({ venta, onCerrar }: Props) {
       tiles={tiles}
       items={venta.items}
       onCerrar={onCerrar}
+      tourId="modal-detalle-venta"
     />
   )
 }

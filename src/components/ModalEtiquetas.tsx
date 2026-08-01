@@ -1,8 +1,12 @@
 'use client'
 
+import { useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import FieldGroup from '@/components/ui/FieldGroup'
+import TourHelpButton from '@/components/TourHelpButton'
+import { tourDone } from '@/lib/tours'
+import { useOnboarding } from '@/context/OnboardingContext'
 
 type Props = {
 
@@ -31,6 +35,14 @@ export default function ModalEtiquetas({
 }: Props) {
 
   if (!abierto) return null
+  const { startTour } = useOnboarding()
+
+  useEffect(() => {
+    if (!tourDone('modal-etiquetas')) {
+      const t = setTimeout(() => startTour('modal-etiquetas'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [abierto, startTour])
 
   return (
 
@@ -55,6 +67,7 @@ export default function ModalEtiquetas({
           className="
             p-8
             border-b border-slate-100 
+            flex items-center justify-between
           "
         >
 
@@ -68,15 +81,13 @@ export default function ModalEtiquetas({
             Generar etiquetas
           </h2>
 
-          <p
-            className="
-              mt-2 text-sm text-slate-500 
-            "
-          >
-            Selecciona el formato que deseas imprimir.
-          </p>
+          <TourHelpButton tourId="modal-etiquetas" />
 
         </div>
+
+        <p className="mt-2 text-sm text-slate-500">
+          Selecciona el formato que deseas imprimir.
+        </p>
 
         {/* CONTENIDO */}
 

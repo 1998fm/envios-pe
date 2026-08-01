@@ -1,4 +1,5 @@
 'use client'
+import { useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Checkbox from '@/components/ui/Checkbox'
@@ -6,6 +7,9 @@ import Select from '@/components/ui/Select'
 import FieldGroup from '@/components/ui/FieldGroup'
 import Field from '@/components/ui/Field'
 import type { Envio } from '@/types/envio'
+import TourHelpButton from '@/components/TourHelpButton'
+import { tourDone } from '@/lib/tours'
+import { useOnboarding } from '@/context/OnboardingContext'
 type Props = {
 
   abierto: boolean
@@ -51,17 +55,25 @@ export default function ModalCambioMasivo({
   soloSeleccionados,
   setSoloSeleccionados,
 
-seleccionados,
+  seleccionados,
 
-metodosDisponibles,
+  metodosDisponibles,
 
-aplicarCambioMasivo,
+  aplicarCambioMasivo,
 
   onCerrar,
 
 }: Props) {
 
   if (!abierto) return null
+  const { startTour } = useOnboarding()
+
+  useEffect(() => {
+    if (!tourDone('modal-cambio-masivo')) {
+      const t = setTimeout(() => startTour('modal-cambio-masivo'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [abierto, startTour])
 
   return (
 
@@ -92,26 +104,33 @@ aplicarCambioMasivo,
       className="
         p-8
         border-b border-slate-100 
+        flex items-center justify-between
       "
     >
 
-      <h2
-        className="
-          text-3xl
-          font-extrabold
-          text-slate-900 
-        "
-      >
-        Cambio Masivo
-      </h2>
+      <div>
 
-      <p
-        className="
-          mt-2 text-sm text-slate-500 
-        "
-      >
-        Cambia el estado de múltiples pedidos al mismo tiempo.
-      </p>
+        <h2
+          className="
+            text-3xl
+            font-extrabold
+            text-slate-900 
+          "
+        >
+          Cambio Masivo
+        </h2>
+
+        <p
+          className="
+            mt-2 text-sm text-slate-500 
+          "
+        >
+          Cambia el estado de múltiples pedidos al mismo tiempo.
+        </p>
+
+      </div>
+
+      <TourHelpButton tourId="modal-cambio-masivo" />
 
     </div>
 

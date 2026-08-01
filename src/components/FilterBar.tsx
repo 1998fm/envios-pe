@@ -35,25 +35,25 @@ export default function FilterBar({
       p-4 sm:p-5
       flex flex-col sm:flex-row gap-3
     ">
-      <div className="relative flex-1">
-        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 " />
-        <input
-          placeholder="Buscar por nombre, DNI o teléfono..."
-          value={busqueda}
-          onChange={(e) => onBusquedaChange(e.target.value)}
-          className="
-            w-full pl-10 pr-4 py-3 rounded-xl text-sm
-            bg-white 
-            border border-slate-200 
-            text-slate-900 
-            placeholder:text-slate-400 :text-slate-500
-            focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500
-            transition-all duration-200
-          "
-        />
-      </div>
+       <div data-tour="filtro-busqueda" className="relative flex-1">
+         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 " />
+         <input
+           placeholder="Buscar por nombre, DNI o teléfono..."
+           value={busqueda}
+           onChange={(e) => onBusquedaChange(e.target.value)}
+           className="
+             w-full pl-10 pr-4 py-3 rounded-xl text-sm
+             bg-white 
+             border border-slate-200 
+             text-slate-900 
+             placeholder:text-slate-400 :text-slate-500
+             focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500
+             transition-all duration-200
+           "
+         />
+       </div>
 
-      <div className="flex gap-3 flex-wrap">
+       <div data-tour="filtro-estado" className="flex gap-3 flex-wrap">
         <MultiSelect
           label="Estado"
           options={estadoOptions}

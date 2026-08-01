@@ -6,6 +6,10 @@ import AutocompleteInput from '@/components/AutocompleteInput'
 import agenciasShalom from '@/data/agencias-shalom.json'
 import { ConfigModalProps } from '@/types/config'
 import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store, Building, Phone, MapPin, Image, MessageCircle, Link2, Globe, Clock, DollarSign, Camera, Music, ExternalLink } from 'lucide-react'
+import TourHelpButton from '@/components/TourHelpButton'
+import { tourDone } from '@/lib/tours'
+import { useOnboarding } from '@/context/OnboardingContext'
+import { useEffect } from 'react'
 
 export default function ModalConfiguracion({
   abierto, onCerrar,
@@ -13,6 +17,14 @@ export default function ModalConfiguracion({
   distritosMoto, guardarConfiguracion, plan = 'basic', onUpgrade,
 }: ConfigModalProps & { onUpgrade?: () => void }) {
   if (!abierto) return null
+  const { startTour } = useOnboarding()
+
+  useEffect(() => {
+    if (!tourDone('modal-configuracion')) {
+      const t = setTimeout(() => startTour('modal-configuracion'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [abierto, startTour])
 
   const isBasic = plan === 'basic'
 
@@ -37,10 +49,11 @@ export default function ModalConfiguracion({
   return (
     <Modal open={abierto} maxWidth="max-w-4xl">
       <div className="flex flex-col h-[90vh]">
-        <div className="p-6 border-b border-slate-100  shrink-0 bg-white ">
+        <div className="p-6 border-b border-slate-100  shrink-0 bg-white flex items-center justify-between">
           <h2 className="text-2xl font-bold text-slate-900 ">
             Configuración
           </h2>
+          <TourHelpButton tourId="modal-configuracion" />
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-white ">

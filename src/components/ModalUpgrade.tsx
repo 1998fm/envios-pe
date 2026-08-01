@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from '@/components/ui/Modal'
 import { toast } from 'sonner'
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import TourHelpButton from '@/components/TourHelpButton'
+import { tourDone } from '@/lib/tours'
+import { useOnboarding } from '@/context/OnboardingContext'
 
 type Props = {
   abierto: boolean
@@ -30,6 +33,14 @@ export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpr
   const [loading, setLoading] = useState(false)
   const isTrial = planActual === 'pro'
   const supabase = createClient()
+  const { startTour } = useOnboarding()
+
+  useEffect(() => {
+    if (!tourDone('modal-upgrade')) {
+      const t = setTimeout(() => startTour('modal-upgrade'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [abierto, startTour])
 
   const precios = {
     mensual: { label: 'Mensual', precio: 'S/ 29.90', detalle: '/mes', valor: 29.90 },
@@ -73,9 +84,12 @@ export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpr
               </p>
             )}
           </div>
-          <button onClick={onCerrar} className="p-2 rounded-xl hover:bg-slate-100 :bg-slate-700 text-slate-400 hover:text-slate-600 :text-slate-300 transition-all duration-200">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <TourHelpButton tourId="modal-upgrade" />
+            <button onClick={onCerrar} className="p-2 rounded-xl hover:bg-slate-100 :bg-slate-700 text-slate-400 hover:text-slate-600 :text-slate-300 transition-all duration-200">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50 ">

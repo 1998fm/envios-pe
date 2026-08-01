@@ -17,6 +17,8 @@ import {
   LayoutDashboard,
   Receipt,
 } from 'lucide-react'
+import TourHelpButton from '@/components/TourHelpButton'
+import type { TourId } from '@/lib/tours'
 
 type Props = {
   plan?: string
@@ -60,12 +62,12 @@ export default function DashboardMenu({
   }, [])
 
   const secciones = [
-    { key: 'resumen' as const, label: 'Resumen', icon: LayoutDashboard },
-    { key: 'envios' as const, label: 'Envíos', icon: Boxes },
-    { key: 'productos' as const, label: 'Productos', icon: Package },
-    { key: 'ventas' as const, label: 'Ventas', icon: ShoppingCart },
-    { key: 'compras' as const, label: 'Compras', icon: Truck },
-    { key: 'gastos' as const, label: 'Gastos', icon: Receipt },
+    { key: 'resumen' as const, label: 'Resumen', icon: LayoutDashboard, tour: 'tab-resumen' as TourId },
+    { key: 'envios' as const, label: 'Envíos', icon: Boxes, tour: 'tab-envios' as TourId },
+    { key: 'productos' as const, label: 'Productos', icon: Package, tour: 'tab-productos' as TourId },
+    { key: 'ventas' as const, label: 'Ventas', icon: ShoppingCart, tour: 'tab-ventas' as TourId },
+    { key: 'compras' as const, label: 'Compras', icon: Truck, tour: 'tab-compras' as TourId },
+    { key: 'gastos' as const, label: 'Gastos', icon: Receipt, tour: 'tab-gastos' as TourId },
   ]
 
   function navegar(p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos') {
@@ -149,19 +151,21 @@ export default function DashboardMenu({
                   Secciones
                 </p>
                 {secciones.map((s) => (
-                  <button
-                    key={s.key}
-                    onClick={() => navegar(s.key)}
-                    className={`${itemClass} ${
-                      pestañaActiva === s.key ? 'bg-sky-50 text-sky-700 font-semibold' : ''
-                    }`}
-                  >
-                    <s.icon size={16} className={pestañaActiva === s.key ? 'text-sky-600' : 'text-slate-400'} />
-                    {s.label}
-                    {pestañaActiva === s.key && (
-                      <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-500" />
-                    )}
-                  </button>
+                  <div key={s.key} className="flex items-center gap-1">
+                    <button
+                      onClick={() => navegar(s.key)}
+                      className={`${itemClass} flex-1 ${
+                        pestañaActiva === s.key ? 'bg-sky-50 text-sky-700 font-semibold' : ''
+                      }`}
+                    >
+                      <s.icon size={16} className={pestañaActiva === s.key ? 'text-sky-600' : 'text-slate-400'} />
+                      {s.label}
+                      {pestañaActiva === s.key && (
+                        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-500" />
+                      )}
+                    </button>
+                    <TourHelpButton tourId={s.tour} className="w-6 h-6 mr-1" />
+                  </div>
                 ))}
               </div>
 

@@ -6,6 +6,9 @@ import { toast } from 'sonner'
 import type { Gasto } from '@/types/inventario'
 import { CATEGORIAS_GASTO, CATEGORIA_GASTO_LABEL, CATEGORIA_GASTO_STYLE } from '@/types/inventario'
 import { useConfirm } from '@/components/ConfirmDialog'
+import { useOnboarding } from '@/context/OnboardingContext'
+import { tourDone } from '@/lib/tours'
+import TourHelpButton from '@/components/TourHelpButton'
 
 type Props = { userId: string }
 
@@ -17,6 +20,7 @@ const formVacio = { categoria: 'OTROS', concepto: '', monto: '', fecha: new Date
 
 export default function SeccionGastos({ userId }: Props) {
   const confirmar = useConfirm()
+  const { startTour } = useOnboarding()
   const [gastos, setGastos] = useState<Gasto[]>([])
   const [filtroCategoria, setFiltroCategoria] = useState('TODAS')
   const [loading, setLoading] = useState(true)
@@ -35,6 +39,13 @@ export default function SeccionGastos({ userId }: Props) {
   }
 
   useEffect(() => { cargarGastos() }, [userId, filtroCategoria])
+
+  useEffect(() => {
+    if (showModal && !tourDone('modal-nuevo-gasto')) {
+      const t = setTimeout(() => startTour('modal-nuevo-gasto'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [showModal, startTour])
 
   const totalMes = gastos.reduce((acc, g) => acc + Number(g.monto || 0), 0)
 
@@ -115,13 +126,14 @@ export default function SeccionGastos({ userId }: Props) {
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <button
+          data-tour="gastos-nuevo"
           onClick={abrirNuevo}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200"
         >
           <Plus size={16} /> Registrar gasto
         </button>
 
-        <div className="flex gap-1 flex-wrap">
+        <div data-tour="gastos-filtros" className="flex gap-1 flex-wrap">
           {CATEGORIAS_FILTRO.map((c) => (
             <button
               key={c}
@@ -139,21 +151,21 @@ export default function SeccionGastos({ userId }: Props) {
       </div>
 
       {gastos.length > 0 && (
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-5 py-4 flex items-center justify-between">
+        <div data-tour="gastos-total" className="rounded-2xl border border-slate-200 bg-white shadow-sm px-5 py-4 flex items-center justify-between">
           <p className="text-sm text-slate-500">Total de la lista</p>
           <p className="text-lg font-extrabold text-slate-900">{fmtSoles(totalMes)}</p>
         </div>
       )}
 
       {gastos.length === 0 && (
-        <div className="text-center py-16 text-slate-400">
+        <div data-tour="gastos-vacio" className="text-center py-16 text-slate-400">
           <p className="text-lg font-semibold text-slate-500">No hay gastos</p>
           <p className="text-sm mt-1">Registra materiales, pasajes o delivery</p>
         </div>
       )}
 
       {gastos.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div data-tour="gastos-tabla" className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -200,8 +212,9 @@ export default function SeccionGastos({ userId }: Props) {
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={cerrarModal}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="shrink-0 p-6 pb-4 border-b border-slate-200">
+            <div className="shrink-0 p-6 pb-4 border-b border-slate-200 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">{editando ? 'Editar gasto' : 'Registrar gasto'}</h3>
+              <TourHelpButton tourId="modal-nuevo-gasto" />
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-5">

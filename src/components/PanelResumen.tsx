@@ -226,6 +226,7 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
       {/* ============ SALDO DISPONIBLE ============ */}
       {data && (
         <div
+          data-tour="resumen-saldo"
           className={`rounded-2xl bg-gradient-to-r ${
             data.kpis.saldoDisponible >= 0
               ? 'from-sky-600 via-sky-600 to-indigo-700'
@@ -265,7 +266,7 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
       )}
 
       {/* ============ KPIs ============ */}
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
+      <div data-tour="resumen-kpis" className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
         {kpis.map((kpi, i) => (
           <div
             key={kpi.label}
@@ -296,7 +297,7 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
       ) : (
         <>
           {/* ============ PENDIENTE DE ACCIÓN ============ */}
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5">
+          <div data-tour="resumen-pendientes" className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5">
             <h3 className="text-sm font-bold text-slate-900">Pendiente de acción</h3>
             <p className="text-xs text-slate-400 mt-0.5">Lo que necesita tu atención hoy.</p>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
@@ -369,7 +370,7 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
           </div>
 
           {/* ============ GRÁFICOS ============ */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div data-tour="resumen-graficos" className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div className="rounded-2xl border border-slate-100 bg-white p-4 lg:col-span-2">
               <h3 className="text-sm font-bold text-slate-900">Pedidos últimos 30 días</h3>
               <div className="h-52 mt-2">
@@ -474,7 +475,7 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
           </div>
 
           {/* ============ RECIENTES ============ */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div data-tour="resumen-recientes" className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5">
               <h3 className="text-sm font-bold text-slate-900">Últimos pedidos</h3>
               {data.recientes.envios.length === 0 ? (

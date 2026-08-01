@@ -1,13 +1,16 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import TarjetaEnvio from './TarjetaEnvio'
 import ResumenCopiarDatos from './ResumenCopiarDatos'
 import BotonesModal from './BotonesModal'
 import { buscarTarifa } from '../utils/buscarTarifa'
 import { generarTextoMoto } from '../utils/generarTextoMoto'
-import { useState } from 'react'
 import { exportarExcelMoto } from '../utils/exportarExcelMoto'
 import type { ModalCopiarDatosProps } from '../types'
+import TourHelpButton from '@/components/TourHelpButton'
+import { tourDone } from '@/lib/tours'
+import { useOnboarding } from '@/context/OnboardingContext'
 
 export default function ModalCopiarDatos({
   abierto,
@@ -19,6 +22,14 @@ export default function ModalCopiarDatos({
   onCambiarCobro,
 }: ModalCopiarDatosProps) {
   if (!abierto) return null
+  const { startTour } = useOnboarding()
+
+  useEffect(() => {
+    if (!tourDone('modal-copiar-datos')) {
+      const t = setTimeout(() => startTour('modal-copiar-datos'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [abierto, startTour])
 
   const [copiado, setCopiado] = useState(false)
 
@@ -49,13 +60,16 @@ export default function ModalCopiarDatos({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 sm:p-6">
       <div className="relative overflow-hidden bg-white  rounded-2xl border border-slate-200  shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col">
-        <div className="shrink-0 px-6 sm:px-8 pt-8 sm:pt-10 pb-6 border-b border-slate-200 ">
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 ">
-            Copiar datos para Motorizado
-          </h2>
-          <p className="mt-2 text-sm text-slate-500 ">
-            Revisa los envíos antes de copiar o exportar la información.
-          </p>
+        <div className="shrink-0 px-6 sm:px-8 pt-8 sm:pt-10 pb-6 border-b border-slate-200  flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 ">
+              Copiar datos para Motorizado
+            </h2>
+            <p className="mt-2 text-sm text-slate-500 ">
+              Revisa los envíos antes de copiar o exportar la información.
+            </p>
+          </div>
+          <TourHelpButton tourId="modal-copiar-datos" />
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">

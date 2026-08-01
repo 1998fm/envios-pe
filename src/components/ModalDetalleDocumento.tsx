@@ -1,6 +1,11 @@
 'use client'
 
+import { useEffect } from 'react'
+import TourHelpButton from '@/components/TourHelpButton'
+import { tourDone } from '@/lib/tours'
+import type { TourId } from '@/lib/tours'
 import type { ReactNode } from 'react'
+import { useOnboarding } from '@/context/OnboardingContext'
 
 type Item = {
   id: string
@@ -17,6 +22,7 @@ type Props = {
   tiles: ReactNode
   items?: Item[]
   onCerrar: () => void
+  tourId?: TourId
 }
 
 export default function ModalDetalleDocumento({
@@ -26,7 +32,16 @@ export default function ModalDetalleDocumento({
   tiles,
   items,
   onCerrar,
+  tourId,
 }: Props) {
+  const { startTour } = useOnboarding()
+
+  useEffect(() => {
+    if (!tourId || tourDone(tourId)) return
+    const t = setTimeout(() => startTour(tourId), 400)
+    return () => clearTimeout(t)
+  }, [tourId, startTour])
+
   return (
     <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -36,13 +51,16 @@ export default function ModalDetalleDocumento({
         className="bg-white rounded-[28px] border border-slate-100 shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-slate-100 px-4 sm:px-8 py-3 sm:py-4 shrink-0">
-          <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900">
-            {titulo}
-          </h2>
-          <p className="mt-0.5 text-xs sm:text-sm text-slate-500">
-            Información completa.
-          </p>
+        <div className="border-b border-slate-100 px-4 sm:px-8 py-3 sm:py-4 shrink-0 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900">
+              {titulo}
+            </h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-500">
+              Información completa.
+            </p>
+          </div>
+          {tourId && <TourHelpButton tourId={tourId} />}
         </div>
 
         <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-4">

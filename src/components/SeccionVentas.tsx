@@ -6,6 +6,9 @@ import { toast } from 'sonner'
 import type { Venta, Producto } from '@/types/inventario'
 import ModalDetalleVenta from '@/components/ModalDetalleVenta'
 import { useConfirm } from '@/components/ConfirmDialog'
+import { useOnboarding } from '@/context/OnboardingContext'
+import { tourDone } from '@/lib/tours'
+import TourHelpButton from '@/components/TourHelpButton'
 
 type Props = { userId: string }
 
@@ -19,6 +22,7 @@ const METODOS_PAGO = [
 
 export default function SeccionVentas({ userId }: Props) {
   const confirmar = useConfirm()
+  const { startTour } = useOnboarding()
   const [ventas, setVentas] = useState<Venta[]>([])
   const [filtroEstado, setFiltroEstado] = useState('')
   const [loading, setLoading] = useState(true)
@@ -49,6 +53,20 @@ export default function SeccionVentas({ userId }: Props) {
   }
 
   useEffect(() => { cargarVentas() }, [userId, filtroEstado])
+
+  useEffect(() => {
+    if (showNueva && !tourDone('modal-nueva-venta')) {
+      const t = setTimeout(() => startTour('modal-nueva-venta'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [showNueva, startTour])
+
+  useEffect(() => {
+    if (ventaDetalle && !tourDone('modal-detalle-venta')) {
+      const t = setTimeout(() => startTour('modal-detalle-venta'), 400)
+      return () => clearTimeout(t)
+    }
+  }, [ventaDetalle, startTour])
 
   useEffect(() => {
     if (showNueva) {
@@ -215,12 +233,13 @@ export default function SeccionVentas({ userId }: Props) {
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <button
+          data-tour="ventas-nueva"
           onClick={() => setShowNueva(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200"
         >
           <Plus size={16} /> Nueva venta
         </button>
-        <div className="flex gap-1">
+        <div data-tour="ventas-filtros" className="flex gap-1">
           {ESTADOS.map((e) => (
             <button
               key={e}
@@ -238,14 +257,14 @@ export default function SeccionVentas({ userId }: Props) {
       </div>
 
       {ventas.length === 0 && (
-        <div className="text-center py-16 text-slate-400">
+        <div data-tour="ventas-vacio" className="text-center py-16 text-slate-400">
           <p className="text-lg font-semibold text-slate-500">No hay ventas</p>
           <p className="text-sm mt-1">Registra tu primera venta</p>
         </div>
       )}
 
       {ventas.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div data-tour="ventas-tabla" className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -303,7 +322,7 @@ export default function SeccionVentas({ userId }: Props) {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => setVentaDetalle(v)} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Ver detalle">
+                        <button data-tour="ventas-detalle" onClick={() => setVentaDetalle(v)} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Ver detalle">
                           <Eye size={15} />
                         </button>
                         {v.estado === 'PENDIENTE' && (
@@ -334,8 +353,9 @@ export default function SeccionVentas({ userId }: Props) {
       {showNueva && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={cerrarNueva}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="shrink-0 p-6 pb-4 border-b border-slate-200">
+            <div className="shrink-0 p-6 pb-4 border-b border-slate-200 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Nueva venta</h3>
+              <TourHelpButton tourId="modal-nueva-venta" />
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-5">
