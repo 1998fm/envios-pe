@@ -49,43 +49,56 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       return
     }
 
-    document.querySelectorAll('.tour-highlight').forEach((el) =>
-      el.classList.remove('tour-highlight')
-    )
+    try {
+      document.querySelectorAll('.tour-highlight').forEach((el) =>
+        el.classList.remove('tour-highlight')
+      )
+    } catch {
+      stopTour()
+      return
+    }
 
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
-      const target = document.querySelector(current.target) as HTMLElement | null
-      if (!target) {
-        if (step === 0) {
-          stopTour()
+      try {
+        const target = document.querySelector(current.target) as HTMLElement | null
+        if (!target) {
+          if (step === 0) {
+            stopTour()
+            return
+          }
+          setStep((s) => s + 1)
           return
         }
-        setStep((s) => s + 1)
-        return
+
+        target.classList.add('tour-highlight')
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+        requestAnimationFrame(() => {
+          try {
+            const rect = target.getBoundingClientRect()
+            const gap = 12
+            const tw = 320
+            const th = 200
+
+            let top = rect.bottom + gap
+            let left = Math.max(
+              12,
+              Math.min(rect.left + rect.width / 2 - tw / 2, window.innerWidth - tw - 12)
+            )
+
+            if (top + th > window.innerHeight) {
+              top = Math.max(12, rect.top - gap - th)
+            }
+
+            setStyle({ top, left, position: 'fixed', zIndex: 50 })
+          } catch {
+            stopTour()
+          }
+        })
+      } catch {
+        stopTour()
       }
-
-      target.classList.add('tour-highlight')
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' })
-
-      requestAnimationFrame(() => {
-        const rect = target.getBoundingClientRect()
-        const gap = 12
-        const tw = 320
-        const th = 200
-
-        let top = rect.bottom + gap
-        let left = Math.max(
-          12,
-          Math.min(rect.left + rect.width / 2 - tw / 2, window.innerWidth - tw - 12)
-        )
-
-        if (top + th > window.innerHeight) {
-          top = Math.max(12, rect.top - gap - th)
-        }
-
-        setStyle({ top, left, position: 'fixed', zIndex: 50 })
-      })
     }, 300)
 
     return () => {
