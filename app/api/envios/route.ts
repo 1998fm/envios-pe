@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { calcularFechaEntrega } from '@/lib/logistica/calcularFechaEntrega'
 import { checkEnvioLimit } from '@/lib/planLimits'
+import { computeEffectivePlan } from '@/lib/planGating'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -79,6 +80,10 @@ export async function POST(req: Request) {
       await supabaseAdmin
         .from('profiles')
         .select(`
+          plan,
+          trial_end,
+          pro_until,
+
           logistica_moto_dias,
           logistica_moto_usa_hora_corte,
           logistica_moto_hora_corte,
@@ -110,9 +115,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: reason }, { status: 403 })
     }
 
+    const esPro = computeEffectivePlan(perfil).plan === 'pro'
+
+    // Para básico la configuración logística personalizada (días, hora de corte, cupo) no aplica
+    const logistica = esPro
+      ? {
+          logisticaMotoDias: perfil.logistica_moto_dias ?? ['MONDAY'],
+          logisticaMotoUsaHoraCorte: perfil.logistica_moto_usa_hora_corte ?? false,
+          logisticaMotoHoraCorte: perfil.logistica_moto_hora_corte ?? '18:00',
+          logisticaMotoLimitar: perfil.logistica_moto_limitar ?? false,
+          logisticaMotoCupo: perfil.logistica_moto_cupo ?? 0,
+          logisticaAgenciasDias: perfil.logistica_agencias_dias ?? ['MONDAY'],
+          logisticaAgenciasUsaHoraCorte: perfil.logistica_agencias_usa_hora_corte ?? false,
+          logisticaAgenciasHoraCorte: perfil.logistica_agencias_hora_corte ?? '18:00',
+          logisticaAgenciasLimitar: perfil.logistica_agencias_limitar ?? false,
+          logisticaAgenciasCupo: perfil.logistica_agencias_cupo ?? 0,
+        }
+      : {
+          logisticaMotoDias: ['MONDAY'],
+          logisticaMotoUsaHoraCorte: false,
+          logisticaMotoHoraCorte: '18:00',
+          logisticaMotoLimitar: false,
+          logisticaMotoCupo: 0,
+          logisticaAgenciasDias: ['MONDAY'],
+          logisticaAgenciasUsaHoraCorte: false,
+          logisticaAgenciasHoraCorte: '18:00',
+          logisticaAgenciasLimitar: false,
+          logisticaAgenciasCupo: 0,
+        }
+
     let fechaProgramada: Date
 
-    if (fechaProgramadaBody) {
+    if (esPro && fechaProgramadaBody) {
       fechaProgramada = new Date(fechaProgramadaBody)
     } else {
       const tipoMetodo =
@@ -124,37 +158,7 @@ export async function POST(req: Request) {
         await calcularFechaEntrega(
           supabaseAdmin,
           user_id,
-          {
-            logisticaMotoDias:
-              perfil.logistica_moto_dias ?? ['MONDAY'],
-
-            logisticaMotoUsaHoraCorte:
-              perfil.logistica_moto_usa_hora_corte ?? false,
-
-            logisticaMotoHoraCorte:
-              perfil.logistica_moto_hora_corte ?? '18:00',
-
-            logisticaMotoLimitar:
-              perfil.logistica_moto_limitar ?? false,
-
-            logisticaMotoCupo:
-              perfil.logistica_moto_cupo ?? 0,
-
-            logisticaAgenciasDias:
-              perfil.logistica_agencias_dias ?? ['MONDAY'],
-
-            logisticaAgenciasUsaHoraCorte:
-              perfil.logistica_agencias_usa_hora_corte ?? false,
-
-            logisticaAgenciasHoraCorte:
-              perfil.logistica_agencias_hora_corte ?? '18:00',
-
-            logisticaAgenciasLimitar:
-              perfil.logistica_agencias_limitar ?? false,
-
-            logisticaAgenciasCupo:
-              perfil.logistica_agencias_cupo ?? 0,
-          },
+          logistica,
           tipoMetodo
         )
     }

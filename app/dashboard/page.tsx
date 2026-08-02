@@ -43,7 +43,7 @@ import SeccionProductos from '@/components/SeccionProductos'
 import SeccionVentas from '@/components/SeccionVentas'
 import SeccionCompras from '@/components/SeccionCompras'
 import SeccionGastos from '@/components/SeccionGastos'
-import { UPGRADE_EVENT } from '@/lib/planGating'
+import { UPGRADE_EVENT, computeEffectivePlan } from '@/lib/planGating'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, clearTour, TOURS, type TourId } from '@/lib/tours'
 
@@ -497,13 +497,9 @@ setSlugEmpresa(
   profile?.slug || ''
 )
 
-setPlan(profile?.plan || 'basic')
-
-const trialEnd = profile?.trial_end ? new Date(profile.trial_end) : null
-const dias = trialEnd && trialEnd > new Date()
-  ? Math.ceil((trialEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-  : null
-setDiasRestantes(dias)
+const planEfectivo = computeEffectivePlan(profile ?? {})
+setPlan(planEfectivo.plan)
+setDiasRestantes(planEfectivo.diasRestantes)
 setUserId(user.id)
 setLoading(false)
     }

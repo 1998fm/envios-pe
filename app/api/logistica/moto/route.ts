@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { validarHoraCorte } from '@/lib/logistica/validarHoraCorte'
+import { computeEffectivePlan } from '@/lib/planGating'
 
 const DIAS_SEMANA = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
 
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   const { data: perfil, error } = await supabaseAdmin
     .from('profiles')
-    .select('logistica_moto_dias, logistica_moto_usa_hora_corte, logistica_moto_hora_corte, logistica_moto_limitar, logistica_moto_cupo')
+    .select('plan, trial_end, pro_until, logistica_moto_dias, logistica_moto_usa_hora_corte, logistica_moto_hora_corte, logistica_moto_limitar, logistica_moto_cupo')
     .eq('id', userId)
     .single()
 
@@ -32,11 +33,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const diasDisponibles: string[] = perfil?.logistica_moto_dias ?? ['MONDAY']
-  const usaHora = perfil?.logistica_moto_usa_hora_corte ?? false
-  const horaCorte = perfil?.logistica_moto_hora_corte ?? '18:00'
-  const limitar = perfil?.logistica_moto_limitar ?? false
-  const cupo = perfil?.logistica_moto_cupo ?? 0
+  const esPro = computeEffectivePlan(perfil).plan === 'pro'
+
+  const diasDisponibles: string[] = esPro ? (perfil?.logistica_moto_dias ?? ['MONDAY']) : ['MONDAY']
+  const usaHora = esPro ? (perfil?.logistica_moto_usa_hora_corte ?? false) : false
+  const horaCorte = esPro ? (perfil?.logistica_moto_hora_corte ?? '18:00') : '18:00'
+  const limitar = esPro ? (perfil?.logistica_moto_limitar ?? false) : false
+  const cupo = esPro ? (perfil?.logistica_moto_cupo ?? 0) : 0
 
   // Normalizar a Perú y determinar offset según hora de corte
   const peruStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })

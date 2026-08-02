@@ -1,5 +1,6 @@
 import { supabaseServer } from 'app/f/[slug]/lib/supabase/server'
 import PublicForm from '@/components/PublicForm'
+import { computeEffectivePlan } from '@/lib/planGating'
 
 export default async function FormPage({
   params,
@@ -21,6 +22,8 @@ export default async function FormPage({
       </div>
     )
   }
+
+  const isPro = computeEffectivePlan(profile).plan === 'pro'
 
   return (
 
@@ -44,6 +47,7 @@ export default async function FormPage({
 
       <PublicForm
         userId={profile.id}
+        isPro={isPro}
         logoUrl={profile.logo_url}
         redirectMessage={profile.redirect_message}
         redirectUrl={profile.redirect_url}

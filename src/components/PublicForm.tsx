@@ -14,6 +14,7 @@ import SuccessScreen from '@/components/SuccessScreen'
 
 type Props = {
   userId: string
+  isPro?: boolean
   logoUrl?: string
   redirectMessage?: string
   redirectUrl?: string
@@ -37,6 +38,7 @@ type MetodoDisponible = { value: string; label: string }
 
 export default function PublicForm({
   userId,
+  isPro = false,
   logoUrl,
   redirectMessage,
   redirectUrl,
@@ -152,13 +154,13 @@ export default function PublicForm({
   }, [userId])
 
   useEffect(() => {
-    if (enviado && redirectUrl) {
+    if (enviado && isPro && redirectUrl) {
       const timer = setTimeout(() => {
         window.location.href = redirectUrl
       }, 3000)
       return () => clearTimeout(timer)
     }
-  }, [enviado, redirectUrl])
+  }, [enviado, redirectUrl, isPro])
 
   const handleSubmit = useCallback(async () => {
     setError('')
@@ -232,7 +234,7 @@ export default function PublicForm({
         referencia,
         detalle,
         observaciones: '',
-        ...(fechaSeleccionada ? { fecha_programada: new Date(fechaSeleccionada + 'T12:00:00').toISOString() } : {}),
+        ...(isPro && fechaSeleccionada ? { fecha_programada: new Date(fechaSeleccionada + 'T12:00:00').toISOString() } : {}),
       }),
     })
 
@@ -255,9 +257,9 @@ export default function PublicForm({
     return (
       <div className="max-w-xl mx-auto mt-6 sm:mt-10 px-3 sm:px-4">
         <SuccessScreen
-          logoUrl={logoUrl}
-          redirectMessage={redirectMessage}
-          redirectUrl={redirectUrl}
+          logoUrl={isPro ? logoUrl : undefined}
+          redirectMessage={isPro ? redirectMessage : undefined}
+          redirectUrl={isPro ? redirectUrl : undefined}
           fechaProgramada={fechaProgramada}
         />
       </div>
@@ -280,7 +282,7 @@ export default function PublicForm({
         " />
 
         <div className="space-y-6 mt-2">
-          <FormHeader logoUrl={logoUrl} />
+          <FormHeader logoUrl={isPro ? logoUrl : undefined} />
 
           <PersonalDataSection
             nombre={nombre}
@@ -329,7 +331,7 @@ export default function PublicForm({
             />
           )}
 
-          {metodo === 'MOTORIZADO' && (
+          {metodo === 'MOTORIZADO' && isPro && (
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600 ">
                 <input
@@ -384,11 +386,11 @@ export default function PublicForm({
           <SubmitButton loading={loading} onClick={handleSubmit} />
 
           <SocialLinks
-            instagramUrl={instagramUrl}
-            facebookUrl={facebookUrl}
-            tiktokUrl={tiktokUrl}
-            webUrl={webUrl}
-            whatsappUrl={whatsappUrl}
+            instagramUrl={isPro ? instagramUrl : undefined}
+            facebookUrl={isPro ? facebookUrl : undefined}
+            tiktokUrl={isPro ? tiktokUrl : undefined}
+            webUrl={isPro ? webUrl : undefined}
+            whatsappUrl={isPro ? whatsappUrl : undefined}
           />
         </div>
       </div>
