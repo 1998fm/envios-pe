@@ -31,7 +31,7 @@ export default function ModalConfiguracion({
   const tabs = [
     { key: 'EMPRESA', label: 'Empresa' },
     { key: 'METODOS', label: 'Métodos' },
-    { key: 'LOGISTICA' as const, label: 'Logística', locked: isBasic },
+    { key: 'LOGISTICA' as const, label: 'Logística' },
     { key: 'TARIFAS' as const, label: 'Tarifas', locked: isBasic },
   ]
 
@@ -356,7 +356,7 @@ export default function ModalConfiguracion({
             </div>
           )}
 
-          {config.vistaConfig === 'LOGISTICA' && !isBasic && (
+          {config.vistaConfig === 'LOGISTICA' && (
             <div className="space-y-6">
               <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
                 <div className="flex items-center gap-3 mb-4">
@@ -387,6 +387,8 @@ export default function ModalConfiguracion({
                         setLimitar={setter('logisticaMotoLimitar')}
                         cupo={config.logisticaMotoCupo}
                         setCupo={setter('logisticaMotoCupo')}
+                        bloqueado={isBasic}
+                        onUpgrade={onUpgrade}
                       />
                     </div>
                   )}
@@ -414,6 +416,8 @@ export default function ModalConfiguracion({
                           nombreMetodoOtro={config.nombreMetodoOtro}
                           setNombreMetodoOtro={setter('nombreMetodoOtro')}
                           mostrarNombreMetodo={config.metodoOtro}
+                          bloqueado={isBasic}
+                          onUpgrade={onUpgrade}
                         />
                       </div>
                     )

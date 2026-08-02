@@ -20,7 +20,7 @@ export const FEATURES: FeatureDef[] = [
   { key: 'logo', label: 'Logo personalizado', basic: false, pro: true },
   { key: 'redes', label: 'Redes sociales en formulario', basic: false, pro: true },
   { key: 'redirect', label: 'URL de redirección', basic: false, pro: true },
-  { key: 'logistica', label: 'Control logístico', basic: false, pro: true },
+  { key: 'logistica', label: 'Hora de corte y cupo diario', basic: false, pro: true },
   { key: 'tarifas', label: 'Tarifas por distrito', basic: false, pro: true },
   { key: 'cambio_masivo', label: 'Cambio masivo de estados', basic: false, pro: true },
   { key: 'marca_blanca', label: 'Marca blanca en formulario', basic: false, pro: true },

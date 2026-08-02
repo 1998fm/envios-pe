@@ -1043,16 +1043,16 @@ mensaje_recojo:
   ...obtenerConfiguracionLogistica({
 
   logisticaMotoDias: config.logisticaMotoDias,
-  logisticaMotoUsaHoraCorte: config.logisticaMotoUsaHoraCorte,
-  logisticaMotoHoraCorte: config.logisticaMotoHoraCorte,
-  logisticaMotoLimitar: config.logisticaMotoLimitar,
-  logisticaMotoCupo: config.logisticaMotoCupo,
+  logisticaMotoUsaHoraCorte: plan === 'basic' ? false : config.logisticaMotoUsaHoraCorte,
+  logisticaMotoHoraCorte: plan === 'basic' ? '18:00' : config.logisticaMotoHoraCorte,
+  logisticaMotoLimitar: plan === 'basic' ? false : config.logisticaMotoLimitar,
+  logisticaMotoCupo: plan === 'basic' ? 0 : config.logisticaMotoCupo,
 
   logisticaAgenciasDias: config.logisticaAgenciasDias,
-  logisticaAgenciasUsaHoraCorte: config.logisticaAgenciasUsaHoraCorte,
-  logisticaAgenciasHoraCorte: config.logisticaAgenciasHoraCorte,
-  logisticaAgenciasLimitar: config.logisticaAgenciasLimitar,
-  logisticaAgenciasCupo: config.logisticaAgenciasCupo,
+  logisticaAgenciasUsaHoraCorte: plan === 'basic' ? false : config.logisticaAgenciasUsaHoraCorte,
+  logisticaAgenciasHoraCorte: plan === 'basic' ? '18:00' : config.logisticaAgenciasHoraCorte,
+  logisticaAgenciasLimitar: plan === 'basic' ? false : config.logisticaAgenciasLimitar,
+  logisticaAgenciasCupo: plan === 'basic' ? 0 : config.logisticaAgenciasCupo,
 
 }),
 

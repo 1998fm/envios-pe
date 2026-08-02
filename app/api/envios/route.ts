@@ -132,12 +132,12 @@ export async function POST(req: Request) {
           logisticaAgenciasCupo: perfil.logistica_agencias_cupo ?? 0,
         }
       : {
-          logisticaMotoDias: ['MONDAY'],
+          logisticaMotoDias: perfil.logistica_moto_dias ?? ['MONDAY'],
           logisticaMotoUsaHoraCorte: false,
           logisticaMotoHoraCorte: '18:00',
           logisticaMotoLimitar: false,
           logisticaMotoCupo: 0,
-          logisticaAgenciasDias: ['MONDAY'],
+          logisticaAgenciasDias: perfil.logistica_agencias_dias ?? ['MONDAY'],
           logisticaAgenciasUsaHoraCorte: false,
           logisticaAgenciasHoraCorte: '18:00',
           logisticaAgenciasLimitar: false,

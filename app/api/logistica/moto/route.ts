@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
   const esPro = computeEffectivePlan(perfil).plan === 'pro'
 
-  const diasDisponibles: string[] = esPro ? (perfil?.logistica_moto_dias ?? ['MONDAY']) : ['MONDAY']
+  const diasDisponibles: string[] = perfil?.logistica_moto_dias ?? ['MONDAY']
   const usaHora = esPro ? (perfil?.logistica_moto_usa_hora_corte ?? false) : false
   const horaCorte = esPro ? (perfil?.logistica_moto_hora_corte ?? '18:00') : '18:00'
   const limitar = esPro ? (perfil?.logistica_moto_limitar ?? false) : false
