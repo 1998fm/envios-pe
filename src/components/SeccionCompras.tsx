@@ -7,7 +7,7 @@ import type { Compra, Producto } from '@/types/inventario'
 import ModalDetalleCompra from '@/components/ModalDetalleCompra'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
-import { tourDone } from '@/lib/tours'
+import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 
 type Props = { userId: string }
@@ -43,14 +43,14 @@ export default function SeccionCompras({ userId }: Props) {
   useEffect(() => { cargarCompras() }, [userId, filtroEstado])
 
   useEffect(() => {
-    if (showNueva && !tourDone('modal-nueva-compra')) {
+    if (showNueva && trayectoDone() && !tourDone('modal-nueva-compra')) {
       const t = setTimeout(() => startTour('modal-nueva-compra'), 400)
       return () => clearTimeout(t)
     }
   }, [showNueva, startTour])
 
   useEffect(() => {
-    if (compraDetalle && !tourDone('modal-detalle-compra')) {
+    if (compraDetalle && trayectoDone() && !tourDone('modal-detalle-compra')) {
       const t = setTimeout(() => startTour('modal-detalle-compra'), 400)
       return () => clearTimeout(t)
     }

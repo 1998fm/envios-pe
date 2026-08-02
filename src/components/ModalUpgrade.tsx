@@ -5,7 +5,7 @@ import Modal from '@/components/ui/Modal'
 import { toast } from 'sonner'
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import TourHelpButton from '@/components/TourHelpButton'
-import { tourDone } from '@/lib/tours'
+import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { FEATURES } from '@/lib/planGating'
 
@@ -27,7 +27,7 @@ export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpr
   const { startTour } = useOnboarding()
 
   useEffect(() => {
-    if (!tourDone('modal-upgrade')) {
+    if (trayectoDone() && !tourDone('modal-upgrade')) {
       const t = setTimeout(() => startTour('modal-upgrade'), 400)
       return () => clearTimeout(t)
     }

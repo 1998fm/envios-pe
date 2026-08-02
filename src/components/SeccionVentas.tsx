@@ -7,7 +7,7 @@ import type { Venta, Producto } from '@/types/inventario'
 import ModalDetalleVenta from '@/components/ModalDetalleVenta'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
-import { tourDone } from '@/lib/tours'
+import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade } from '@/lib/planGating'
 
@@ -56,14 +56,14 @@ export default function SeccionVentas({ userId }: Props) {
   useEffect(() => { cargarVentas() }, [userId, filtroEstado])
 
   useEffect(() => {
-    if (showNueva && !tourDone('modal-nueva-venta')) {
+    if (showNueva && trayectoDone() && !tourDone('modal-nueva-venta')) {
       const t = setTimeout(() => startTour('modal-nueva-venta'), 400)
       return () => clearTimeout(t)
     }
   }, [showNueva, startTour])
 
   useEffect(() => {
-    if (ventaDetalle && !tourDone('modal-detalle-venta')) {
+    if (ventaDetalle && trayectoDone() && !tourDone('modal-detalle-venta')) {
       const t = setTimeout(() => startTour('modal-detalle-venta'), 400)
       return () => clearTimeout(t)
     }

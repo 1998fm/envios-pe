@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import TourHelpButton from '@/components/TourHelpButton'
-import { tourDone } from '@/lib/tours'
+import { tourDone, trayectoDone } from '@/lib/tours'
 import type { TourId } from '@/lib/tours'
 import type { ReactNode } from 'react'
 import { useOnboarding } from '@/context/OnboardingContext'
@@ -37,7 +37,7 @@ export default function ModalDetalleDocumento({
   const { startTour } = useOnboarding()
 
   useEffect(() => {
-    if (!tourId || tourDone(tourId)) return
+    if (!tourId || !trayectoDone() || tourDone(tourId)) return
     const t = setTimeout(() => startTour(tourId), 400)
     return () => clearTimeout(t)
   }, [tourId, startTour])

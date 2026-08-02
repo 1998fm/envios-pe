@@ -26,14 +26,38 @@ export type TourId =
 
 export type Tour = {
   id: TourId
+  titulo: string
   modal?: boolean
   steps: TourStep[]
+}
+
+export const TRAYECTO_INICIAL: TourId[] = [
+  'tab-resumen',
+  'tab-envios',
+  'tab-ventas',
+  'tab-productos',
+  'tab-compras',
+  'tab-gastos',
+]
+
+export type TabKey = 'resumen' | 'envios' | 'ventas' | 'productos' | 'compras' | 'gastos'
+
+export const TOUR_TAB: Partial<Record<TourId, TabKey>> = {
+  'tab-resumen': 'resumen',
+  'tab-envios': 'envios',
+  'tab-ventas': 'ventas',
+  'tab-productos': 'productos',
+  'tab-compras': 'compras',
+  'tab-gastos': 'gastos',
 }
 
 const LEGACY_KEYS: Record<string, string> = {
   'tab-resumen': 'tori_dashboard_tour_done',
   'tab-envios': 'tori_card_tour_done',
 }
+
+const TRAYECTO_DONE_KEY = 'tori_trayecto_done'
+const TRAYECTO_INDEX_KEY = 'tori_trayecto_index'
 
 export function tourDone(id: string): boolean {
   if (typeof window === 'undefined') return true
@@ -52,40 +76,62 @@ export function clearTour(id: string): void {
   localStorage.removeItem(`tori_tour_${id}_done`)
 }
 
+export function trayectoDone(): boolean {
+  if (typeof window === 'undefined') return true
+  return localStorage.getItem(TRAYECTO_DONE_KEY) === 'true'
+}
+
+export function markTrayectoDone(): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(TRAYECTO_DONE_KEY, 'true')
+}
+
+export function getTrayectoIndex(): number {
+  if (typeof window === 'undefined') return 0
+  const raw = parseInt(localStorage.getItem(TRAYECTO_INDEX_KEY) || '0', 10)
+  return Number.isNaN(raw) ? 0 : raw
+}
+
+export function setTrayectoIndex(index: number): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(TRAYECTO_INDEX_KEY, String(index))
+}
+
+export function clearAllTours(): void {
+  if (typeof window === 'undefined') return
+  TOURS.forEach((t) => clearTour(t.id))
+  Object.values(LEGACY_KEYS).forEach((k) => localStorage.removeItem(k))
+  localStorage.removeItem(TRAYECTO_DONE_KEY)
+  localStorage.removeItem(TRAYECTO_INDEX_KEY)
+}
+
 export const TOURS: Tour[] = [
   // ==========================================
   // PESTAÑA: RESUMEN
   // ==========================================
   {
     id: 'tab-resumen',
+    titulo: 'Resumen',
     steps: [
       {
         target: '#dashboard-content',
-        text: '¡Hola! Soy Tori, tu ayudante. Este es tu panel de resumen: aquí ves todo tu negocio de un vistazo. Te explico cada parte en pocos pasos.',
+        text: '¡Hola! Soy Tori, tu ayudante. Este es el Resumen: aquí ves todo tu negocio de un vistazo. Te guiaré por las secciones, una por una. Toca "Siguiente" para avanzar.',
       },
       {
         target: '[data-tour="resumen-saldo"]',
-        text: 'Este es tu saldo disponible: lo que te queda después de ventas, compras y gastos. Se calcula solo: Ventas − Compras − Gastos.',
+        text: 'Tu saldo disponible: lo que te queda tras ventas, compras y gastos. Se calcula solo: Ventas − Compras − Gastos.',
       },
       {
         target: '[data-tour="resumen-kpis"]',
-        text: 'Tus cifras del día y del mes: cuánto vendiste, cuánto te deben y cuántos pedidos te faltan despachar. Solo mira, sin hacer cuentas.',
+        text: 'Tus cifras del día y del mes: cuánto vendiste, cuánto te deben y pedidos por despachar. Solo mira, sin cuentas.',
       },
       {
         target: '[data-tour="resumen-pendientes"]',
-        text: 'Aquí Tori te recuerda lo que no debes olvidar hoy: pedidos sin empacar, cobros pendientes y productos con stock bajo. Toca uno y te lleva directo.',
-      },
-      {
-        target: '[data-tour="resumen-graficos"]',
-        text: 'Tus gráficos: pedidos de los últimos 30 días, formas de pago y cómo van tus envíos. No necesitas ser experto, solo mirarlos.',
+        text: 'Tori te recuerda lo urgente de hoy: pedidos sin empacar, cobros pendientes y stock bajo. Toca uno y te lleva directo.',
       },
       {
         target: '[data-tour="resumen-recientes"]',
-        text: 'Los últimos movimientos de tu negocio: pedidos, ventas y gastos recientes, para que siempre sepas qué pasó.',
-      },
-      {
-        target: '#dashboard-content',
-        text: '¡Eso es todo por ahora! Te iré explicando cada pestaña la primera vez que la abras. Si quieres repetir una guía, toca el botón de la "i".',
+        text: 'Los últimos movimientos: pedidos, ventas y gastos recientes. Ahora sí, te muestro el resto de secciones en orden.',
       },
     ],
   },
@@ -95,6 +141,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'tab-envios',
+    titulo: 'Envíos',
     steps: [
       {
         target: '[data-tour="filter-bar"]',
@@ -128,6 +175,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'tab-productos',
+    titulo: 'Productos',
     steps: [
       {
         target: '[data-tour="productos-buscar"]',
@@ -157,6 +205,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'tab-ventas',
+    titulo: 'Ventas',
     steps: [
       {
         target: '[data-tour="ventas-nueva"]',
@@ -186,6 +235,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'tab-compras',
+    titulo: 'Compras',
     steps: [
       {
         target: '[data-tour="compras-nueva"]',
@@ -211,6 +261,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'tab-gastos',
+    titulo: 'Gastos',
     steps: [
       {
         target: '[data-tour="gastos-nuevo"]',
@@ -240,6 +291,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-nueva-venta',
+    titulo: 'Nueva venta',
     modal: true,
     steps: [
       {
@@ -270,6 +322,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-detalle-venta',
+    titulo: 'Detalle de venta',
     modal: true,
     steps: [
       {
@@ -292,6 +345,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-nueva-compra',
+    titulo: 'Nueva compra',
     modal: true,
     steps: [
       {
@@ -318,6 +372,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-detalle-compra',
+    titulo: 'Detalle de compra',
     modal: true,
     steps: [
       {
@@ -340,6 +395,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-nuevo-producto',
+    titulo: 'Nuevo producto',
     modal: true,
     steps: [
       {
@@ -366,6 +422,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-nuevo-gasto',
+    titulo: 'Nuevo gasto',
     modal: true,
     steps: [
       {
@@ -392,6 +449,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-detalle-envio',
+    titulo: 'Detalle de pedido',
     modal: true,
     steps: [
       {
@@ -418,6 +476,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-configuracion',
+    titulo: 'Configuración',
     modal: true,
     steps: [
       {
@@ -444,6 +503,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-cambio-masivo',
+    titulo: 'Cambio masivo',
     modal: true,
     steps: [
       {
@@ -470,6 +530,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-exportar-shalom',
+    titulo: 'Exportar a Shalom',
     modal: true,
     steps: [
       {
@@ -492,6 +553,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-etiquetas',
+    titulo: 'Etiquetas',
     modal: true,
     steps: [
       {
@@ -510,6 +572,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-copiar-datos',
+    titulo: 'Copiar datos',
     modal: true,
     steps: [
       {
@@ -536,6 +599,7 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-upgrade',
+    titulo: 'Planes Pro',
     modal: true,
     steps: [
       {

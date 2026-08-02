@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 
 type Props = {
+  titulo: string
   text: string
   step: number
   totalSteps: number
@@ -13,7 +14,7 @@ type Props = {
   style?: React.CSSProperties
 }
 
-export default function OnboardingTooltip({ text, step, totalSteps, onNext, onSkip, style }: Props) {
+export default function OnboardingTooltip({ titulo, text, step, totalSteps, onNext, onSkip, style }: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8, scale: 0.96 }}
@@ -35,6 +36,9 @@ export default function OnboardingTooltip({ text, step, totalSteps, onNext, onSk
           <ToriMascot variant="guide" size={48} animate />
         </div>
         <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wider text-sky-600 mb-1">
+            {titulo}
+          </p>
           <p className="text-sm text-slate-700 leading-relaxed">
             {text}
           </p>

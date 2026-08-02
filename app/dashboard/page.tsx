@@ -45,18 +45,17 @@ import SeccionCompras from '@/components/SeccionCompras'
 import SeccionGastos from '@/components/SeccionGastos'
 import { UPGRADE_EVENT, computeEffectivePlan } from '@/lib/planGating'
 import { useOnboarding } from '@/context/OnboardingContext'
-import { tourDone, clearTour, TOURS, type TourId } from '@/lib/tours'
-
-const TAB_TOUR: Record<string, TourId> = {
-  resumen: 'tab-resumen',
-  envios: 'tab-envios',
-  productos: 'tab-productos',
-  ventas: 'tab-ventas',
-  compras: 'tab-compras',
-  gastos: 'tab-gastos',
-}
-
-const TOURS_IDS = TOURS.map((t) => t.id)
+import {
+  tourDone,
+  clearAllTours,
+  getTrayectoIndex,
+  setTrayectoIndex,
+  trayectoDone,
+  markTrayectoDone,
+  TRAYECTO_INICIAL,
+  TOUR_TAB,
+  type TourId,
+} from '@/lib/tours'
 
 export default function DashboardPage() {
   const supabase = useMemo(() => createClient(), [])
@@ -255,7 +254,7 @@ const [envioDetalle, setEnvioDetalle] =
   useState<Envio | null>(null)
 
   useEffect(() => {
-    if (envioDetalle && !tourDone('modal-detalle-envio')) {
+    if (envioDetalle && trayectoDone() && !tourDone('modal-detalle-envio')) {
       const t = setTimeout(() => startTour('modal-detalle-envio'), 400)
       return () => clearTimeout(t)
     }
@@ -508,24 +507,56 @@ setLoading(false)
   }, [router, supabase])
 
   // ========================================
-  // ONBOARDING POR PESTAÑA
+  // TRAYECTO GUIADO DE BIENVENIDA
+  // Inicia en Resumen (tab por defecto al cargar)
+  // y recorre las secciones en orden hasta completar.
   // ========================================
+
+  const [trayectoIdx, setTrayectoIdx] = useState(() => getTrayectoIndex())
+  const trayectoProgramado = useRef(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('tour') === 'start') {
-      TOURS_IDS.forEach(clearTour)
+      clearAllTours()
+      setTrayectoIdx(0)
       window.history.replaceState({}, '', window.location.pathname)
     }
   }, [])
 
   useEffect(() => {
-    if (loading || active) return
-    const id = TAB_TOUR[pestañaActiva]
-    if (!id || tourDone(id)) return
-    const timer = setTimeout(() => startTour(id), 600)
+    if (loading || active || trayectoProgramado.current) return
+    if (trayectoDone()) return
+
+    const tourId = TRAYECTO_INICIAL[trayectoIdx]
+    if (!tourId) {
+      markTrayectoDone()
+      return
+    }
+
+    const tab = TOUR_TAB[tourId]
+    if (tab && tab !== pestañaActiva) {
+      setPestañaActiva(tab)
+      return
+    }
+
+    trayectoProgramado.current = true
+    const timer = setTimeout(() => {
+      trayectoProgramado.current = false
+      startTour(tourId, (mode) => {
+        if (mode === 'saltado') {
+          markTrayectoDone()
+          return
+        }
+        const next = trayectoIdx + 1
+        setTrayectoIndex(next)
+        setTrayectoIdx(next)
+        if (next >= TRAYECTO_INICIAL.length) markTrayectoDone()
+      })
+    }, 600)
+
     return () => clearTimeout(timer)
-  }, [pestañaActiva, loading, active, startTour])
+  }, [loading, active, pestañaActiva, trayectoIdx, startTour])
 
   // Abrir modal de upgrade desde cualquier componente
   useEffect(() => {

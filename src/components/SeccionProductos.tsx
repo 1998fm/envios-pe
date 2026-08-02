@@ -7,7 +7,7 @@ import type { Producto } from '@/types/inventario'
 import { UNIDADES_MEDIDA } from '@/types/inventario'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
-import { tourDone } from '@/lib/tours'
+import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade } from '@/lib/planGating'
 
@@ -66,7 +66,7 @@ export default function SeccionProductos({ userId }: Props) {
   useEffect(() => { cargarProductos() }, [userId, busqueda])
 
   useEffect(() => {
-    if (showNuevo && !tourDone('modal-nuevo-producto')) {
+    if (showNuevo && trayectoDone() && !tourDone('modal-nuevo-producto')) {
       const t = setTimeout(() => startTour('modal-nuevo-producto'), 400)
       return () => clearTimeout(t)
     }

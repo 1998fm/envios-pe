@@ -4,8 +4,10 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { getTour, markTourDone, type TourId } from '@/lib/tours'
 import OnboardingTooltip from '@/components/OnboardingTooltip'
 
+type FinishMode = 'completado' | 'saltado'
+
 type OnboardingContextValue = {
-  startTour: (id: TourId) => void
+  startTour: (id: TourId, onFinish?: (mode: FinishMode) => void) => void
   stopTour: () => void
   isActive: (id: TourId) => boolean
   active: TourId | null
@@ -18,8 +20,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [step, setStep] = useState(0)
   const [style, setStyle] = useState<React.CSSProperties | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onFinishRef = useRef<((mode: FinishMode) => void) | null>(null)
+  const finishModeRef = useRef<FinishMode>('completado')
 
-  const startTour = useCallback((id: TourId) => {
+  const startTour = useCallback((id: TourId, onFinish?: (mode: FinishMode) => void) => {
+    onFinishRef.current = onFinish ?? null
     setActive((prev) => (prev === id ? prev : id))
     setStep(0)
   }, [])
@@ -33,13 +38,16 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const finishTour = useCallback((id: TourId) => {
     markTourDone(id)
     stopTour()
+    const cb = onFinishRef.current
+    onFinishRef.current = null
+    cb?.(finishModeRef.current)
   }, [stopTour])
 
   useEffect(() => {
     if (!active) return
     const tour = getTour(active)
     if (!tour) {
-      stopTour()
+      finishTour(active)
       return
     }
 
@@ -54,7 +62,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         el.classList.remove('tour-highlight')
       )
     } catch {
-      stopTour()
+      finishTour(active)
       return
     }
 
@@ -64,7 +72,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         const target = document.querySelector(current.target) as HTMLElement | null
         if (!target) {
           if (step === 0) {
-            stopTour()
+            finishTour(active)
             return
           }
           setStep((s) => s + 1)
@@ -93,11 +101,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
             setStyle({ top, left, position: 'fixed', zIndex: 50 })
           } catch {
-            stopTour()
+            finishTour(active)
           }
         })
       } catch {
-        stopTour()
+        finishTour(active)
       }
     }, 300)
 
@@ -119,6 +127,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     const tour = getTour(active)
     if (!tour) return
     if (step >= tour.steps.length - 1) {
+      finishModeRef.current = 'completado'
       finishTour(active)
       return
     }
@@ -127,6 +136,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   function handleSkip() {
     if (!active) return
+    finishModeRef.current = 'saltado'
     finishTour(active)
   }
 
@@ -157,6 +167,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           `}</style>
           {style && tour.steps[safeStep] && (
             <OnboardingTooltip
+              titulo={tour.titulo}
               text={tour.steps[safeStep].text}
               step={safeStep + 1}
               totalSteps={tour.steps.length}

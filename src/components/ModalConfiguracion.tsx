@@ -7,7 +7,7 @@ import agenciasShalom from '@/data/agencias-shalom.json'
 import { ConfigModalProps } from '@/types/config'
 import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store, Building, Phone, MapPin, Image, MessageCircle, Link2, Globe, Clock, DollarSign, Camera, Music, ExternalLink, Lock } from 'lucide-react'
 import TourHelpButton from '@/components/TourHelpButton'
-import { tourDone } from '@/lib/tours'
+import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { useEffect } from 'react'
 
@@ -20,7 +20,7 @@ export default function ModalConfiguracion({
   const { startTour } = useOnboarding()
 
   useEffect(() => {
-    if (!tourDone('modal-configuracion')) {
+    if (trayectoDone() && !tourDone('modal-configuracion')) {
       const t = setTimeout(() => startTour('modal-configuracion'), 400)
       return () => clearTimeout(t)
     }

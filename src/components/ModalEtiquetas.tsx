@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import FieldGroup from '@/components/ui/FieldGroup'
 import TourHelpButton from '@/components/TourHelpButton'
-import { tourDone } from '@/lib/tours'
+import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 
 type Props = {
@@ -38,7 +38,7 @@ export default function ModalEtiquetas({
   const { startTour } = useOnboarding()
 
   useEffect(() => {
-    if (!tourDone('modal-etiquetas')) {
+    if (trayectoDone() && !tourDone('modal-etiquetas')) {
       const t = setTimeout(() => startTour('modal-etiquetas'), 400)
       return () => clearTimeout(t)
     }

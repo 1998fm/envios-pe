@@ -19,6 +19,7 @@ import {
   guardarPasoTarifas,
 } from '@/lib/onboardingGuardar'
 import type { ConfigState } from '@/types/config'
+import { clearAllTours } from '@/lib/tours'
 
 const initialConfig: ConfigState = {
   vistaConfig: 'EMPRESA',
@@ -162,14 +163,12 @@ export default function OnboardingWizard() {
   }
 
   function irAlDashboard() {
-    localStorage.removeItem('tori_dashboard_tour_done')
-    localStorage.removeItem('tori_card_tour_done')
+    clearAllTours()
     router.push('/dashboard')
   }
 
   function saltar() {
-    localStorage.removeItem('tori_dashboard_tour_done')
-    localStorage.removeItem('tori_card_tour_done')
+    clearAllTours()
     router.push('/dashboard')
   }
 

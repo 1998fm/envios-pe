@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 
 import TourHelpButton from '@/components/TourHelpButton'
-import { tourDone } from '@/lib/tours'
+import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 
 type Props = {
@@ -31,7 +31,7 @@ export default function ModalExportShalom({
   const { startTour } = useOnboarding()
 
   useEffect(() => {
-    if (!tourDone('modal-exportar-shalom')) {
+    if (trayectoDone() && !tourDone('modal-exportar-shalom')) {
       const t = setTimeout(() => startTour('modal-exportar-shalom'), 400)
       return () => clearTimeout(t)
     }

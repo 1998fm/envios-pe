@@ -69,8 +69,8 @@ export default function DashboardMenu({
   const secciones = [
     { key: 'resumen' as const, label: 'Resumen', icon: LayoutDashboard, tour: 'tab-resumen' as TourId },
     { key: 'envios' as const, label: 'Envíos', icon: Boxes, tour: 'tab-envios' as TourId },
-    { key: 'productos' as const, label: 'Productos', icon: Package, tour: 'tab-productos' as TourId },
     { key: 'ventas' as const, label: 'Ventas', icon: ShoppingCart, tour: 'tab-ventas' as TourId },
+    { key: 'productos' as const, label: 'Productos', icon: Package, tour: 'tab-productos' as TourId },
     { key: 'compras' as const, label: 'Compras', icon: Truck, tour: 'tab-compras' as TourId },
     { key: 'gastos' as const, label: 'Gastos', icon: Receipt, tour: 'tab-gastos' as TourId },
   ]

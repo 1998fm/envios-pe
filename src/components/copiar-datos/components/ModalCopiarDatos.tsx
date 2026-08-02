@@ -9,7 +9,7 @@ import { generarTextoMoto } from '../utils/generarTextoMoto'
 import { exportarExcelMoto } from '../utils/exportarExcelMoto'
 import type { ModalCopiarDatosProps } from '../types'
 import TourHelpButton from '@/components/TourHelpButton'
-import { tourDone } from '@/lib/tours'
+import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 
 export default function ModalCopiarDatos({
@@ -25,7 +25,7 @@ export default function ModalCopiarDatos({
   const { startTour } = useOnboarding()
 
   useEffect(() => {
-    if (!tourDone('modal-copiar-datos')) {
+    if (trayectoDone() && !tourDone('modal-copiar-datos')) {
       const t = setTimeout(() => startTour('modal-copiar-datos'), 400)
       return () => clearTimeout(t)
     }

@@ -8,7 +8,7 @@ import FieldGroup from '@/components/ui/FieldGroup'
 import Field from '@/components/ui/Field'
 import type { Envio } from '@/types/envio'
 import TourHelpButton from '@/components/TourHelpButton'
-import { tourDone } from '@/lib/tours'
+import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 type Props = {
 
@@ -69,7 +69,7 @@ export default function ModalCambioMasivo({
   const { startTour } = useOnboarding()
 
   useEffect(() => {
-    if (!tourDone('modal-cambio-masivo')) {
+    if (trayectoDone() && !tourDone('modal-cambio-masivo')) {
       const t = setTimeout(() => startTour('modal-cambio-masivo'), 400)
       return () => clearTimeout(t)
     }

@@ -7,7 +7,7 @@ import type { Gasto } from '@/types/inventario'
 import { CATEGORIAS_GASTO, CATEGORIA_GASTO_LABEL, CATEGORIA_GASTO_STYLE } from '@/types/inventario'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
-import { tourDone } from '@/lib/tours'
+import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 
 type Props = { userId: string }
@@ -41,7 +41,7 @@ export default function SeccionGastos({ userId }: Props) {
   useEffect(() => { cargarGastos() }, [userId, filtroCategoria])
 
   useEffect(() => {
-    if (showModal && !tourDone('modal-nuevo-gasto')) {
+    if (showModal && trayectoDone() && !tourDone('modal-nuevo-gasto')) {
       const t = setTimeout(() => startTour('modal-nuevo-gasto'), 400)
       return () => clearTimeout(t)
     }
