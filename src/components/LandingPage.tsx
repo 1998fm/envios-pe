@@ -33,6 +33,7 @@ import {
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import LogoTori from '@/components/LogoTori'
+import ToriMascot from '@/components/ToriMascot'
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -120,6 +121,32 @@ const testimonials = [
     role: 'Distribuidora — Ate',
     result: 'Vendió más en su primer mes con el formulario',
   },
+  {
+    initials: 'DV',
+    gradient: 'from-amber-500 to-orange-500',
+    quote: 'Cada tarde anotaba direcciones del WhatsApp en una libreta. Ahora los pedidos llegan solos al panel y hasta sé cuánto me falta por cobrar.',
+    name: 'Diego Vega',
+    role: 'Comida — San Isidro',
+    result: 'Cobró todo lo que le debían ese mismo mes',
+  },
+]
+
+const planBasicFeatures = [
+  'Hasta 50 envíos al mes',
+  'Hasta 2 métodos de envío',
+  '50 productos y 100 ventas',
+  'Compras y gastos',
+  'Etiquetas de envío',
+  'Exportar a Shalom (10 al mes)',
+]
+
+const planProFeatures = [
+  'Envíos, productos y ventas ilimitados',
+  'Todos los métodos de envío',
+  'Logo, colores y marca blanca',
+  'Tarifas por distrito',
+  'Hora de corte y cupo diario',
+  'Redes sociales, URL de redirección y cambio masivo',
 ]
 
 const faqs = [
@@ -353,7 +380,7 @@ export default function LandingPage() {
                         key={i}
                         className={`w-9 h-9 rounded-full bg-gradient-to-br ${g} border-2 border-white flex items-center justify-center text-white text-[10px] font-bold shadow-sm`}
                       >
-                        {['CM', 'JR', 'AP', 'DV'][i]}
+                        {['CR', 'JM', 'AP', 'DV'][i]}
                       </div>
                     ),
                   )}
@@ -487,6 +514,19 @@ export default function LandingPage() {
                   <p className="text-xs font-bold text-slate-900">Nuevo pedido</p>
                   <p className="text-[10px] text-slate-400">Lucía · 2 box de brownies · Motorizado</p>
                 </div>
+              </motion.div>
+
+              {/* Tori te saluda */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.9 }}
+                className="hidden md:flex absolute -bottom-5 -right-4 items-center gap-2.5 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-900/10 px-3.5 py-2.5"
+              >
+                <ToriMascot variant="happy" size={36} />
+                <p className="text-[10px] font-semibold text-slate-700 leading-tight max-w-[130px]">
+                  ¡Hola! Yo ordeno tus pedidos.
+                </p>
               </motion.div>
             </motion.div>
           </div>
@@ -959,13 +999,21 @@ export default function LandingPage() {
             ))}
           </div>
 
-          <p className="mt-10 text-center text-sm text-slate-500">
-            Pensado para{' '}
-            <span className="font-semibold text-slate-700">
-              repostería, ropa, comida, regalos, artesanías
-            </span>{' '}
-            y más.
-          </p>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+            {['Repostería', 'Ropa y moda', 'Comida y catering', 'Regalos y detalles', 'Artesanías', 'Flores', 'Cosmética natural'].map(
+              (niche) => (
+                <span
+                  key={niche}
+                  className="px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-600"
+                >
+                  {niche}
+                </span>
+              ),
+            )}
+            <span className="px-3 py-1.5 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 text-xs font-semibold text-white">
+              + tu negocio
+            </span>
+          </div>
         </div>
       </section>
 
@@ -1058,7 +1106,7 @@ export default function LandingPage() {
             </h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {testimonials.map((t, i) => (
               <motion.div
                 key={t.name}
@@ -1115,7 +1163,7 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4 }}
-              className="relative rounded-2xl border border-slate-200 bg-white p-6 sm:p-8"
+              className="relative flex flex-col rounded-2xl border border-slate-200 bg-white p-6 sm:p-8"
             >
               <h3 className="text-lg font-bold text-slate-900">Básico</h3>
               <p className="mt-1 text-sm text-slate-500">Para empezar a ordenarte</p>
@@ -1123,6 +1171,14 @@ export default function LandingPage() {
                 <span className="text-4xl font-extrabold text-slate-900">Gratis</span>
               </div>
               <p className="mt-1 text-xs text-slate-400">Para siempre, después de la prueba</p>
+              <ul className="mt-5 flex-1 space-y-2.5">
+                {planBasicFeatures.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
+                    <Check size={15} className="mt-0.5 shrink-0 text-sky-500" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
               <Link
                 href="/register"
                 className="mt-6 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold border border-slate-200 text-slate-700 hover:border-sky-500 hover:text-sky-700 transition-all duration-200"
@@ -1136,7 +1192,7 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.1 }}
-              className="relative rounded-2xl border-2 border-sky-500 bg-white p-6 sm:p-8 shadow-xl shadow-sky-500/10"
+              className="relative flex flex-col rounded-2xl border-2 border-sky-500 bg-white p-6 sm:p-8 shadow-xl shadow-sky-500/10"
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 text-white text-[11px] font-bold uppercase tracking-wider">
                 Más popular
@@ -1144,13 +1200,26 @@ export default function LandingPage() {
               <h3 className="text-lg font-bold text-slate-900 mt-2">Pro</h3>
               <p className="mt-1 text-sm text-slate-500">Para negocios en crecimiento</p>
               <div className="mt-4">
-                <p className="text-sm line-through text-slate-400 mb-1">S/ 39.90</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm line-through text-slate-400 mb-1">S/ 39.90</p>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-[10px] font-bold text-amber-700">
+                    Precio de lanzamiento
+                  </span>
+                </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-5xl font-extrabold text-slate-900">S/ 29.90</span>
                   <span className="text-sm text-slate-500 font-medium">/mes</span>
                 </div>
               </div>
               <p className="mt-2 text-sm text-slate-500">30 días gratis, luego S/ 29.90/mes</p>
+              <ul className="mt-5 flex-1 space-y-2.5">
+                {planProFeatures.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
+                    <Check size={15} className="mt-0.5 shrink-0 text-sky-500" />
+                    <span className="font-semibold text-slate-800">{f}</span>
+                  </li>
+                ))}
+              </ul>
               <Link
                 href="/register"
                 className="mt-6 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-sky-500/25 hover:scale-[1.02] transition-all duration-200"
@@ -1160,6 +1229,10 @@ export default function LandingPage() {
               </Link>
             </motion.div>
           </div>
+
+          <p className="mt-8 text-center text-sm text-slate-500">
+            Sin permanencia. Puedes cambiar o cancelar tu plan cuando quieras, sin multas ni letra pequeña.
+          </p>
         </div>
       </section>
 
@@ -1200,6 +1273,7 @@ export default function LandingPage() {
             className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-sky-600 via-sky-600 to-indigo-700 px-5 sm:px-12 py-10 sm:py-16 text-center text-white"
           >
             <div className="relative">
+              <ToriMascot variant="happy" size={76} className="mx-auto mb-4" />
               <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
                 No pierdas otro pedido más.
               </h2>
@@ -1227,21 +1301,70 @@ export default function LandingPage() {
 
       {/* ============ FOOTER ============ */}
       <footer className="border-t border-slate-200 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm font-bold tracking-tight bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-            <LogoTori size={22} />
-            Tori — organiza los pedidos de tu emprendimiento
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto] gap-8 sm:gap-12 items-start">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-bold tracking-tight bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                <LogoTori size={22} />
+                Tori — organiza los pedidos de tu emprendimiento
+              </div>
+              <p className="mt-3 text-xs text-slate-400 max-w-xs leading-relaxed">
+                Pedidos, stock y ventas en un solo lugar. Hecho para emprendedores peruanos que venden por redes.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Producto</p>
+              <ul className="space-y-2.5 text-xs text-slate-500">
+                <li>
+                  <a href="#como-funciona" className="hover:text-sky-600 transition-colors">
+                    Cómo funciona
+                  </a>
+                </li>
+                <li>
+                  <a href="#formulario" className="hover:text-sky-600 transition-colors">
+                    Formulario para clientes
+                  </a>
+                </li>
+                <li>
+                  <a href="#planes" className="hover:text-sky-600 transition-colors">
+                    Planes
+                  </a>
+                </li>
+                <li>
+                  <a href="#faq" className="hover:text-sky-600 transition-colors">
+                    Preguntas frecuentes
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Acceso</p>
+              <ul className="space-y-2.5 text-xs text-slate-500">
+                <li>
+                  <Link href="/login" className="hover:text-sky-600 transition-colors">
+                    Iniciar sesión
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/register" className="hover:text-sky-600 transition-colors">
+                    Comenzar gratis
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
-          <div className="text-xs text-slate-400">
-            © {new Date().getFullYear()} Tori — Todos los derechos reservados.
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-xs text-slate-500 hover:text-slate-700 transition-colors">
-              Iniciar sesión
-            </Link>
-            <Link href="/register" className="text-xs text-slate-500 hover:text-slate-700 transition-colors">
-              Comenzar gratis
-            </Link>
+
+          <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div className="text-xs text-slate-400">
+              © {new Date().getFullYear()} Tori — Todos los derechos reservados.
+            </div>
+            <div className="flex items-center gap-4">
+              <a href="#como-funciona" className="text-xs text-slate-400 hover:text-slate-600 transition-colors">
+                Ir arriba
+              </a>
+            </div>
           </div>
         </div>
       </footer>
