@@ -86,8 +86,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           try {
             const rect = target.getBoundingClientRect()
             const gap = 12
-            const tw = 320
-            const th = 200
+            const tw = 384
+            const th = 260
 
             let top = rect.bottom + gap
             let left = Math.max(
@@ -97,6 +97,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
             if (top + th > window.innerHeight) {
               top = Math.max(12, rect.top - gap - th)
+            } else {
+              top = Math.max(12, top)
             }
 
             setStyle({ top, left, position: 'fixed', zIndex: 50 })
