@@ -9,6 +9,7 @@ import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
+import { openUpgrade } from '@/lib/planGating'
 
 type Props = {
   userId: string
@@ -119,6 +120,12 @@ export default function SeccionProductos({ userId }: Props) {
       setNuevoForm({ nombre: '', sku: '', precio_venta: 0, precio_compra: 0, stock_actual: 0, stock_minimo: 0, unidad: 'unidad' })
       cargarProductos()
     } else {
+      if (res.status === 403) {
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.error || 'Límite alcanzado')
+        openUpgrade()
+        return
+      }
       toast.error('Error al crear')
     }
   }

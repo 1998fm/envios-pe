@@ -5,7 +5,7 @@ import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
 import AutocompleteInput from '@/components/AutocompleteInput'
 import agenciasShalom from '@/data/agencias-shalom.json'
 import { ConfigModalProps } from '@/types/config'
-import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store, Building, Phone, MapPin, Image, MessageCircle, Link2, Globe, Clock, DollarSign, Camera, Music, ExternalLink } from 'lucide-react'
+import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store, Building, Phone, MapPin, Image, MessageCircle, Link2, Globe, Clock, DollarSign, Camera, Music, ExternalLink, Lock } from 'lucide-react'
 import TourHelpButton from '@/components/TourHelpButton'
 import { tourDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
@@ -31,8 +31,8 @@ export default function ModalConfiguracion({
   const tabs = [
     { key: 'EMPRESA', label: 'Empresa' },
     { key: 'METODOS', label: 'Métodos' },
-    ...(!isBasic ? [{ key: 'LOGISTICA' as const, label: 'Logística' }] : []),
-    ...(!isBasic ? [{ key: 'TARIFAS' as const, label: 'Tarifas' }] : []),
+    { key: 'LOGISTICA' as const, label: 'Logística', locked: isBasic },
+    { key: 'TARIFAS' as const, label: 'Tarifas', locked: isBasic },
   ]
 
   function upd<K extends keyof typeof config>(key: K, value: (typeof config)[K]) {
@@ -61,14 +61,21 @@ export default function ModalConfiguracion({
             {tabs.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => upd('vistaConfig', tab.key)}
-                className={`flex-1 py-2 rounded-xl font-medium transition text-sm ${
+                onClick={() => {
+                  if ('locked' in tab && tab.locked) {
+                    onUpgrade?.()
+                    return
+                  }
+                  upd('vistaConfig', tab.key)
+                }}
+                className={`flex-1 py-2 rounded-xl font-medium transition text-sm inline-flex items-center justify-center gap-1.5 ${
                   config.vistaConfig === tab.key
                     ? 'bg-white  shadow text-slate-900 '
                     : 'text-slate-500 '
                 }`}
               >
                 {tab.label}
+                {'locked' in tab && tab.locked && <Lock size={13} className="text-slate-400" />}
               </button>
             ))}
           </div>
@@ -119,7 +126,25 @@ export default function ModalConfiguracion({
                   />
               </div>
 
-              {!isBasic && (
+              {isBasic ? (
+                <div className="p-5 border border-dashed border-slate-300 rounded-2xl bg-slate-50 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center">
+                      <Lock size={18} className="text-slate-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-700">Logo del negocio</h3>
+                      <p className="text-xs text-slate-500">Disponible en el plan Pro</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={onUpgrade}
+                    className="shrink-0 text-xs font-semibold text-sky-600 underline hover:no-underline"
+                  >
+                    Ver planes
+                  </button>
+                </div>
+              ) : (
                 <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
@@ -151,7 +176,25 @@ export default function ModalConfiguracion({
                   placeholder="Gracias por tu compra. En unos segundos te redirigiremos." />
               </div>
 
-              {!isBasic && (
+              {isBasic ? (
+                <div className="p-5 border border-dashed border-slate-300 rounded-2xl bg-slate-50 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center">
+                      <Lock size={18} className="text-slate-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-700">URL de redirección</h3>
+                      <p className="text-xs text-slate-500">Disponible en el plan Pro</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={onUpgrade}
+                    className="shrink-0 text-xs font-semibold text-sky-600 underline hover:no-underline"
+                  >
+                    Ver planes
+                  </button>
+                </div>
+              ) : (
                 <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center">
@@ -167,7 +210,25 @@ export default function ModalConfiguracion({
                 </div>
               )}
 
-              {!isBasic && (
+              {isBasic ? (
+                <div className="p-5 border border-dashed border-slate-300 rounded-2xl bg-slate-50 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center">
+                      <Lock size={18} className="text-slate-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-700">Redes sociales</h3>
+                      <p className="text-xs text-slate-500">Disponible en el plan Pro</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={onUpgrade}
+                    className="shrink-0 text-xs font-semibold text-sky-600 underline hover:no-underline"
+                  >
+                    Ver planes
+                  </button>
+                </div>
+              ) : (
                 <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">

@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { checkRecordLimit } from '@/lib/planLimits'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -35,6 +36,11 @@ export async function POST(request: Request) {
 
   if (!user_id || !persona_id || !items?.length) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
+  }
+
+  const { allowed, reason } = await checkRecordLimit(user_id, 'ventas')
+  if (!allowed) {
+    return NextResponse.json({ error: reason }, { status: 403 })
   }
 
   const pago = metodo_pago === 'YAPE_PLIN' || metodo_pago === 'TARJETA' ? metodo_pago : 'EFECTIVO'

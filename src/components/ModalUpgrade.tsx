@@ -7,6 +7,7 @@ import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import TourHelpButton from '@/components/TourHelpButton'
 import { tourDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
+import { FEATURES } from '@/lib/planGating'
 
 type Props = {
   abierto: boolean
@@ -16,17 +17,7 @@ type Props = {
   userId?: string | null
 }
 
-const features = [
-  { label: 'Envíos mensuales', basic: '50', pro: 'Ilimitados' },
-  { label: 'Métodos de envío', basic: 'Hasta 2', pro: 'Ilimitados' },
-  { label: 'Logo personalizado', basic: false, pro: true },
-  { label: 'Redes sociales en formulario', basic: false, pro: true },
-  { label: 'URL de redirección', basic: false, pro: true },
-  { label: 'Control logístico', basic: false, pro: true },
-  { label: 'Tarifas por distrito', basic: false, pro: true },
-  { label: 'Cambio masivo de estados', basic: false, pro: true },
-  { label: 'Marca blanca en formulario', basic: false, pro: true },
-]
+const features = FEATURES
 
 export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpresa, userId }: Props) {
   const [periodo, setPeriodo] = useState<'mensual' | 'trimestral'>('mensual')

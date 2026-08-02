@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { checkRecordLimit } from '@/lib/planLimits'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -35,6 +36,11 @@ export async function POST(request: Request) {
 
   if (!user_id || !nombre) {
     return NextResponse.json({ error: 'user_id y nombre son requeridos' }, { status: 400 })
+  }
+
+  const { allowed, reason } = await checkRecordLimit(user_id, 'productos')
+  if (!allowed) {
+    return NextResponse.json({ error: reason }, { status: 403 })
   }
 
   const { data, error } = await supabaseAdmin

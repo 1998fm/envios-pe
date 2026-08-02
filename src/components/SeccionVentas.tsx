@@ -9,6 +9,7 @@ import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
+import { openUpgrade } from '@/lib/planGating'
 
 type Props = { userId: string }
 
@@ -165,6 +166,13 @@ export default function SeccionVentas({ userId }: Props) {
       cerrarNueva()
       cargarVentas()
     } else {
+      if (res.status === 403) {
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.error || 'Límite alcanzado')
+        openUpgrade()
+        setCreando(false)
+        return
+      }
       toast.error('Error al crear venta')
     }
     setCreando(false)

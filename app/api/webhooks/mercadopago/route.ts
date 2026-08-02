@@ -66,11 +66,10 @@ export async function POST(request: Request) {
           .eq('id', userId)
       }
 
+      // En 'cancelled' NO se toca pro_until: el usuario conserva el período
+      // ya pagado y checkTrialStatus lo degrada a 'basic' al expirar.
       if (status === 'cancelled') {
-        await supabaseAdmin
-          .from('profiles')
-          .update({ pro_until: null })
-          .eq('id', userId)
+        return new Response('OK', { status: 200 })
       }
     }
 

@@ -13,6 +13,17 @@ export type PlanFeature = {
   dashboard_completo: boolean
   envios_masivos: boolean
   control_logistico: boolean
+  max_productos: number | null
+  max_ventas: number | null
+  max_exportaciones_shalom: number | null
+  max_pedidos_copiar: number | null
+}
+
+export type LimitCheck = {
+  allowed: boolean
+  used: number
+  max: number | null
+  reason?: string
 }
 
 export type TrialStatus = {
@@ -122,4 +133,88 @@ export async function checkEnvioLimit(userId: string): Promise<{ allowed: boolea
   }
 
   return { allowed: true }
+}
+
+type TablaConProfile = 'productos' | 'ventas'
+
+export async function checkRecordLimit(
+  userId: string,
+  tabla: TablaConProfile
+): Promise<LimitCheck> {
+  const { plan } = await checkTrialStatus(userId)
+  const features = await getPlanFeatures(plan)
+
+  const limite =
+    tabla === 'productos' ? features?.max_productos ?? null : features?.max_ventas ?? null
+
+  if (limite === null) {
+    return { allowed: true, used: 0, max: null }
+  }
+
+  const { count, error } = await supabaseAdmin
+    .from(tabla)
+    .select('*', { count: 'exact', head: true })
+    .eq('profile_id', userId)
+
+  if (error) {
+    return { allowed: false, used: 0, max: limite, reason: 'Error al verificar límite' }
+  }
+
+  const used = count ?? 0
+
+  if (used >= limite) {
+    const nombre = tabla === 'productos' ? 'productos' : 'ventas'
+    return {
+      allowed: false,
+      used,
+      max: limite,
+      reason: `Límite de ${limite} ${nombre} alcanzado en el plan Básico. Actualiza a Pro para ${nombre} ilimitados.`,
+    }
+  }
+
+  return { allowed: true, used, max: limite }
+}
+
+export async function checkShalomExportLimit(userId: string): Promise<LimitCheck> {
+  const { plan } = await checkTrialStatus(userId)
+  const features = await getPlanFeatures(plan)
+
+  const max = features?.max_exportaciones_shalom ?? null
+
+  if (max === null) {
+    return { allowed: true, used: 0, max: null }
+  }
+
+  const inicioMes = new Date()
+  inicioMes.setDate(1)
+  inicioMes.setHours(0, 0, 0, 0)
+
+  const { count, error } = await supabaseAdmin
+    .from('shalom_exports')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', inicioMes.toISOString())
+
+  if (error) {
+    return { allowed: false, used: 0, max, reason: 'Error al verificar límite' }
+  }
+
+  const used = count ?? 0
+
+  if (used >= max) {
+    return {
+      allowed: false,
+      used,
+      max,
+      reason: `Límite de ${max} exportaciones a Shalom por mes alcanzado. Actualiza a Pro para exportaciones ilimitadas.`,
+    }
+  }
+
+  return { allowed: true, used, max }
+}
+
+export async function registrarExportacionShalom(userId: string, cantidad: number) {
+  await supabaseAdmin
+    .from('shalom_exports')
+    .insert({ user_id: userId, cantidad })
 }

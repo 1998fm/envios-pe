@@ -43,6 +43,7 @@ import SeccionProductos from '@/components/SeccionProductos'
 import SeccionVentas from '@/components/SeccionVentas'
 import SeccionCompras from '@/components/SeccionCompras'
 import SeccionGastos from '@/components/SeccionGastos'
+import { UPGRADE_EVENT } from '@/lib/planGating'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, clearTour, TOURS, type TourId } from '@/lib/tours'
 
@@ -86,6 +87,7 @@ const [mensajeToast, setMensajeToast] =
   useState<ConfigState>(initialConfigState)
 const [plan, setPlan] = useState('basic')
 const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
+const [shalomUso, setShalomUso] = useState<{ used: number; max: number | null }>({ used: 0, max: null })
 const [mostrarUpgrade, setMostrarUpgrade] = useState(false)
 const [agruparPor, setAgruparPor] = useState<'programada' | 'registro'>('programada')
 const [pestañaActiva, setPestañaActiva] = useState<'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos'>('resumen')
@@ -339,6 +341,10 @@ const mostrarBotonCopiar =
   enviosMotoSeleccionados.length ===
     seleccionados.length
 
+const copiarDatosLocked =
+  plan === 'basic' &&
+  enviosMotoSeleccionados.length > 50
+
   useEffect(() => {
     async function cargar() {
       const {
@@ -525,6 +531,26 @@ setLoading(false)
     return () => clearTimeout(timer)
   }, [pestañaActiva, loading, active, startTour])
 
+  // Abrir modal de upgrade desde cualquier componente
+  useEffect(() => {
+    function handleUpgrade() {
+      setMostrarUpgrade(true)
+    }
+    window.addEventListener(UPGRADE_EVENT, handleUpgrade)
+    return () => window.removeEventListener(UPGRADE_EVENT, handleUpgrade)
+  }, [])
+
+  // Uso mensual de exportaciones Shalom (solo visible en básico)
+  useEffect(() => {
+    if (!userId || plan !== 'basic') return
+    fetch(`/api/usage/shalom?user_id=${userId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && typeof d.used === 'number') setShalomUso({ used: d.used, max: d.max ?? null })
+      })
+      .catch(() => {})
+  }, [userId, plan])
+
   // Manejar retorno de MercadoPago
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -678,6 +704,41 @@ async function confirmarExportacion() {
     )
 
     return
+  }
+
+  if (plan === 'basic' && userId) {
+
+    const res = await fetch(
+      '/api/usage/shalom',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          cantidad: enviosExportar.length,
+        }),
+      }
+    )
+
+    if (!res.ok) {
+
+      const data = await res.json().catch(() => ({}))
+      toast.error(
+        data.error ||
+          'Límite de exportaciones a Shalom alcanzado.'
+      )
+      setMostrarUpgrade(true)
+      return
+
+    } else {
+
+      const data = await res.json().catch(() => ({}))
+      if (data && typeof data.used === 'number') {
+        setShalomUso({ used: data.used, max: data.max ?? null })
+      }
+
+    }
+
   }
 
   exportarShalom(
@@ -1179,8 +1240,10 @@ for (
 
     <DashboardMenu
       plan={plan}
-      tieneShalom={true}
+      tieneShalom={config.metodoShalom}
       showCopiarDatos={mostrarBotonCopiar}
+      copiarDatosLocked={copiarDatosLocked}
+      shalomUso={shalomUso}
       pestañaActiva={pestañaActiva}
       onNavegar={setPestañaActiva}
       onExportShalom={exportarSeleccionados}

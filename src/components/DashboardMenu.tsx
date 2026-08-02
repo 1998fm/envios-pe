@@ -18,12 +18,15 @@ import {
   Receipt,
 } from 'lucide-react'
 import TourHelpButton from '@/components/TourHelpButton'
+import LockedFeature from '@/components/LockedFeature'
 import type { TourId } from '@/lib/tours'
 
 type Props = {
   plan?: string
   tieneShalom: boolean
   showCopiarDatos: boolean
+  copiarDatosLocked?: boolean
+  shalomUso?: { used: number; max: number | null }
   pestañaActiva: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos'
   onNavegar: (p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos') => void
   onExportShalom: () => void
@@ -37,6 +40,8 @@ export default function DashboardMenu({
   plan = 'basic',
   tieneShalom,
   showCopiarDatos,
+  copiarDatosLocked = false,
+  shalomUso = { used: 0, max: null },
   pestañaActiva,
   onNavegar,
   onExportShalom,
@@ -179,24 +184,41 @@ export default function DashboardMenu({
                   <button data-tour="exportar-shalom" onClick={() => ejecutar(onExportShalom)} className={itemClass}>
                     <Download size={16} className="text-sky-500" />
                     Shalom Pro
+                    {shalomUso.max != null && (
+                      <span className="ml-auto text-[10px] font-semibold text-slate-400">
+                        {shalomUso.used}/{shalomUso.max} este mes
+                      </span>
+                    )}
                   </button>
                 )}
-                {plan !== 'basic' && (
+                {plan === 'pro' ? (
                   <button data-tour="cambio-masivo" onClick={() => ejecutar(onCambioMasivo)} className={itemClass}>
                     <Replace size={16} className="text-indigo-500" />
                     Cambio Masivo
                   </button>
+                ) : (
+                  <div data-tour="cambio-masivo" className="flex items-center justify-between pr-3">
+                    <LockedFeature label="Cambio Masivo" hint="Cambio masivo de estados — disponible en el plan Pro" className="flex-1" />
+                  </div>
                 )}
                 <button data-tour="generar-etiquetas" onClick={() => ejecutar(onGenerarEtiquetas)} className={itemClass}>
                   <Tag size={16} className="text-emerald-500" />
                   Generar etiquetas
                 </button>
-                {showCopiarDatos && (
+                {showCopiarDatos && (copiarDatosLocked ? (
+                  <div data-tour="copiar-datos" className="flex items-center justify-between pr-3">
+                    <LockedFeature
+                      label="Copiar datos"
+                      hint="Copiar datos de más de 50 pedidos motorizados — disponible en el plan Pro"
+                      className="flex-1"
+                    />
+                  </div>
+                ) : (
                   <button data-tour="copiar-datos" onClick={() => ejecutar(onCopiarDatos)} className={itemClass}>
                     <Copy size={16} className="text-amber-500" />
                     Copiar datos
                   </button>
-                )}
+                ))}
               </div>
 
               <div className="my-1.5 h-px bg-slate-100" />
