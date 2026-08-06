@@ -31,6 +31,8 @@ const initialConfig: ConfigState = {
   logoUrl: '',
   redirectUrl: '',
   redirectMessage: '',
+  redirectMessageImage: '',
+  redirectMessageImageFile: null,
   instagramUrl: '',
   facebookUrl: '',
   tiktokUrl: '',

@@ -8,6 +8,7 @@ import { CheckCircle2, Calendar } from 'lucide-react'
 type Props = {
   logoUrl?: string
   redirectMessage?: string
+  redirectMessageImage?: string
   redirectUrl?: string
   fechaProgramada?: string
 }
@@ -15,6 +16,7 @@ type Props = {
 export default function SuccessScreen({
   logoUrl,
   redirectMessage,
+  redirectMessageImage,
   redirectUrl,
   fechaProgramada,
 }: Props) {
@@ -101,6 +103,12 @@ export default function SuccessScreen({
         <p className="mt-3 text-slate-500  whitespace-pre-line">
           {redirectMessage || 'Gracias por tu solicitud.'}
         </p>
+
+        {redirectMessageImage && (
+          <div className="mt-5 flex justify-center">
+            <img src={redirectMessageImage} alt="Mensaje de éxito" className="max-h-64 max-w-full object-contain rounded-xl" />
+          </div>
+        )}
 
         {fechaProgramada && (
           <motion.div

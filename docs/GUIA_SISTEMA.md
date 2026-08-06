@@ -555,7 +555,7 @@ Todas las rutas están en `app/api/`. Usan `service_role` (admin). **No validan 
 
 ### Tablas y columnas principales
 
-- **profiles**: `id` (=auth user), `empresa`, `slug` (único), `plan` ('basic'|'pro'), `trial_end`, `pro_until`, `telefono`, `direccion`, `origen_shalom`, `logo_url`, `redirect_url`, `redirect_message`, redes (`instagram_url`, `facebook_url`, `tiktok_url`, `web_url`, `whatsapp_url`), métodos (`metodo_motorizado/shalom/olva/marvisur/flores/otro/recojo`), `nombre_metodo_otro`, `mensaje_recojo`, logística moto/agencias (`logistica_moto_dias[]`, `usa_hora_corte`, `hora_corte`, `limitar`, `cupo`).
+- **profiles**: `id` (=auth user), `empresa`, `slug` (único), `plan` ('basic'|'pro'), `trial_end`, `pro_until`, `telefono`, `direccion`, `origen_shalom`, `logo_url`, `redirect_url`, `redirect_message`, `redirect_message_image`, redes (`instagram_url`, `facebook_url`, `tiktok_url`, `web_url`, `whatsapp_url`), métodos (`metodo_motorizado/shalom/olva/marvisur/flores/otro/recojo`), `nombre_metodo_otro`, `mensaje_recojo`, logística moto/agencias (`logistica_moto_dias[]`, `usa_hora_corte`, `hora_corte`, `limitar`, `cupo`).
 - **envios**: `id`, `user_id`, `nombre`, `dni`, `telefono`, `metodo` (CHECK: MOTORIZADO/SHALOM/OLVA/MARVISUR/FLORES/OTRO/RECOJO), `nombre_metodo`, `destino`, `direccion`, `referencia`, `detalle`, `tamano` (XS/S/M/L), `estado` (NO_EMPACADO/EMPACADO/ENVIADO), `fecha_registro`, `fecha_programada`.
 - **envio_items**: `envio_id` ↔ `venta_item_id`, `cantidad`.
 - **personas**: `dni` (único, nullable), `nombre`, `telefono`.

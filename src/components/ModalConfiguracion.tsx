@@ -169,11 +169,26 @@ export default function ModalConfiguracion({
                   </div>
                   <h3 className="text-lg font-bold text-slate-900">Mensaje de éxito</h3>
                 </div>
-                <p className="text-xs text-slate-500 mb-3">Este mensaje verán tus clientes después de hacer un pedido.</p>
+                <p className="text-xs text-slate-500 mb-3">Este mensaje (texto y/o imagen) verán tus clientes después de hacer un pedido.</p>
                 <textarea value={config.redirectMessage}
                   onChange={(e) => upd('redirectMessage', e.target.value)} rows={4}
                   className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400"
                   placeholder="Gracias por tu compra. En unos segundos te redirigiremos." />
+                {config.redirectMessageImage && (
+                  <div className="mt-3">
+                    <img src={config.redirectMessageImage} alt="Imagen del mensaje de éxito"
+                      className="max-h-40 object-contain border border-slate-200 rounded-xl p-2 bg-white" />
+                    <button
+                      onClick={() => { upd('redirectMessageImage', ''); upd('redirectMessageImageFile', null) }}
+                      className="mt-2 text-xs font-semibold text-rose-600 underline hover:no-underline"
+                    >
+                      Quitar imagen
+                    </button>
+                  </div>
+                )}
+                <input type="file" accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => upd('redirectMessageImageFile', e.target.files?.[0] || null)}
+                  className="mt-3 w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-sky-100 file:text-sky-700 file:font-semibold file:text-sm" />
               </div>
 
               {isBasic ? (

@@ -50,6 +50,7 @@ export default async function FormPage({
         isPro={isPro}
         logoUrl={profile.logo_url}
         redirectMessage={profile.redirect_message}
+        redirectMessageImage={profile.redirect_message_image}
         redirectUrl={profile.redirect_url}
 
         instagramUrl={profile.instagram_url}

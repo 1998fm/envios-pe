@@ -29,6 +29,21 @@ export async function guardarPasoEmpresa(
     nuevaLogoUrl = data.publicUrl
   }
 
+  let nuevaMsgImagen = config.redirectMessageImage
+
+  if (config.redirectMessageImageFile) {
+    const extension = config.redirectMessageImageFile.name.split('.').pop()
+    const filePath = `${userId}/mensaje-exito.${extension}`
+    const { error: uploadError } = await supabase.storage
+      .from('logos')
+      .upload(filePath, config.redirectMessageImageFile, { upsert: true })
+
+    if (uploadError) return { error: uploadError.message }
+
+    const { data } = supabase.storage.from('logos').getPublicUrl(filePath)
+    nuevaMsgImagen = data.publicUrl
+  }
+
   const slug = generarSlug(config.empresa)
   const { data: slugExistente } = await supabase
     .from('profiles')
@@ -50,6 +65,7 @@ export async function guardarPasoEmpresa(
       logo_url: nuevaLogoUrl,
       redirect_url: config.redirectUrl,
       redirect_message: config.redirectMessage,
+      redirect_message_image: nuevaMsgImagen,
       instagram_url: config.instagramUrl,
       facebook_url: config.facebookUrl,
       tiktok_url: config.tiktokUrl,

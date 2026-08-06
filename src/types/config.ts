@@ -10,6 +10,8 @@ export type ConfigState = {
   logoUrl: string
   redirectUrl: string
   redirectMessage: string
+  redirectMessageImage: string
+  redirectMessageImageFile: File | null
   instagramUrl: string
   facebookUrl: string
   tiktokUrl: string
@@ -47,6 +49,8 @@ export const initialConfigState: ConfigState = {
   logoUrl: '',
   redirectUrl: '',
   redirectMessage: '',
+  redirectMessageImage: '',
+  redirectMessageImageFile: null,
   instagramUrl: '',
   facebookUrl: '',
   tiktokUrl: '',

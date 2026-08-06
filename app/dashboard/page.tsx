@@ -394,6 +394,7 @@ if (crearPerfilError) {
       logo_url,
       redirect_url,
       redirect_message,
+      redirect_message_image,
 
       instagram_url,
       facebook_url,
@@ -465,6 +466,7 @@ setConfig(prev => ({
   logoUrl: profile?.logo_url || '',
   redirectUrl: profile?.redirect_url || '',
   redirectMessage: profile?.redirect_message || '',
+  redirectMessageImage: profile?.redirect_message_image || '',
   instagramUrl: profile?.instagram_url || '',
   facebookUrl: profile?.facebook_url || '',
   tiktokUrl: profile?.tiktok_url || '',
@@ -985,6 +987,50 @@ async function guardarConfiguracion() {
     setConfig(prev => ({...prev, logoUrl: nuevaLogoUrl}))
   }
 
+  let nuevaMsgImagen = config.redirectMessageImage
+
+  if (config.redirectMessageImageFile) {
+
+    const extension =
+      config.redirectMessageImageFile.name
+        .split('.')
+        .pop()
+
+    const filePath =
+      `${user.id}/mensaje-exito.${extension}`
+
+    const {
+      error: uploadError,
+    } = await supabase.storage
+      .from('logos')
+      .upload(
+        filePath,
+        config.redirectMessageImageFile,
+        {
+          upsert: true,
+        }
+      )
+
+    if (uploadError) {
+      toast.error(
+        uploadError.message
+      )
+      return
+    }
+
+    const { data } =
+      supabase.storage
+        .from('logos')
+        .getPublicUrl(
+          filePath
+        )
+
+    nuevaMsgImagen =
+      data.publicUrl
+
+    setConfig(prev => ({...prev, redirectMessageImage: nuevaMsgImagen}))
+  }
+
   const nuevoSlug =
     config.empresa
     .toLowerCase()
@@ -1028,6 +1074,9 @@ async function guardarConfiguracion() {
 
         redirect_message:
           config.redirectMessage,
+
+        redirect_message_image:
+          nuevaMsgImagen,
 
         instagram_url:
           config.instagramUrl,

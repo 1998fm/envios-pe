@@ -17,6 +17,7 @@ type Props = {
   isPro?: boolean
   logoUrl?: string
   redirectMessage?: string
+  redirectMessageImage?: string
   redirectUrl?: string
   instagramUrl?: string
   facebookUrl?: string
@@ -41,6 +42,7 @@ export default function PublicForm({
   isPro = false,
   logoUrl,
   redirectMessage,
+  redirectMessageImage,
   redirectUrl,
   instagramUrl,
   facebookUrl,
@@ -259,6 +261,7 @@ export default function PublicForm({
         <SuccessScreen
           logoUrl={isPro ? logoUrl : undefined}
           redirectMessage={isPro ? redirectMessage : undefined}
+          redirectMessageImage={isPro ? redirectMessageImage : undefined}
           redirectUrl={isPro ? redirectUrl : undefined}
           fechaProgramada={fechaProgramada}
         />
