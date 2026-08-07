@@ -87,12 +87,14 @@ export async function POST(req: Request) {
           logistica_moto_dias,
           logistica_moto_usa_hora_corte,
           logistica_moto_hora_corte,
+          logistica_moto_anticipacion,
           logistica_moto_limitar,
           logistica_moto_cupo,
 
           logistica_agencias_dias,
           logistica_agencias_usa_hora_corte,
           logistica_agencias_hora_corte,
+          logistica_agencias_anticipacion,
           logistica_agencias_limitar,
           logistica_agencias_cupo
         `)
@@ -123,11 +125,13 @@ export async function POST(req: Request) {
           logisticaMotoDias: perfil.logistica_moto_dias ?? ['MONDAY'],
           logisticaMotoUsaHoraCorte: perfil.logistica_moto_usa_hora_corte ?? false,
           logisticaMotoHoraCorte: perfil.logistica_moto_hora_corte ?? '18:00',
+          logisticaMotoAnticipacion: perfil.logistica_moto_anticipacion ?? 1,
           logisticaMotoLimitar: perfil.logistica_moto_limitar ?? false,
           logisticaMotoCupo: perfil.logistica_moto_cupo ?? 0,
           logisticaAgenciasDias: perfil.logistica_agencias_dias ?? ['MONDAY'],
           logisticaAgenciasUsaHoraCorte: perfil.logistica_agencias_usa_hora_corte ?? false,
           logisticaAgenciasHoraCorte: perfil.logistica_agencias_hora_corte ?? '18:00',
+          logisticaAgenciasAnticipacion: perfil.logistica_agencias_anticipacion ?? 1,
           logisticaAgenciasLimitar: perfil.logistica_agencias_limitar ?? false,
           logisticaAgenciasCupo: perfil.logistica_agencias_cupo ?? 0,
         }
@@ -135,11 +139,13 @@ export async function POST(req: Request) {
           logisticaMotoDias: perfil.logistica_moto_dias ?? ['MONDAY'],
           logisticaMotoUsaHoraCorte: false,
           logisticaMotoHoraCorte: '18:00',
+          logisticaMotoAnticipacion: 1,
           logisticaMotoLimitar: false,
           logisticaMotoCupo: 0,
           logisticaAgenciasDias: perfil.logistica_agencias_dias ?? ['MONDAY'],
           logisticaAgenciasUsaHoraCorte: false,
           logisticaAgenciasHoraCorte: '18:00',
+          logisticaAgenciasAnticipacion: 1,
           logisticaAgenciasLimitar: false,
           logisticaAgenciasCupo: 0,
         }

@@ -29,11 +29,13 @@ export type ConfigState = {
   logisticaMotoDias: string[]
   logisticaMotoHoraCorte: string
   logisticaMotoUsaHoraCorte: boolean
+  logisticaMotoAnticipacion: number
   logisticaMotoLimitar: boolean
   logisticaMotoCupo: number
   logisticaAgenciasDias: string[]
   logisticaAgenciasHoraCorte: string
   logisticaAgenciasUsaHoraCorte: boolean
+  logisticaAgenciasAnticipacion: number
   logisticaAgenciasLimitar: boolean
   logisticaAgenciasCupo: number
   tarifas: Record<string, string>
@@ -68,11 +70,13 @@ export const initialConfigState: ConfigState = {
   logisticaMotoDias: ['MONDAY'],
   logisticaMotoHoraCorte: '18:00',
   logisticaMotoUsaHoraCorte: false,
+  logisticaMotoAnticipacion: 1,
   logisticaMotoLimitar: false,
   logisticaMotoCupo: 0,
   logisticaAgenciasDias: ['MONDAY'],
   logisticaAgenciasHoraCorte: '18:00',
   logisticaAgenciasUsaHoraCorte: false,
+  logisticaAgenciasAnticipacion: 1,
   logisticaAgenciasLimitar: false,
   logisticaAgenciasCupo: 0,
   tarifas: {},

@@ -15,6 +15,9 @@ export function obtenerConfiguracionLogistica(
     logistica_moto_hora_corte:
       config.logisticaMotoHoraCorte,
 
+    logistica_moto_anticipacion:
+      config.logisticaMotoAnticipacion,
+
     logistica_moto_limitar:
       config.logisticaMotoLimitar,
 
@@ -29,6 +32,9 @@ export function obtenerConfiguracionLogistica(
 
     logistica_agencias_hora_corte:
       config.logisticaAgenciasHoraCorte,
+
+    logistica_agencias_anticipacion:
+      config.logisticaAgenciasAnticipacion,
 
     logistica_agencias_limitar:
       config.logisticaAgenciasLimitar,

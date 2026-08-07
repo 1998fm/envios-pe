@@ -413,7 +413,7 @@ Archivo: `src/components/ModalConfiguracion.tsx`. Se abre desde el menú lateral
   1. Sube el logo a storage `logos/{userId}/logo.{ext}` (si cambió).
   2. Valida slug único.
   3. `UPDATE profiles` con todos los campos de negocio, métodos, logística, redes, redirect.
-  4. **Sanitiza logística en básico** (aunque la UI no lo deje editar): fuerza `usaHoraCorte=false`, `horaCorte='18:00'`, `limitar=false`, `cupo=0`.
+  4. **Sanitiza logística en básico** (aunque la UI no lo deje editar): fuerza `usaHoraCorte=false`, `horaCorte='18:00'`, `anticipacion=1`, `limitar=false`, `cupo=0`.
   5. `UPSERT tarifas_moto` (onConflict `profile_id,distrito`).
   6. Toast "Configuración guardada".
 
@@ -496,7 +496,7 @@ Archivo: `app/f/[slug]/page.tsx` (Server) + `src/components/PublicForm.tsx` (Cli
 | Logo personalizado | ✗ | ✓ |
 | Redes sociales en formulario | ✗ | ✓ |
 | URL de redirección | ✗ | ✓ |
-| Hora de corte y cupo diario | ✗ | ✓ |
+| Hora de corte, anticipación mínima y cupo diario | ✗ | ✓ |
 | Tarifas por distrito | ✗ | ✓ |
 | Cambio masivo de estados | ✗ | ✓ |
 | Marca blanca en formulario | ✗ | ✓ |
@@ -555,7 +555,7 @@ Todas las rutas están en `app/api/`. Usan `service_role` (admin). **No validan 
 
 ### Tablas y columnas principales
 
-- **profiles**: `id` (=auth user), `empresa`, `slug` (único), `plan` ('basic'|'pro'), `trial_end`, `pro_until`, `telefono`, `direccion`, `origen_shalom`, `logo_url`, `redirect_url`, `redirect_message`, `redirect_message_image`, redes (`instagram_url`, `facebook_url`, `tiktok_url`, `web_url`, `whatsapp_url`), métodos (`metodo_motorizado/shalom/olva/marvisur/flores/otro/recojo`), `nombre_metodo_otro`, `mensaje_recojo`, logística moto/agencias (`logistica_moto_dias[]`, `usa_hora_corte`, `hora_corte`, `limitar`, `cupo`).
+- **profiles**: `id` (=auth user), `empresa`, `slug` (único), `plan` ('basic'|'pro'), `trial_end`, `pro_until`, `telefono`, `direccion`, `origen_shalom`, `logo_url`, `redirect_url`, `redirect_message`, `redirect_message_image`, redes (`instagram_url`, `facebook_url`, `tiktok_url`, `web_url`, `whatsapp_url`), métodos (`metodo_motorizado/shalom/olva/marvisur/flores/otro/recojo`), `nombre_metodo_otro`, `mensaje_recojo`, logística moto/agencias (`logistica_moto_dias[]`, `usa_hora_corte`, `hora_corte`, `anticipacion` (días mínimos, default 1), `limitar`, `cupo`).
 - **envios**: `id`, `user_id`, `nombre`, `dni`, `telefono`, `metodo` (CHECK: MOTORIZADO/SHALOM/OLVA/MARVISUR/FLORES/OTRO/RECOJO), `nombre_metodo`, `destino`, `direccion`, `referencia`, `detalle`, `tamano` (XS/S/M/L), `estado` (NO_EMPACADO/EMPACADO/ENVIADO), `fecha_registro`, `fecha_programada`.
 - **envio_items**: `envio_id` ↔ `venta_item_id`, `cantidad`.
 - **personas**: `dni` (único, nullable), `nombre`, `telefono`.

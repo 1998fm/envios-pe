@@ -112,11 +112,13 @@ export async function guardarPasoLogistica(
       logisticaMotoDias: config.logisticaMotoDias,
       logisticaMotoUsaHoraCorte: config.logisticaMotoUsaHoraCorte,
       logisticaMotoHoraCorte: config.logisticaMotoHoraCorte,
+      logisticaMotoAnticipacion: config.logisticaMotoAnticipacion,
       logisticaMotoLimitar: config.logisticaMotoLimitar,
       logisticaMotoCupo: config.logisticaMotoCupo,
       logisticaAgenciasDias: config.logisticaAgenciasDias,
       logisticaAgenciasUsaHoraCorte: config.logisticaAgenciasUsaHoraCorte,
       logisticaAgenciasHoraCorte: config.logisticaAgenciasHoraCorte,
+      logisticaAgenciasAnticipacion: config.logisticaAgenciasAnticipacion,
       logisticaAgenciasLimitar: config.logisticaAgenciasLimitar,
       logisticaAgenciasCupo: config.logisticaAgenciasCupo,
     }))

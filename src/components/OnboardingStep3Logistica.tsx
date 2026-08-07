@@ -45,6 +45,8 @@ export default function OnboardingStep3Logistica({ config, upd }: Props) {
               setUsaHora={setter(upd, 'logisticaMotoUsaHoraCorte', config)}
               hora={config.logisticaMotoHoraCorte}
               setHora={setter(upd, 'logisticaMotoHoraCorte', config)}
+              anticipacion={config.logisticaMotoAnticipacion}
+              setAnticipacion={setter(upd, 'logisticaMotoAnticipacion', config)}
               limitar={config.logisticaMotoLimitar}
               setLimitar={setter(upd, 'logisticaMotoLimitar', config)}
               cupo={config.logisticaMotoCupo}
@@ -69,6 +71,8 @@ export default function OnboardingStep3Logistica({ config, upd }: Props) {
               setUsaHora={setter(upd, 'logisticaAgenciasUsaHoraCorte', config)}
               hora={config.logisticaAgenciasHoraCorte}
               setHora={setter(upd, 'logisticaAgenciasHoraCorte', config)}
+              anticipacion={config.logisticaAgenciasAnticipacion}
+              setAnticipacion={setter(upd, 'logisticaAgenciasAnticipacion', config)}
               limitar={config.logisticaAgenciasLimitar}
               setLimitar={setter(upd, 'logisticaAgenciasLimitar', config)}
               cupo={config.logisticaAgenciasCupo}
@@ -83,7 +87,7 @@ export default function OnboardingStep3Logistica({ config, upd }: Props) {
 
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
         <p className="font-semibold">¿Cómo funciona?</p>
-        <p className="text-xs mt-1">La hora de corte es del <strong>día anterior</strong> al día de envío. Ej: si envías lunes con corte 10am, los pedidos después de las 10am del domingo se programan para el martes (siguiente día disponible). Así siempre cumples los plazos.</p>
+        <p className="text-xs mt-1">La <strong>anticipación mínima</strong> indica cuántos días antes deben registrar sus pedidos tus clientes. Si activas la <strong>hora de corte</strong>, los pedidos hechos después de esa hora se programan un día adicional. Ej: con anticipación 2 y corte 10am, un pedido del lunes a las 11am se programa para el miércoles (siguiente día disponible).</p>
       </div>
     </div>
   )

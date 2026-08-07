@@ -398,6 +398,8 @@ export default function ModalConfiguracion({
                         setUsaHora={setter('logisticaMotoUsaHoraCorte')}
                         hora={config.logisticaMotoHoraCorte}
                         setHora={setter('logisticaMotoHoraCorte')}
+                        anticipacion={config.logisticaMotoAnticipacion}
+                        setAnticipacion={setter('logisticaMotoAnticipacion')}
                         limitar={config.logisticaMotoLimitar}
                         setLimitar={setter('logisticaMotoLimitar')}
                         cupo={config.logisticaMotoCupo}
@@ -424,6 +426,8 @@ export default function ModalConfiguracion({
                           setUsaHora={setter('logisticaAgenciasUsaHoraCorte')}
                           hora={config.logisticaAgenciasHoraCorte}
                           setHora={setter('logisticaAgenciasHoraCorte')}
+                          anticipacion={config.logisticaAgenciasAnticipacion}
+                          setAnticipacion={setter('logisticaAgenciasAnticipacion')}
                           limitar={config.logisticaAgenciasLimitar}
                           setLimitar={setter('logisticaAgenciasLimitar')}
                           cupo={config.logisticaAgenciasCupo}

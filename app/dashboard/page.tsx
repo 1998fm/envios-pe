@@ -413,12 +413,14 @@ if (crearPerfilError) {
  logistica_moto_dias,
  logistica_moto_hora_corte,
  logistica_moto_usa_hora_corte,
+ logistica_moto_anticipacion,
  logistica_moto_limitar,
  logistica_moto_cupo,
 
  logistica_agencias_dias,
  logistica_agencias_hora_corte,
  logistica_agencias_usa_hora_corte,
+ logistica_agencias_anticipacion,
  logistica_agencias_limitar,
  logistica_agencias_cupo
     `)
@@ -484,11 +486,13 @@ setConfig(prev => ({
   logisticaMotoDias: profile?.logistica_moto_dias ?? ['MONDAY'],
   logisticaMotoHoraCorte: profile?.logistica_moto_hora_corte ?? '18:00',
   logisticaMotoUsaHoraCorte: profile?.logistica_moto_usa_hora_corte ?? false,
+  logisticaMotoAnticipacion: profile?.logistica_moto_anticipacion ?? 1,
   logisticaMotoLimitar: profile?.logistica_moto_limitar ?? false,
   logisticaMotoCupo: profile?.logistica_moto_cupo ?? 0,
   logisticaAgenciasDias: profile?.logistica_agencias_dias ?? ['MONDAY'],
   logisticaAgenciasHoraCorte: profile?.logistica_agencias_hora_corte ?? '18:00',
   logisticaAgenciasUsaHoraCorte: profile?.logistica_agencias_usa_hora_corte ?? false,
+  logisticaAgenciasAnticipacion: profile?.logistica_agencias_anticipacion ?? 1,
   logisticaAgenciasLimitar: profile?.logistica_agencias_limitar ?? false,
   logisticaAgenciasCupo: profile?.logistica_agencias_cupo ?? 0,
   tarifas: tarifasObj,
@@ -1125,12 +1129,14 @@ mensaje_recojo:
   logisticaMotoDias: config.logisticaMotoDias,
   logisticaMotoUsaHoraCorte: plan === 'basic' ? false : config.logisticaMotoUsaHoraCorte,
   logisticaMotoHoraCorte: plan === 'basic' ? '18:00' : config.logisticaMotoHoraCorte,
+  logisticaMotoAnticipacion: plan === 'basic' ? 1 : config.logisticaMotoAnticipacion,
   logisticaMotoLimitar: plan === 'basic' ? false : config.logisticaMotoLimitar,
   logisticaMotoCupo: plan === 'basic' ? 0 : config.logisticaMotoCupo,
 
   logisticaAgenciasDias: config.logisticaAgenciasDias,
   logisticaAgenciasUsaHoraCorte: plan === 'basic' ? false : config.logisticaAgenciasUsaHoraCorte,
   logisticaAgenciasHoraCorte: plan === 'basic' ? '18:00' : config.logisticaAgenciasHoraCorte,
+  logisticaAgenciasAnticipacion: plan === 'basic' ? 1 : config.logisticaAgenciasAnticipacion,
   logisticaAgenciasLimitar: plan === 'basic' ? false : config.logisticaAgenciasLimitar,
   logisticaAgenciasCupo: plan === 'basic' ? 0 : config.logisticaAgenciasCupo,
 

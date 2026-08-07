@@ -29,6 +29,11 @@ export async function calcularFechaEntrega(
       ? configuracion.logisticaMotoHoraCorte
       : configuracion.logisticaAgenciasHoraCorte
 
+  const anticipacion =
+    metodo === 'MOTO'
+      ? configuracion.logisticaMotoAnticipacion
+      : configuracion.logisticaAgenciasAnticipacion
+
   const limitar =
     metodo === 'MOTO'
       ? configuracion.logisticaMotoLimitar
@@ -48,8 +53,8 @@ let fechaEntrega = new Date(hoyPeru)
 
 const diasAgregar =
   usaHora && validarHoraCorte(horaCorte)
-    ? 2
-    : 1
+    ? anticipacion + 1
+    : anticipacion
 
 fechaEntrega.setDate(fechaEntrega.getDate() + diasAgregar)
 

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   const { data: perfil, error } = await supabaseAdmin
     .from('profiles')
-    .select('plan, trial_end, pro_until, logistica_moto_dias, logistica_moto_usa_hora_corte, logistica_moto_hora_corte, logistica_moto_limitar, logistica_moto_cupo')
+    .select('plan, trial_end, pro_until, logistica_moto_dias, logistica_moto_usa_hora_corte, logistica_moto_hora_corte, logistica_moto_anticipacion, logistica_moto_limitar, logistica_moto_cupo')
     .eq('id', userId)
     .single()
 
@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
   const diasDisponibles: string[] = perfil?.logistica_moto_dias ?? ['MONDAY']
   const usaHora = esPro ? (perfil?.logistica_moto_usa_hora_corte ?? false) : false
   const horaCorte = esPro ? (perfil?.logistica_moto_hora_corte ?? '18:00') : '18:00'
+  const anticipacion = esPro ? (perfil?.logistica_moto_anticipacion ?? 1) : 1
   const limitar = esPro ? (perfil?.logistica_moto_limitar ?? false) : false
   const cupo = esPro ? (perfil?.logistica_moto_cupo ?? 0) : 0
 
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
   const [y, m, d] = peruStr.split('-').map(Number)
   const hoyPeru = new Date(y, m - 1, d, 12, 0, 0, 0)
 
-  const offset = usaHora && validarHoraCorte(horaCorte) ? 2 : 1
+  const offset = usaHora && validarHoraCorte(horaCorte) ? anticipacion + 1 : anticipacion
 
   const fechasDisponibles: string[] = []
   const candidata = new Date(hoyPeru)

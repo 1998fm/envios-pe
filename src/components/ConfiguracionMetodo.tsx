@@ -11,6 +11,9 @@ type Props = {
   hora: string
   setHora: React.Dispatch<React.SetStateAction<string>>
 
+  anticipacion: number
+  setAnticipacion: React.Dispatch<React.SetStateAction<number>>
+
   limitar: boolean
   setLimitar: React.Dispatch<React.SetStateAction<boolean>>
 
@@ -37,6 +40,9 @@ export default function ConfiguracionMetodo({
 
   hora,
   setHora,
+
+  anticipacion,
+  setAnticipacion,
 
   limitar,
   setLimitar,
@@ -116,6 +122,32 @@ export default function ConfiguracionMetodo({
                 <span className="text-xs text-slate-400">Ej: 18:00 = pedidos después de las 6pm van al día siguiente</span>
               </div>
             )}
+          </div>
+
+          <div className="space-y-3">
+            <label className="flex items-center gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-700">Días de anticipación mínima</p>
+                <p className="text-xs text-slate-500">Cuántos días antes deben registrar sus pedidos tus clientes</p>
+              </div>
+            </label>
+
+            <div className="flex items-center gap-4 ml-7">
+              <input
+                inputMode="numeric"
+                pattern="[0-9]*"
+                type="text"
+                min={1}
+                max={7}
+                value={anticipacion || ''}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10)
+                  setAnticipacion(isNaN(val) ? 1 : Math.min(Math.max(val, 1), 7))
+                }}
+                className="w-24 border border-slate-200 rounded-xl px-4 py-2 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+              />
+              <span className="text-xs text-slate-400">días antes (mínimo 1)</span>
+            </div>
           </div>
 
           <label className="flex items-center gap-3 cursor-pointer">
