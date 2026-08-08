@@ -2,29 +2,28 @@
 
 import { motion } from 'framer-motion'
 import {
-  AlertTriangle,
-  ArrowDown,
   ArrowRight,
   BarChart3,
   Boxes,
-  Brain,
   Check,
   CheckCircle2,
   ClipboardList,
+  Clock,
+  Coins,
   MapPin,
   Menu,
+  MessageCircle,
   Minus,
   Package,
-  PackageX,
   Palette,
   Plus,
+  Search,
   Settings,
   ShieldCheck,
   ShoppingCart,
   Smartphone,
   Star,
   Store,
-  TrendingDown,
   Truck,
   UserRound,
   Warehouse,
@@ -42,93 +41,156 @@ const fadeUp = {
   transition: { duration: 0.5, ease: 'easeOut' },
 } as const
 
+const diagnosticoItems = [
+  'Busqué una conversación en WhatsApp para encontrar los datos de un pedido.',
+  'Vendí algo y después no estaba seguro de si todavía quedaba.',
+  'Olvidé cobrar un pedido.',
+  'Olvidé enviar un pedido.',
+  'Mandé un pedido incompleto.',
+  'Copié direcciones manualmente para preparar envíos.',
+  'Tengo información repartida entre WhatsApp, Excel, notas o cuadernos.',
+  'Después de cada live tengo que sentarme a ordenar todo.',
+  'Siento que paso demasiado tiempo organizando en lugar de vender.',
+]
+
+const flujoProblema = ['Cliente', 'WhatsApp', 'Pedido', 'Pago', 'Inventario', 'Empaque', 'Envío', 'Seguimiento']
+
+const consecuencias = [
+  { icon: Clock, title: 'Tiempo', desc: 'Horas que podrías usar para vender.' },
+  { icon: Coins, title: 'Dinero', desc: 'Pérdidas causadas por errores, olvidos o falta de control.' },
+  { icon: Package, title: 'Pedidos', desc: 'Pedidos incompletos, equivocados u olvidados.' },
+  { icon: Search, title: 'Información', desc: 'Tiempo buscando datos entre chats, hojas y notas.' },
+  { icon: MessageCircle, title: 'WhatsApp', desc: 'Cientos de conversaciones que revisar para encontrar información.' },
+]
+
+const antesItems = [
+  'Buscar conversaciones.',
+  'Revisar notas.',
+  'Actualizar hojas.',
+  'Buscar direcciones.',
+  'Revisar pedidos uno por uno.',
+  'Intentar recordar qué pasó.',
+]
+
+const despuesItems = [
+  'Pedidos organizados.',
+  'Envíos listos.',
+  'Inventario claro.',
+  'Dinero disponible visible.',
+  'Menos trabajo repetitivo.',
+  'Mayor tranquilidad.',
+]
+
 const features = [
   {
-    icon: Truck,
-    title: 'Recibe pedidos ordenados',
-    desc: 'Tus clientes llenan sus datos y eligen su envío. Todo llega a un solo lugar, sin desorden ni mensajes perdidos.',
+    icon: MessageCircle,
+    title: 'Deja de buscar pedidos en WhatsApp.',
+    problem: '¿Sigues buscando conversaciones para encontrar los datos de un pedido?',
+    solution: 'Tu cliente completa sus datos desde tu formulario y la información llega organizada a Tori.',
+    benefit: 'Menos copiar. Menos errores. Más tiempo.',
   },
   {
     icon: Boxes,
-    title: 'Controla tu stock',
-    desc: 'Registra tus productos y Tori te avisa cuando algo se está por acabar. Nunca más te quedas sin inventario.',
+    title: '¿Vendiste algo y ya no recuerdas si quedaba?',
+    problem: 'Controlar el inventario después de cada venta puede convertirse en otro trabajo más.',
+    solution: 'Tori mantiene tu inventario conectado con tus ventas.',
+    benefit: 'Sabes qué tienes disponible y reduces el riesgo de vender algo que ya no tienes.',
+  },
+  {
+    icon: Coins,
+    title: 'Ten claro cuánto dinero tienes disponible.',
+    problem: 'Hacer cuentas constantemente para saber cómo va el negocio.',
+    solution: 'Tori te ayuda a tener una visión clara de tu dinero disponible.',
+    benefit: 'Porque vender más también significa saber cuánto realmente tienes.',
   },
   {
     icon: ShoppingCart,
-    title: 'Lleva tus ventas y cobros',
-    desc: 'Efectivo, Yape/Plin o tarjeta. Si un pago falta, te queda marcado para que no se te olvide.',
+    title: 'Organiza tus ventas y cobros.',
+    problem: 'Cuando las ventas y los cobros están dispersos, es fácil perder el control.',
+    solution: 'Registra y consulta tus ventas y cobros desde un mismo sistema.',
+    benefit: 'Más claridad sobre lo que vendiste y lo que tienes pendiente.',
   },
   {
     icon: Warehouse,
-    title: 'Registra compras y gastos',
-    desc: 'Proveedores, materiales, pasajes y delivery. Sabes cuánto entra y cuánto sale de tu negocio.',
+    title: 'Controla compras y gastos.',
+    problem: 'Los gastos pequeños también terminan afectando las cuentas.',
+    solution: 'Registra compras y gastos para tener una visión más completa del negocio.',
+    benefit: 'Deja de hacer cuentas a ciegas.',
   },
   {
-    icon: MapPin,
-    title: 'Define tu reparto',
-    desc: 'Precios por distrito, horarios de corte y cupo diario. Tori calcula por ti, sin hacer cuentas a mano.',
-  },
-  {
-    icon: Smartphone,
-    title: 'Formulario con tu marca',
-    desc: 'Tus clientes ven tu logo y tus colores. Piden desde el celular, sin registrarse y sin bajar apps.',
+    icon: Truck,
+    title: 'Coordina tus envíos con menos trabajo.',
+    problem: 'Preparar información para el courier manualmente consume tiempo.',
+    solution: 'Tori organiza la información necesaria para gestionar tus envíos.',
+    benefit: 'Menos trabajo manual y menos posibilidades de equivocarte.',
   },
 ]
+
+const featureFormulario = {
+  icon: Palette,
+  title: 'Tu formulario, a tu manera.',
+  problem: 'No todos los negocios necesitan pedir los mismos datos.',
+  solution: 'Personaliza el formulario que utilizan tus clientes para solicitar sus envíos.',
+  benefit: 'Recibe la información que realmente necesitas, ordenada desde el inicio.',
+}
 
 const steps = [
   {
     step: '01',
     icon: Settings,
     title: 'Crea tu cuenta',
-    desc: 'Ponle tu nombre y tu logo a tu negocio. Todo listo en menos de 5 minutos.',
+    desc: 'Empieza tu prueba gratuita y configura tu negocio.',
   },
   {
     step: '02',
-    icon: Smartphone,
-    title: 'Comparte tu link',
-    desc: 'Tu formulario de pedidos, listo para WhatsApp, Instagram o tu web.',
+    icon: ClipboardList,
+    title: 'Organiza tu operación',
+    desc: 'Configura tus productos, ventas, inventario y envíos.',
   },
   {
     step: '03',
-    icon: ClipboardList,
-    title: 'Recibe y despacha',
-    desc: 'Cada pedido llega ordenado a tu panel. Tú solo revisas y despachas.',
+    icon: CheckCircle2,
+    title: 'Empieza a trabajar',
+    desc: 'Deja que Tori te ayude a mantener todo organizado.',
   },
 ]
 
-const testimonials = [
+const historias = [
   {
-    initials: 'CR',
-    gradient: 'from-sky-500 to-cyan-500',
-    quote: 'Tenía un WhatsApp lleno de pedidos y direcciones. Ahora cada cliente llena su pedido en mi formulario y yo solo reviso qué despachar.',
-    name: 'Camila Rivas',
-    role: 'Repostería — Lima',
-    result: 'Ahorro 2 horas al día respondiendo pedidos',
+    quote: 'Es como mi Excel, pero en orden.',
+    context: 'Emprendedora de repostería · Lima',
+    result: 'Ahora sabe cuánto dinero tiene disponible en segundos y ya no llena manualmente el formato de Shalom ni busca direcciones en WhatsApp.',
   },
   {
-    initials: 'JM',
-    gradient: 'from-indigo-500 to-purple-500',
-    quote: 'Antes usaba Excel y siempre se me escapaba algo. Ahora pedidos, stock y ventas están en un solo lugar y nada se pierde.',
-    name: 'Jorge Manrique',
-    role: 'Boutique de ropa — Lima',
-    result: 'Ya no se me olvida ningún pedido ni cobro',
+    quote: 'Ahora puedo usar mi tiempo para vender más.',
+    context: 'Emprendedora de repostería · Lima',
+    result: 'Antes podía perder alrededor de 3 horas al día organizando pedidos.',
   },
   {
-    initials: 'AP',
-    gradient: 'from-emerald-500 to-teal-500',
-    quote: 'El formulario con mi marca hizo que pedir sea facilísimo. Mis ventas crecieron y ya no se me escapa ningún pedido.',
-    name: 'Andrea Paz',
-    role: 'Distribuidora — Ate',
-    result: 'Vendió más en su primer mes con el formulario',
+    quote: 'Todo es práctico y fácil de usar.',
+    context: 'Emprendedora de repostería · Lima',
+    result: 'Describe Tori como simple, necesario y funcional.',
   },
   {
-    initials: 'DV',
-    gradient: 'from-amber-500 to-orange-500',
-    quote: 'Cada tarde anotaba direcciones del WhatsApp en una libreta. Ahora los pedidos llegan solos al panel y hasta sé cuánto me falta por cobrar.',
-    name: 'Diego Vega',
-    role: 'Comida — San Isidro',
-    result: 'Cobró todo lo que le debían ese mismo mes',
+    quote: 'Ahora tengo más claridad y confianza de lo que tenemos.',
+    context: 'Emprendedora de repostería · Lima',
+    result: 'Pasó de sentirse desordenado y frustrado a sentirse con mayor claridad y control.',
   },
+]
+
+const paraQuienSi = [
+  'Vendes principalmente por WhatsApp.',
+  'Captas clientes desde TikTok, Instagram o Facebook.',
+  'Tienes pedidos constantemente.',
+  'Usas Excel, Google Sheets, cuadernos, notas o varias herramientas para organizarte.',
+  'Sientes que organizar el negocio consume demasiado tiempo.',
+  'Quieres vender más sin trabajar cada vez más horas.',
+]
+
+const paraQuienNo = [
+  'Buscas un ERP empresarial extremadamente complejo.',
+  'Quieres una herramienta que haga absolutamente todo.',
+  'Tu negocio necesita procesos corporativos muy específicos.',
 ]
 
 const planBasicFeatures = [
@@ -145,42 +207,34 @@ const planProFeatures = [
   'Todos los métodos de envío',
   'Logo, colores y marca blanca',
   'Tarifas por distrito',
-  'Hora de corte y cupo diario',
+  'Hora de corte, anticipación y cupo diario',
   'Redes sociales, URL de redirección y cambio masivo',
 ]
 
 const faqs = [
   {
-    q: '¿Mis clientes necesitan registrarse para pedir?',
-    a: 'No. Solo entran a tu link, llenan sus datos y listo. Sin cuenta, sin apps, sin complicaciones.',
+    q: '¿Necesito conocimientos técnicos para usar Tori?',
+    a: 'No. Tori está diseñado para ser sencillo y guiarte durante el uso.',
   },
   {
-    q: '¿Puedo usar mis propios métodos de envío?',
-    a: 'Sí. Motorizado, Shalom, Olva, una agencia o el método que tú quieras. También puedes ofrecer recojo en tienda.',
+    q: '¿Tengo que cambiar la forma en que vendo?',
+    a: 'No. Puedes seguir utilizando tus canales de venta habituales, como WhatsApp, TikTok e Instagram.',
   },
   {
-    q: '¿Cómo cobro a mis clientes?',
-    a: 'Puedes cobrar en efectivo, Yape/Plin o tarjeta. Si un pago falta, queda marcado para que no se te olvide.',
+    q: '¿Tori reemplaza WhatsApp?',
+    a: 'No. Tori organiza la información que genera tu negocio para que puedas gestionarla mejor.',
   },
   {
-    q: '¿Probar Tori cuesta algo?',
-    a: 'No. Son 30 días gratis del plan Pro completo, sin registrar tarjeta ni compromiso.',
+    q: '¿Tengo que dejar Excel inmediatamente?',
+    a: 'No. Puedes comenzar utilizando Tori y hacer la transición a tu propio ritmo.',
   },
   {
-    q: '¿Qué pasa cuando termina la prueba?',
-    a: 'Te quedas con el plan Básico gratis para siempre: tu formulario, tus pedidos y hasta 50 envíos al mes.',
+    q: '¿Tori es solo para empresas grandes?',
+    a: 'No. Tori está pensado para emprendedores que necesitan organizar mejor su negocio a medida que crecen.',
   },
   {
-    q: '¿Puedo controlar el stock de mis productos?',
-    a: 'Sí. Registra tus productos y Tori te avisa cuando queda poco. Así nunca te quedas sin inventario.',
-  },
-  {
-    q: '¿Mis datos están seguros?',
-    a: 'Sí. Tu información está separada de la de otros negocios y solo tú puedes verla.',
-  },
-  {
-    q: '¿Puedo cancelar cuando quiera?',
-    a: 'Claro. Cambia o cancela tu plan cuando quieras, sin multas ni letra pequeña.',
+    q: '¿Cuánto cuesta probar Tori?',
+    a: 'Puedes probar Tori durante 30 días gratis, sin tarjeta.',
   },
 ]
 
@@ -241,6 +295,7 @@ export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [faqAbierta, setFaqAbierta] = useState<number | null>(0)
   const [showSticky, setShowSticky] = useState(false)
+  const [marcados, setMarcados] = useState<number[]>([])
 
   useEffect(() => {
     const onScroll = () => setShowSticky(window.scrollY > 600)
@@ -249,8 +304,24 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  function toggleMarco(i: number) {
+    setMarcados((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]))
+  }
+
+  const navLinks = [
+    { label: 'Cómo funciona', href: '#como-funciona' },
+    { label: 'Funciones', href: '#funciones' },
+    { label: 'Historias', href: '#historias' },
+    { label: 'Precios', href: '#precios' },
+  ]
+
   const nav = (
     <nav className="flex items-center gap-5 sm:gap-8">
+      {navLinks.map((l) => (
+        <a key={l.href} href={l.href} className="hidden lg:block text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+          {l.label}
+        </a>
+      ))}
       <Link href="/login" className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">
         Iniciar sesión
       </Link>
@@ -258,7 +329,7 @@ export default function LandingPage() {
         href="/register"
         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200"
       >
-        Comenzar gratis
+        Probar Tori
         <ArrowRight size={15} />
       </Link>
     </nav>
@@ -269,7 +340,7 @@ export default function LandingPage() {
       {/* ============ BANNER DE PROMOCIÓN ============ */}
       <div className="bg-gradient-to-r from-sky-600 to-indigo-700 text-white text-center text-xs sm:text-sm font-semibold py-2 px-4">
         <span className="inline-flex flex-wrap items-center justify-center gap-x-1.5">
-          30 días Pro gratis, sin tarjeta ·
+          30 días gratis, sin tarjeta ·
           <Link href="/register" className="underline underline-offset-2 font-bold hover:text-sky-100">
             Empieza ahora
           </Link>
@@ -303,6 +374,11 @@ export default function LandingPage() {
             className="sm:hidden px-4 pb-4 border-b border-slate-100 bg-white"
           >
             <div className="flex flex-col gap-3">
+              {navLinks.map((l) => (
+                <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="text-sm font-semibold text-slate-600 py-2">
+                  {l.label}
+                </a>
+              ))}
               <Link href="/login" onClick={() => setMenuOpen(false)} className="text-sm font-semibold text-slate-600 py-2">
                 Iniciar sesión
               </Link>
@@ -311,7 +387,7 @@ export default function LandingPage() {
                 onClick={() => setMenuOpen(false)}
                 className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white"
               >
-                Comenzar gratis
+                Probar Tori
                 <ArrowRight size={16} />
               </Link>
             </div>
@@ -328,25 +404,25 @@ export default function LandingPage() {
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }}>
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-sky-200 text-sky-700 text-xs font-semibold mb-6">
                 <BarChart3 size={13} />
-                Para emprendedores que venden por redes
+                Para emprendedores que venden por WhatsApp
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08]">
-                Deja de{' '}
+                Vender por WhatsApp debería darte más ventas,{' '}
                 <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                  perder pedidos
-                </span>{' '}
-                en WhatsApp.
+                  no más desorden.
+                </span>
               </h1>
               <p className="mt-5 text-base sm:text-xl text-slate-600 leading-relaxed max-w-lg">
-                Tus clientes piden desde un formulario con tu logo y cada pedido llega ordenado:
-                qué despachar, qué cobrar y qué comprar. Sin chats revueltos, sin Excel.
+                Respondes mensajes, haces lives, vendes, cobras, controlas tus productos y preparas pedidos.
+                Pero si cada venta significa más cosas que recordar, quizá no necesitas trabajar más.
+                Necesitas tener tu negocio bajo control.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <Link
                   href="/register"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-sky-500/25 hover:scale-[1.02] transition-all duration-200"
                 >
-                  Recibe tu primer pedido en 5 min
+                  Quiero ordenar mi negocio
                   <ArrowRight size={16} />
                 </Link>
                 <a
@@ -516,7 +592,7 @@ export default function LandingPage() {
                 </div>
               </motion.div>
 
-              {/* Tori te saluda */}
+              {/* Tori te acompaña */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -525,7 +601,7 @@ export default function LandingPage() {
               >
                 <ToriMascot variant="happy" size={36} />
                 <p className="text-[10px] font-semibold text-slate-700 leading-tight max-w-[130px]">
-                  ¡Hola! Yo ordeno tus pedidos.
+                  Tranquilo, de esto me encargo yo.
                 </p>
               </motion.div>
             </motion.div>
@@ -533,332 +609,322 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============ EL DOLOR: ¿TE SUENA FAMILIAR? ============ */}
+      {/* ============ AUTODIAGNÓSTICO ============ */}
+      <section id="diagnostico" className="py-14 sm:py-20 bg-white">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <motion.div {...fadeUp} className="text-center mb-10 sm:mb-12">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Ahora sé sincero contigo mismo</p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              ¿Cuántas de estas cosas te{' '}
+              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                han pasado?
+              </span>
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate-600">
+              No tienes que marcar todas. Solo queremos que seas sincero contigo mismo.
+            </p>
+          </motion.div>
+
+          <div className="space-y-2.5">
+            {diagnosticoItems.map((item, i) => {
+              const marcado = marcados.includes(i)
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => toggleMarco(i)}
+                  className={`w-full flex items-start gap-3 text-left rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 ${
+                    marcado
+                      ? 'border-sky-500 bg-sky-50'
+                      : 'border-slate-200 bg-white hover:border-sky-300'
+                  }`}
+                >
+                  <span
+                    className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                      marcado ? 'bg-sky-600 border-sky-600' : 'border-slate-300 bg-white'
+                    }`}
+                  >
+                    {marcado && <Check size={13} className="text-white" />}
+                  </span>
+                  <span className={`text-sm leading-relaxed ${marcado ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>
+                    {item}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {marcados.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-sky-50 p-6 sm:p-8 text-center"
+            >
+              <div className="flex justify-center mb-3">
+                <ToriMascot variant="happy" size={48} />
+              </div>
+              <p className="text-lg sm:text-xl font-extrabold text-slate-900">Si marcaste varias, tranquilo.</p>
+              <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-lg mx-auto">
+                No significa que seas desordenado. Significa que tu negocio creció y tus herramientas no crecieron contigo.
+              </p>
+              <a
+                href="#problema"
+                className="inline-flex items-center gap-2 mt-5 px-6 py-3 rounded-2xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-sky-500/25 hover:scale-[1.02] transition-all duration-200"
+              >
+                Quiero tener más control
+                <ArrowRight size={16} />
+              </a>
+            </motion.div>
+          )}
+        </div>
+      </section>
+
+      {/* ============ EL PROBLEMA REAL ============ */}
+      <section id="problema" className="py-14 sm:py-20 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">El problema real</p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              El problema no es que tengas{' '}
+              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                muchas ventas.
+              </span>
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate-600">
+              Es todo lo que tienes que hacer después de cada venta.
+            </p>
+          </motion.div>
+
+          {/* Flujo visual: todo lo que pasa después de cada venta */}
+          <div className="overflow-x-auto pb-2">
+            <div className="flex items-center gap-2 min-w-max mx-auto justify-center">
+              {flujoProblema.map((paso, i) => (
+                <div key={paso} className="flex items-center gap-2">
+                  <span className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm">
+                    {paso}
+                  </span>
+                  {i < flujoProblema.length - 1 && (
+                    <ArrowRight size={14} className="shrink-0 text-slate-300" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <motion.div {...fadeUp} className="mt-10 sm:mt-12 text-center max-w-2xl mx-auto">
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">
+              Cuando cada cosa termina en un lugar diferente, tu negocio termina{' '}
+              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                dependiendo de tu memoria.
+              </span>
+            </p>
+            <p className="mt-4 text-lg sm:text-xl font-extrabold text-red-600">Y ahí comienzan los errores.</p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ============ CONSECUENCIAS ============ */}
       <section className="py-14 sm:py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">El día a día sin Tori</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">El costo del desorden</p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              ¿Te{' '}
+              Y ese desorden te está{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                suena
+                costando
               </span>{' '}
-              familiar?
+              más de lo que parece.
             </h2>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {[
-              {
-                icon: AlertTriangle,
-                title: 'Pedidos que se pierden',
-                desc: 'Uno pide por WhatsApp, otro por tu cuenta de Instagram y al final alguien se queda sin respuesta.',
-              },
-              {
-                icon: Brain,
-                title: 'Ventas en tu cabeza',
-                desc: 'No sabes cuánto vendiste hoy ni cuánto te deben. Todo depende de tu memoria.',
-              },
-              {
-                icon: PackageX,
-                title: 'Stock que se acaba',
-                desc: 'Se te agota el insumo justo cuando más vendes, y el cliente se va con otro.',
-              },
-              {
-                icon: TrendingDown,
-                title: 'No sabes si ganas',
-                desc: 'A fin de mes no sabes si tu negocio ganó o perdió dinero de verdad.',
-              },
-            ].map((item, i) => (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5">
+            {consecuencias.map((c, i) => (
               <motion.div
-                key={item.title}
+                key={c.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.08 }}
-                className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5 sm:p-6"
+                className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5"
               >
                 <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center">
-                  <item.icon size={20} className="text-red-500" />
+                  <c.icon size={20} className="text-red-500" />
                 </div>
-                <h3 className="mt-4 font-bold text-slate-900">{item.title}</h3>
-                <p className="mt-1.5 text-sm text-slate-500 leading-relaxed">{item.desc}</p>
+                <h3 className="mt-4 font-bold text-slate-900">{c.title}</h3>
+                <p className="mt-1.5 text-sm text-slate-500 leading-relaxed">{c.desc}</p>
               </motion.div>
             ))}
           </div>
 
-          <motion.div {...fadeUp} className="mt-10 sm:mt-12 text-center">
-            <p className="text-xl sm:text-2xl font-extrabold text-slate-900">
-              Cada pedido perdido es{' '}
-              <span className="text-red-600">dinero que no vuelve.</span>
-            </p>
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 mt-5 px-6 py-3 rounded-2xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-sky-500/25 hover:scale-[1.02] transition-all duration-200"
-            >
-              Empieza a ordenar tu negocio
-              <ArrowRight size={16} />
-            </Link>
+          <motion.div {...fadeUp} className="mt-10 sm:mt-12 max-w-2xl mx-auto text-center">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
+              <p className="text-lg sm:text-2xl font-extrabold text-slate-900 leading-snug">
+                &ldquo;Sé que estoy vendiendo... pero no sé exactamente qué está pasando con mi negocio.&rdquo;
+              </p>
+              <p className="mt-3 text-xs text-slate-400">La frase de muchos emprendedores antes de encontrar Tori</p>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ============ MÉTRICAS ============ */}
-      <section className="py-10 sm:py-14 bg-white border-y border-slate-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { number: '1', label: 'sola app para todo tu negocio' },
-              { number: '5 min', label: 'para empezar a vender' },
-              { number: '0', label: 'pedidos perdidos en chats' },
-              { number: '24/7', label: 'tus clientes piden solos' },
-            ].map((item, i) => (
-              <motion.div
-                key={item.label}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
-                className="text-center"
-              >
-                <div className="text-3xl sm:text-4xl font-extrabold text-slate-900">{item.number}</div>
-                <div className="mt-1 text-xs sm:text-sm text-slate-500">{item.label}</div>
-              </motion.div>
-            ))}
-          </div>
+      {/* ============ TRANSICIÓN: AQUÍ ENTRA TORI ============ */}
+      <section className="py-14 sm:py-20 bg-slate-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <motion.div {...fadeUp} className="text-center mb-10">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Aquí entra Tori</p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              No necesitas{' '}
+              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                trabajar más.
+              </span>
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate-600">
+              Necesitas que el trabajo repetitivo deje de depender de ti.
+            </p>
+          </motion.div>
+
+          {/* Tori te habla */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="relative rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5 p-6 sm:p-8"
+          >
+            <div className="flex items-start gap-4">
+              <ToriMascot variant="guide" size={56} className="shrink-0" />
+              <div className="rounded-2xl rounded-tl-sm bg-slate-50 border border-slate-200 px-4 py-3.5 flex-1">
+                <p className="text-xs font-bold text-slate-400 mb-1">Hola, soy Tori.</p>
+                <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
+                  Tu compañero de negocio. Te ayudo a organizar tus pedidos, ventas, inventario y envíos
+                  para que tengas todo mucho más claro y puedas dedicar tu tiempo a lo que realmente hace crecer tu negocio:{' '}
+                  <span className="font-extrabold text-slate-900">Vender.</span>
+                </p>
+              </div>
+            </div>
+            <a
+              href="#funciones"
+              className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-2xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-sky-500/25 hover:scale-[1.02] transition-all duration-200"
+            >
+              Conocer Tori
+              <ArrowRight size={16} />
+            </a>
+          </motion.div>
         </div>
       </section>
 
-      {/* ============ ANTES Y DESPUÉS ============ */}
-      <section className="py-14 sm:py-20 bg-slate-50">
+      {/* ============ TRANSFORMACIÓN: ANTES Y DESPUÉS ============ */}
+      <section id="como-funciona" className="py-14 sm:py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
             <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Antes y después</p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Así es hoy… y así sería{' '}
+              De &ldquo;¿dónde estaba ese pedido?&rdquo; a{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                con Tori
+                &ldquo;ya sé qué tengo que hacer&rdquo;.
               </span>
             </h2>
           </motion.div>
 
-          <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-6 lg:gap-10 items-center max-w-4xl mx-auto">
-            {/* Así es hoy */}
+          <div className="grid md:grid-cols-2 gap-6 sm:gap-10 max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, x: -24 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
+              className="rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:p-8"
             >
-              <div className="relative bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-900/5 overflow-hidden">
-                <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  <span className="ml-3 text-[10px] font-medium text-slate-400">WhatsApp · tu negocio</span>
-                </div>
-                <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-slate-100 bg-slate-50">
-                  <div className="w-8 h-8 rounded-full bg-slate-200" />
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">Chat desordenado</p>
-                    <p className="text-[10px] text-slate-400">127 mensajes sin leer</p>
-                  </div>
-                  <span className="ml-auto px-2 py-1 rounded-full bg-red-50 text-red-600 text-[9px] font-bold whitespace-nowrap">
-                    9 sin respuesta
-                  </span>
-                </div>
-                <div className="p-4 space-y-2.5">
-                  <div className="max-w-[85%] ml-auto bg-emerald-100 text-emerald-900 text-[11px] rounded-2xl rounded-br-sm px-3 py-2">
-                    Hola! me haces 1 box de brownies para el jueves?
-                  </div>
-                  <div className="max-w-[85%] bg-slate-100 text-slate-800 text-[11px] rounded-2xl rounded-bl-sm px-3 py-2">
-                    Claro! me pasas tu dirección?
-                  </div>
-                  <div className="max-w-[85%] ml-auto bg-emerald-100 text-emerald-900 text-[11px] rounded-2xl rounded-br-sm px-3 py-2">
-                    Av. Lima 123, San Borja
-                  </div>
-                  <div className="max-w-[85%] bg-slate-100 text-slate-800 text-[11px] rounded-2xl rounded-bl-sm px-3 py-2">
-                    Ya te confirmo el envío, un momento
-                  </div>
-                  <div className="max-w-[85%] ml-auto bg-emerald-100 text-emerald-900 text-[11px] rounded-2xl rounded-br-sm px-3 py-2">
-                    ... y mi pedido?
-                  </div>
-                </div>
-              </div>
-              <p className="mt-3 text-center text-xs font-semibold text-slate-500">
-                Hoy: el pedido se pierde entre 127 mensajes.
-              </p>
+              <p className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Antes</p>
+              <ul className="space-y-3">
+                {antesItems.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-slate-600">
+                    <X size={16} className="mt-0.5 shrink-0 text-red-400" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </motion.div>
 
-            {/* Conector */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.6 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-              className="flex items-center justify-center"
-            >
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-sky-500/25">
-                <ArrowRight size={20} className="rotate-90 lg:rotate-0" />
-              </div>
-            </motion.div>
-
-            {/* Así es con Tori */}
             <motion.div
               initial={{ opacity: 0, x: 24 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="rounded-2xl border-2 border-sky-200 bg-sky-50/50 p-6 sm:p-8"
             >
-              <div className="relative bg-white border-2 border-sky-200 rounded-2xl shadow-xl shadow-sky-500/10 overflow-hidden">
-                <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  <span className="ml-3 text-[10px] font-medium text-slate-400">app.tori.pe/dashboard</span>
-                </div>
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <LogoTori size={26} />
-                    <span className="text-sm font-extrabold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                      Tori
-                    </span>
-                    <span className="ml-auto px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold whitespace-nowrap">
-                      Pedido confirmado
-                    </span>
-                  </div>
-                  <div className="rounded-xl border border-slate-100 p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm">
-                        L
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">Lucía Fernández</p>
-                        <p className="text-[11px] text-slate-400">1 box de brownies · Motorizado</p>
-                      </div>
-                    </div>
-                    <div className="mt-3 space-y-1.5">
-                      <div className="flex justify-between text-[11px]">
-                        <span className="text-slate-500">Distrito</span>
-                        <span className="font-semibold text-slate-800">Miraflores</span>
-                      </div>
-                      <div className="flex justify-between text-[11px]">
-                        <span className="text-slate-500">Envío</span>
-                        <span className="font-semibold text-slate-800">S/ 8.00</span>
-                      </div>
-                      <div className="flex justify-between text-[11px]">
-                        <span className="text-slate-500">Pago</span>
-                        <span className="font-semibold text-emerald-600">Confirmado</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-2 text-[11px] font-semibold text-emerald-600">
-                    <Check size={13} />
-                    Llega solo y ordenado, sin preguntar nada
-                  </div>
-                </div>
-              </div>
-              <p className="mt-3 text-center text-xs font-semibold text-sky-700">
-                Con Tori: entra a tu panel listo para despachar.
-              </p>
+              <p className="text-sm font-bold uppercase tracking-wider text-sky-600 mb-4">Con Tori</p>
+              <ul className="space-y-3">
+                {despuesItems.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-slate-800 font-semibold">
+                    <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ============ CÓMO FUNCIONA ============ */}
-      <section id="como-funciona" className="py-14 sm:py-20">
+      {/* ============ FUNCIONES ============ */}
+      <section id="funciones" className="py-14 sm:py-20 bg-slate-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Cómo funciona</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Todo lo que necesitas, en un solo lugar</p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Empieza en{' '}
+              Menos trabajo repetitivo.{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                3 pasos
+                Más control.
               </span>
             </h2>
             <p className="mt-3 text-sm sm:text-base text-slate-600">
-              No necesitas saber de tecnología ni de sistemas. Solo seguir estos pasos.
+              Tori conecta las tareas que antes tenías repartidas entre WhatsApp, Excel, notas y otras herramientas.
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
-            {steps.map((item, i) => (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {features.map((f, i) => (
               <motion.div
-                key={item.step}
+                key={f.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1, ease: 'easeOut' }}
-                className="relative bg-white border border-slate-200 rounded-2xl p-6 sm:p-8"
+                transition={{ duration: 0.4, delay: (i % 3) * 0.06 }}
+                className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 hover:border-sky-300 hover:shadow-lg transition-all duration-200 flex flex-col"
               >
-                <span className="text-5xl sm:text-6xl font-black text-sky-100 leading-none">{item.step}</span>
-                <div className="mt-2 w-12 h-0.5 bg-gradient-to-r from-sky-500 to-indigo-500 rounded-full" />
-                <item.icon size={24} className="mt-5 text-sky-600" />
-                <h3 className="mt-4 text-lg font-bold text-slate-900">{item.title}</h3>
-                <p className="mt-2 text-sm text-slate-500 leading-relaxed">{item.desc}</p>
+                <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center shrink-0">
+                  <f.icon size={20} className="text-sky-600" />
+                </div>
+                <h3 className="mt-4 font-bold text-slate-900 leading-snug">{f.title}</h3>
+                <p className="mt-2 text-sm text-slate-500 leading-relaxed">{f.problem}</p>
+                <div className="mt-4 rounded-xl bg-sky-50 border border-sky-100 p-3.5 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-sky-600 mb-1">Lo que Tori hace</p>
+                  <p className="text-sm text-slate-700 leading-relaxed">{f.solution}</p>
+                </div>
+                <p className="mt-3 inline-flex items-start gap-1.5 text-xs font-bold text-emerald-700">
+                  <Check size={14} className="mt-0.5 shrink-0 text-emerald-600" />
+                  {f.benefit}
+                </p>
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ============ FORMULARIO PARA TUS CLIENTES ============ */}
-      <section id="formulario" className="py-14 sm:py-20 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-            {/* Texto */}
+          {/* Spotlight: tu formulario, a tu manera */}
+          <div className="mt-10 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center bg-white border border-slate-200 rounded-3xl p-6 sm:p-10">
             <motion.div {...fadeUp}>
-              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">
-                Formulario para tus clientes
-              </p>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-                Tus clientes piden{' '}
-                <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                  sin llamarte
-                </span>
-              </h2>
-              <p className="mt-3 text-sm sm:text-base text-slate-600">
-                Comparte tu link y cada pedido llega ordenado a tu dashboard: con los datos del cliente,
-                el método de envío y el costo. Tú solo preparas y despachas.
-              </p>
-
-              <div className="mt-6 space-y-4">
-                {[
-                  {
-                    icon: UserRound,
-                    title: 'Sin registrarse ni bajar apps',
-                    desc: 'Tu cliente solo abre el link y llena sus datos. Nada complicado.',
-                  },
-                  {
-                    icon: Palette,
-                    title: 'Con tu logo y tus colores',
-                    desc: 'El formulario se ve como tu tienda, no como un sistema raro.',
-                  },
-                  {
-                    icon: Truck,
-                    title: 'Costo de envío automático',
-                    desc: 'Elige la zona y el método, y la tarifa aparece sola. Cero cálculos.',
-                  },
-                ].map((item, i) => (
-                  <motion.div
-                    key={item.title}
-                    initial={{ opacity: 0, y: 12 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: i * 0.1 }}
-                    className="flex items-start gap-3"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center shrink-0">
-                      <item.icon size={17} className="text-sky-600" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm text-slate-900">{item.title}</p>
-                      <p className="text-sm text-slate-500">{item.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
+              <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center mb-4">
+                <Palette size={20} className="text-sky-600" />
               </div>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">{featureFormulario.title}</h3>
+              <p className="mt-2 text-sm sm:text-base text-slate-600">{featureFormulario.problem}</p>
+              <div className="mt-4 rounded-xl bg-sky-50 border border-sky-100 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-sky-600 mb-1">Lo que Tori hace</p>
+                <p className="text-sm text-slate-700">{featureFormulario.solution}</p>
+              </div>
+              <p className="mt-3 inline-flex items-start gap-1.5 text-xs font-bold text-emerald-700">
+                <Check size={14} className="mt-0.5 shrink-0 text-emerald-600" />
+                {featureFormulario.benefit}
+              </p>
             </motion.div>
 
             {/* Mockup del formulario */}
@@ -964,87 +1030,44 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============ FUNCIONES CLAVE ============ */}
+      {/* ============ FACILIDAD ============ */}
       <section className="py-14 sm:py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Funcionalidades</p>
-            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Todo lo que tu negocio{' '}
-              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                necesita
-              </span>
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-600">
-              Simple de usar, pensado para quienes recién empiezan y para los que ya crecieron.
-            </p>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {features.map((item, i) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: (i % 3) * 0.06 }}
-                className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 hover:border-sky-300 hover:shadow-lg transition-all duration-200"
-              >
-                <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center">
-                  <item.icon size={20} className="text-sky-600" />
-                </div>
-                <h3 className="mt-4 font-bold text-slate-900">{item.title}</h3>
-                <p className="mt-1.5 text-sm text-slate-500 leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
-            {['Repostería', 'Ropa y moda', 'Comida y catering', 'Regalos y detalles', 'Artesanías', 'Flores', 'Cosmética natural'].map(
-              (niche) => (
-                <span
-                  key={niche}
-                  className="px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-600"
-                >
-                  {niche}
-                </span>
-              ),
-            )}
-            <span className="px-3 py-1.5 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 text-xs font-semibold text-white">
-              + tu negocio
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* ============ PANEL DE RESUMEN ============ */}
-      <section className="py-14 sm:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <motion.div {...fadeUp}>
-              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Panel de resumen</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">¿Te preocupa que sea complicado?</p>
               <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-                Ves todo claro en{' '}
+                A nuestro primer{' '}
                 <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                  un solo panel
-                </span>
+                  emprendedor
+                </span>{' '}
+                también.
               </h2>
-              <div className="mt-6 space-y-4">
-                {[
-                  'Cuánto vendes, cuánto gastas y tu saldo, de un vistazo.',
-                  'Pedidos por despachar y productos con stock bajo, marcados para que no se te olviden.',
-                  'Todo tu historial de pedidos, ventas y compras siempre a la mano.',
-                ].map((text, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="mt-0.5 w-5 h-5 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
-                      <Check size={12} className="text-sky-600" />
-                    </div>
-                    <p className="text-sm text-slate-600 leading-relaxed">{text}</p>
-                  </div>
-                ))}
+              <p className="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed">
+                Antes de probar Tori pensaba que podía ser complicado y que no entendería cómo usarlo.
+              </p>
+
+              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
+                <div className="flex gap-0.5 mb-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} size={16} className="text-amber-400 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-lg sm:text-2xl font-extrabold text-slate-900 leading-snug">
+                  &ldquo;Es como mi Excel, pero en orden.&rdquo;
+                </p>
               </div>
+
+              <p className="mt-5 text-sm text-slate-600 leading-relaxed">
+                Tori está pensado para que puedas entender qué hacer sin tener que convertirte en experto en sistemas.
+              </p>
+              <p className="mt-2 inline-flex items-start gap-1.5 text-sm font-semibold text-slate-800">
+                <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" />
+                Todo está explicado claramente y te guía por lo que suele ser fácil de entender.
+              </p>
             </motion.div>
 
+            {/* Panel de resumen */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1093,71 +1116,175 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============ TESTIMONIOS ============ */}
-      <section className="py-14 sm:py-20 bg-white">
+      {/* ============ HISTORIAS ============ */}
+      <section id="historias" className="py-14 sm:py-20 bg-slate-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Testimonios</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Historias reales</p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Historias de{' '}
+              Tori ya forma parte del día a día de{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                emprendedores
+                otros emprendedores.
               </span>
             </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate-600">
+              No queremos decirte que Tori funciona. Preferimos que lo cuenten quienes ya lo están usando.
+            </p>
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {testimonials.map((t, i) => (
+            {historias.map((h, i) => (
               <motion.div
-                key={t.name}
+                key={h.quote}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.1 }}
-                className="bg-slate-50 border border-slate-100 rounded-2xl p-6 sm:p-8"
+                className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col"
               >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${t.gradient} flex items-center justify-center text-white font-bold text-base shadow-sm`}>
-                    {t.initials}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-sm text-slate-900">{t.name}</div>
-                    <div className="text-xs text-slate-400">{t.role}</div>
-                  </div>
-                </div>
                 <div className="flex gap-0.5 mb-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <Star key={j} size={13} className="text-amber-400 fill-amber-400" />
                   ))}
                 </div>
-                <p className="text-sm text-slate-600 leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
-                <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-700">
-                  <Check size={12} />
-                  {t.result}
-                </p>
+                <p className="text-base font-extrabold text-slate-900 leading-snug">&ldquo;{h.quote}&rdquo;</p>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{h.context}</p>
+                <div className="mt-4 pt-4 border-t border-slate-100 flex items-start gap-2 text-sm text-slate-600 leading-relaxed">
+                  <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-emerald-500" />
+                  {h.result}
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ============ PLANES ============ */}
-      <section id="planes" className="py-14 sm:py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      {/* ============ ¿TORI ES PARA TI? ============ */}
+      <section id="para-quien" className="py-14 sm:py-20 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Precios</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">¿Tori es para ti?</p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Planes{' '}
+              Tori es para emprendedores que quieren ordenar su negocio{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                simples y claros
+                sin complicarse.
               </span>
             </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-600">
-              30 días gratis. Después, tú decides si sigues.
-            </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 p-6 sm:p-8"
+            >
+              <p className="text-sm font-bold uppercase tracking-wider text-emerald-700 mb-4">Sí, es para mí si...</p>
+              <ul className="space-y-3">
+                {paraQuienSi.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:p-8"
+            >
+              <p className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">No es para ti si...</p>
+              <ul className="space-y-3">
+                {paraQuienNo.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-slate-500">
+                    <X size={16} className="mt-0.5 shrink-0 text-slate-300" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </div>
+
+          <motion.div {...fadeUp} className="mt-10 text-center max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">
+              Si mientras leías esto pensaste &ldquo;eso me pasa a mí&rdquo;, probablemente Tori fue hecho{' '}
+              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                pensando en alguien como tú.
+              </span>
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ============ CÓMO FUNCIONA ============ */}
+      <section className="py-14 sm:py-20 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Así de simple</p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              Empieza a ordenar tu negocio en{' '}
+              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                pocos pasos.
+              </span>
+            </h2>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
+            {steps.map((item, i) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.1, ease: 'easeOut' }}
+                className="relative bg-white border border-slate-200 rounded-2xl p-6 sm:p-8"
+              >
+                <span className="text-5xl sm:text-6xl font-black text-sky-100 leading-none">{item.step}</span>
+                <div className="mt-2 w-12 h-0.5 bg-gradient-to-r from-sky-500 to-indigo-500 rounded-full" />
+                <item.icon size={24} className="mt-5 text-sky-600" />
+                <h3 className="mt-4 text-lg font-bold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm text-slate-500 leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ PRUEBA / PRECIOS ============ */}
+      <section id="precios" className="py-14 sm:py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Pruébalo sin riesgo</p>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              30 días para descubrir si Tori{' '}
+              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                es para ti.
+              </span>
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate-600">Empieza gratis y decide después.</p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-400">
+              {['30 días gratis', 'Sin tarjeta', 'Cancela cuando quieras'].map((b) => (
+                <span key={b} className="flex items-center gap-1.5">
+                  <ShieldCheck size={13} className="text-emerald-500" />
+                  {b}
+                </span>
+              ))}
+            </div>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 mt-6 px-6 py-3.5 rounded-2xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-xl hover:shadow-sky-500/25 hover:scale-[1.02] transition-all duration-200"
+            >
+              Probar Tori gratis
+              <ArrowRight size={16} />
+            </Link>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mx-auto mt-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1237,14 +1364,14 @@ export default function LandingPage() {
       </section>
 
       {/* ============ FAQ ============ */}
-      <section id="faq" className="py-14 sm:py-20 bg-white">
+      <section id="faq" className="py-14 sm:py-20 bg-slate-50">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Preguntas</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Preguntas frecuentes</p>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Dudas{' '}
+              Lo que nos{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                frecuentes
+                preguntan
               </span>
             </h2>
           </motion.div>
@@ -1274,26 +1401,24 @@ export default function LandingPage() {
           >
             <div className="relative">
               <ToriMascot variant="happy" size={76} className="mx-auto mb-4" />
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-200 mb-2">Tu negocio ya está creciendo.</p>
               <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                No pierdas otro pedido más.
+                Ahora haz que organizarlo no te quite el tiempo para hacerlo crecer.
               </h2>
               <p className="mt-3 sm:mt-4 text-sm sm:text-xl text-sky-100 max-w-lg mx-auto">
-                Crea tu cuenta, comparte tu link y recibe tu primer pedido
-                organizado en minutos. Sin tarjeta, sin complicaciones.
+                Menos tiempo buscando, copiando y ordenando. Más tiempo para vender.
               </p>
               <Link
                 href="/register"
                 className="inline-flex items-center gap-2 mt-6 sm:mt-8 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-sm font-semibold bg-white text-sky-700 hover:bg-sky-50 hover:shadow-2xl hover:scale-[1.02] transition-all duration-200"
               >
-                Recibe tu primer pedido en 5 min
+                Empezar a usar Tori
                 <ArrowRight size={16} />
               </Link>
               <p className="mt-4 text-xs text-sky-200/70">
                 30 días de prueba · Sin tarjeta · Cancela cuando quieras
               </p>
-              <p className="mt-2 text-xs text-sky-100/90 font-semibold">
-                Prueba gratis. Si no te sirve, sigues vendiendo como siempre.
-              </p>
+              <p className="mt-2 text-sm text-sky-100/90 font-semibold">🐶 Nos vemos dentro.</p>
             </div>
           </motion.div>
         </div>
@@ -1306,10 +1431,10 @@ export default function LandingPage() {
             <div>
               <div className="flex items-center gap-2 text-sm font-bold tracking-tight bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
                 <LogoTori size={22} />
-                Tori — organiza los pedidos de tu emprendimiento
+                Tori
               </div>
               <p className="mt-3 text-xs text-slate-400 max-w-xs leading-relaxed">
-                Pedidos, stock y ventas en un solo lugar. Hecho para emprendedores peruanos que venden por redes.
+                Tori existe para ayudar a los emprendedores a recuperar el control de su negocio y dedicar más tiempo a vender y crecer.
               </p>
             </div>
 
@@ -1317,24 +1442,19 @@ export default function LandingPage() {
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Producto</p>
               <ul className="space-y-2.5 text-xs text-slate-500">
                 <li>
-                  <a href="#como-funciona" className="hover:text-sky-600 transition-colors">
-                    Cómo funciona
-                  </a>
+                  <a href="#como-funciona" className="hover:text-sky-600 transition-colors">Cómo funciona</a>
                 </li>
                 <li>
-                  <a href="#formulario" className="hover:text-sky-600 transition-colors">
-                    Formulario para clientes
-                  </a>
+                  <a href="#funciones" className="hover:text-sky-600 transition-colors">Funciones</a>
                 </li>
                 <li>
-                  <a href="#planes" className="hover:text-sky-600 transition-colors">
-                    Planes
-                  </a>
+                  <a href="#historias" className="hover:text-sky-600 transition-colors">Historias</a>
                 </li>
                 <li>
-                  <a href="#faq" className="hover:text-sky-600 transition-colors">
-                    Preguntas frecuentes
-                  </a>
+                  <a href="#precios" className="hover:text-sky-600 transition-colors">Precios</a>
+                </li>
+                <li>
+                  <a href="#faq" className="hover:text-sky-600 transition-colors">Preguntas frecuentes</a>
                 </li>
               </ul>
             </div>
@@ -1343,14 +1463,10 @@ export default function LandingPage() {
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Acceso</p>
               <ul className="space-y-2.5 text-xs text-slate-500">
                 <li>
-                  <Link href="/login" className="hover:text-sky-600 transition-colors">
-                    Iniciar sesión
-                  </Link>
+                  <Link href="/login" className="hover:text-sky-600 transition-colors">Iniciar sesión</Link>
                 </li>
                 <li>
-                  <Link href="/register" className="hover:text-sky-600 transition-colors">
-                    Comenzar gratis
-                  </Link>
+                  <Link href="/register" className="hover:text-sky-600 transition-colors">Comenzar gratis</Link>
                 </li>
               </ul>
             </div>
@@ -1387,7 +1503,7 @@ export default function LandingPage() {
             href="/register"
             className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/25 transition-all duration-200"
           >
-            Comenzar gratis
+            Probar Tori
             <ArrowRight size={14} />
           </Link>
         </motion.div>
