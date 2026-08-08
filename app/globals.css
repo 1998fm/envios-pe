@@ -6,6 +6,67 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@theme {
+  --color-tori-50: #eff8ff;
+  --color-tori-100: #dff1ff;
+  --color-tori-200: #b9e4ff;
+  --color-tori-300: #7dceff;
+  --color-tori-400: #3db5f4;
+  --color-tori-500: #1397df;
+  --color-tori-600: #087bc0;
+  --color-tori-700: #08639d;
+  --color-tori-900: #0a3552;
+  --shadow-soft: 0 20px 60px rgba(10, 53, 82, 0.1);
+  --shadow-card: 0 12px 35px rgba(10, 53, 82, 0.08);
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(8, 99, 157, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(8, 99, 157, 0.045) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(14px);
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #087bc0, #35b5ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.connector {
+  position: relative;
+}
+
+.connector::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 4px);
+  width: 2px;
+  height: 24px;
+  background: linear-gradient(#b9e4ff, transparent);
+}
+
+@media (min-width: 768px) {
+  .connector::after {
+    left: calc(100% + 2px);
+    top: 50%;
+    width: 42px;
+    height: 2px;
+    background: linear-gradient(90deg, #b9e4ff, transparent);
+  }
+}
+
+.connector:last-child::after {
+  display: none;
+}
+
 
 
 @keyframes fadeInUp {
