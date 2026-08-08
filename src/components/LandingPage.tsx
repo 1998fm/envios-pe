@@ -16,17 +16,13 @@ import {
   MessageCircle,
   Minus,
   Package,
-  Palette,
   Plus,
   Search,
   Settings,
   ShieldCheck,
   ShoppingCart,
-  Smartphone,
   Star,
-  Store,
   Truck,
-  UserRound,
   Warehouse,
   X,
 } from 'lucide-react'
@@ -34,6 +30,9 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import LogoTori from '@/components/LogoTori'
 import ToriMascot from '@/components/ToriMascot'
+import FeaturesSection from '@/components/landing/FeaturesSection'
+import DashboardDemo from '@/components/landing/DashboardDemo'
+import TestimonialsSection from '@/components/landing/TestimonialsSection'
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -64,52 +63,6 @@ const consecuencias = [
   { icon: MessageCircle, title: 'WhatsApp', desc: 'Cientos de chats que revisar.' },
 ]
 
-const features = [
-  {
-    icon: MessageCircle,
-    title: 'Deja de buscar pedidos en WhatsApp.',
-    solution: 'Tu cliente llena sus datos y cada pedido llega ordenado a Tori.',
-    benefit: 'Menos copiar, menos errores',
-  },
-  {
-    icon: Boxes,
-    title: '¿Vendiste algo y ya no recuerdas si quedaba?',
-    solution: 'Tu inventario queda conectado a tus ventas.',
-    benefit: 'Sabes qué tienes disponible',
-  },
-  {
-    icon: Coins,
-    title: '¿Cuánto dinero tienes disponible?',
-    solution: 'Una visión clara de tu dinero y tus cuentas.',
-    benefit: 'Vende con los números claros',
-  },
-  {
-    icon: ShoppingCart,
-    title: 'Organiza tus ventas y cobros.',
-    solution: 'Todas tus ventas y cobros en un mismo lugar.',
-    benefit: 'Sabes qué vendiste y qué te deben',
-  },
-  {
-    icon: Warehouse,
-    title: 'Controla compras y gastos.',
-    solution: 'Registra compras y gastos sin cuentas a mano.',
-    benefit: 'Deja de hacer cuentas a ciegas',
-  },
-  {
-    icon: Truck,
-    title: 'Coordina tus envíos con menos trabajo.',
-    solution: 'Tori prepara la información para tus envíos.',
-    benefit: 'Menos manual, menos errores',
-  },
-]
-
-const featureFormulario = {
-  icon: Palette,
-  title: 'Tu formulario, a tu manera.',
-  text: 'Personaliza lo que piden tus clientes para recibir la información que necesitas, ordenada desde el inicio.',
-  benefit: 'Recibe la info que necesitas',
-}
-
 const steps = [
   {
     step: '01',
@@ -128,29 +81,6 @@ const steps = [
     icon: CheckCircle2,
     title: 'Empieza a trabajar',
     desc: 'Tori mantiene todo en orden.',
-  },
-]
-
-const historias = [
-  {
-    quote: 'Es como mi Excel, pero en orden.',
-    context: 'Repostería · Lima',
-    result: 'Su dinero disponible en segundos, sin llenar formatos a mano.',
-  },
-  {
-    quote: 'Ahora uso mi tiempo para vender más.',
-    context: 'Repostería · Lima',
-    result: 'Antes perdía hasta 3 horas al día organizando pedidos.',
-  },
-  {
-    quote: 'Todo es práctico y fácil de usar.',
-    context: 'Repostería · Lima',
-    result: 'Simple, necesario y funcional.',
-  },
-  {
-    quote: 'Ahora tengo claridad y confianza.',
-    context: 'Repostería · Lima',
-    result: 'De la frustración al control de su negocio.',
   },
 ]
 
@@ -240,13 +170,6 @@ const stockCritico = [
   { name: 'Cinta adhesiva', qty: '6 / 40', pct: 15, color: 'bg-red-500' },
   { name: 'Etiquetas Tori', qty: '33 / 50', pct: 66, color: 'bg-sky-500' },
 ]
-
-const metodosForm = [
-  { icon: Truck, label: 'Motorizado', active: true },
-  { icon: Package, label: 'Shalom', active: false },
-  { icon: Store, label: 'Recojo', active: false },
-]
-
 const navItems = [
   { icon: Truck, label: 'Pedidos' },
   { icon: Boxes, label: 'Inventario' },
@@ -759,7 +682,7 @@ export default function LandingPage() {
             <p className="relative text-lg sm:text-2xl font-extrabold leading-snug max-w-2xl mx-auto">
               “Sé que estoy vendiendo... pero no sé exactamente qué está pasando con mi negocio.”
             </p>
-            <p className="relative mt-3 text-xs text-slate-400">La frase de muchos emprendedores antes de encontrar Tori</p>
+            <p className="relative mt-3 text-xs text-slate-400">Vender no debería sentirse así.</p>
           </motion.div>
         </div>
       </section>
@@ -944,148 +867,11 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ============ MIRA CÓMO FUNCIONA TORI ============ */}
+      <DashboardDemo />
+
       {/* ============ FUNCIONES ============ */}
-      <section id="funciones" className="py-14 sm:py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Todo en un solo lugar</p>
-            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Menos trabajo repetitivo.{' '}
-              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                Más control.
-              </span>
-            </h2>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {features.map((f, i) => (
-              <motion.div
-                key={f.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: (i % 3) * 0.06 }}
-                className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 sm:p-6 hover:border-sky-300 hover:shadow-lg hover:bg-white transition-all duration-200 flex flex-col"
-              >
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-sm shrink-0">
-                  <f.icon size={20} className="text-white" />
-                </div>
-                <h3 className="mt-4 font-bold text-slate-900 leading-snug">{f.title}</h3>
-                <p className="mt-1.5 text-sm text-slate-500 leading-relaxed">{f.solution}</p>
-                <span className="mt-3 inline-flex items-center gap-1.5 self-start rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-700">
-                  <Check size={12} />
-                  {f.benefit}
-                </span>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Spotlight: tu formulario, a tu manera */}
-          <div className="mt-10 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center bg-gradient-to-br from-sky-50 to-indigo-50 border border-sky-100 rounded-3xl p-6 sm:p-10">
-            <motion.div {...fadeUp}>
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center mb-4 shadow-sm">
-                <Palette size={20} className="text-white" />
-              </div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">{featureFormulario.title}</h3>
-              <p className="mt-2 text-sm sm:text-base text-slate-600 leading-relaxed">{featureFormulario.text}</p>
-              <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-200 px-3.5 py-1.5 text-xs font-bold text-emerald-700">
-                <Check size={13} />
-                {featureFormulario.benefit}
-              </span>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-              className="relative mx-auto w-full max-w-sm"
-            >
-              <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-900/10 overflow-hidden">
-                <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-100">
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  <span className="ml-3 hidden sm:block flex-1 max-w-xs text-center text-[10px] font-medium text-slate-400 bg-slate-50 rounded-lg px-3 py-1 truncate">
-                    dulcesdemaria.pe/pedido
-                  </span>
-                </div>
-
-                <div className="p-4 sm:p-6">
-                  <div className="flex items-center gap-3 mb-5">
-                    <LogoTori size={40} />
-                    <div>
-                      <p className="text-base font-extrabold text-slate-900">Dulces de María</p>
-                      <p className="text-[11px] text-slate-400">Haz tu pedido en 1 minuto</p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-slate-100 p-3.5">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Tus datos</p>
-                    <div className="mt-2.5 space-y-2">
-                      <div className="h-2.5 w-full rounded-full bg-slate-200 animate-pulse" />
-                      <div className="h-2.5 w-2/3 rounded-full bg-slate-200 animate-pulse" />
-                      <div className="h-2.5 w-1/2 rounded-full bg-slate-200 animate-pulse" />
-                    </div>
-                  </div>
-
-                  <div className="mt-3.5">
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                      ¿Cómo lo recibes?
-                    </p>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {metodosForm.map((m, i) => (
-                        <div
-                          key={i}
-                          className={`rounded-xl p-2.5 text-center ${
-                            m.active ? 'border-2 border-sky-500 bg-sky-50' : 'border border-slate-100 bg-white'
-                          }`}
-                        >
-                          <m.icon size={15} className={`mx-auto ${m.active ? 'text-sky-600' : 'text-slate-400'}`} />
-                          <p className={`text-[9px] font-bold mt-1 ${m.active ? 'text-sky-700' : 'text-slate-500'}`}>
-                            {m.label}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-3.5 flex items-center justify-between rounded-xl border border-slate-100 p-3.5">
-                    <div>
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                        Distrito: Miraflores
-                      </p>
-                      <p className="text-sm font-extrabold text-slate-900 mt-0.5">Envío S/ 8.00</p>
-                    </div>
-                    <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
-                      <CheckCircle2 size={14} className="text-emerald-600" />
-                    </span>
-                  </div>
-
-                  <div className="mt-4 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white text-center py-3 text-sm font-bold shadow-lg shadow-sky-500/20">
-                    Confirmar pedido
-                  </div>
-                </div>
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ y: [16, 0, 0, -16], opacity: [0, 1, 1, 0] }}
-                transition={{ duration: 4, times: [0, 0.15, 0.8, 1], repeat: Infinity, repeatDelay: 1.2, delay: 1.5 }}
-                className="hidden md:flex absolute -bottom-6 -left-10 items-center gap-3 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-900/5 px-4 py-3"
-              >
-                <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
-                  <Check size={16} className="text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-900">Nuevo pedido</p>
-                  <p className="text-[10px] text-slate-400">María García · Motorizado · hace 1 min</p>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      <FeaturesSection />
 
       {/* ============ FACILIDAD ============ */}
       <section className="py-14 sm:py-20 bg-slate-50">
@@ -1111,7 +897,7 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <p className="text-lg sm:text-2xl font-extrabold text-slate-900 leading-snug">
-                  &ldquo;Es como mi Excel, pero en orden.&rdquo;
+                  &ldquo;Antes me frustraba de tanto trabajo.&rdquo;
                 </p>
                 <p className="mt-2 text-xs text-slate-400">Primera emprendedora en usar Tori</p>
               </div>
@@ -1171,47 +957,7 @@ export default function LandingPage() {
       </section>
 
       {/* ============ HISTORIAS ============ */}
-      <section id="historias" className="py-14 sm:py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-sky-600 mb-2">Historias reales</p>
-            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Otros emprendedores{' '}
-              <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                ya lo usan.
-              </span>
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-600">
-              Preferimos que lo cuenten quienes ya lo están usando.
-            </p>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
-            {historias.map((h, i) => (
-              <motion.div
-                key={h.quote}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
-                className="rounded-2xl border border-slate-200 bg-slate-50/50 p-6 sm:p-8 flex flex-col"
-              >
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <Star key={j} size={14} className="text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">&ldquo;{h.quote}&rdquo;</p>
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{h.context}</p>
-                <div className="mt-4 pt-4 border-t border-slate-100 flex items-start gap-2 text-sm text-slate-600 leading-relaxed">
-                  <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-500" />
-                  {h.result}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <TestimonialsSection />
 
       {/* ============ ¿TORI ES PARA TI? ============ */}
       <section id="para-quien" className="py-14 sm:py-20 bg-slate-50">
@@ -1287,7 +1033,7 @@ export default function LandingPage() {
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Empieza a ordenar tu negocio en{' '}
               <span className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                pocos pasos.
+                3 pasos.
               </span>
             </h2>
           </motion.div>
