@@ -398,6 +398,30 @@ export default function SeccionProductos({ userId }: Props) {
                    />
                  </div>
                </div>
+               <div>
+                 {(() => {
+                   const ganancia = nuevoForm.precio_venta - nuevoForm.precio_compra
+                   const pct = nuevoForm.precio_venta > 0 ? (ganancia / nuevoForm.precio_venta) * 100 : 0
+                   const positivo = nuevoForm.precio_venta > 0 && ganancia >= 0
+                   const sinDatos = nuevoForm.precio_venta <= 0 && nuevoForm.precio_compra <= 0
+                   return (
+                     <div className={`rounded-xl px-3 py-2.5 text-sm font-semibold flex items-center justify-between ${
+                       sinDatos
+                         ? 'bg-slate-50 text-slate-400'
+                         : positivo
+                         ? 'bg-emerald-50 text-emerald-700'
+                         : 'bg-red-50 text-red-600'
+                     }`}>
+                       <span>Ganancia</span>
+                       <span>
+                         {sinDatos
+                           ? '—'
+                           : `S/ ${ganancia.toFixed(2)} · ${pct.toFixed(0)}%`}
+                       </span>
+                     </div>
+                   )
+                 })()}
+               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Unidad</label>
                 <select
