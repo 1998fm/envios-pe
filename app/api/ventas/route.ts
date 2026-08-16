@@ -55,9 +55,23 @@ export async function POST(request: Request) {
       producto_nombre: it.producto_nombre,
       cantidad: it.cantidad,
       precio_unitario: it.precio_unitario,
+      costo_unitario: 0,
       subtotal,
     }
   })
+
+  // Foto del costo de cada producto al momento de la venta
+  const productoIds = itemsData.map((it: any) => it.producto_id).filter(Boolean)
+  if (productoIds.length > 0) {
+    const { data: productos } = await supabaseAdmin
+      .from('productos')
+      .select('id, precio_compra')
+      .in('id', productoIds)
+    const costoPorId = new Map((productos || []).map((p: any) => [p.id, p.precio_compra ?? 0]))
+    for (const it of itemsData) {
+      if (it.producto_id) it.costo_unitario = costoPorId.get(it.producto_id) ?? 0
+    }
+  }
 
   // Vincular cliente con este negocio si no existe
   const { data: vinculo } = await supabaseAdmin

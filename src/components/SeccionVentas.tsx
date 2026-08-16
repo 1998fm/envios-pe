@@ -280,6 +280,7 @@ export default function SeccionVentas({ userId }: Props) {
                 <th className="px-4 py-3">DNI</th>
                 <th className="px-4 py-3 text-right">Productos</th>
                 <th className="px-4 py-3 text-right">Total</th>
+                <th className="px-4 py-3 text-right">Ganancia</th>
                 <th className="px-4 py-3 text-center">Pago</th>
                 <th className="px-4 py-3 text-center">Estado Venta</th>
                 <th className="px-4 py-3 text-center">Envío</th>
@@ -294,12 +295,26 @@ export default function SeccionVentas({ userId }: Props) {
                   ANULADA: 'bg-red-100 text-red-700',
                   PENDIENTE: 'bg-amber-100 text-amber-700',
                 }[v.estado]
+
+                const costo = (v.items || []).reduce(
+                  (sum, it) => sum + (it.costo_unitario ?? 0) * it.cantidad,
+                  0
+                )
+                const ganancia = v.total - costo
+                const pctGanancia = v.total > 0 ? (ganancia / v.total) * 100 : 0
+                const pctText = `${pctGanancia >= 0 ? '' : ''}${pctGanancia.toFixed(0)}%`
+                const gananciaText = `S/ ${ganancia.toFixed(2)}`
+
                 return (
                   <tr key={v.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 font-medium text-slate-900">{v.persona_nombre}</td>
                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">{v.persona_dni}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{v.items?.length ?? 0} ítems</td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-900">S/ {v.total.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="font-semibold text-emerald-600">{gananciaText}</span>
+                      <span className="block text-[11px] text-slate-400">{pctText}</span>
+                    </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${
                         v.metodo_pago === 'TARJETA' ? 'bg-indigo-100 text-indigo-700' :

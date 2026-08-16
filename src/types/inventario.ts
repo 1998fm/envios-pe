@@ -58,6 +58,7 @@ export type VentaItem = {
   producto_nombre: string
   cantidad: number
   precio_unitario: number
+  costo_unitario?: number
   subtotal: number
 }
 

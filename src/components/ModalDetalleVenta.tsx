@@ -17,6 +17,13 @@ export default function ModalDetalleVenta({ venta, onCerrar }: Props) {
     PENDIENTE: 'bg-amber-100 text-amber-700',
   }[venta.estado]
 
+  const costo = (venta.items || []).reduce(
+    (sum, it) => sum + (it.costo_unitario ?? 0) * it.cantidad,
+    0
+  )
+  const ganancia = venta.total - costo
+  const pctGanancia = venta.total > 0 ? (ganancia / venta.total) * 100 : 0
+
   const tiles = (
     <>
       <div className="bg-slate-50 rounded-2xl p-3">
@@ -38,6 +45,11 @@ export default function ModalDetalleVenta({ venta, onCerrar }: Props) {
       <div className="bg-slate-50 rounded-2xl p-3">
         <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Total</p>
         <p className="font-bold text-slate-900 text-lg">S/ {venta.total.toFixed(2)}</p>
+      </div>
+      <div className="bg-slate-50 rounded-2xl p-3">
+        <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Ganancia</p>
+        <p className="font-bold text-emerald-600 text-lg">S/ {ganancia.toFixed(2)}</p>
+        <p className="text-[11px] text-slate-400">{pctGanancia.toFixed(0)}% de la venta</p>
       </div>
       <div className="bg-slate-50 rounded-2xl p-3">
         <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Fecha</p>
