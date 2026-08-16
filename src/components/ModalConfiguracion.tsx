@@ -123,6 +123,8 @@ export default function ModalConfiguracion({
                     onChange={(v) => upd('nuevoOrigen', v)}
                     options={agenciasShalom}
                     placeholder="Buscar agencia Shalom"
+                    requireSelection
+                    errorMessage="Selecciona una agencia Shalom de la lista."
                   />
               </div>
 

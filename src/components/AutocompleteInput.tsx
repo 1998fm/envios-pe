@@ -2,12 +2,15 @@
 
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Check } from 'lucide-react'
 
 type Props = {
   value: string
   onChange: (value: string) => void
   options: string[]
   placeholder: string
+  requireSelection?: boolean
+  errorMessage?: string
 }
 
 const inputClass = `
@@ -16,7 +19,7 @@ const inputClass = `
   border border-slate-200 
   rounded-xl
   text-slate-900 
-  placeholder:text-slate-400 :text-slate-500
+  placeholder:text-slate-400
   focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500
   transition-all duration-200
   text-sm
@@ -34,7 +37,7 @@ const dropdownClass = `
 const optionClass = `
   w-full text-left px-4 py-3
   text-sm text-slate-700 
-  hover:bg-sky-50 :bg-sky-900/20
+  hover:bg-sky-50
   transition-colors duration-150
   cursor-pointer
 `
@@ -44,8 +47,20 @@ export default function AutocompleteInput({
   onChange,
   options,
   placeholder,
+  requireSelection = false,
+  errorMessage,
 }: Props) {
   const [abierto, setAbierto] = useState(false)
+
+  const esValido = useMemo(() => {
+    if (!requireSelection) return true
+    if (!value.trim()) return false
+    return options.some(
+      (item) => item.toLowerCase() === value.trim().toLowerCase()
+    )
+  }, [requireSelection, value, options])
+
+  const mostrarError = requireSelection && !esValido
 
   const filtrados = useMemo(() => {
     if (!value.trim()) return options.slice(0, 20)
@@ -57,45 +72,70 @@ export default function AutocompleteInput({
   }, [value, options])
 
   return (
-    <div className="relative">
-      <input
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => {
-          onChange(e.target.value)
-          setAbierto(true)
-        }}
-        onFocus={() => setAbierto(true)}
-        onBlur={() => setTimeout(() => setAbierto(false), 150)}
-        className={inputClass}
-      />
+    <div>
+      <div className="relative">
+        <input
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => {
+            onChange(e.target.value)
+            setAbierto(true)
+          }}
+          onFocus={() => setAbierto(true)}
+          onBlur={() => setTimeout(() => setAbierto(false), 150)}
+          className={`${inputClass} ${
+            mostrarError
+              ? 'border-red-400 focus:ring-red-500/40 focus:border-red-500'
+              : ''
+          }`}
+          aria-invalid={mostrarError}
+        />
 
-      <AnimatePresence>
-        {abierto && filtrados.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.15 }}
-            className={dropdownClass}
-          >
-            {filtrados.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  onChange(item)
-                  setAbierto(false)
-                }}
-                className={optionClass}
-              >
-                {item}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <AnimatePresence>
+          {abierto && filtrados.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              transition={{ duration: 0.15 }}
+              className={dropdownClass}
+            >
+              {filtrados.map((item) => {
+                const seleccionado =
+                  value.trim() &&
+                  item.toLowerCase() === value.trim().toLowerCase()
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      onChange(item)
+                      setAbierto(false)
+                    }}
+                    className={`${optionClass} ${
+                      seleccionado ? 'bg-sky-50 font-semibold' : ''
+                    }`}
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      <span>{item}</span>
+                      {seleccionado && (
+                        <Check size={14} className="text-sky-600 shrink-0" />
+                      )}
+                    </span>
+                  </button>
+                )
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {mostrarError && (
+        <p className="mt-1.5 text-xs font-medium text-red-600">
+          {errorMessage || 'Selecciona una opción de la lista.'}
+        </p>
+      )}
     </div>
   )
 }

@@ -12,6 +12,7 @@ import OnboardingStep1Empresa from '@/components/OnboardingStep1Empresa'
 import OnboardingStep2Metodos from '@/components/OnboardingStep2Metodos'
 import OnboardingStep3Logistica from '@/components/OnboardingStep3Logistica'
 import OnboardingStep4Tarifas from '@/components/OnboardingStep4Tarifas'
+import agenciasShalom from '@/data/agencias-shalom.json'
 import {
   guardarPasoEmpresa,
   guardarPasoMetodos,
@@ -143,6 +144,17 @@ export default function OnboardingWizard() {
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError('Sesión expirada'); setSaving(false); return }
+
+    if (step === 2 && config.metodoShalom) {
+      const origenValido = agenciasShalom.some(
+        (a) => a.toLowerCase() === config.nuevoOrigen.trim().toLowerCase()
+      )
+      if (!config.nuevoOrigen.trim() || !origenValido) {
+        setError('Selecciona una agencia Shalom de origen de la lista.')
+        setSaving(false)
+        return
+      }
+    }
 
     let result: { error?: string; slug?: string } = {}
     if (step === 1) result = await guardarPasoEmpresa(supabase, user.id, config)
