@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 
 import { Store } from 'lucide-react'
 import FormHeader from '@/components/FormHeader'
@@ -65,6 +65,7 @@ export default function PublicForm({
   const [enviado, setEnviado] = useState(false)
   const [fechaProgramada, setFechaProgramada] = useState('')
   const [error, setError] = useState('')
+  const enviandoRef = useRef(false)
 
   const [nombre, setNombre] = useState('')
   const [dni, setDni] = useState('')
@@ -167,42 +168,50 @@ export default function PublicForm({
   }, [enviado, redirectUrl, isPro])
 
   const handleSubmit = useCallback(async () => {
+    if (enviandoRef.current || loading) return
+    enviandoRef.current = true
     setError('')
     setLoading(true)
 
     if (!nombre.trim()) {
       setError('Ingresa tu nombre.')
       setLoading(false)
+      enviandoRef.current = false
       return
     }
 
     if (!dni.trim()) {
       setError('Ingresa tu documento.')
       setLoading(false)
+      enviandoRef.current = false
       return
     }
 
     if (telefono.trim().length < 9) {
       setError('Ingresa un teléfono válido.')
       setLoading(false)
+      enviandoRef.current = false
       return
     }
 
     if (metodo === 'SHALOM' && !agencia) {
       setError('Selecciona una agencia.')
       setLoading(false)
+      enviandoRef.current = false
       return
     }
 
     if (['OLVA', 'MARVISUR', 'FLORES', 'OTRO'].includes(metodo) && (!provincia || !direccion)) {
       setError('Completa los datos de envío.')
       setLoading(false)
+      enviandoRef.current = false
       return
     }
 
     if (metodo === 'MOTORIZADO' && (!distrito || !direccion)) {
       setError('Completa los datos de envío.')
       setLoading(false)
+      enviandoRef.current = false
       return
     }
 
@@ -243,6 +252,7 @@ export default function PublicForm({
     })
 
     setLoading(false)
+    enviandoRef.current = false
 
     if (!res.ok) {
       const errorData = await res.json()

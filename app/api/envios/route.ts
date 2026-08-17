@@ -117,6 +117,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: reason }, { status: 403 })
     }
 
+    // Deduplicación: si ya existe un envío idéntico creado en los últimos 30 segundos
+    // (doble clic, doble tap o reintento), devolver el existente en lugar de duplicarlo.
+    const hace30s = new Date(Date.now() - 30 * 1000).toISOString()
+    const { data: duplicado } = await supabaseAdmin
+      .from('envios')
+      .select('*')
+      .eq('user_id', user_id)
+      .eq('dni', dni ?? null)
+      .eq('telefono', telefono ?? null)
+      .eq('metodo', metodo)
+      .gte('fecha_registro', hace30s)
+      .order('fecha_registro', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (duplicado) {
+      return NextResponse.json({
+        success: true,
+        envio: duplicado,
+        duplicado: true,
+      })
+    }
+
     const esPro = computeEffectivePlan(perfil).plan !== 'basic'
 
     // Para básico la configuración logística personalizada (días, hora de corte, cupo) no aplica
