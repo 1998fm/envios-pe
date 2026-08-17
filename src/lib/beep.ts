@@ -1,27 +1,42 @@
 export function beepOk() {
-  beep(880)
+  const ctx = crearCtx()
+  if (!ctx) return
+  tono(ctx, 660, 0, 0.35)
+  tono(ctx, 990, 0.4, 0.6)
 }
 
 export function beepError() {
-  beep(220)
+  const ctx = crearCtx()
+  if (!ctx) return
+  tono(ctx, 220, 0, 1.0)
 }
 
-function beep(freq: number) {
-  if (typeof window === 'undefined') return
+function crearCtx(): AudioContext | null {
+  if (typeof window === 'undefined') return null
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-    if (!AudioCtx) return
-    const ctx = new AudioCtx()
+    if (!AudioCtx) return null
+    return new AudioCtx()
+  } catch {
+    return null
+  }
+}
+
+function tono(ctx: AudioContext, freq: number, inicio: number, duracion: number) {
+  try {
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.connect(gain)
     gain.connect(ctx.destination)
-    osc.type = 'sine'
+    osc.type = 'square'
     osc.frequency.value = freq
-    gain.gain.setValueAtTime(0.12, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15)
-    osc.start()
-    osc.stop(ctx.currentTime + 0.15)
+    const t = ctx.currentTime + inicio
+    gain.gain.setValueAtTime(0.0001, t)
+    gain.gain.exponentialRampToValueAtTime(0.5, t + 0.02)
+    gain.gain.setValueAtTime(0.5, t + duracion - 0.05)
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + duracion)
+    osc.start(t)
+    osc.stop(t + duracion)
   } catch {
     // sin sonido si el navegador lo bloquea
   }
