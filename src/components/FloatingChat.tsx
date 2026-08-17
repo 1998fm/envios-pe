@@ -17,7 +17,7 @@ const FAQS: FAQ[] = [
   },
   {
     q: '¿Qué plan tengo y cómo cambio?',
-    a: 'Tu plan se muestra en la barra superior. Si estás en Pro Trial, cuando se cumplan los 30 días pasas automáticamente a Básico (gratis, 50 envíos/mes, 2 métodos). Al actualizar a Pro (S/29.90/mes) se desbloquea: métodos ilimitados, tarifas por distrito, cambio masivo, tu marca en el formulario, redes sociales, control de logística y más. El pago es vía MercadoPago y se activa al instante.',
+    a: 'Tu plan se muestra en la barra superior. Si estás en Business Plus Trial, cuando se cumplan los 30 días pasas automáticamente a Básico (gratis, 50 envíos/mes, 2 métodos). Puedes actualizar a Pro (S/29.90/mes) o Business Plus (S/49.90/mes) —se desbloquean tarifas por distrito, cambio masivo, tu marca en el formulario, control de logística y más; Business Plus añade redes sociales, lector QR en ventas y exportación a Excel/CSV. El pago es vía MercadoPago y se activa al instante.',
   },
   {
     q: '¿Mis clientes necesitan una cuenta?',
@@ -37,7 +37,7 @@ const FAQS: FAQ[] = [
   },
   {
     q: '¿Qué es el Cambio Masivo y cómo se usa?',
-    a: 'Es una herramienta del plan Pro que te permite cambiar el estado de varios pedidos a la vez. Por ejemplo: selecciona 20 pedidos que ya entregaste y pásalos todos de "Empacado" a "Enviado" en un solo clic. Ahorra tiempo cuando tienes muchos pedidos.',
+    a: 'Es una herramienta del plan Pro o Business Plus que te permite cambiar el estado de varios pedidos a la vez. Por ejemplo: selecciona 20 pedidos que ya entregaste y pásalos todos de "Empacado" a "Enviado" en un solo clic. Ahorra tiempo cuando tienes muchos pedidos.',
   },
   {
     q: '¿Cómo uso los filtros y estadísticas?',
@@ -53,11 +53,11 @@ const FAQS: FAQ[] = [
   },
   {
     q: '¿Puedo poner precio diferente por distrito?',
-    a: 'Sí. En la configuración de tarifas (plan Pro) puedes definir un precio distinto para cada distrito de Lima. También puedes usar "Precio único para todos" si prefieres simplificar. El cliente verá el costo exacto antes de confirmar su pedido.',
+    a: 'Sí. En la configuración de tarifas (plan Pro o Business Plus) puedes definir un precio distinto para cada distrito de Lima. También puedes usar "Precio único para todos" si prefieres simplificar. El cliente verá el costo exacto antes de confirmar su pedido.',
   },
   {
     q: '¿Qué pasa si supero el límite del plan Básico?',
-    a: 'El plan Pro no tiene límites de envíos. Si estás en Básico y necesitas más de 50 envíos al mes, puedes actualizar a Pro desde tu dashboard con un clic. Tus datos y configuración se mantienen intactos.',
+    a: 'El plan Pro permite 500 envíos, 200 productos y 2000 ventas al mes; Business Plus no tiene límites. Si estás en Básico y necesitas más de 50 envíos al mes, puedes actualizar desde tu dashboard con un clic. Tus datos y configuración se mantienen intactos.',
   },
 ]
 

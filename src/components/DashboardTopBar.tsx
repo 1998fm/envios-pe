@@ -13,7 +13,7 @@ type Props = {
 }
 
 export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompartir, onUpgrade, onLogout }: Props) {
-  const isTrial = diasRestantes != null && plan === 'pro'
+  const isTrial = diasRestantes != null && (plan === 'pro' || plan === 'business_plus')
 
   return (
     <div data-tour="topbar">
@@ -35,7 +35,11 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
           )}
           {isTrial ? (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100  text-amber-700  whitespace-nowrap">
-              Pro · Trial {diasRestantes}d
+              {plan === 'business_plus' ? 'Business Plus' : 'Pro'} · Trial {diasRestantes}d
+            </span>
+          ) : plan === 'business_plus' ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white whitespace-nowrap">
+              Business Plus
             </span>
           ) : plan === 'pro' ? (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-sky-600 to-indigo-600 text-white whitespace-nowrap">
@@ -83,7 +87,7 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
           <div className="rounded-xl bg-amber-50  border border-amber-200  px-4 py-3 flex items-center justify-between gap-3">
             <p className="text-xs sm:text-sm text-amber-800 ">
               {diasRestantes === 0
-                ? 'Tu prueba gratuita termina hoy. Actualiza a Pro para no perder tus funciones.'
+                ? 'Tu prueba gratuita termina hoy. Actualiza a Pro o Business Plus para no perder tus funciones.'
                 : `Tu prueba gratuita termina en ${diasRestantes} día${diasRestantes !== 1 ? 's' : ''}.`}
             </p>
             <button
@@ -99,7 +103,7 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
         <div className="px-4 sm:px-6 pb-4">
           <div className="rounded-xl bg-slate-100  border border-slate-200  px-4 py-3 flex items-center justify-between gap-3">
             <p className="text-xs sm:text-sm text-slate-600 ">
-              Estás en el plan Básico. Actualiza a Pro para envíos ilimitados y más funciones.
+              Estás en el plan Básico. Actualiza a Pro o Business Plus para más funciones.
             </p>
           <button
             onClick={onUpgrade}

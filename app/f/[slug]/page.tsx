@@ -23,7 +23,9 @@ export default async function FormPage({
     )
   }
 
-  const isPro = computeEffectivePlan(profile).plan === 'pro'
+  const planEfectivo = computeEffectivePlan(profile)
+  const isPro = planEfectivo.plan !== 'basic'
+  const isBusinessPlus = planEfectivo.plan === 'business_plus'
 
   return (
 
@@ -48,6 +50,7 @@ export default async function FormPage({
       <PublicForm
         userId={profile.id}
         isPro={isPro}
+        isBusinessPlus={isBusinessPlus}
         logoUrl={profile.logo_url}
         redirectMessage={profile.redirect_message}
         redirectMessageImage={profile.redirect_message_image}

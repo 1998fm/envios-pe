@@ -599,16 +599,16 @@ export const TOURS: Tour[] = [
   // ==========================================
   {
     id: 'modal-upgrade',
-    titulo: 'Planes Pro',
+    titulo: 'Planes',
     modal: true,
     steps: [
       {
         target: '[data-tour="upgrade-periodo"]',
-        text: 'Aquí eliges el plan Pro para desbloquear más funciones: más envíos, logística y tarifas. También puedes quedarte en el plan Básico gratis.',
+        text: 'Elige entre pago mensual o trimestral. Puedes actualizar a Pro o Business Plus para desbloquear más funciones, o quedarte en el plan Básico gratis.',
       },
       {
         target: '[data-tour="upgrade-planes"]',
-        text: 'Compara los planes: Básico es gratis para siempre y Pro te da todo el poder de Tori.',
+        text: 'Compara los tres planes: Básico es gratis para siempre, Pro es ideal para crecer y Business Plus es ilimitado con herramientas avanzadas.',
       },
       {
         target: '[data-tour="upgrade-pagar"]',

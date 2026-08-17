@@ -117,7 +117,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: reason }, { status: 403 })
     }
 
-    const esPro = computeEffectivePlan(perfil).plan === 'pro'
+    const esPro = computeEffectivePlan(perfil).plan !== 'basic'
 
     // Para básico la configuración logística personalizada (días, hora de corte, cupo) no aplica
     const logistica = esPro

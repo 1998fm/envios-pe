@@ -59,11 +59,13 @@ export async function checkTrialStatus(userId: string): Promise<TrialStatus> {
   const proUntil = profile.pro_until ? new Date(profile.pro_until) : null
   const isPaidActive = proUntil && proUntil > now
 
-  // 1. Pro pagado activo
+  const planActivo = profile.plan === 'business_plus' ? 'business_plus' : 'pro'
+
+  // 1. Pro/Business Plus pagado activo
   if (isPaidActive) {
     const daysRemaining = Math.ceil((proUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
     return {
-      plan: 'pro',
+      plan: planActivo,
       isTrial: false,
       isPaid: true,
       trialEnd: profile.trial_end,
@@ -74,12 +76,13 @@ export async function checkTrialStatus(userId: string): Promise<TrialStatus> {
 
   // 2. Trial activo (solo si no tiene pro_until activo)
   const trialEnd = profile.trial_end ? new Date(profile.trial_end) : null
-  const isTrialActive = trialEnd && trialEnd > now && profile.plan === 'pro'
+  const isTrialActive =
+    trialEnd && trialEnd > now && (profile.plan === 'pro' || profile.plan === 'business_plus')
 
   if (isTrialActive) {
     const daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
     return {
-      plan: 'pro',
+      plan: planActivo,
       isTrial: true,
       isPaid: false,
       trialEnd: profile.trial_end,
@@ -88,8 +91,8 @@ export async function checkTrialStatus(userId: string): Promise<TrialStatus> {
     }
   }
 
-  // 3. Sin Pro activo — auto-downgrade a basic
-  if (profile.plan === 'pro') {
+  // 3. Sin plan activo — auto-downgrade a basic
+  if (profile.plan === 'pro' || profile.plan === 'business_plus') {
     await supabaseAdmin
       .from('profiles')
       .update({ plan: 'basic', trial_end: null })
@@ -128,7 +131,7 @@ export async function checkEnvioLimit(userId: string): Promise<{ allowed: boolea
   if ((count ?? 0) >= features.max_envios) {
     return {
       allowed: false,
-      reason: `Límite de ${features.max_envios} envíos mensuales alcanzado. Actualiza a Pro para envíos ilimitados.`,
+      reason: `Límite de ${features.max_envios} envíos mensuales alcanzado. Actualiza a Pro (500/mes) o Business Plus (ilimitado).`,
     }
   }
 
@@ -168,7 +171,7 @@ export async function checkRecordLimit(
       allowed: false,
       used,
       max: limite,
-      reason: `Límite de ${limite} ${nombre} alcanzado en el plan Básico. Actualiza a Pro para ${nombre} ilimitados.`,
+      reason: `Límite de ${limite} ${nombre} alcanzado en el plan Básico. Actualiza a Pro o Business Plus para más ${nombre}.`,
     }
   }
 
@@ -206,7 +209,7 @@ export async function checkShalomExportLimit(userId: string): Promise<LimitCheck
       allowed: false,
       used,
       max,
-      reason: `Límite de ${max} exportaciones a Shalom por mes alcanzado. Actualiza a Pro para exportaciones ilimitadas.`,
+      reason: `Límite de ${max} exportaciones a Shalom por mes alcanzado. Actualiza a Pro o Business Plus para exportaciones ilimitadas.`,
     }
   }
 

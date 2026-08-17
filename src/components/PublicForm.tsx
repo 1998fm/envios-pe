@@ -15,6 +15,7 @@ import SuccessScreen from '@/components/SuccessScreen'
 type Props = {
   userId: string
   isPro?: boolean
+  isBusinessPlus?: boolean
   logoUrl?: string
   redirectMessage?: string
   redirectMessageImage?: string
@@ -40,6 +41,7 @@ type MetodoDisponible = { value: string; label: string }
 export default function PublicForm({
   userId,
   isPro = false,
+  isBusinessPlus = false,
   logoUrl,
   redirectMessage,
   redirectMessageImage,
@@ -389,11 +391,11 @@ export default function PublicForm({
           <SubmitButton loading={loading} onClick={handleSubmit} />
 
           <SocialLinks
-            instagramUrl={isPro ? instagramUrl : undefined}
-            facebookUrl={isPro ? facebookUrl : undefined}
-            tiktokUrl={isPro ? tiktokUrl : undefined}
-            webUrl={isPro ? webUrl : undefined}
-            whatsappUrl={isPro ? whatsappUrl : undefined}
+            instagramUrl={isBusinessPlus ? instagramUrl : undefined}
+            facebookUrl={isBusinessPlus ? facebookUrl : undefined}
+            tiktokUrl={isBusinessPlus ? tiktokUrl : undefined}
+            webUrl={isBusinessPlus ? webUrl : undefined}
+            whatsappUrl={isBusinessPlus ? whatsappUrl : undefined}
           />
         </div>
       </div>

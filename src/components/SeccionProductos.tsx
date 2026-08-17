@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Search, Pencil, Trash2, Check, X, Printer } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Producto } from '@/types/inventario'
 import { UNIDADES_MEDIDA } from '@/types/inventario'
@@ -9,11 +9,12 @@ import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
-import { openUpgrade } from '@/lib/planGating'
+import { openUpgrade, planNivel } from '@/lib/planGating'
 import EtiquetasProducto, { TAMANOS_ETIQUETA_PRODUCTO, type TamanoEtiquetaProducto } from '@/components/EtiquetasProducto'
 
 type Props = {
   userId: string
+  plan?: string
 }
 
 function generarSKU(nombre: string): string {
@@ -35,7 +36,7 @@ const EJEMPLOS = [
   { nombre: 'Leche 1L', precio_venta: 5.50, precio_compra: 4.00, stock_actual: 60, stock_minimo: 12, unidad: 'L' },
 ]
 
-export default function SeccionProductos({ userId }: Props) {
+export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   const confirmar = useConfirm()
   const { startTour } = useOnboarding()
   const [productos, setProductos] = useState<Producto[]>([])
@@ -321,7 +322,7 @@ export default function SeccionProductos({ userId }: Props) {
                         </div>
                       ) : (
                         <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => { setImprimirProducto(p); setMostrarModalImprimir(true) }} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Imprimir etiqueta">
+                          <button onClick={() => { if (planNivel(plan) < 1) { openUpgrade(); return } setImprimirProducto(p); setMostrarModalImprimir(true) }} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title={planNivel(plan) < 1 ? 'Disponible en Pro y Business Plus' : 'Imprimir etiqueta'}>
                             <Printer size={16} />
                           </button>
                           <button onClick={() => iniciarEdicion(p)} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Editar">
@@ -430,7 +431,20 @@ export default function SeccionProductos({ userId }: Props) {
                  </div>
                </div>
                <div>
-                 {(() => {
+                 {planNivel(plan) < 1 ? (
+                   <button
+                     onClick={openUpgrade}
+                     className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold flex items-center justify-between bg-slate-50 text-slate-500 border border-dashed border-slate-300 hover:border-sky-300 transition-colors"
+                     title="Disponible en Pro y Business Plus"
+                   >
+                     <span className="flex items-center gap-2">
+                       <Lock size={14} className="text-slate-400" />
+                       Ganancia por venta
+                     </span>
+                     <span className="text-xs font-semibold text-sky-600">Ver planes</span>
+                   </button>
+                 ) : (
+                  (() => {
                    const ganancia = nuevoForm.precio_venta - nuevoForm.precio_compra
                    const pct = nuevoForm.precio_venta > 0 ? (ganancia / nuevoForm.precio_venta) * 100 : 0
                    const positivo = nuevoForm.precio_venta > 0 && ganancia >= 0
@@ -451,7 +465,8 @@ export default function SeccionProductos({ userId }: Props) {
                        </span>
                      </div>
                    )
-                 })()}
+                  })()
+                 )}
                </div>
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Unidad</label>

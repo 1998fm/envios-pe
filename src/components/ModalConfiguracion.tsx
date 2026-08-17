@@ -137,7 +137,7 @@ export default function ModalConfiguracion({
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-slate-700">Logo del negocio</h3>
-                      <p className="text-xs text-slate-500">Disponible en el plan Pro</p>
+                      <p className="text-xs text-slate-500">Disponible en Pro y Business Plus</p>
                     </div>
                   </div>
                   <button
@@ -208,7 +208,7 @@ export default function ModalConfiguracion({
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-slate-700">URL de redirección</h3>
-                      <p className="text-xs text-slate-500">Disponible en el plan Pro</p>
+                      <p className="text-xs text-slate-500">Disponible en Pro y Business Plus</p>
                     </div>
                   </div>
                   <button
@@ -234,7 +234,7 @@ export default function ModalConfiguracion({
                 </div>
               )}
 
-              {isBasic ? (
+              {plan !== 'business_plus' ? (
                 <div className="p-5 border border-dashed border-slate-300 rounded-2xl bg-slate-50 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center">
@@ -242,7 +242,7 @@ export default function ModalConfiguracion({
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-slate-700">Redes sociales</h3>
-                      <p className="text-xs text-slate-500">Disponible en el plan Pro</p>
+                      <p className="text-xs text-slate-500">Disponible en el plan Business Plus</p>
                     </div>
                   </div>
                   <button
@@ -461,7 +461,7 @@ export default function ModalConfiguracion({
                 ¿Necesitas más funciones?
               </p>
               <p className="text-xs text-amber-700  mt-1">
-                Actualiza a Pro y obtén logo personalizado, redes sociales, tarifas, control logístico y más.
+                Actualiza a Pro o Business Plus y obtén logo personalizado, tarifas, control logístico y más.
               </p>
               <button
                 onClick={onUpgrade}

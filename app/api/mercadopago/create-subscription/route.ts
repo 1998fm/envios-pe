@@ -1,4 +1,4 @@
-import { crearSuscripcion, type Periodo } from '@/lib/mercadopago'
+import { crearSuscripcion, type Periodo, type PlanPago } from '@/lib/mercadopago'
 import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: Request) {
@@ -7,14 +7,18 @@ export async function POST(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { userId, periodo } = await request.json()
+  const { userId, periodo, plan } = await request.json()
 
-  if (!userId || !periodo) {
+  if (!userId || !periodo || !plan) {
     return Response.json({ error: 'Faltan campos requeridos' }, { status: 400 })
   }
 
   if (periodo !== 'mensual' && periodo !== 'trimestral') {
     return Response.json({ error: 'Periodo inválido' }, { status: 400 })
+  }
+
+  if (plan !== 'pro' && plan !== 'business_plus') {
+    return Response.json({ error: 'Plan inválido' }, { status: 400 })
   }
 
   // Obtener email del usuario
@@ -32,6 +36,7 @@ export async function POST(request: Request) {
     const result = await crearSuscripcion({
       email: userData.user.email,
       userId,
+      plan: plan as PlanPago,
       periodo: periodo as Periodo,
       backUrl,
     })

@@ -1418,8 +1418,8 @@ for (
          </>
        )}
 
-       {pestañaActiva === 'productos' && <SeccionProductos userId={userId || ''} />}
-       {pestañaActiva === 'ventas' && <SeccionVentas userId={userId || ''} />}
+       {pestañaActiva === 'productos' && <SeccionProductos userId={userId || ''} plan={plan} />}
+       {pestañaActiva === 'ventas' && <SeccionVentas userId={userId || ''} plan={plan} />}
        {pestañaActiva === 'compras' && <SeccionCompras userId={userId || ''} />}
        {pestañaActiva === 'gastos' && <SeccionGastos userId={userId || ''} />}
 

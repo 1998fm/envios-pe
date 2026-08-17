@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       id: userId,
       empresa,
       slug,
-      plan: 'pro',
+      plan: 'business_plus',
       trial_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     })
 

@@ -1,4 +1,4 @@
-import { obtenerSuscripcion } from '@/lib/mercadopago'
+import { obtenerSuscripcion, planDesdeMonto } from '@/lib/mercadopago'
 import { WebhookSignatureValidator } from 'mercadopago'
 import { createClient } from '@supabase/supabase-js'
 
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     if (topic === 'preapproval') {
       const preapproval = await obtenerSuscripcion(id)
 
-      const userId = preapproval.external_reference
+      const userId = String(preapproval.external_reference ?? '').split('__')[0]
       const status = preapproval.status
 
       if (!userId) {
@@ -53,14 +53,14 @@ export async function POST(request: Request) {
 
       if (status === 'authorized') {
         const monto = preapproval.auto_recurring?.transaction_amount ?? 29.90
-        const meses = monto >= 70 ? 3 : 1
+        const { plan, meses } = planDesdeMonto(monto)
         const proUntil = new Date()
         proUntil.setMonth(proUntil.getMonth() + meses)
 
         await supabaseAdmin
           .from('profiles')
           .update({
-            plan: 'pro',
+            plan,
             pro_until: proUntil.toISOString(),
           })
           .eq('id', userId)

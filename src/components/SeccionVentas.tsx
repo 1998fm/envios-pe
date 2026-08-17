@@ -9,9 +9,9 @@ import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
-import { openUpgrade } from '@/lib/planGating'
+import { openUpgrade, planNivel } from '@/lib/planGating'
 
-type Props = { userId: string }
+type Props = { userId: string; plan?: string }
 
 const ESTADOS = ['COMPLETADA', 'ANULADA', 'PENDIENTE'] as const
 
@@ -21,7 +21,7 @@ const METODOS_PAGO = [
   { key: 'TARJETA', label: 'Tarjeta' },
 ] as const
 
-export default function SeccionVentas({ userId }: Props) {
+export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   const confirmar = useConfirm()
   const { startTour } = useOnboarding()
   const [ventas, setVentas] = useState<Venta[]>([])
@@ -292,7 +292,7 @@ export default function SeccionVentas({ userId }: Props) {
                 <th className="px-4 py-3">DNI</th>
                 <th className="px-4 py-3 text-right">Productos</th>
                 <th className="px-4 py-3 text-right">Total</th>
-                <th className="px-4 py-3 text-right">Ganancia</th>
+                {planNivel(plan) >= 1 && <th className="px-4 py-3 text-right">Ganancia</th>}
                 <th className="px-4 py-3 text-center">Pago</th>
                 <th className="px-4 py-3 text-center">Estado Venta</th>
                 <th className="px-4 py-3 text-center">Envío</th>
@@ -323,10 +323,12 @@ export default function SeccionVentas({ userId }: Props) {
                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">{v.persona_dni}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{v.items?.length ?? 0} ítems</td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-900">S/ {v.total.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="font-semibold text-emerald-600">{gananciaText}</span>
-                      <span className="block text-[11px] text-slate-400">{pctText}</span>
-                    </td>
+                    {planNivel(plan) >= 1 && (
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-semibold text-emerald-600">{gananciaText}</span>
+                        <span className="block text-[11px] text-slate-400">{pctText}</span>
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${
                         v.metodo_pago === 'TARJETA' ? 'bg-indigo-100 text-indigo-700' :
@@ -563,7 +565,7 @@ export default function SeccionVentas({ userId }: Props) {
         </div>
       )}
 
-      <ModalDetalleVenta venta={ventaDetalle} onCerrar={() => setVentaDetalle(null)} />
+      <ModalDetalleVenta venta={ventaDetalle} onCerrar={() => setVentaDetalle(null)} plan={plan} />
     </div>
   )
 }

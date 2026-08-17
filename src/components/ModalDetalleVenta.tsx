@@ -2,13 +2,16 @@
 
 import type { Venta } from '@/types/inventario'
 import ModalDetalleDocumento from '@/components/ModalDetalleDocumento'
+import { Lock } from 'lucide-react'
+import { openUpgrade, planNivel } from '@/lib/planGating'
 
 type Props = {
   venta: Venta | null
   onCerrar: () => void
+  plan?: string
 }
 
-export default function ModalDetalleVenta({ venta, onCerrar }: Props) {
+export default function ModalDetalleVenta({ venta, onCerrar, plan = 'basic' }: Props) {
   if (!venta) return null
 
   const badge = {
@@ -46,11 +49,24 @@ export default function ModalDetalleVenta({ venta, onCerrar }: Props) {
         <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Total</p>
         <p className="font-bold text-slate-900 text-lg">S/ {venta.total.toFixed(2)}</p>
       </div>
-      <div className="bg-slate-50 rounded-2xl p-3">
-        <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Ganancia</p>
-        <p className="font-bold text-emerald-600 text-lg">S/ {ganancia.toFixed(2)}</p>
-        <p className="text-[11px] text-slate-400">{pctGanancia.toFixed(0)}% de la venta</p>
-      </div>
+      {planNivel(plan) >= 1 ? (
+        <div className="bg-slate-50 rounded-2xl p-3">
+          <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Ganancia</p>
+          <p className="font-bold text-emerald-600 text-lg">S/ {ganancia.toFixed(2)}</p>
+          <p className="text-[11px] text-slate-400">{pctGanancia.toFixed(0)}% de la venta</p>
+        </div>
+      ) : (
+        <button
+          onClick={openUpgrade}
+          className="bg-slate-50 rounded-2xl p-3 text-left border border-dashed border-slate-300 hover:border-sky-300 transition-colors"
+        >
+          <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Ganancia</p>
+          <p className="font-bold text-slate-400 text-lg flex items-center gap-2">
+            <Lock size={16} />
+            Ver planes
+          </p>
+        </button>
+      )}
       <div className="bg-slate-50 rounded-2xl p-3">
         <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Fecha</p>
         <p className="font-semibold text-slate-900 text-sm">

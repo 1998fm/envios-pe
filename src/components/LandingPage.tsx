@@ -103,16 +103,29 @@ const planBasicFeatures = [
   '50 productos y 100 ventas',
   'Compras y gastos',
   'Etiquetas de envío',
-  'Exportar a Shalom (10 al mes)',
+  'Exportar a Shalom (8 al mes)',
 ]
 
 const planProFeatures = [
-  'Envíos, productos y ventas ilimitados',
+  '500 envíos al mes',
+  '200 productos y 2000 ventas',
   'Todos los métodos de envío',
   'Logo, colores y marca blanca',
   'Tarifas por distrito',
   'Hora de corte, anticipación y cupo diario',
-  'Redes sociales, URL de redirección y cambio masivo',
+  'Etiquetas de producto con QR',
+  'Ganancia por venta',
+  'URL de redirección y cambio masivo',
+]
+
+const planBusinessPlusFeatures = [
+  'Envíos, productos y ventas ilimitados',
+  'Todos los métodos de envío',
+  'Redes sociales en tu formulario',
+  'Lector de QR en ventas',
+  'Exportar datos a Excel/CSV',
+  'Todo lo del plan Pro',
+  'Soporte prioritario',
 ]
 
 const faqs = [
@@ -789,7 +802,7 @@ export default function LandingPage() {
           </motion.div>
 
           {/* Planes */}
-          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mx-auto mt-12">
+          <div className="grid md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto mt-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -855,6 +868,40 @@ export default function LandingPage() {
               <Link
                 href="/register"
                 className="mt-6 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold bg-tori-600 hover:bg-tori-700 text-white hover:shadow-xl hover:shadow-tori-600/20 transition-all duration-200"
+              >
+                Comenzar prueba gratis
+                <ArrowRight size={16} />
+              </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="relative flex flex-col rounded-2xl border border-slate-200 bg-white p-6 sm:p-8"
+            >
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-violet-600 text-white text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
+                Negocios que escalan
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mt-2">Business Plus</h3>
+              <p className="mt-1 text-sm text-slate-500">Ilimitado y con herramientas avanzadas</p>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-5xl font-extrabold text-slate-900">S/ 49.90</span>
+                <span className="text-sm text-slate-500 font-medium">/mes</span>
+              </div>
+              <p className="mt-2 text-sm text-slate-500">O S/ 129.90 cada 3 meses</p>
+              <ul className="mt-5 flex-1 space-y-2.5">
+                {planBusinessPlusFeatures.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
+                    <Check size={15} className="mt-0.5 shrink-0 text-violet-500" />
+                    <span className="font-semibold text-slate-800">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/register"
+                className="mt-6 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold bg-violet-600 hover:bg-violet-700 text-white hover:shadow-xl hover:shadow-violet-600/20 transition-all duration-200"
               >
                 Comenzar prueba gratis
                 <ArrowRight size={16} />

@@ -11,7 +11,7 @@ type Props = {
 
 export default function LockedFeature({
   label = 'Función Pro',
-  hint = 'Disponible en el plan Pro',
+  hint = 'Disponible en Pro y Business Plus',
   className = '',
 }: Props) {
   return (

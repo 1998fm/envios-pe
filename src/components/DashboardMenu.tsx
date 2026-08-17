@@ -191,14 +191,14 @@ export default function DashboardMenu({
                     )}
                   </button>
                 )}
-                {plan === 'pro' ? (
+                {plan !== 'basic' ? (
                   <button data-tour="cambio-masivo" onClick={() => ejecutar(onCambioMasivo)} className={itemClass}>
                     <Replace size={16} className="text-indigo-500" />
                     Cambio Masivo
                   </button>
                 ) : (
                   <div data-tour="cambio-masivo" className="flex items-center justify-between pr-3">
-                    <LockedFeature label="Cambio Masivo" hint="Cambio masivo de estados — disponible en el plan Pro" className="flex-1" />
+                    <LockedFeature label="Cambio Masivo" hint="Cambio masivo de estados — disponible en Pro y Business Plus" className="flex-1" />
                   </div>
                 )}
                 <button data-tour="generar-etiquetas" onClick={() => ejecutar(onGenerarEtiquetas)} className={itemClass}>
@@ -209,7 +209,7 @@ export default function DashboardMenu({
                   <div data-tour="copiar-datos" className="flex items-center justify-between pr-3">
                     <LockedFeature
                       label="Copiar datos"
-                      hint="Copiar datos de más de 50 pedidos motorizados — disponible en el plan Pro"
+                      hint="Copiar datos de más de 50 pedidos motorizados — disponible en Pro y Business Plus"
                       className="flex-1"
                     />
                   </div>

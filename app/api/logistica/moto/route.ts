@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const esPro = computeEffectivePlan(perfil).plan === 'pro'
+  const esPro = computeEffectivePlan(perfil).plan !== 'basic'
 
   const diasDisponibles: string[] = perfil?.logistica_moto_dias ?? ['MONDAY']
   const usaHora = esPro ? (perfil?.logistica_moto_usa_hora_corte ?? false) : false
