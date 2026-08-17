@@ -1,13 +1,13 @@
 export function beepOk() {
   const ctx = crearCtx()
   if (!ctx) return
-  tono(ctx, 880, 0, 1.0)
+  tono(ctx, 880, 0, 0.5)
 }
 
 export function beepError() {
   const ctx = crearCtx()
   if (!ctx) return
-  tono(ctx, 220, 0, 1.0)
+  tono(ctx, 220, 0, 0.5)
 }
 
 function crearCtx(): AudioContext | null {
