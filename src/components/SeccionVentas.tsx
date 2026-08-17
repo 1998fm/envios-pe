@@ -1,15 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Check, X, RotateCcw, Loader2, Eye } from 'lucide-react'
+import { Plus, Check, X, RotateCcw, Loader2, Eye, ScanBarcode, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Venta, Producto } from '@/types/inventario'
 import ModalDetalleVenta from '@/components/ModalDetalleVenta'
+import EscannerVentas from '@/components/EscannerVentas'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade, planNivel } from '@/lib/planGating'
+import { beepOk, beepError } from '@/lib/beep'
 
 type Props = { userId: string; plan?: string }
 
@@ -42,6 +44,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
 
   const [productos, setProductos] = useState<Producto[]>([])
   const [busquedaProd, setBusquedaProd] = useState('')
+  const [showEscanner, setShowEscanner] = useState(false)
   const [itemsVenta, setItemsVenta] = useState<{ producto_id: string; nombre: string; cantidad: string; precio: number }[]>([])
   const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'YAPE_PLIN' | 'TARJETA'>('EFECTIVO')
   const [creando, setCreando] = useState(false)
@@ -132,6 +135,28 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
 
   function agregarProducto(prod: Producto) {
     setItemsVenta([...itemsVenta, { producto_id: prod.id, nombre: prod.nombre, cantidad: '1', precio: prod.precio_venta }])
+  }
+
+  function manejarCodigoEscaneado(codigo: string) {
+    const codigoLimpio = codigo.trim()
+    if (!codigoLimpio) return
+    const prod = productos.find((p) => p.id === codigoLimpio || (p.sku && p.sku === codigoLimpio))
+    if (!prod) {
+      beepError()
+      toast.error('Producto no encontrado con ese código')
+      return
+    }
+    const existe = itemsVenta.find((it) => it.producto_id === prod.id)
+    if (existe) {
+      const nuevos = itemsVenta.map((it) =>
+        it.producto_id === prod.id ? { ...it, cantidad: String((Number(it.cantidad) || 0) + 1) } : it,
+      )
+      setItemsVenta(nuevos)
+    } else {
+      agregarProducto(prod)
+    }
+    beepOk()
+    toast.success(`${prod.nombre} agregado a la venta`)
   }
 
   function quitarProducto(idx: number) {
@@ -468,12 +493,31 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
 
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Agregar productos</label>
-                <input
-                  value={busquedaProd}
-                  onChange={(e) => setBusquedaProd(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                  placeholder="Buscar producto..."
-                />
+                <div className="flex gap-2 mt-1">
+                  <input
+                    value={busquedaProd}
+                    onChange={(e) => setBusquedaProd(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                    placeholder="Buscar producto..."
+                  />
+                  {planNivel(plan) >= 2 ? (
+                    <button
+                      onClick={() => setShowEscanner(true)}
+                      title="Escanear código QR de producto"
+                      className="shrink-0 px-3 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-2"
+                    >
+                      <ScanBarcode size={16} /> Escanear
+                    </button>
+                  ) : (
+                    <button
+                      onClick={openUpgrade}
+                      title="Lector de QR — disponible en Business Plus"
+                      className="shrink-0 px-3 py-2 rounded-xl text-sm font-semibold text-slate-400 bg-slate-50 border border-dashed border-slate-200 hover:border-sky-400 hover:text-sky-600 flex items-center gap-2 transition-all duration-150 cursor-pointer"
+                    >
+                      <Lock size={14} /> Escanear
+                    </button>
+                  )}
+                </div>
                 <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
                   {productosFiltrados.map((p) => (
                     <button
@@ -565,6 +609,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
         </div>
       )}
 
+      <EscannerVentas abierto={showEscanner && planNivel(plan) >= 2} onCerrar={() => setShowEscanner(false)} onDetectar={manejarCodigoEscaneado} />
       <ModalDetalleVenta venta={ventaDetalle} onCerrar={() => setVentaDetalle(null)} plan={plan} />
     </div>
   )

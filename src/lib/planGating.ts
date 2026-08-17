@@ -30,6 +30,7 @@ export const FEATURES: FeatureDef[] = [
   { key: 'tarifas', label: 'Tarifas por distrito', basic: false, pro: true, business_plus: true, min: 'pro' },
   { key: 'cambio_masivo', label: 'Cambio masivo de estados', basic: false, pro: true, business_plus: true, min: 'pro' },
   { key: 'marca_blanca', label: 'Marca blanca en formulario', basic: false, pro: true, business_plus: true, min: 'pro' },
+  { key: 'lector_qr', label: 'Lector de QR en ventas', basic: false, pro: false, business_plus: true, min: 'business_plus' },
 ]
 
 export const UPGRADE_EVENT = 'open-upgrade'
