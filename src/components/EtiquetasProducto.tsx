@@ -59,10 +59,10 @@ export default function EtiquetasProducto({ productos, tamano }: Props) {
                 </div>
               )}
             </div>
-            <div className="flex items-center justify-center shrink-0">
+            <div className="flex items-center justify-center shrink-0 pl-1">
               <QRCodeSVG
                 value={p.sku || p.id}
-                size={Math.min(tamano.altoMm - Math.max(2, tamano.altoMm * 0.14), tamano.anchoMm * 0.55) * 3.78}
+                size={Math.min(tamano.altoMm - Math.max(2, tamano.altoMm * 0.14), tamano.anchoMm * 0.42) * 3.78}
                 level="M"
               />
             </div>
