@@ -1,8 +1,30 @@
+import { QRCodeSVG } from 'qrcode.react'
+
 type Props = {
   tipoEtiqueta: 'A4' | 'INDIVIDUAL'
   gruposEtiquetas: any[][]
   enviosEtiquetas: any[]
   logoUrl: string
+}
+
+function QRContenido({ productos, size = 92 }: { productos?: { nombre: string; cantidad: number }[]; size?: number }) {
+  if (!productos || productos.length === 0) return null
+
+  const contenido = productos
+    .map((p) => `${p.cantidad}x ${p.nombre}`)
+    .join('\n')
+
+  return (
+    <div className="flex items-center gap-3">
+      <QRCodeSVG value={contenido} size={size} level="M" />
+      <div>
+        <div className="text-[10px] uppercase text-gray-500 font-bold mb-1">Contenido</div>
+        <div className="text-sm font-medium whitespace-pre-line leading-snug">
+          {contenido}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function EtiquetasImpresion({
@@ -217,6 +239,14 @@ export default function EtiquetasImpresion({
 
     </div>
 
+    {/* CONTENIDO (QR) */}
+
+    {envio.productos && envio.productos.length > 0 && (
+      <div className="mt-3 pt-3 border-t">
+        <QRContenido productos={envio.productos} />
+      </div>
+    )}
+
   </div>
 
 </div>
@@ -429,6 +459,14 @@ export default function EtiquetasImpresion({
         </div>
 
       </div>
+
+      {/* CONTENIDO (QR) */}
+
+      {envio.productos && envio.productos.length > 0 && (
+        <div className="mt-8 pt-6 border-t">
+<QRContenido productos={envio.productos} size={140} />
+        </div>
+      )}
 
     </div>
 

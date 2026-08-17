@@ -1330,7 +1330,7 @@ for (
       onNavegar={setPestañaActiva}
       onExportShalom={exportarSeleccionados}
       onCambioMasivo={() => setMostrarModalEstado(true)}
-      onGenerarEtiquetas={() => {
+      onGenerarEtiquetas={async () => {
         if (seleccionados.length === 0) {
           toast.error('Selecciona al menos un envío')
           return
@@ -1338,7 +1338,29 @@ for (
         const pedidos = envios.filter((envio) =>
           seleccionados.includes(envio.id)
         )
-        setEnviosEtiquetas(pedidos)
+
+        const { data: ventas } = await supabase
+          .from('ventas')
+          .select('envio_id, items:venta_items(producto_nombre, cantidad)')
+          .in('envio_id', seleccionados)
+
+        const productosPorEnvio = new Map<string, { nombre: string; cantidad: number }[]>()
+        for (const venta of ventas || []) {
+          for (const item of venta.items || []) {
+            const lista = productosPorEnvio.get(venta.envio_id) || []
+            const existente = lista.find((p) => p.nombre === item.producto_nombre)
+            if (existente) existente.cantidad += item.cantidad
+            else lista.push({ nombre: item.producto_nombre, cantidad: item.cantidad })
+            productosPorEnvio.set(venta.envio_id, lista)
+          }
+        }
+
+        setEnviosEtiquetas(
+          pedidos.map((envio) => ({
+            ...envio,
+            productos: productosPorEnvio.get(envio.id) || [],
+          }))
+        )
         setMostrarEtiquetas(true)
       }}
       onCopiarDatos={abrirModalCopiar}
