@@ -1339,37 +1339,24 @@ for (
           seleccionados.includes(envio.id)
         )
 
-        const dnis = [
-          ...new Set(
-            pedidos.map((envio) => envio.dni).filter((dni): dni is string => !!dni)
-          ),
-        ]
+        const { data: ventas, error: ventasError } = await supabase
+          .from('ventas')
+          .select('envio_id, items:venta_items(producto_nombre, cantidad)')
+          .in('envio_id', seleccionados)
+
+        if (ventasError) {
+          toast.error('Error al leer los productos: ' + ventasError.message)
+          return
+        }
 
         const productosPorEnvio = new Map<string, { nombre: string; cantidad: number }[]>()
-
-        for (const dni of dnis) {
-          const { data: ventas, error: ventasError } = await supabase
-            .from('ventas')
-            .select('id, items:venta_items(producto_nombre, cantidad)')
-            .eq('persona_dni', dni)
-            .eq('estado', 'COMPLETADA')
-
-          if (ventasError) {
-            toast.error('Error al leer los productos: ' + ventasError.message)
-            return
-          }
-
-          for (const venta of ventas || []) {
-            for (const item of venta.items || []) {
-              for (const envio of pedidos) {
-                if (envio.dni !== dni) continue
-                const lista = productosPorEnvio.get(envio.id) || []
-                const existente = lista.find((p) => p.nombre === item.producto_nombre)
-                if (existente) existente.cantidad += item.cantidad
-                else lista.push({ nombre: item.producto_nombre, cantidad: item.cantidad })
-                productosPorEnvio.set(envio.id, lista)
-              }
-            }
+        for (const venta of ventas || []) {
+          for (const item of venta.items || []) {
+            const lista = productosPorEnvio.get(venta.envio_id) || []
+            const existente = lista.find((p) => p.nombre === item.producto_nombre)
+            if (existente) existente.cantidad += item.cantidad
+            else lista.push({ nombre: item.producto_nombre, cantidad: item.cantidad })
+            productosPorEnvio.set(venta.envio_id, lista)
           }
         }
 

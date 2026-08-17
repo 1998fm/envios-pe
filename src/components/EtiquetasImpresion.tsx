@@ -15,14 +15,8 @@ function QRContenido({ productos, size = 92 }: { productos?: { nombre: string; c
     .join('\n')
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex justify-center">
       <QRCodeSVG value={contenido} size={size} level="M" />
-      <div>
-        <div className="text-[10px] uppercase text-gray-500 font-bold mb-1">Contenido</div>
-        <div className="text-sm font-medium whitespace-pre-line leading-snug">
-          {contenido}
-        </div>
-      </div>
     </div>
   )
 }
