@@ -9,6 +9,7 @@ import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store, Building, 
 import TourHelpButton from '@/components/TourHelpButton'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
+import { comprimirImagenWebP } from '@/lib/comprimirImagen'
 import { useEffect } from 'react'
 
 export default function ModalConfiguracion({
@@ -159,7 +160,10 @@ export default function ModalConfiguracion({
                       className="h-20 object-contain mb-3 border border-slate-200 rounded-xl p-2 bg-white" />
                   )}
                   <input type="file" accept="image/png,image/jpeg,image/webp"
-                    onChange={(e) => upd('logoFile', e.target.files?.[0] || null)}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0] || null
+                      upd('logoFile', file ? await comprimirImagenWebP(file) : null)
+                    }}
                     className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-sky-100 file:text-sky-700 file:font-semibold file:text-sm" />
                 </div>
               )}
@@ -189,7 +193,10 @@ export default function ModalConfiguracion({
                   </div>
                 )}
                 <input type="file" accept="image/png,image/jpeg,image/webp"
-                  onChange={(e) => upd('redirectMessageImageFile', e.target.files?.[0] || null)}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0] || null
+                    upd('redirectMessageImageFile', file ? await comprimirImagenWebP(file) : null)
+                  }}
                   className="mt-3 w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-sky-100 file:text-sky-700 file:font-semibold file:text-sm" />
               </div>
 

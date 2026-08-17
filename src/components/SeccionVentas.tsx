@@ -28,6 +28,8 @@ export default function SeccionVentas({ userId }: Props) {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [loading, setLoading] = useState(true)
   const [showNueva, setShowNueva] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [cargandoMas, setCargandoMas] = useState(false)
 
   const [ventaDetalle, setVentaDetalle] = useState<Venta | null>(null)
 
@@ -44,16 +46,26 @@ export default function SeccionVentas({ userId }: Props) {
   const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'YAPE_PLIN' | 'TARJETA'>('EFECTIVO')
   const [creando, setCreando] = useState(false)
 
-  async function cargarVentas() {
+  async function cargarVentas(offset = 0, append = false) {
     const params = new URLSearchParams({ user_id: userId })
     if (filtroEstado) params.set('estado', filtroEstado)
+    params.set('offset', String(offset))
     const res = await fetch(`/api/ventas?${params}`)
     const json = await res.json()
-    if (res.ok) setVentas(json.data || [])
+    if (res.ok) {
+      setVentas((prev) => (append ? [...prev, ...(json.data || [])] : json.data || []))
+      setHasMore((json.offset + json.data.length) < json.total)
+    }
     setLoading(false)
   }
 
   useEffect(() => { cargarVentas() }, [userId, filtroEstado])
+
+  async function cargarMas() {
+    setCargandoMas(true)
+    await cargarVentas(ventas.length, true)
+    setCargandoMas(false)
+  }
 
   useEffect(() => {
     if (showNueva && trayectoDone() && !tourDone('modal-nueva-venta')) {
@@ -71,7 +83,7 @@ export default function SeccionVentas({ userId }: Props) {
 
   useEffect(() => {
     if (showNueva) {
-      fetch(`/api/productos?user_id=${userId}`).then((r) => r.json()).then((j) => setProductos(j.data || []))
+      fetch(`/api/productos?user_id=${userId}&limit=1000`).then((r) => r.json()).then((j) => setProductos(j.data || []))
     }
   }, [showNueva, userId])
 
@@ -370,6 +382,18 @@ export default function SeccionVentas({ userId }: Props) {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <button
+            onClick={cargarMas}
+            disabled={cargandoMas}
+            className="px-5 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all"
+          >
+            {cargandoMas ? 'Cargando...' : 'Cargar más ventas'}
+          </button>
         </div>
       )}
 

@@ -6,6 +6,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('user_id')
   const busqueda = searchParams.get('busqueda') || ''
+  const offset = parseInt(searchParams.get('offset') || '0')
+  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 1000)
 
   if (!userId) {
     return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
@@ -13,21 +15,22 @@ export async function GET(request: Request) {
 
   let query = supabaseAdmin
     .from('productos')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('profile_id', userId)
 
   if (busqueda) {
     query = query.ilike('nombre', `%${busqueda}%`)
   }
 
-  const { data, error } = await query
+  const { data, count, error } = await query
     .order('nombre', { ascending: true })
+    .range(offset, offset + limit - 1)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ data })
+  return NextResponse.json({ data, total: count ?? 0, offset, limit })
 }
 
 export async function POST(request: Request) {

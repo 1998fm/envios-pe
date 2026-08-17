@@ -44,6 +44,8 @@ export default function SeccionProductos({ userId }: Props) {
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Partial<Producto>>({})
   const [showNuevo, setShowNuevo] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [cargandoMas, setCargandoMas] = useState(false)
   const [nuevoForm, setNuevoForm] = useState({
     nombre: '',
     sku: '',
@@ -54,16 +56,26 @@ export default function SeccionProductos({ userId }: Props) {
     unidad: 'unidad',
   })
 
-  async function cargarProductos() {
+  async function cargarProductos(offset = 0, append = false) {
     const params = new URLSearchParams({ user_id: userId })
     if (busqueda) params.set('busqueda', busqueda)
+    params.set('offset', String(offset))
     const res = await fetch(`/api/productos?${params}`)
     const json = await res.json()
-    if (res.ok) setProductos(json.data || [])
+    if (res.ok) {
+      setProductos((prev) => (append ? [...prev, ...(json.data || [])] : json.data || []))
+      setHasMore((json.offset + json.data.length) < json.total)
+    }
     setLoading(false)
   }
 
   useEffect(() => { cargarProductos() }, [userId, busqueda])
+
+  async function cargarMas() {
+    setCargandoMas(true)
+    await cargarProductos(productos.length, true)
+    setCargandoMas(false)
+  }
 
   useEffect(() => {
     if (showNuevo && trayectoDone() && !tourDone('modal-nuevo-producto')) {
@@ -319,6 +331,18 @@ export default function SeccionProductos({ userId }: Props) {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <button
+            onClick={cargarMas}
+            disabled={cargandoMas}
+            className="px-5 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all"
+          >
+            {cargandoMas ? 'Cargando...' : 'Cargar más productos'}
+          </button>
         </div>
       )}
 

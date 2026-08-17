@@ -28,17 +28,36 @@ export default function SeccionGastos({ userId }: Props) {
   const [editando, setEditando] = useState<Gasto | null>(null)
   const [form, setForm] = useState(formVacio)
   const [guardando, setGuardando] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [cargandoMas, setCargandoMas] = useState(false)
+  const [totalMes, setTotalMes] = useState(0)
 
-  async function cargarGastos() {
+  async function cargarGastos(offset = 0, append = false) {
     const params = new URLSearchParams({ user_id: userId })
     if (filtroCategoria !== 'TODAS') params.set('categoria', filtroCategoria)
-    const res = await fetch(`/api/gastos?${params}`)
-    const json = await res.json()
-    if (res.ok) setGastos(json.data || [])
+
+    const [res, resTotal] = await Promise.all([
+      fetch(`/api/gastos?${params}&offset=${offset}`),
+      fetch(`/api/gastos?${params}&limit=1000`),
+    ])
+    const [json, jsonTotal] = await Promise.all([res.json(), resTotal.json()])
+    if (res.ok) {
+      setGastos((prev) => (append ? [...prev, ...(json.data || [])] : json.data || []))
+      setHasMore((json.offset + json.data.length) < json.total)
+    }
+    if (resTotal.ok) {
+      setTotalMes((jsonTotal.data || []).reduce((acc: number, g: Gasto) => acc + Number(g.monto || 0), 0))
+    }
     setLoading(false)
   }
 
   useEffect(() => { cargarGastos() }, [userId, filtroCategoria])
+
+  async function cargarMas() {
+    setCargandoMas(true)
+    await cargarGastos(gastos.length, true)
+    setCargandoMas(false)
+  }
 
   useEffect(() => {
     if (showModal && trayectoDone() && !tourDone('modal-nuevo-gasto')) {
@@ -46,8 +65,6 @@ export default function SeccionGastos({ userId }: Props) {
       return () => clearTimeout(t)
     }
   }, [showModal, startTour])
-
-  const totalMes = gastos.reduce((acc, g) => acc + Number(g.monto || 0), 0)
 
   function abrirNuevo() {
     setEditando(null)
@@ -206,6 +223,18 @@ export default function SeccionGastos({ userId }: Props) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <button
+            onClick={cargarMas}
+            disabled={cargandoMas}
+            className="px-5 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all"
+          >
+            {cargandoMas ? 'Cargando...' : 'Cargar más gastos'}
+          </button>
         </div>
       )}
 

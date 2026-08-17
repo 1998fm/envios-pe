@@ -2,6 +2,7 @@
 
 import type { ConfigState } from '@/types/config'
 import { Upload, Store, Phone, MapPin } from 'lucide-react'
+import { comprimirImagenWebP } from '@/lib/comprimirImagen'
 
 type Props = {
   config: ConfigState
@@ -77,7 +78,10 @@ export default function OnboardingStep1Empresa({ config, upd }: Props) {
         <input
           type="file"
           accept="image/png,image/jpeg,image/webp"
-          onChange={(e) => upd('logoFile', e.target.files?.[0] || null)}
+          onChange={async (e) => {
+            const file = e.target.files?.[0] || null
+            upd('logoFile', file ? await comprimirImagenWebP(file) : null)
+          }}
           className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-sky-100 file:text-sky-700 file:font-semibold file:text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
         />
         <p className="text-xs text-slate-400 mt-1">Se mostrará en tu formulario público. Recomendado: 200×200px.</p>

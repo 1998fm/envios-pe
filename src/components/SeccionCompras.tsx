@@ -21,6 +21,8 @@ export default function SeccionCompras({ userId }: Props) {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [loading, setLoading] = useState(true)
   const [showNueva, setShowNueva] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [cargandoMas, setCargandoMas] = useState(false)
 
   const [compraDetalle, setCompraDetalle] = useState<Compra | null>(null)
 
@@ -31,16 +33,26 @@ export default function SeccionCompras({ userId }: Props) {
   const [itemsCompra, setItemsCompra] = useState<{ producto_id: string; nombre: string; cantidad: string; precio: number }[]>([])
   const [creando, setCreando] = useState(false)
 
-  async function cargarCompras() {
+  async function cargarCompras(offset = 0, append = false) {
     const params = new URLSearchParams({ user_id: userId })
     if (filtroEstado) params.set('estado', filtroEstado)
+    params.set('offset', String(offset))
     const res = await fetch(`/api/compras?${params}`)
     const json = await res.json()
-    if (res.ok) setCompras(json.data || [])
+    if (res.ok) {
+      setCompras((prev) => (append ? [...prev, ...(json.data || [])] : json.data || []))
+      setHasMore((json.offset + json.data.length) < json.total)
+    }
     setLoading(false)
   }
 
   useEffect(() => { cargarCompras() }, [userId, filtroEstado])
+
+  async function cargarMas() {
+    setCargandoMas(true)
+    await cargarCompras(compras.length, true)
+    setCargandoMas(false)
+  }
 
   useEffect(() => {
     if (showNueva && trayectoDone() && !tourDone('modal-nueva-compra')) {
@@ -58,7 +70,7 @@ export default function SeccionCompras({ userId }: Props) {
 
   useEffect(() => {
     if (showNueva) {
-      fetch(`/api/productos?user_id=${userId}`).then((r) => r.json()).then((j) => setProductos(j.data || []))
+      fetch(`/api/productos?user_id=${userId}&limit=1000`).then((r) => r.json()).then((j) => setProductos(j.data || []))
     }
   }, [showNueva, userId])
 
@@ -248,6 +260,18 @@ export default function SeccionCompras({ userId }: Props) {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <button
+            onClick={cargarMas}
+            disabled={cargandoMas}
+            className="px-5 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all"
+          >
+            {cargandoMas ? 'Cargando...' : 'Cargar más compras'}
+          </button>
         </div>
       )}
 
