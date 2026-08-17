@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Search, Pencil, Trash2, Check, X } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Check, X, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Producto } from '@/types/inventario'
 import { UNIDADES_MEDIDA } from '@/types/inventario'
@@ -10,6 +10,7 @@ import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade } from '@/lib/planGating'
+import EtiquetasProducto, { TAMANOS_ETIQUETA_PRODUCTO, type TamanoEtiquetaProducto } from '@/components/EtiquetasProducto'
 
 type Props = {
   userId: string
@@ -46,6 +47,9 @@ export default function SeccionProductos({ userId }: Props) {
   const [showNuevo, setShowNuevo] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [cargandoMas, setCargandoMas] = useState(false)
+  const [mostrarModalImprimir, setMostrarModalImprimir] = useState(false)
+  const [imprimirProducto, setImprimirProducto] = useState<Producto | null>(null)
+  const [tamanoEtiqueta, setTamanoEtiqueta] = useState<TamanoEtiquetaProducto>(TAMANOS_ETIQUETA_PRODUCTO[0])
   const [nuevoForm, setNuevoForm] = useState({
     nombre: '',
     sku: '',
@@ -317,6 +321,9 @@ export default function SeccionProductos({ userId }: Props) {
                         </div>
                       ) : (
                         <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => { setImprimirProducto(p); setMostrarModalImprimir(true) }} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Imprimir etiqueta">
+                            <Printer size={16} />
+                          </button>
                           <button onClick={() => iniciarEdicion(p)} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Editar">
                             <Pencil size={16} />
                           </button>
@@ -473,6 +480,74 @@ export default function SeccionProductos({ userId }: Props) {
             </div>
           </div>
         </div>
+      )}
+
+      {mostrarModalImprimir && imprimirProducto && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => { setMostrarModalImprimir(false); setImprimirProducto(null) }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900">Imprimir etiqueta</h3>
+              <button onClick={() => { setMostrarModalImprimir(false); setImprimirProducto(null) }} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors" title="Cerrar">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div>
+              <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-700 truncate">
+                {imprimirProducto.nombre}
+              </div>
+              {imprimirProducto.sku && (
+                <div className="mt-1 text-xs font-mono text-slate-400 px-3">
+                  {imprimirProducto.sku}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tamaño de etiqueta</label>
+              <select
+                value={`${tamanoEtiqueta.anchoMm}x${tamanoEtiqueta.altoMm}`}
+                onChange={(e) => {
+                  const t = TAMANOS_ETIQUETA_PRODUCTO.find(
+                    (t) => `${t.anchoMm}x${t.altoMm}` === e.target.value
+                  )
+                  if (t) setTamanoEtiqueta(t)
+                }}
+                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+              >
+                {TAMANOS_ETIQUETA_PRODUCTO.map((t) => (
+                  <option key={`${t.anchoMm}x${t.altoMm}`} value={`${t.anchoMm}x${t.altoMm}`}>
+                    {t.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button onClick={() => { setMostrarModalImprimir(false); setImprimirProducto(null) }} className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  setMostrarModalImprimir(false)
+                  setTimeout(() => {
+                    window.print()
+                  }, 300)
+                }}
+                className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg transition-all"
+              >
+                Imprimir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {imprimirProducto && (
+        <EtiquetasProducto
+          productos={[imprimirProducto]}
+          tamano={tamanoEtiqueta}
+        />
       )}
     </div>
   )
