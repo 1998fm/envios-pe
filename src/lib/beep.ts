@@ -1,8 +1,7 @@
 export function beepOk() {
   const ctx = crearCtx()
   if (!ctx) return
-  tono(ctx, 660, 0, 0.35)
-  tono(ctx, 990, 0.4, 0.6)
+  tono(ctx, 880, 0, 1.0)
 }
 
 export function beepError() {

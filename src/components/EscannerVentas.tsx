@@ -48,7 +48,7 @@ export default function EscannerVentas({ abierto, onCerrar, onDetectar }: Props)
           (decodedText) => {
             if (cancelado) return
             const ahora = Date.now()
-            if (decodedText === ultimoCodigoRef.current && ahora - ultimoTiempoRef.current < 1500) return
+            if (decodedText === ultimoCodigoRef.current && ahora - ultimoTiempoRef.current < 3000) return
             ultimoCodigoRef.current = decodedText
             ultimoTiempoRef.current = ahora
             onDetectarRef.current(decodedText)
