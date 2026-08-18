@@ -41,7 +41,7 @@ export default function EscannerVentas({ abierto, onCerrar, onDetectar }: Props)
           {
             fps: 10,
             qrbox: (ancho, alto) => {
-              const lado = Math.min(ancho, alto) * 0.7
+              const lado = Math.min(ancho, alto) * 0.95
               return { width: lado, height: lado }
             },
           },
@@ -100,7 +100,7 @@ export default function EscannerVentas({ abierto, onCerrar, onDetectar }: Props)
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4" onClick={onCerrar}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ScanBarcode size={18} className="text-sky-600" />
@@ -112,7 +112,7 @@ export default function EscannerVentas({ abierto, onCerrar, onDetectar }: Props)
         </div>
 
         <div className="p-4 space-y-3">
-          <div className="relative rounded-xl overflow-hidden bg-black aspect-square max-h-[320px] mx-auto w-full">
+          <div className="relative rounded-xl overflow-hidden bg-black aspect-square max-h-[420px] mx-auto w-full">
             <div id={ELEMENT_ID} className="w-full h-full" />
             {estado === 'arrancando' && (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white/90 gap-2 bg-black/60">
