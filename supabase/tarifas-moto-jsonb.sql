@@ -1,15 +1,13 @@
 -- =============================================
 -- TARIFAS MOTO → JSONB (1 fila por usuario)
--- IDEMPOTENTE: puede ejecutarse varias veces y
--- converge al estado final sin importar el estado
--- parcial en que haya quedado una ejecución previa.
+-- IDEMPOTENTE: converge al estado final desde cualquier
+-- estado parcial (incluye tabla nueva vacía).
+-- Fuente de verdad: tarifas_moto_backup.
 -- =============================================
 
 BEGIN;
 
--- ── 1) RESPALDO ─────────────────────────────────
--- Crea el backup SOLO si no existe y aún existe la
--- tabla con el formato viejo (columnas distrito/precio).
+-- ── 1) RESPALDO (solo si no existe y hay formato viejo) ──
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -26,60 +24,47 @@ BEGIN
   END IF;
 END $$;
 
--- ── 2) MIGRACIÓN ────────────────────────────────
--- Si tarifas_moto aún es formato viejo, migra a JSONB.
+-- ── 2) Si aún está en formato viejo (distrito/precio), migrar a JSONB ──
 DO $$
-DECLARE
-  tiene_columna_jsonb boolean;
-  existe_tabla boolean;
 BEGIN
-  SELECT EXISTS (
+  IF EXISTS (
     SELECT FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'tarifas_moto'
-      AND column_name = 'tarifas'
-  ) INTO tiene_columna_jsonb;
-
-  SELECT EXISTS (
-    SELECT FROM pg_tables
-    WHERE schemaname = 'public' AND tablename = 'tarifas_moto'
-  ) INTO existe_tabla;
-
-  IF NOT existe_tabla THEN
-    -- Caso: la tabla vieja ya se eliminó pero quedó la nueva sin renombrar
-    IF EXISTS (
-      SELECT FROM pg_tables
-      WHERE schemaname = 'public' AND tablename = 'tarifas_moto_nuevo'
-    ) THEN
-      ALTER TABLE tarifas_moto_nuevo RENAME TO tarifas_moto;
-    END IF;
-    RETURN;
+      AND column_name = 'distrito'
+  ) THEN
+    DROP TABLE IF EXISTS tarifas_moto_nuevo;
+    CREATE TABLE tarifas_moto_nuevo (
+      profile_id uuid PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+      tarifas jsonb NOT NULL DEFAULT '{}'::jsonb
+    );
+    INSERT INTO tarifas_moto_nuevo (profile_id, tarifas)
+    SELECT tm.profile_id,
+           jsonb_object_agg(tm.distrito, to_jsonb(tm.precio)) AS tarifas
+    FROM tarifas_moto tm
+    INNER JOIN profiles p ON p.id = tm.profile_id
+    WHERE tm.distrito IS NOT NULL
+    GROUP BY tm.profile_id;
+    DROP TABLE tarifas_moto;
+    ALTER TABLE tarifas_moto_nuevo RENAME TO tarifas_moto;
   END IF;
-
-  IF tiene_columna_jsonb THEN
-    RETURN; -- ya migrada
-  END IF;
-
-  -- Formato viejo (distrito/precio): migrar
-  DROP TABLE IF EXISTS tarifas_moto_nuevo;
-
-  CREATE TABLE tarifas_moto_nuevo (
-    profile_id uuid PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
-    tarifas jsonb NOT NULL DEFAULT '{}'::jsonb
-  );
-
-  INSERT INTO tarifas_moto_nuevo (profile_id, tarifas)
-  SELECT tm.profile_id,
-         jsonb_object_agg(tm.distrito, to_jsonb(tm.precio)) AS tarifas
-  FROM tarifas_moto tm
-  INNER JOIN profiles p ON p.id = tm.profile_id
-  WHERE tm.distrito IS NOT NULL
-  GROUP BY tm.profile_id;
-
-  DROP TABLE tarifas_moto;
-  ALTER TABLE tarifas_moto_nuevo RENAME TO tarifas_moto;
 END $$;
 
--- ── 3) RLS (solo el dueño) ──────────────────────
+-- ── 3) Reconstruir datos desde el backup ─────────
+-- Limpia filas (parciales) de usuarios del backup y las restaura completas.
+-- Conserva filas en formato nuevo de usuarios que NO estén en el backup.
+DELETE FROM tarifas_moto t
+USING tarifas_moto_backup b
+WHERE t.profile_id = b.profile_id;
+
+INSERT INTO tarifas_moto (profile_id, tarifas)
+SELECT b.profile_id,
+       jsonb_object_agg(b.distrito, to_jsonb(b.precio)) AS tarifas
+FROM tarifas_moto_backup b
+INNER JOIN profiles p ON p.id = b.profile_id
+WHERE b.distrito IS NOT NULL
+GROUP BY b.profile_id;
+
+-- ── 4) RLS (solo el dueño) ────────────────────────
 ALTER TABLE tarifas_moto ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "tarifas_select_owner" ON tarifas_moto;
@@ -101,9 +86,9 @@ CREATE POLICY "tarifas_delete_owner" ON tarifas_moto
 
 COMMIT;
 
--- ── Verificación ────────────────────────────────
-SELECT count(*) AS filas_por_usuario FROM tarifas_moto;
-
--- NOTA: tarifas_moto_backup conserva los registros originales.
--- Cuando confirmes que todo funciona, elimínala con:
---   DROP TABLE tarifas_moto_backup;
+-- ── Verificación ───────────────────────────────────
+SELECT
+  (SELECT count(*) FROM tarifas_moto) AS filas_nuevas,
+  (SELECT count(DISTINCT b.profile_id) FROM tarifas_moto_backup b
+     INNER JOIN profiles p ON p.id = b.profile_id) AS usuarios_con_tarifas,
+  (SELECT count(*) FROM tarifas_moto_backup) AS filas_backup;
