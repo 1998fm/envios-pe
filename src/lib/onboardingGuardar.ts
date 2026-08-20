@@ -132,19 +132,17 @@ export async function guardarPasoTarifas(
   userId: string,
   config: ConfigState
 ) {
-  const tarifasParaGuardar = Object.entries(config.tarifas)
-    .filter(([, precio]) => precio !== '')
-    .map(([distrito, precio]) => ({
-      profile_id: userId,
-      distrito,
-      precio: Number(precio),
-    }))
+  const tarifasObj = Object.fromEntries(
+    Object.entries(config.tarifas)
+      .filter(([, precio]) => precio !== '')
+      .map(([distrito, precio]) => [distrito, Number(precio)])
+  )
 
-  if (tarifasParaGuardar.length === 0) return { error: null }
+  if (Object.keys(tarifasObj).length === 0) return { error: null }
 
   const { error } = await supabase
     .from('tarifas_moto')
-    .upsert(tarifasParaGuardar, { onConflict: 'profile_id,distrito' })
+    .upsert({ profile_id: userId, tarifas: tarifasObj })
 
   return { error: error?.message }
 }

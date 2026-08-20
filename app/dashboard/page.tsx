@@ -435,27 +435,28 @@ const {
   data: tarifasData
 } = await supabase
   .from('tarifas_moto')
-  .select(`
-    distrito,
-    precio
-  `)
+  .select('tarifas')
   .eq(
     'profile_id',
     user.id
   )
+  .maybeSingle()
 
 setOrigenShalom(
   profile?.origen_shalom || ''
 )
 
-const tarifasObj =
-  tarifasData
-    ? tarifasData.reduce(
-        (acc, item) => {
-          acc[item.distrito] = String(item.precio)
-          return acc
-        },
-        {} as Record<string, string>
+const tarifasObj: Record<string, string> =
+  tarifasData?.tarifas
+    ? Object.fromEntries(
+        Object.entries(
+          tarifasData.tarifas
+        ).map(
+          ([distrito, precio]) => [
+            distrito,
+            String(precio),
+          ]
+        )
       )
     : {}
 
@@ -1162,7 +1163,7 @@ mensaje_recojo:
 // GUARDAR TARIFAS
 // ========================================
 
-const tarifasParaGuardar =
+const tarifasObj = Object.fromEntries(
   Object.entries(
     config.tarifas
   )
@@ -1171,48 +1172,38 @@ const tarifasParaGuardar =
         precio !== ''
     )
     .map(
-      ([distrito, precio]) => ({
-        profile_id:
-          user.id,
-
+      ([distrito, precio]) => [
         distrito,
-
-        precio:
-          Number(precio),
-      })
+        Number(precio),
+      ]
     )
+)
 
-if (
-  tarifasParaGuardar.length > 0
-) {
+const {
+  error: tarifasError,
+} = await supabase
+  .from(
+    'tarifas_moto'
+  )
+  .upsert({
+    profile_id:
+      user.id,
 
-  const {
-    error: tarifasError,
-  } = await supabase
-    .from(
-      'tarifas_moto'
-    )
-    .upsert(
-      tarifasParaGuardar,
-      {
-        onConflict:
-          'profile_id,distrito',
-      }
-    )
+    tarifas:
+      tarifasObj,
+  })
 
-  if (tarifasError) {
+if (tarifasError) {
 
-    console.error(
-      tarifasError
-    )
+  console.error(
+    tarifasError
+  )
 
-    setMensajeToast(
-      'Error guardando tarifas'
-    )
+  setMensajeToast(
+    'Error guardando tarifas'
+  )
 
-    return
-
-  }
+  return
 
 }
 

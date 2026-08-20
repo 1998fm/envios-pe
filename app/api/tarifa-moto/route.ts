@@ -24,9 +24,8 @@ export async function GET(req: NextRequest) {
   const { data, error } =
     await supabaseAdmin
       .from('tarifas_moto')
-      .select('precio')
+      .select('tarifas')
       .eq('profile_id', userId)
-      .eq('distrito', distrito)
       .maybeSingle()
 
   if (error || !data) {
@@ -39,8 +38,10 @@ export async function GET(req: NextRequest) {
 
   }
 
+  const precio = data.tarifas[distrito]
+
   return NextResponse.json({
-    precio: data.precio,
+    precio: precio ?? null,
   })
 
 }
