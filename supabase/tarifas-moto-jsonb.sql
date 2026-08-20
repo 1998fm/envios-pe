@@ -20,11 +20,14 @@ CREATE TABLE tarifas_moto_nuevo (
 );
 
 -- 3) Migrar datos existentes (agrupa todos los distritos por usuario)
+--    Solo migra perfiles que existen en "profiles" (descarta huérfanos)
 INSERT INTO tarifas_moto_nuevo (profile_id, tarifas)
-SELECT profile_id,
-       jsonb_object_agg(distrito, to_jsonb(precio)) AS tarifas
-FROM tarifas_moto
-GROUP BY profile_id;
+SELECT tm.profile_id,
+       jsonb_object_agg(tm.distrito, to_jsonb(tm.precio)) AS tarifas
+FROM tarifas_moto tm
+INNER JOIN profiles p ON p.id = tm.profile_id
+WHERE tm.distrito IS NOT NULL
+GROUP BY tm.profile_id;
 
 -- 4) Reemplazar la tabla vieja
 DROP TABLE tarifas_moto;
