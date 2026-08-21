@@ -21,14 +21,10 @@ import {
   AreaChart,
   Area,
   XAxis,
-  YAxis,
   Tooltip,
-  CartesianGrid,
-  BarChart,
-  Bar,
-  Cell,
   PieChart,
   Pie,
+  Cell,
 } from 'recharts'
 import ToriMascot from '@/components/ToriMascot'
 import { CATEGORIA_GASTO_LABEL, CATEGORIA_GASTO_STYLE } from '@/types/inventario'
@@ -83,20 +79,25 @@ type Props = {
   onNavegar: (p: 'envios' | 'productos' | 'ventas' | 'compras') => void
 }
 
-const METODO_COLORS = ['#0284c7', '#6366f1', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#94a3b8']
+const METODO_COLORS = ['#0ea5e9', '#6366f1', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#94a3b8']
 const ESTADO_ENVIO_COLORS: Record<string, string> = {
-  NO_EMPACADO: '#ef4444',
-  EMPACADO: '#f59e0b',
-  ENVIADO: '#0284c7',
+  NO_EMPACADO: '#f87171',
+  EMPACADO: '#fbbf24',
+  ENVIADO: '#34d399',
+}
+const ESTADO_ENVIO_LABEL: Record<string, string> = {
+  NO_EMPACADO: 'Sin empacar',
+  EMPACADO: 'Empacados',
+  ENVIADO: 'Enviados',
 }
 
 const ESTADO_BADGE: Record<string, string> = {
-  NO_EMPACADO: 'bg-red-100 text-red-700',
-  EMPACADO: 'bg-amber-100 text-amber-700',
-  ENVIADO: 'bg-emerald-100 text-emerald-700',
-  COMPLETADA: 'bg-emerald-100 text-emerald-700',
-  PENDIENTE: 'bg-amber-100 text-amber-700',
-  ANULADA: 'bg-slate-100 text-slate-500',
+  NO_EMPACADO: 'bg-red-50 text-red-600',
+  EMPACADO: 'bg-amber-50 text-amber-600',
+  ENVIADO: 'bg-emerald-50 text-emerald-600',
+  COMPLETADA: 'bg-emerald-50 text-emerald-600',
+  PENDIENTE: 'bg-amber-50 text-amber-600',
+  ANULADA: 'bg-slate-100 text-slate-400',
 }
 
 const METODO_PAGO_LABEL: Record<string, string> = {
@@ -121,20 +122,17 @@ const fmtFechaLarga = (s: string) =>
     month: 'short',
   })
 
-const fmtCompacto = (v: number) =>
-  v >= 1000 ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : String(v)
-
 function DeltaBadge({ delta, invert = false }: { delta: number | null; invert?: boolean }) {
   if (delta === null) return null
   const up = delta >= 0
   const bueno = invert ? !up : up
   return (
     <span
-      className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-        bueno ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+      className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+        bueno ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
       }`}
     >
-      {up ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+      {up ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
       {Math.abs(delta)}%
     </span>
   )
@@ -145,8 +143,8 @@ function KpiCard({
   value,
   sub,
   icon: Icon,
-  iconClass,
-  hoverClass,
+  tint,
+  iconColor,
   delta,
   deltaInvert,
 }: {
@@ -154,26 +152,24 @@ function KpiCard({
   value: string
   sub?: string
   icon: any
-  iconClass: string
-  hoverClass: string
+  tint: string
+  iconColor: string
   delta?: number | null
   deltaInvert?: boolean
 }) {
   return (
-    <div
-      className={`rounded-2xl border border-slate-100 bg-white p-4 transition-all duration-200 hover:shadow-md ${hoverClass}`}
-    >
-      <div className="flex items-center justify-between">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconClass}`}>
-          <Icon size={18} />
-        </div>
+    <div className={`rounded-2xl p-3.5 sm:p-4 transition-all duration-200 ${tint}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 truncate">
+          <Icon size={13} className={iconColor} />
+          {label}
+        </span>
         {delta !== undefined && <DeltaBadge delta={delta ?? null} invert={deltaInvert} />}
       </div>
-      <p className="mt-3 text-xl font-extrabold text-slate-900 leading-none">{value}</p>
-      {sub && <p className="mt-1 text-[11px] text-slate-400">{sub}</p>}
-      <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-        {label}
+      <p className="mt-2 text-xl sm:text-2xl font-extrabold text-slate-900 leading-none tracking-tight">
+        {value}
       </p>
+      {sub && <p className="mt-1 text-[11px] text-slate-400">{sub}</p>}
     </div>
   )
 }
@@ -194,8 +190,10 @@ function HistoricoTooltip({ active, payload }: any) {
   )
 }
 
-function SkeletonCard() {
-  return <div className="h-28 animate-pulse rounded-2xl border border-slate-100 bg-white" />
+const prevDe = (valor: number, delta: number | null): number | null => {
+  if (delta === null) return null
+  if (delta <= -99) return valor * 5
+  return valor / (1 + delta / 100)
 }
 
 export default function PanelResumen({ userId, onNavegar }: Props) {
@@ -245,24 +243,24 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
           label: 'Ventas del mes',
           value: fmtSoles(data.kpis.ventasMes),
           icon: Banknote,
-          iconClass: 'bg-sky-100 text-sky-600',
-          hoverClass: 'hover:border-sky-200',
+          tint: 'bg-sky-50',
+          iconColor: 'text-sky-600',
           delta: data.deltas.ventasMes,
         },
         {
           label: 'Ventas hoy',
           value: fmtSoles(data.kpis.ventasHoy),
           icon: TrendingUp,
-          iconClass: 'bg-emerald-100 text-emerald-600',
-          hoverClass: 'hover:border-emerald-200',
+          tint: 'bg-emerald-50',
+          iconColor: 'text-emerald-600',
           delta: data.deltas.ventasHoy,
         },
         {
           label: 'Gastos del mes',
           value: fmtSoles(data.kpis.gastosMes),
           icon: Receipt,
-          iconClass: 'bg-rose-100 text-rose-600',
-          hoverClass: 'hover:border-rose-200',
+          tint: 'bg-rose-50',
+          iconColor: 'text-rose-600',
           delta: data.deltas.gastosMes,
           deltaInvert: true,
         },
@@ -276,15 +274,15 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
           value: String(data.kpis.pedidosPorDespachar),
           sub: `${data.kpis.pedidosPorDespachar - data.pendientes.sinEmpacar} empacados`,
           icon: Package,
-          iconClass: 'bg-amber-100 text-amber-600',
-          hoverClass: 'hover:border-amber-200',
+          tint: 'bg-amber-50',
+          iconColor: 'text-amber-600',
         },
         {
           label: 'Envíos del mes',
           value: String(data.kpis.enviosMes),
           icon: PackageOpen,
-          iconClass: 'bg-purple-100 text-purple-600',
-          hoverClass: 'hover:border-purple-200',
+          tint: 'bg-purple-50',
+          iconColor: 'text-purple-600',
           delta: data.deltas.enviosMes,
         },
         {
@@ -292,40 +290,36 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
           value: String(data.kpis.cobrosPendientes),
           sub: fmtSoles(data.kpis.cobrosPendientesTotal),
           icon: Hourglass,
-          iconClass: 'bg-indigo-100 text-indigo-600',
-          hoverClass: 'hover:border-indigo-200',
+          tint: 'bg-indigo-50',
+          iconColor: 'text-indigo-600',
         },
         {
           label: 'Stock bajo',
           value: String(data.kpis.stockBajo),
           sub: 'por reabastecer',
           icon: AlertTriangle,
-          iconClass:
-            data.kpis.stockBajo > 0 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400',
-          hoverClass: 'hover:border-red-200',
+          tint: data.kpis.stockBajo > 0 ? 'bg-red-50' : 'bg-slate-100',
+          iconColor: data.kpis.stockBajo > 0 ? 'text-red-500' : 'text-slate-400',
         },
       ]
     : []
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="h-32 animate-pulse rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50" />
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           {Array.from({ length: 3 }).map((_, i) => (
-            <SkeletonCard key={i} />
+            <div key={i} className="h-24 animate-pulse rounded-2xl bg-slate-100" />
           ))}
         </div>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
           {Array.from({ length: 4 }).map((_, i) => (
-            <SkeletonCard key={i} />
+            <div key={i} className="h-24 animate-pulse rounded-2xl bg-slate-100" />
           ))}
         </div>
-        <div className="h-72 animate-pulse rounded-2xl border border-slate-100 bg-white" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <div className="h-64 animate-pulse rounded-2xl border border-slate-100 bg-white" />
-          <div className="h-64 animate-pulse rounded-2xl border border-slate-100 bg-white" />
-        </div>
+        <div className="h-64 animate-pulse rounded-2xl bg-white border border-slate-100" />
+        <div className="h-80 animate-pulse rounded-2xl bg-white border border-slate-100" />
       </div>
     )
   }
@@ -345,71 +339,106 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
 
   const areaColor = metrica === 'monto' ? '#0284c7' : '#6366f1'
 
+  const metodosPago = data?.graficos.ventasPorMetodo.filter((m) => m.total > 0) ?? []
+  const totalMetodosPago = metodosPago.reduce((a, m) => a + m.total, 0)
+
+  const estadosData = (data?.graficos.enviosPorEstado ?? [])
+    .filter((e) => e.count > 0)
+    .sort(
+      (a, b) =>
+        ['NO_EMPACADO', 'EMPACADO', 'ENVIADO'].indexOf(a.estado) -
+        ['NO_EMPACADO', 'EMPACADO', 'ENVIADO'].indexOf(b.estado)
+    )
+  const totalEstados = estadosData.reduce((a, e) => a + e.count, 0)
+
+  const canales = (data?.graficos.enviosPorMetodo ?? []).filter((m) => m.count > 0)
+  const maxCanal = Math.max(...canales.map((c) => c.count), 1)
+
+  const comparativa = data
+    ? [
+        {
+          label: 'Ventas',
+          icon: Banknote,
+          valor: data.kpis.ventasMes,
+          fmt: (n: number) => fmtSoles(n),
+          delta: data.deltas.ventasMes,
+          color: 'bg-sky-500',
+        },
+        {
+          label: 'Envíos',
+          icon: PackageOpen,
+          valor: data.kpis.enviosMes,
+          fmt: (n: number) => String(Math.round(n)),
+          delta: data.deltas.enviosMes,
+          color: 'bg-purple-500',
+        },
+        {
+          label: 'Gastos',
+          icon: Receipt,
+          valor: data.kpis.gastosMes,
+          fmt: (n: number) => fmtSoles(n),
+          delta: data.deltas.gastosMes,
+          invert: true,
+          color: 'bg-rose-500',
+        },
+      ]
+    : []
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* ============ SALDO DISPONIBLE ============ */}
       {data && (
         <div
           data-tour="resumen-saldo"
-          className={`rounded-2xl bg-gradient-to-r ${
+          className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${
             data.kpis.saldoDisponible >= 0
               ? 'from-sky-600 via-sky-600 to-indigo-700'
               : 'from-red-500 via-red-500 to-rose-600'
-          } p-5 sm:p-6 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-sm`}
+          } p-5 sm:p-6 text-white shadow-sm`}
         >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-white/70">
-              Saldo disponible
-            </p>
-            <p className="text-3xl sm:text-4xl font-extrabold mt-1 leading-none tracking-tight">
-              {fmtSoles(data.kpis.saldoDisponible)}
-            </p>
-            <p className="text-xs text-white/70 mt-2">Ventas totales − Compras − Gastos</p>
-          </div>
-          <div className="flex items-center gap-5 sm:gap-8 sm:divide-x sm:divide-white/20">
-            <div className="sm:pr-5">
+          <div className="absolute -right-12 -top-20 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+          <div className="absolute -right-24 -bottom-10 w-48 h-48 rounded-full bg-white/5 blur-xl pointer-events-none" />
+          <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+            <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
-                Ventas
+                Saldo disponible
               </p>
-              <p className="text-lg font-extrabold mt-0.5">{fmtSoles(data.kpis.totalVentas)}</p>
+              <p className="text-4xl sm:text-5xl font-extrabold mt-1.5 leading-none tracking-tight">
+                {fmtSoles(data.kpis.saldoDisponible)}
+              </p>
+              <p className="text-[11px] text-white/60 mt-2">Ventas totales − Compras − Gastos</p>
             </div>
-            <div className="sm:px-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
-                Compras
-              </p>
-              <p className="text-lg font-extrabold mt-0.5">{fmtSoles(data.kpis.totalCompras)}</p>
-            </div>
-            <div className="sm:pl-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
-                Gastos
-              </p>
-              <p className="text-lg font-extrabold mt-0.5">{fmtSoles(data.kpis.totalGastos)}</p>
+            <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:pb-1">
+              {[
+                { l: 'Ventas', v: data.kpis.totalVentas },
+                { l: 'Compras', v: data.kpis.totalCompras },
+                { l: 'Gastos', v: data.kpis.totalGastos },
+              ].map((t) => (
+                <div key={t.l}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/60">
+                    {t.l}
+                  </p>
+                  <p className="text-base sm:text-lg font-extrabold mt-0.5 whitespace-nowrap">
+                    {fmtSoles(t.v)}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       )}
 
       {/* ============ KPIs ============ */}
-      <div data-tour="resumen-kpis" className="space-y-3">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-            Dinero
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {dineroKpis.map((kpi) => (
-              <KpiCard key={kpi.label} {...kpi} />
-            ))}
-          </div>
+      <div data-tour="resumen-kpis" className="space-y-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          {dineroKpis.map((kpi) => (
+            <KpiCard key={kpi.label} {...kpi} />
+          ))}
         </div>
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-            Operación
-          </p>
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-            {operacionKpis.map((kpi) => (
-              <KpiCard key={kpi.label} {...kpi} />
-            ))}
-          </div>
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
+          {operacionKpis.map((kpi) => (
+            <KpiCard key={kpi.label} {...kpi} />
+          ))}
         </div>
       </div>
 
@@ -425,17 +454,19 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
           {/* ============ PENDIENTE DE ACCIÓN ============ */}
           <div
             data-tour="resumen-pendientes"
-            className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5"
+            className="rounded-2xl border border-slate-100 bg-white p-3 sm:p-4"
           >
-            <h3 className="text-sm font-bold text-slate-900">Pendiente de acción</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Lo que necesita tu atención hoy.</p>
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="px-1.5 pt-1">
+              <h3 className="text-sm font-bold text-slate-900">Pendiente de acción</h3>
+              <p className="text-[11px] text-slate-400">Lo que necesita tu atención hoy.</p>
+            </div>
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-1">
               <button
                 onClick={() => onNavegar('envios')}
-                className="group flex items-center gap-3 rounded-xl border border-slate-100 p-3.5 text-left transition-all hover:border-red-200 hover:bg-red-50/50"
+                className="group flex items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-red-50/60"
               >
-                <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
-                  <Boxes size={18} className="text-red-600" />
+                <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                  <Boxes size={16} className="text-red-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-lg font-extrabold text-slate-900 leading-none">
@@ -444,23 +475,23 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
                   <p className="text-[11px] text-slate-500 truncate">sin empacar</p>
                   <div className="mt-1.5 h-1 rounded-full bg-slate-100 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-red-400"
+                      className="h-full rounded-full bg-red-400 transition-all duration-500"
                       style={{ width: `${pctSinEmpacar}%` }}
                     />
                   </div>
                 </div>
                 <ChevronRight
-                  size={16}
+                  size={15}
                   className="text-slate-300 group-hover:text-red-500 transition-colors"
                 />
               </button>
 
               <button
                 onClick={() => onNavegar('envios')}
-                className="group flex items-center gap-3 rounded-xl border border-slate-100 p-3.5 text-left transition-all hover:border-amber-200 hover:bg-amber-50/50"
+                className="group flex items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-amber-50/60"
               >
-                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                  <Package size={18} className="text-amber-600" />
+                <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                  <Package size={16} className="text-amber-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-lg font-extrabold text-slate-900 leading-none">
@@ -469,23 +500,23 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
                   <p className="text-[11px] text-slate-500 truncate">por enviar</p>
                   <div className="mt-1.5 h-1 rounded-full bg-slate-100 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-emerald-400"
+                      className="h-full rounded-full bg-emerald-400 transition-all duration-500"
                       style={{ width: `${pctEmpacados}%` }}
                     />
                   </div>
                 </div>
                 <ChevronRight
-                  size={16}
+                  size={15}
                   className="text-slate-300 group-hover:text-amber-500 transition-colors"
                 />
               </button>
 
               <button
                 onClick={() => onNavegar('ventas')}
-                className="group flex items-center gap-3 rounded-xl border border-slate-100 p-3.5 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/50"
+                className="group flex items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-indigo-50/60"
               >
-                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-                  <Hourglass size={18} className="text-indigo-600" />
+                <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                  <Hourglass size={16} className="text-indigo-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-lg font-extrabold text-slate-900 leading-none">
@@ -496,17 +527,17 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
                   </p>
                 </div>
                 <ChevronRight
-                  size={16}
+                  size={15}
                   className="text-slate-300 group-hover:text-indigo-500 transition-colors"
                 />
               </button>
 
               <button
                 onClick={() => onNavegar('productos')}
-                className="group flex items-center gap-3 rounded-xl border border-slate-100 p-3.5 text-left transition-all hover:border-orange-200 hover:bg-orange-50/50"
+                className="group flex items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-orange-50/60"
               >
-                <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
-                  <AlertTriangle size={18} className="text-orange-600" />
+                <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+                  <AlertTriangle size={16} className="text-orange-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-lg font-extrabold text-slate-900 leading-none">
@@ -515,7 +546,7 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
                   <p className="text-[11px] text-slate-500 truncate">productos bajo stock</p>
                 </div>
                 <ChevronRight
-                  size={16}
+                  size={15}
                   className="text-slate-300 group-hover:text-orange-500 transition-colors"
                 />
               </button>
@@ -530,12 +561,10 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <CalendarDays size={15} className="text-sky-600" />
+                  <CalendarDays size={14} className="text-sky-600" />
                   Histórico de ventas por día
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Evolución diaria de tu negocio.
-                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Evolución diaria de tu negocio.</p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="inline-flex rounded-lg bg-slate-100 p-0.5">
@@ -579,263 +608,316 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
             </div>
 
             {/* Chips de estadísticas */}
-            <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-2">
+              <div className="rounded-xl bg-slate-50 p-2.5">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                   Total del período
                 </p>
                 <p className="mt-1 text-base font-extrabold text-slate-900 leading-none">
                   {fmtValor(stats.totalValor)}
                   {metrica === 'pedidos' && (
-                    <span className="text-[11px] font-semibold text-slate-400"> pedidos</span>
+                    <span className="text-[10px] font-semibold text-slate-400"> pedidos</span>
                   )}
                 </p>
               </div>
-              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <div className="rounded-xl bg-slate-50 p-2.5">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                   Promedio diario
                 </p>
                 <p className="mt-1 text-base font-extrabold text-slate-900 leading-none">
                   {fmtValor(stats.promedio)}
                   {metrica === 'pedidos' && (
-                    <span className="text-[11px] font-semibold text-slate-400"> pedidos/día</span>
+                    <span className="text-[10px] font-semibold text-slate-400"> /día</span>
                   )}
                 </p>
               </div>
-              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <div className="rounded-xl bg-slate-50 p-2.5">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                   Mejor día
                 </p>
                 <p className="mt-1 text-base font-extrabold text-slate-900 leading-none">
                   {stats.mejor ? fmtValor(stats.mejor.valor) : '—'}
                 </p>
                 {stats.mejor && (
-                  <p className="text-[10px] text-slate-400 mt-0.5 capitalize">
+                  <p className="text-[9px] text-slate-400 mt-0.5 capitalize">
                     {fmtFechaLarga(stats.mejor.fecha)}
                   </p>
                 )}
               </div>
-              <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <div className="rounded-xl bg-slate-50 p-2.5">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
                   Días con venta
                 </p>
                 <p className="mt-1 text-base font-extrabold text-slate-900 leading-none">
                   {stats.diasActivos}
-                  <span className="text-[11px] font-semibold text-slate-400">
-                    {' '}
-                    de {serie.length}
-                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400"> de {serie.length}</span>
                 </p>
               </div>
             </div>
 
-            <div className="h-64 mt-4">
+            <div className="h-56 mt-3 -ml-2">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={serie} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                <AreaChart data={serie} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                   <defs>
                     <linearGradient id={`grad-${metrica}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={areaColor} stopOpacity={0.3} />
+                      <stop offset="0%" stopColor={areaColor} stopOpacity={0.35} />
                       <stop offset="100%" stopColor={areaColor} stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid vertical={false} stroke="#f1f5f9" strokeDasharray="3 3" />
                   <XAxis
                     dataKey="fecha"
-                    tick={{ fontSize: 9, fill: '#94a3b8' }}
+                    tick={{ fontSize: 10, fill: '#cbd5e1' }}
                     tickFormatter={(v: string) => fmtFecha(v)}
-                    minTickGap={28}
+                    minTickGap={36}
                     axisLine={false}
                     tickLine={false}
+                    dy={6}
                   />
-                  <YAxis
-                    tick={{ fontSize: 9, fill: '#94a3b8' }}
-                    width={38}
-                    allowDecimals={false}
-                    tickFormatter={(v: number) => fmtCompacto(v)}
-                    axisLine={false}
-                    tickLine={false}
+                  <Tooltip
+                    content={<HistoricoTooltip />}
+                    cursor={{ stroke: '#e2e8f0', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                   />
-                  <Tooltip content={<HistoricoTooltip />} cursor={{ stroke: '#cbd5e1', strokeDasharray: '4 4' }} />
                   <Area
                     type="monotone"
                     dataKey="valor"
                     stroke={areaColor}
-                    strokeWidth={2.5}
+                    strokeWidth={3}
                     fill={`url(#grad-${metrica})`}
-                    activeDot={{ r: 4, strokeWidth: 2, stroke: '#fff' }}
+                    dot={false}
+                    activeDot={{ r: 5, strokeWidth: 3, stroke: '#fff', fill: areaColor }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* ============ GRÁFICOS ============ */}
-          <div data-tour="resumen-graficos" className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-slate-100 bg-white p-4">
-              <h3 className="text-sm font-bold text-slate-900">Ventas por método de pago</h3>
-              <p className="text-[11px] text-slate-400">Últimos 30 días</p>
-              <div className="h-52 flex items-center justify-center mt-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={data.graficos.ventasPorMetodo}
-                      dataKey="total"
-                      nameKey="metodo"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={60}
-                      innerRadius={32}
-                      label={({ metodo, percent }: any) =>
-                        `${METODO_PAGO_LABEL[metodo] || metodo} ${(percent * 100).toFixed(0)}%`
-                      }
-                      labelLine={false}
-                    >
-                      {data.graficos.ventasPorMetodo.map((entry, i) => (
-                        <Cell key={entry.metodo} fill={METODO_COLORS[i % METODO_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 11 }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+          {/* ============ DESGLOSE DE OPERACIONES ============ */}
+          <div data-tour="resumen-graficos" className="rounded-2xl border border-slate-100 bg-white overflow-hidden">
+            <div className="flex items-center justify-between px-4 pt-4">
+              <h3 className="text-sm font-bold text-slate-900">Desglose de operaciones</h3>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Últimos 30 días
+              </span>
             </div>
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-px bg-slate-100">
+              {/* Métodos de pago */}
+              <section className="bg-white p-4">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Métodos de pago
+                </h4>
+                {metodosPago.length === 0 ? (
+                  <p className="text-xs text-slate-400 mt-6 text-center">Sin ventas en el período.</p>
+                ) : (
+                  <>
+                    <div className="relative h-32 mt-2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={metodosPago}
+                            dataKey="total"
+                            nameKey="metodo"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={38}
+                            outerRadius={58}
+                            paddingAngle={3}
+                            cornerRadius={5}
+                            strokeWidth={0}
+                          >
+                            {metodosPago.map((entry, i) => (
+                              <Cell
+                                key={entry.metodo}
+                                fill={METODO_COLORS[i % METODO_COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                          Total
+                        </p>
+                        <p className="text-xs font-extrabold text-slate-900 whitespace-nowrap">
+                          {fmtSoles(totalMetodosPago)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-2 space-y-1.5">
+                      {metodosPago.map((m, i) => (
+                        <div key={m.metodo} className="flex items-center gap-2 text-[11px]">
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ background: METODO_COLORS[i % METODO_COLORS.length] }}
+                          />
+                          <span className="flex-1 text-slate-600 truncate">
+                            {METODO_PAGO_LABEL[m.metodo] || m.metodo}
+                          </span>
+                          <span className="font-bold text-slate-900 whitespace-nowrap">
+                            {fmtSoles(m.total)}
+                          </span>
+                          <span className="text-slate-400 w-8 text-right shrink-0">
+                            {Math.round((m.total / totalMetodosPago) * 100)}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </section>
 
-            <div className="rounded-2xl border border-slate-100 bg-white p-4">
-              <h3 className="text-sm font-bold text-slate-900">Envíos por estado</h3>
-              <p className="text-[11px] text-slate-400">Últimos 30 días</p>
-              <div className="h-52 flex items-center justify-center mt-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={data.graficos.enviosPorEstado}
-                      dataKey="count"
-                      nameKey="estado"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={60}
-                      innerRadius={32}
-                      label={({ estado, percent }: any) =>
-                        `${estado} ${(percent * 100).toFixed(0)}%`
-                      }
-                      labelLine={false}
-                    >
-                      {data.graficos.enviosPorEstado.map((entry) => (
-                        <Cell
-                          key={entry.estado}
-                          fill={ESTADO_ENVIO_COLORS[entry.estado] || '#94a3b8'}
+              {/* Estados de envío */}
+              <section className="bg-white p-4">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Estados de envío
+                </h4>
+                {totalEstados === 0 ? (
+                  <p className="text-xs text-slate-400 mt-6 text-center">Sin envíos en el período.</p>
+                ) : (
+                  <>
+                    <div className="mt-4 flex h-3.5 rounded-full overflow-hidden bg-slate-100">
+                      {estadosData.map((e) => (
+                        <div
+                          key={e.estado}
+                          className="h-full transition-all duration-500 first:rounded-l-full last:rounded-r-full"
+                          style={{
+                            width: `${(e.count / totalEstados) * 100}%`,
+                            background: ESTADO_ENVIO_COLORS[e.estado] || '#94a3b8',
+                          }}
                         />
                       ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 11 }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-100 bg-white p-4">
-              <h3 className="text-sm font-bold text-slate-900">Envíos por método</h3>
-              <p className="text-[11px] text-slate-400">Últimos 30 días</p>
-              <div className="h-52 mt-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.graficos.enviosPorMetodo} layout="vertical">
-                    <XAxis
-                      type="number"
-                      tick={{ fontSize: 9, fill: '#94a3b8' }}
-                      allowDecimals={false}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      dataKey="metodo"
-                      type="category"
-                      tick={{ fontSize: 9, fill: '#94a3b8' }}
-                      width={70}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 11 }}
-                    />
-                    <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                      {data.graficos.enviosPorMetodo.map((_, i) => (
-                        <Cell key={i} fill={METODO_COLORS[i % METODO_COLORS.length]} />
+                    </div>
+                    <p className="mt-2 text-[10px] text-slate-400">
+                      {totalEstados} envíos en total
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      {estadosData.map((e) => (
+                        <div key={e.estado} className="flex items-center gap-2 text-[11px]">
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ background: ESTADO_ENVIO_COLORS[e.estado] || '#94a3b8' }}
+                          />
+                          <span className="flex-1 text-slate-600">
+                            {ESTADO_ENVIO_LABEL[e.estado] || e.estado}
+                          </span>
+                          <span className="font-bold text-slate-900">{e.count}</span>
+                          <span className="text-slate-400 w-8 text-right">
+                            {Math.round((e.count / totalEstados) * 100)}%
+                          </span>
+                        </div>
                       ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+                    </div>
+                  </>
+                )}
+              </section>
 
-            <div className="rounded-2xl border border-slate-100 bg-white p-4">
-              <h3 className="text-sm font-bold text-slate-900">Este mes vs mes anterior</h3>
-              <p className="text-[11px] text-slate-400">Comparativa del mes en curso</p>
-              <div className="mt-3 space-y-2.5">
-                <div className="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
-                  <div className="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center shrink-0">
-                    <Banknote size={14} className="text-sky-600" />
+              {/* Canales de envío */}
+              <section className="bg-white p-4">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Canales de envío
+                </h4>
+                {canales.length === 0 ? (
+                  <p className="text-xs text-slate-400 mt-6 text-center">Sin envíos en el período.</p>
+                ) : (
+                  <div className="mt-4 space-y-3.5">
+                    {canales.map((c, i) => (
+                      <div key={c.metodo}>
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-slate-600 font-semibold truncate">{c.metodo}</span>
+                          <span className="font-extrabold text-slate-900">{c.count}</span>
+                        </div>
+                        <div className="mt-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${(c.count / maxCanal) * 100}%`,
+                              background: METODO_COLORS[i % METODO_COLORS.length],
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <p className="flex-1 text-xs font-bold text-slate-700">Ventas</p>
-                  <span className="text-sm font-extrabold text-slate-900">
-                    {fmtSoles(data.kpis.ventasMes)}
-                  </span>
-                  <DeltaBadge delta={data.deltas.ventasMes} />
+                )}
+              </section>
+
+              {/* Mes vs anterior */}
+              <section className="bg-white p-4">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Mes vs anterior
+                </h4>
+                <div className="mt-4 space-y-4">
+                  {comparativa.map((row) => {
+                    const prev = prevDe(row.valor, row.delta)
+                    const max = Math.max(row.valor, prev ?? 0, 1)
+                    return (
+                      <div key={row.label}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600">
+                            <row.icon size={12} className="text-slate-400" />
+                            {row.label}
+                          </span>
+                          <DeltaBadge delta={row.delta} invert={row.invert} />
+                        </div>
+                        <p className="text-sm font-extrabold text-slate-900 mt-0.5">
+                          {row.fmt(row.valor)}
+                        </p>
+                        <div className="mt-1.5 space-y-1">
+                          <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${row.color}`}
+                              style={{ width: `${(row.valor / max) * 100}%` }}
+                            />
+                          </div>
+                          {prev !== null && (
+                            <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-slate-300 transition-all duration-500"
+                                style={{ width: `${(prev / max) * 100}%` }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-                <div className="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                    <PackageOpen size={14} className="text-purple-600" />
-                  </div>
-                  <p className="flex-1 text-xs font-bold text-slate-700">Envíos</p>
-                  <span className="text-sm font-extrabold text-slate-900">
-                    {data.kpis.enviosMes}
+                <div className="mt-4 flex items-center gap-3 text-[9px] text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-1.5 rounded-full bg-slate-400" /> Este mes
                   </span>
-                  <DeltaBadge delta={data.deltas.enviosMes} />
-                </div>
-                <div className="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
-                  <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
-                    <Receipt size={14} className="text-rose-600" />
-                  </div>
-                  <p className="flex-1 text-xs font-bold text-slate-700">Gastos</p>
-                  <span className="text-sm font-extrabold text-slate-900">
-                    {fmtSoles(data.kpis.gastosMes)}
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-1.5 rounded-full bg-slate-200" /> Anterior
                   </span>
-                  <DeltaBadge delta={data.deltas.gastosMes} invert />
                 </div>
-              </div>
+              </section>
             </div>
           </div>
 
           {/* ============ RECIENTES ============ */}
           <div data-tour="resumen-recientes" className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5">
+            <div className="rounded-2xl border border-slate-100 bg-white p-4">
               <h3 className="text-sm font-bold text-slate-900">Últimos pedidos</h3>
               {data.recientes.envios.length === 0 ? (
                 <p className="text-xs text-slate-400 mt-3">Aún no hay pedidos.</p>
               ) : (
-                <div className="mt-3 space-y-2">
+                <div className="mt-1 divide-y divide-slate-50">
                   {data.recientes.envios.map((e) => (
-                    <div
-                      key={e.id}
-                      className="flex items-center gap-3 rounded-xl border border-slate-100 p-3"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                        <CheckCircle2 size={14} className="text-slate-400" />
+                    <div key={e.id} className="py-2.5 flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">
+                        <CheckCircle2 size={13} className="text-slate-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-900 truncate">{e.nombre}</p>
+                        <p className="text-xs font-semibold text-slate-900 truncate">{e.nombre}</p>
                         <p className="text-[10px] text-slate-400 truncate">
                           {e.metodo} · {fmtFecha(e.fecha_registro)}
                         </p>
                       </div>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap ${
-                          ESTADO_BADGE[e.estado] || 'bg-slate-100 text-slate-500'
+                        className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap ${
+                          ESTADO_BADGE[e.estado] || 'bg-slate-100 text-slate-400'
                         }`}
                       >
-                        {e.estado}
+                        {ESTADO_ENVIO_LABEL[e.estado] || e.estado}
                       </span>
                     </div>
                   ))}
@@ -843,22 +925,19 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
               )}
             </div>
 
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5">
+            <div className="rounded-2xl border border-slate-100 bg-white p-4">
               <h3 className="text-sm font-bold text-slate-900">Últimas ventas</h3>
               {data.recientes.ventas.length === 0 ? (
                 <p className="text-xs text-slate-400 mt-3">Aún no hay ventas.</p>
               ) : (
-                <div className="mt-3 space-y-2">
+                <div className="mt-1 divide-y divide-slate-50">
                   {data.recientes.ventas.map((v) => (
-                    <div
-                      key={v.id}
-                      className="flex items-center gap-3 rounded-xl border border-slate-100 p-3"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center shrink-0">
-                        <Banknote size={14} className="text-sky-600" />
+                    <div key={v.id} className="py-2.5 flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-sky-50 flex items-center justify-center shrink-0">
+                        <Banknote size={13} className="text-sky-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-900 truncate">
+                        <p className="text-xs font-semibold text-slate-900 truncate">
                           {v.persona_nombre}
                         </p>
                         <p className="text-[10px] text-slate-400 truncate">
@@ -866,45 +945,42 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
                           {fmtFecha(v.created_at)}
                         </p>
                       </div>
-                      <span className="text-xs font-bold text-slate-900 whitespace-nowrap">
-                        {fmtSoles(v.total)}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap ${
-                          ESTADO_BADGE[v.estado] || 'bg-slate-100 text-slate-500'
-                        }`}
-                      >
-                        {v.estado === 'PENDIENTE' ? 'Por cobrar' : v.estado}
-                      </span>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-bold text-slate-900">{fmtSoles(v.total)}</p>
+                        <span
+                          className={`inline-block mt-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                            ESTADO_BADGE[v.estado] || 'bg-slate-100 text-slate-400'
+                          }`}
+                        >
+                          {v.estado === 'PENDIENTE' ? 'Por cobrar' : v.estado}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-5">
+            <div className="rounded-2xl border border-slate-100 bg-white p-4">
               <h3 className="text-sm font-bold text-slate-900">Últimos gastos</h3>
               {data.recientes.gastos.length === 0 ? (
                 <p className="text-xs text-slate-400 mt-3">Aún no hay gastos.</p>
               ) : (
-                <div className="mt-3 space-y-2">
+                <div className="mt-1 divide-y divide-slate-50">
                   {data.recientes.gastos.map((g) => (
-                    <div
-                      key={g.id}
-                      className="flex items-center gap-3 rounded-xl border border-slate-100 p-3"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
-                        <Receipt size={14} className="text-rose-600" />
+                    <div key={g.id} className="py-2.5 flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center shrink-0">
+                        <Receipt size={13} className="text-rose-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-900 truncate">{g.concepto}</p>
+                        <p className="text-xs font-semibold text-slate-900 truncate">{g.concepto}</p>
                         <p className="text-[10px] text-slate-400 truncate">
                           {CATEGORIA_GASTO_LABEL[g.categoria] || g.categoria} · {fmtFecha(g.fecha)}
                         </p>
                       </div>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap ${
-                          CATEGORIA_GASTO_STYLE[g.categoria] || 'bg-slate-100 text-slate-600'
+                        className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap ${
+                          CATEGORIA_GASTO_STYLE[g.categoria] || 'bg-slate-100 text-slate-500'
                         }`}
                       >
                         {fmtSoles(g.monto)}
