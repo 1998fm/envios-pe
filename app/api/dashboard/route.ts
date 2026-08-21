@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 
+const DIAS_HISTORICO = 90
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('user_id')
@@ -117,36 +119,86 @@ export async function GET(request: Request) {
     sumGastos(new Date(0)),
   ])
 
-  const fechaInicio = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  // ========================================
+  // HISTÓRICO DIARIO (90 días) — se calcula
+  // agregando en memoria; no usa tablas extra.
+  // ========================================
+
+  const hoyUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+  const inicioHistorico = hoyUtc - (DIAS_HISTORICO - 1) * 24 * 60 * 60 * 1000
+  const inicioStr = new Date(inicioHistorico).toISOString().split('T')[0]
+
+  const dias: string[] = []
+  for (let i = 0; i < DIAS_HISTORICO; i++) {
+    dias.push(new Date(inicioHistorico + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+  }
 
   const [{ data: enviosRango }, { data: ventasRango }] = await Promise.all([
     supabaseAdmin
       .from('envios')
       .select('fecha_registro, metodo, estado')
       .eq('user_id', userId)
-      .gte('fecha_registro', `${fechaInicio}T00:00:00.000Z`)
+      .gte('fecha_registro', `${inicioStr}T00:00:00.000Z`)
       .order('fecha_registro', { ascending: true }),
     supabaseAdmin
       .from('ventas')
       .select('created_at, metodo_pago, total, estado')
       .eq('profile_id', userId)
-      .gte('created_at', `${fechaInicio}T00:00:00.000Z`)
+      .gte('created_at', `${inicioStr}T00:00:00.000Z`)
       .order('created_at', { ascending: true }),
   ])
 
-  const tendenciaDiaria: { fecha: string; count: number }[] = []
-  const dailyMap: Record<string, number> = {}
-  enviosRango?.forEach((e: any) => {
-    const day = e.fecha_registro.split('T')[0]
-    dailyMap[day] = (dailyMap[day] || 0) + 1
+  // Ventas por día (solo COMPLETADA y PENDIENTE, igual que los KPIs de ventas)
+  const ventasDia: Record<string, { total: number; cantidad: number }> = {}
+  dias.forEach((d) => {
+    ventasDia[d] = { total: 0, cantidad: 0 }
   })
-  Object.entries(dailyMap)
-    .map(([fecha, count]) => ({ fecha, count }))
-    .sort((a, b) => a.fecha.localeCompare(b.fecha))
-    .forEach((item) => tendenciaDiaria.push(item))
+  ventasRango?.forEach((v: any) => {
+    if (v.estado !== 'COMPLETADA' && v.estado !== 'PENDIENTE') return
+    const bucket = ventasDia[(v.created_at || '').split('T')[0]]
+    if (!bucket) return
+    bucket.total += Number(v.total || 0)
+    bucket.cantidad += 1
+  })
+
+  // Pedidos por día (todos los estados, igual que la tendencia anterior)
+  const pedidosDia: Record<string, number> = {}
+  dias.forEach((d) => {
+    pedidosDia[d] = 0
+  })
+  enviosRango?.forEach((e: any) => {
+    const day = (e.fecha_registro || '').split('T')[0]
+    if (pedidosDia[day] === undefined) return
+    pedidosDia[day] += 1
+  })
+
+  const historicoVentas = dias.map((fecha) => ({
+    fecha,
+    total: Math.round(ventasDia[fecha].total * 100) / 100,
+    cantidad: ventasDia[fecha].cantidad,
+  }))
+
+  const historicoPedidos = dias.map((fecha) => ({
+    fecha,
+    count: pedidosDia[fecha],
+  }))
+
+  // ========================================
+  // GRÁFICOS DE LOS ÚLTIMOS 30 DÍAS
+  // (se filtran del rango de 90 días ya descargado)
+  // ========================================
+
+  const corte30 = dias[dias.length - 30]
+
+  const envios30 = (enviosRango ?? []).filter(
+    (e: any) => (e.fecha_registro || '').split('T')[0] >= corte30
+  )
+  const ventas30 = (ventasRango ?? []).filter(
+    (v: any) => (v.created_at || '').split('T')[0] >= corte30
+  )
 
   const metodoMap: Record<string, number> = {}
-  ventasRango?.forEach((v: any) => {
+  ventas30.forEach((v: any) => {
     const m = v.metodo_pago || 'SIN_METODO'
     metodoMap[m] = (metodoMap[m] || 0) + Number(v.total || 0)
   })
@@ -155,7 +207,7 @@ export async function GET(request: Request) {
     .sort((a, b) => b.total - a.total)
 
   const estadoEnvioMap: Record<string, number> = {}
-  enviosRango?.forEach((e: any) => {
+  envios30.forEach((e: any) => {
     const s = e.estado || 'SIN_ESTADO'
     estadoEnvioMap[s] = (estadoEnvioMap[s] || 0) + 1
   })
@@ -164,7 +216,7 @@ export async function GET(request: Request) {
     .sort((a, b) => b.count - a.count)
 
   const metodoEnvioMap: Record<string, number> = {}
-  enviosRango?.forEach((e: any) => {
+  envios30.forEach((e: any) => {
     const m = e.metodo || 'SIN_METODO'
     metodoEnvioMap[m] = (metodoEnvioMap[m] || 0) + 1
   })
@@ -233,8 +285,11 @@ export async function GET(request: Request) {
       ventasHoy: delta(ventasHoy, ventasAyer),
       gastosMes: delta(gastosMes, gastosMesAnterior),
     },
+    historico: {
+      ventas: historicoVentas,
+      pedidos: historicoPedidos,
+    },
     graficos: {
-      tendenciaDiaria,
       ventasPorMetodo,
       enviosPorEstado,
       enviosPorMetodo,
