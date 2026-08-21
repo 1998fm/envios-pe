@@ -17,7 +17,7 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
 
   return (
     <div data-tour="topbar">
-      <div className="flex items-center gap-4 mb-6 px-4 sm:px-6">
+      <div className="flex items-center justify-between gap-4 mb-6 px-4 sm:px-6">
         <div className="flex items-center gap-3 shrink-0">
           {logoUrl ? (
             <img
@@ -58,12 +58,12 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
             onClick={onCompartir}
             className="
               px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold
-              bg-white 
-              border border-slate-200 
-              text-slate-700 
-              hover:bg-slate-50 :bg-slate-700
-              hover:border-sky-500 :border-sky-500
-              hover:text-sky-700 :text-sky-300
+              bg-white
+              border border-slate-200
+              text-slate-700
+              hover:bg-slate-50
+              hover:border-sky-500
+              hover:text-sky-700
               transition-all duration-200
               shrink-0
             "
