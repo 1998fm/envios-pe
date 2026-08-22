@@ -74,7 +74,31 @@ export async function POST(req: Request) {
       observaciones,
 
       fecha_programada: fechaProgramadaBody,
+      idempotency_key: idempotencyKeyBody,
     } = body
+
+    // Llave de idempotencia: 1 llave = 1 envío. Si el cliente reintenta
+    // (recarga, error de red, doble envío), se devuelve el envío original.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    const idempotencyKey =
+      typeof idempotencyKeyBody === 'string' && UUID_RE.test(idempotencyKeyBody)
+        ? idempotencyKeyBody
+        : null
+
+    if (idempotencyKey) {
+      const { data: porLlave, error: errLlave } = await supabaseAdmin
+        .from('envios')
+        .select('*')
+        .eq('idempotency_key', idempotencyKey)
+        .maybeSingle()
+      if (!errLlave && porLlave) {
+        return NextResponse.json({
+          success: true,
+          envio: porLlave,
+          duplicado: true,
+        })
+      }
+    }
 
     const { data: perfil, error: perfilError } =
       await supabaseAdmin
@@ -140,6 +164,35 @@ export async function POST(req: Request) {
       })
     }
 
+    // Deduplicación extendida (10 min): mismo cliente + mismo método +
+    // exactamente los mismos datos = casi seguro un relleno repetido
+    // del formulario (cerró la página y volvió a llenarlo).
+    const hace10min = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+    const { data: duplicadoReciente } = await supabaseAdmin
+      .from('envios')
+      .select('*')
+      .eq('user_id', user_id)
+      .eq('nombre', nombre ?? '')
+      .eq('dni', dni ?? '')
+      .eq('telefono', telefono ?? '')
+      .eq('metodo', metodo)
+      .eq('destino', destino ?? '')
+      .eq('direccion', direccion ?? '')
+      .eq('referencia', referencia ?? '')
+      .eq('detalle', detalle ?? '')
+      .gte('fecha_registro', hace10min)
+      .order('fecha_registro', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (duplicadoReciente) {
+      return NextResponse.json({
+        success: true,
+        envio: duplicadoReciente,
+        duplicado: true,
+      })
+    }
+
     const esPro = computeEffectivePlan(perfil).plan !== 'basic'
 
     // Para básico la configuración logística personalizada (días, hora de corte, cupo) no aplica
@@ -192,38 +245,73 @@ export async function POST(req: Request) {
         )
     }
 
-    const { data, error } =
+    const insertPayload: Record<string, any> = {
+      user_id,
+
+      nombre,
+      dni,
+      telefono,
+
+      metodo,
+      nombre_metodo,
+
+      destino,
+      direccion,
+      referencia,
+
+      detalle,
+      observaciones,
+
+      estado: 'NO_EMPACADO',
+
+      fecha_registro:
+        new Date().toISOString(),
+
+      fecha_programada:
+        fechaProgramada.toISOString(),
+    }
+    if (idempotencyKey) insertPayload.idempotency_key = idempotencyKey
+
+    let { data, error } =
       await supabaseAdmin
         .from('envios')
-        .insert([
-          {
-            user_id,
-
-            nombre,
-            dni,
-            telefono,
-
-            metodo,
-            nombre_metodo,
-
-            destino,
-            direccion,
-            referencia,
-
-            detalle,
-            observaciones,
-
-            estado: 'NO_EMPACADO',
-
-            fecha_registro:
-              new Date().toISOString(),
-
-            fecha_programada:
-              fechaProgramada.toISOString(),
-          },
-        ])
+        .insert([insertPayload])
         .select()
         .single()
+
+    // La columna aún no existe (migración pendiente en Supabase):
+    // reintentar sin la llave para no bloquear el pedido.
+    if (
+      error &&
+      idempotencyKey &&
+      (error.code === 'PGRST204' || /idempotency_key/i.test(error.message || ''))
+    ) {
+      delete insertPayload.idempotency_key
+      const reintento = await supabaseAdmin
+        .from('envios')
+        .insert([insertPayload])
+        .select()
+        .single()
+      data = reintento.data
+      error = reintento.error
+    }
+
+    // Carrera concurrente: otro request creó el envío con esta misma
+    // llave (índice único). Devolver el existente en vez de fallar.
+    if (error && idempotencyKey && error.code === '23505') {
+      const { data: porLlave } = await supabaseAdmin
+        .from('envios')
+        .select('*')
+        .eq('idempotency_key', idempotencyKey)
+        .maybeSingle()
+      if (porLlave) {
+        return NextResponse.json({
+          success: true,
+          envio: porLlave,
+          duplicado: true,
+        })
+      }
+    }
 
     if (error) {
       return NextResponse.json(
@@ -236,6 +324,14 @@ export async function POST(req: Request) {
       )
     }
 
+    // ============================================================
+    // Pasos secundarios (persona, backfill, vínculo): NUNCA deben
+    // romper la respuesta. El envío ya fue creado; si algo falla aquí
+    // se registra en logs y se responde éxito igualmente. Antes, un
+    // fallo aquí devolvía error 500 con el pedido YA guardado, el
+    // cliente reintentaba y generaba duplicados.
+    // ============================================================
+    try {
     // Guardar/actualizar persona (cliente final)
     // Buscar primero por DNI; si no hay DNI o no se encuentra, buscar por teléfono
     let personaId: string | null = null
@@ -331,6 +427,9 @@ export async function POST(req: Request) {
       await supabaseAdmin
         .from('cliente_de')
         .insert({ persona_id: personaId, profile_id: user_id })
+    }
+    } catch (secErr) {
+      console.error('Post-envío no fatal (persona/vínculo/backfill):', secErr)
     }
 
     return NextResponse.json({

@@ -38,6 +38,42 @@ type Props = {
 
 type MetodoDisponible = { value: string; label: string }
 
+// ============================================================
+// Llave de idempotencia ("ticket"): se genera una vez por sesión
+// del formulario y sobrevive recargas de la página. El servidor
+// la usa para garantizar que N reintentos = 1 solo pedido.
+// Se libera cuando el cliente ve la pantalla de éxito.
+// ============================================================
+function generarUuid(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
+function leerOcrearLlave(userId: string): string {
+  const storageKey = `tori_form_idem_${userId}`
+  try {
+    const guardada = sessionStorage.getItem(storageKey)
+    if (guardada) return guardada
+  } catch {}
+  const nueva = generarUuid()
+  try {
+    sessionStorage.setItem(storageKey, nueva)
+  } catch {}
+  return nueva
+}
+
+function liberarLlave(userId: string) {
+  try {
+    sessionStorage.removeItem(`tori_form_idem_${userId}`)
+  } catch {}
+}
+
 export default function PublicForm({
   userId,
   isPro = false,
@@ -66,6 +102,7 @@ export default function PublicForm({
   const [fechaProgramada, setFechaProgramada] = useState('')
   const [error, setError] = useState('')
   const enviandoRef = useRef(false)
+  const [idempotencyKey] = useState(() => leerOcrearLlave(userId))
 
   const [nombre, setNombre] = useState('')
   const [dni, setDni] = useState('')
@@ -225,47 +262,52 @@ export default function PublicForm({
       detalle = `Distrito: ${distrito}\nDirección: ${direccion}\nReferencia: ${referencia}`
     }
 
-    const res = await fetch('/api/envios', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: userId,
-        nombre,
-        dni,
-        telefono,
-        metodo,
-        nombre_metodo: metodo === 'OTRO' ? nombreOtro : null,
-        destino:
-          metodo === 'SHALOM'
-            ? agencia
-            : ['OLVA', 'MARVISUR', 'FLORES', 'OTRO'].includes(metodo)
-            ? provincia
-            : metodo === 'RECOJO'
-            ? 'RECOJO'
-            : distrito,
-        direccion,
-        referencia,
-        detalle,
-        observaciones: '',
-        ...(isPro && fechaSeleccionada ? { fecha_programada: new Date(fechaSeleccionada + 'T12:00:00').toISOString() } : {}),
-      }),
-    })
+    try {
+      const res = await fetch('/api/envios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          nombre,
+          dni,
+          telefono,
+          metodo,
+          nombre_metodo: metodo === 'OTRO' ? nombreOtro : null,
+          destino:
+            metodo === 'SHALOM'
+              ? agencia
+              : ['OLVA', 'MARVISUR', 'FLORES', 'OTRO'].includes(metodo)
+              ? provincia
+              : metodo === 'RECOJO'
+              ? 'RECOJO'
+              : distrito,
+          direccion,
+          referencia,
+          detalle,
+          observaciones: '',
+          idempotency_key: idempotencyKey,
+          ...(isPro && fechaSeleccionada ? { fecha_programada: new Date(fechaSeleccionada + 'T12:00:00').toISOString() } : {}),
+        }),
+      })
 
-    setLoading(false)
-    enviandoRef.current = false
+      if (!res.ok) {
+        setError('Ocurrió un error al registrar el pedido. Inténtalo de nuevo.')
+        return
+      }
 
-    if (!res.ok) {
-      const errorData = await res.json()
-      console.log(errorData)
-      setError('Ocurrió un error al registrar el pedido.')
-      return
+      const resultado = await res.json()
+      setFechaProgramada(resultado.envio.fecha_programada)
+      setEnviado(true)
+      // El cliente ya vio la confirmación: liberar el ticket para
+      // que un próximo pedido en esta sesión sea uno nuevo.
+      liberarLlave(userId)
+    } catch {
+      setError('No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.')
+    } finally {
+      setLoading(false)
+      enviandoRef.current = false
     }
-
-    const resultado = await res.json()
-    console.log('Fecha recibida:', resultado.envio.fecha_programada)
-    setFechaProgramada(resultado.envio.fecha_programada)
-    setEnviado(true)
-  }, [nombre, dni, telefono, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada])
+  }, [nombre, dni, telefono, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey])
 
   if (enviado) {
     return (
