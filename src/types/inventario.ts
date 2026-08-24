@@ -133,6 +133,7 @@ export type Producto = {
   stock_actual: number
   stock_minimo: number
   unidad: string
+  imagen_url?: string | null
   created_at: string
   updated_at: string
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock } from 'lucide-react'
+import { useEffect, useState, type ChangeEvent } from 'react'
+import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Producto } from '@/types/inventario'
 import { UNIDADES_MEDIDA } from '@/types/inventario'
@@ -11,11 +11,15 @@ import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade, planNivel } from '@/lib/planGating'
 import EtiquetasProducto, { TAMANOS_ETIQUETA_PRODUCTO, type TamanoEtiquetaProducto } from '@/components/EtiquetasProducto'
+import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import { comprimirImagen, rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 
 type Props = {
   userId: string
   plan?: string
 }
+
+type FotoPendiente = { blob: Blob; preview: string; kb: number }
 
 function generarSKU(nombre: string): string {
   return nombre
@@ -38,6 +42,7 @@ const EJEMPLOS = [
 
 export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   const confirmar = useConfirm()
+  const supabase = createClient()
   const { startTour } = useOnboarding()
   const [productos, setProductos] = useState<Producto[]>([])
   const [busqueda, setBusqueda] = useState('')
@@ -51,6 +56,9 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   const [mostrarModalImprimir, setMostrarModalImprimir] = useState(false)
   const [imprimirProducto, setImprimirProducto] = useState<Producto | null>(null)
   const [tamanoEtiqueta, setTamanoEtiqueta] = useState<TamanoEtiquetaProducto>(TAMANOS_ETIQUETA_PRODUCTO[0])
+  const [nuevaFoto, setNuevaFoto] = useState<FotoPendiente | null>(null)
+  const [editFoto, setEditFoto] = useState<FotoPendiente | null>(null)
+  const [subiendoFoto, setSubiendoFoto] = useState(false)
   const [nuevoForm, setNuevoForm] = useState({
     nombre: '',
     sku: '',
@@ -89,19 +97,77 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
     }
   }, [showNuevo, startTour])
 
+  async function escogerFoto(e: ChangeEvent<HTMLInputElement>, destino: 'nuevo' | 'editar') {
+    const input = e.target
+    const file = input.files?.[0]
+    input.value = ''
+    if (!file) return
+    try {
+      const blob = await comprimirImagen(file)
+      const foto: FotoPendiente = {
+        blob,
+        preview: URL.createObjectURL(blob),
+        kb: Math.max(1, Math.round(blob.size / 1024)),
+      }
+      if (destino === 'nuevo') setNuevaFoto(foto)
+      else setEditFoto(foto)
+    } catch (err: any) {
+      toast.error(err?.message || 'No se pudo procesar la imagen.')
+    }
+  }
+
+  function quitarFoto(destino: 'nuevo' | 'editar') {
+    if (destino === 'nuevo' && nuevaFoto) {
+      URL.revokeObjectURL(nuevaFoto.preview)
+      setNuevaFoto(null)
+    }
+    if (destino === 'editar' && editFoto) {
+      URL.revokeObjectURL(editFoto.preview)
+      setEditFoto(null)
+    }
+  }
+
+  // Sube la foto ya comprimida al bucket 'productos' y devuelve su URL pública
+  async function subirFoto(foto: FotoPendiente): Promise<string> {
+    const filePath = `${userId}/producto-${Date.now()}.jpg`
+    const { error } = await supabase.storage
+      .from('productos')
+      .upload(filePath, foto.blob, { contentType: 'image/jpeg' })
+    if (error) throw new Error(error.message)
+    const { data } = supabase.storage.from('productos').getPublicUrl(filePath)
+    return data.publicUrl
+  }
+
   function iniciarEdicion(p: Producto) {
     setEditandoId(p.id)
     setEditForm({ ...p })
+    setEditFoto(null)
   }
 
   async function guardarEdicion() {
     if (!editandoId) return
+    let imagen_url = editForm.imagen_url ?? undefined
+
+    if (editFoto) {
+      setSubiendoFoto(true)
+      try {
+        imagen_url = await subirFoto(editFoto)
+      } catch (err: any) {
+        toast.error(err?.message || 'Error al subir la imagen')
+        setSubiendoFoto(false)
+        return
+      }
+      setSubiendoFoto(false)
+    }
+
     const res = await fetch(`/api/productos/${editandoId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editForm),
+      body: JSON.stringify({ ...editForm, ...(imagen_url ? { imagen_url } : {}) }),
     })
     if (res.ok) {
+      if (editFoto?.preview) URL.revokeObjectURL(editFoto.preview)
+      setEditFoto(null)
       toast.success('Producto actualizado')
       setEditandoId(null)
       cargarProductos()
@@ -126,17 +192,40 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
       toast.error('El nombre es requerido')
       return
     }
+
+    let imagenUrl: string | undefined
+    let rutaSubida: string | undefined
+
+    if (nuevaFoto) {
+      setSubiendoFoto(true)
+      try {
+        imagenUrl = await subirFoto(nuevaFoto)
+        rutaSubida = rutaDesdeUrlProducto(imagenUrl) ?? undefined
+      } catch (err: any) {
+        toast.error(err?.message || 'Error al subir la imagen')
+        setSubiendoFoto(false)
+        return
+      }
+      setSubiendoFoto(false)
+    }
+
     const res = await fetch('/api/productos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...nuevoForm, user_id: userId }),
+      body: JSON.stringify({ ...nuevoForm, user_id: userId, ...(imagenUrl ? { imagen_url: imagenUrl } : {}) }),
     })
     if (res.ok) {
+      if (nuevaFoto?.preview) URL.revokeObjectURL(nuevaFoto.preview)
+      setNuevaFoto(null)
       toast.success('Producto creado')
       setShowNuevo(false)
       setNuevoForm({ nombre: '', sku: '', precio_venta: 0, precio_compra: 0, stock_actual: 0, stock_minimo: 0, unidad: 'unidad' })
       cargarProductos()
     } else {
+      // El producto no se creó: limpiar la imagen subida para no dejar basura en el bucket
+      if (rutaSubida) {
+        try { await supabase.storage.from('productos').remove([rutaSubida]) } catch {}
+      }
       if (res.status === 403) {
         const data = await res.json().catch(() => ({}))
         toast.error(data.error || 'Límite alcanzado')
@@ -238,13 +327,47 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                   <tr key={p.id} className={`hover:bg-slate-50 transition-colors ${bajoStock ? 'bg-red-50' : ''}`}>
                     <td className="px-4 py-3">
                       {editando ? (
-                        <input
-                          value={editForm.nombre || ''}
-                          onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value, sku: generarSKU(e.target.value) })}
-                          className="w-full px-2 py-1 rounded border border-sky-500 text-sm focus:outline-none"
-                        />
+                        <div className="flex items-center gap-2">
+                          <label
+                            className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0 cursor-pointer"
+                            title="Cambiar foto"
+                          >
+                            {editFoto ? (
+                              <img src={editFoto.preview} alt="Nueva foto" className="w-full h-full object-cover" />
+                            ) : editForm.imagen_url ? (
+                              <img src={editForm.imagen_url} alt={p.nombre} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="w-full h-full flex items-center justify-center bg-slate-100 text-xs font-bold text-slate-400">
+                                {(editForm.nombre || p.nombre).charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                            <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-sky-600 flex items-center justify-center border border-white">
+                              <Pencil size={8} className="text-white" />
+                            </span>
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => escogerFoto(e, 'editar')} />
+                          </label>
+                          <input
+                            value={editForm.nombre || ''}
+                            onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value, sku: generarSKU(e.target.value) })}
+                            className="flex-1 min-w-0 px-2 py-1 rounded border border-sky-500 text-sm focus:outline-none"
+                          />
+                        </div>
                       ) : (
-                        <span className="font-medium text-slate-900">{p.nombre}</span>
+                        <div className="flex items-center gap-2.5">
+                          {p.imagen_url ? (
+                            <img
+                              src={p.imagen_url}
+                              alt={p.nombre}
+                              loading="lazy"
+                              className="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0"
+                            />
+                          ) : (
+                            <span className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0">
+                              {p.nombre.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                          <span className="font-medium text-slate-900">{p.nombre}</span>
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">
@@ -313,10 +436,10 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                     <td className="px-4 py-3 text-right">
                       {editando ? (
                         <div className="flex items-center justify-end gap-1">
-                          <button onClick={guardarEdicion} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="Guardar">
+                          <button onClick={guardarEdicion} disabled={subiendoFoto} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50" title="Guardar">
                             <Check size={16} />
                           </button>
-                          <button onClick={() => setEditandoId(null)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors" title="Cancelar">
+                          <button onClick={() => { setEditandoId(null); if (editFoto) { URL.revokeObjectURL(editFoto.preview); setEditFoto(null) } }} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors" title="Cancelar">
                             <X size={16} />
                           </button>
                         </div>
@@ -355,7 +478,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
       )}
 
       {showNuevo && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowNuevo(false)}>
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => { setShowNuevo(false); quitarFoto('nuevo') }}>
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-900">Nuevo producto</h3>
@@ -381,6 +504,41 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                   className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm bg-slate-50 text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                   placeholder="Se genera automáticamente"
                 />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Foto del producto (opcional)</label>
+                <div className="mt-1 flex items-center gap-3">
+                  <label
+                    className={`relative w-16 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer ${
+                      nuevaFoto
+                        ? 'ring-2 ring-sky-500/50'
+                        : 'border-2 border-dashed border-slate-300 hover:border-sky-400 bg-slate-50 transition-colors flex items-center justify-center'
+                    }`}
+                    title={nuevaFoto ? 'Cambiar foto' : 'Elegir foto'}
+                  >
+                    {nuevaFoto ? (
+                      <img src={nuevaFoto.preview} alt="Vista previa" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera size={20} className="text-slate-400" />
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => escogerFoto(e, 'nuevo')} />
+                  </label>
+                  <div className="flex-1 min-w-0">
+                    {nuevaFoto ? (
+                      <>
+                        <p className="text-[11px] font-semibold text-emerald-600">Comprimida: {nuevaFoto.kb} KB</p>
+                        <button
+                          onClick={() => quitarFoto('nuevo')}
+                          className="mt-1 text-[11px] font-semibold text-red-500 hover:text-red-600 transition-colors"
+                        >
+                          Quitar foto
+                        </button>
+                      </>
+                    ) : (
+                      <p className="text-[11px] text-slate-400">JPG o PNG. Se comprime automáticamente para ahorrar espacio.</p>
+                    )}
+                  </div>
+                </div>
               </div>
               <div data-tour="nuevo-producto-stock" className="grid grid-cols-2 gap-3">
                 <div>
@@ -482,15 +640,16 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
               </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <button onClick={() => setShowNuevo(false)} className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">
+              <button onClick={() => { setShowNuevo(false); quitarFoto('nuevo') }} className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">
                 Cancelar
               </button>
                <button
                  data-tour="nuevo-producto-crear"
                  onClick={crearProducto}
-                 className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg transition-all"
+                 disabled={subiendoFoto}
+                 className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg transition-all disabled:opacity-60"
                >
-                 Crear
+                 {subiendoFoto ? 'Subiendo foto...' : 'Crear'}
                </button>
             </div>
           </div>
