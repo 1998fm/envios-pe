@@ -21,6 +21,43 @@ type Props = {
 
 type FotoPendiente = { blob: Blob; preview: string; kb: number }
 
+// Miniatura con vista previa grande al pasar el cursor.
+// Usa position:fixed para no ser recortada por el overflow de la tabla.
+function PreviewImagenProducto({ src, alt }: { src: string; alt: string }) {
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+
+  return (
+    <>
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        className="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0 cursor-zoom-in transition-transform duration-150 hover:scale-110"
+        onMouseEnter={(e) => {
+          const r = (e.target as HTMLElement).getBoundingClientRect()
+          setPos({ x: r.right + 10, y: r.top })
+        }}
+        onMouseLeave={() => setPos(null)}
+      />
+      {pos && (
+        <div
+          className="fixed z-[60] pointer-events-none animate-fade-in-up"
+          style={{
+            left: Math.min(pos.x, (typeof window !== 'undefined' ? window.innerWidth : 9999) - 240),
+            top: Math.max(8, Math.min(pos.y - 100, (typeof window !== 'undefined' ? window.innerHeight : 9999) - 250)),
+          }}
+        >
+          <img
+            src={src}
+            alt=""
+            className="w-56 h-56 object-cover rounded-xl border border-slate-200 shadow-2xl bg-white"
+          />
+        </div>
+      )}
+    </>
+  )
+}
+
 function generarSKU(nombre: string): string {
   return nombre
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -355,12 +392,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                       ) : (
                         <div className="flex items-center gap-2.5">
                           {p.imagen_url ? (
-                            <img
-                              src={p.imagen_url}
-                              alt={p.nombre}
-                              loading="lazy"
-                              className="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0"
-                            />
+                            <PreviewImagenProducto src={p.imagen_url} alt={p.nombre} />
                           ) : (
                             <span className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0">
                               {p.nombre.charAt(0).toUpperCase()}
