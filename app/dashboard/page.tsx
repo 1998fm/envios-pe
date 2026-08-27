@@ -463,7 +463,6 @@ const tarifasObj: Record<string, string> =
 setConfig(prev => ({
   ...prev,
   empresa: profile?.empresa || '',
-  rucEmpresa: localStorage.getItem('tori_ruc') || '',
   telefonoEmpresa: profile?.telefono || '',
   direccionEmpresa: profile?.direccion || '',
   nuevoOrigen: profile?.origen_shalom || '',
@@ -1216,8 +1215,6 @@ if (tarifasError) {
         'Configuración guardada'
       )
 
-      localStorage.setItem('tori_ruc', config.rucEmpresa)
-
       setTimeout(() => {
         setMensajeToast('')
       }, 1500)
@@ -1413,7 +1410,7 @@ for (
        )}
 
        {pestañaActiva === 'productos' && <SeccionProductos userId={userId || ''} plan={plan} />}
-       {pestañaActiva === 'ventas' && <SeccionVentas userId={userId || ''} plan={plan} ruc={config.rucEmpresa} />}
+       {pestañaActiva === 'ventas' && <SeccionVentas userId={userId || ''} plan={plan} />}
        {pestañaActiva === 'compras' && <SeccionCompras userId={userId || ''} />}
        {pestañaActiva === 'gastos' && <SeccionGastos userId={userId || ''} />}
 

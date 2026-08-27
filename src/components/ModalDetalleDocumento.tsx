@@ -23,7 +23,6 @@ type Props = {
   items?: Item[]
   onCerrar: () => void
   tourId?: TourId
-  footer?: ReactNode
 }
 
 export default function ModalDetalleDocumento({
@@ -34,7 +33,6 @@ export default function ModalDetalleDocumento({
   items,
   onCerrar,
   tourId,
-  footer,
 }: Props) {
   const { startTour } = useOnboarding()
 
@@ -102,14 +100,12 @@ export default function ModalDetalleDocumento({
         </div>
 
         <div className="border-t border-slate-100 p-3 sm:p-4 flex justify-end shrink-0 bg-white rounded-b-[28px]">
-          {footer || (
-            <button
-              onClick={onCerrar}
-              className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:shadow-lg hover:shadow-sky-500/20 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
-            >
-              Cerrar
-            </button>
-          )}
+          <button
+            onClick={onCerrar}
+            className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:shadow-lg hover:shadow-sky-500/20 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
+          >
+            Cerrar
+          </button>
         </div>
       </div>
     </div>

@@ -61,7 +61,6 @@ export default function ConditionalFields(props: Props) {
             placeholder="Buscar agencia Shalom"
             requireSelection
             errorMessage="Selecciona una agencia Shalom de la lista."
-            showAddress
           />
         </FieldsWrapper>
       )}

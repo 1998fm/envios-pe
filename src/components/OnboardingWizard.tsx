@@ -25,7 +25,6 @@ import { clearAllTours } from '@/lib/tours'
 const initialConfig: ConfigState = {
   vistaConfig: 'EMPRESA',
   empresa: '',
-  rucEmpresa: '',
   telefonoEmpresa: '',
   direccionEmpresa: '',
   nuevoOrigen: '',
