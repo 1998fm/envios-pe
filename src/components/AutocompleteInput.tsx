@@ -11,6 +11,7 @@ type Props = {
   placeholder: string
   requireSelection?: boolean
   errorMessage?: string
+  showAddress?: boolean
 }
 
 const inputClass = `
@@ -49,6 +50,7 @@ export default function AutocompleteInput({
   placeholder,
   requireSelection = false,
   errorMessage,
+  showAddress = false,
 }: Props) {
   const [abierto, setAbierto] = useState(false)
 
@@ -104,6 +106,17 @@ export default function AutocompleteInput({
                 const seleccionado =
                   value.trim() &&
                   item.toLowerCase() === value.trim().toLowerCase()
+
+                let nombre = item
+                let direccion = ''
+                if (showAddress) {
+                  const partes = item.split(' / ')
+                  if (partes.length >= 3) {
+                    nombre = partes[partes.length - 1]
+                    direccion = partes.slice(0, partes.length - 1).join(' / ')
+                  }
+                }
+
                 return (
                   <button
                     key={item}
@@ -118,7 +131,14 @@ export default function AutocompleteInput({
                     }`}
                   >
                     <span className="flex items-center justify-between gap-2">
-                      <span>{item}</span>
+                      <span className="flex flex-col min-w-0">
+                        <span className="truncate">{nombre}</span>
+                        {showAddress && direccion && (
+                          <span className="text-xs text-slate-400 truncate normal-case font-normal">
+                            {direccion}
+                          </span>
+                        )}
+                      </span>
                       {seleccionado && (
                         <Check size={14} className="text-sky-600 shrink-0" />
                       )}

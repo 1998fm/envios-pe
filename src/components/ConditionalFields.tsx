@@ -57,10 +57,11 @@ export default function ConditionalFields(props: Props) {
           <AutocompleteInput
             value={props.agencia}
             onChange={props.setAgencia}
-            options={agenciasShalom}
+            options={agenciasShalom.map(a => a.nombre)}
             placeholder="Buscar agencia Shalom"
             requireSelection
             errorMessage="Selecciona una agencia Shalom de la lista."
+            showAddress
           />
         </FieldsWrapper>
       )}

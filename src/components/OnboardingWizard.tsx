@@ -25,6 +25,7 @@ import { clearAllTours } from '@/lib/tours'
 const initialConfig: ConfigState = {
   vistaConfig: 'EMPRESA',
   empresa: '',
+  rucEmpresa: '',
   telefonoEmpresa: '',
   direccionEmpresa: '',
   nuevoOrigen: '',
@@ -147,7 +148,7 @@ export default function OnboardingWizard() {
 
     if (step === 2 && config.metodoShalom) {
       const origenValido = agenciasShalom.some(
-        (a) => a.toLowerCase() === config.nuevoOrigen.trim().toLowerCase()
+        (a) => a.nombre.toLowerCase() === config.nuevoOrigen.trim().toLowerCase()
       )
       if (!config.nuevoOrigen.trim() || !origenValido) {
         setError('Selecciona una agencia Shalom de origen de la lista.')

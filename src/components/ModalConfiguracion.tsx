@@ -98,6 +98,13 @@ export default function ModalConfiguracion({
                       className="w-full border border-slate-200 rounded-xl pl-11 pr-4 py-3 bg-white text-slate-900 placeholder-slate-400" />
                   </div>
                   <div className="relative">
+                    <Building size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="text" placeholder="RUC (para facturación electrónica)" value={config.rucEmpresa}
+                      onChange={(e) => upd('rucEmpresa', e.target.value.replace(/\D/g, '').slice(0, 11))}
+                      maxLength={11}
+                      className="w-full border border-slate-200 rounded-xl pl-11 pr-4 py-3 bg-white text-slate-900 placeholder-slate-400" />
+                  </div>
+                  <div className="relative">
                     <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input type="text" placeholder="Teléfono" value={config.telefonoEmpresa}
                       onChange={(e) => upd('telefonoEmpresa', e.target.value)}
@@ -122,7 +129,7 @@ export default function ModalConfiguracion({
                   <AutocompleteInput
                     value={config.nuevoOrigen}
                     onChange={(v) => upd('nuevoOrigen', v)}
-                    options={agenciasShalom}
+                    options={agenciasShalom.map(a => a.nombre)}
                     placeholder="Buscar agencia Shalom"
                     requireSelection
                     errorMessage="Selecciona una agencia Shalom de la lista."
