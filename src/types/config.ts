@@ -90,4 +90,5 @@ export type ConfigModalProps = {
   distritosMoto: string[]
   guardarConfiguracion: () => void
   plan?: string
+  maxMetodos?: number | null
 }

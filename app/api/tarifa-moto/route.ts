@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { computeEffectivePlan } from '@/lib/planGating'
 
 export async function GET(req: NextRequest) {
 
@@ -19,6 +20,20 @@ export async function GET(req: NextRequest) {
       }
     )
 
+  }
+
+  // Las tarifas por distrito son una función de plan Pro/Business Plus.
+  // Si el usuario no tiene un plan pagado/Pro activo, no se aplican precios
+  // por distrito (se neutraliza igual que la configuración logística).
+  const { data: perfil } = await supabaseAdmin
+    .from('profiles')
+    .select('plan, trial_end, pro_until')
+    .eq('id', userId)
+    .single()
+
+  const esPro = computeEffectivePlan(perfil ?? {}).plan !== 'basic'
+  if (!esPro) {
+    return NextResponse.json({ precio: null })
   }
 
   const { data, error } =

@@ -15,7 +15,7 @@ import { useEffect } from 'react'
 export default function ModalConfiguracion({
   abierto, onCerrar,
   config, setConfig,
-  distritosMoto, guardarConfiguracion, plan = 'basic', onUpgrade,
+  distritosMoto, guardarConfiguracion, plan = 'basic', onUpgrade, maxMetodos,
 }: ConfigModalProps & { onUpgrade?: () => void }) {
   if (!abierto) return null
   const { startTour } = useOnboarding()
@@ -291,7 +291,7 @@ export default function ModalConfiguracion({
                 <h3 className="text-lg font-bold text-slate-900 mb-1">Métodos de envío</h3>
                 <p className="text-sm text-slate-500">
                   {isBasic
-                    ? 'Selecciona hasta 2 métodos de envío para ofrecer a tus clientes.'
+                    ? `Selecciona hasta ${maxMetodos ?? 2} métodos de envío para ofrecer a tus clientes.`
                     : 'Activa los métodos que ofrecerás a tus clientes.'}
                 </p>
               </div>
@@ -317,7 +317,8 @@ export default function ModalConfiguracion({
                   ].filter(Boolean).length
 
                   const checked = config[item.key]
-                  const disabled = isBasic && !checked && metodosActivos >= 2
+                  const topeMetodos = maxMetodos ?? 2
+                  const disabled = isBasic && !checked && metodosActivos >= topeMetodos
                   const Icon = item.icon
 
                   return (

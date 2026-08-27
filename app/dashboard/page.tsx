@@ -87,6 +87,7 @@ const [mensajeToast, setMensajeToast] =
 const [plan, setPlan] = useState('basic')
 const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
 const [shalomUso, setShalomUso] = useState<{ used: number; max: number | null }>({ used: 0, max: null })
+const [planFeatures, setPlanFeatures] = useState<{ max_metodos?: number | null; max_pedidos_copiar?: number | null } | null>(null)
 const [mostrarUpgrade, setMostrarUpgrade] = useState(false)
 const [agruparPor, setAgruparPor] = useState<'programada' | 'registro'>('programada')
 const [pestañaActiva, setPestañaActiva] = useState<'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos'>('resumen')
@@ -342,7 +343,7 @@ const mostrarBotonCopiar =
 
 const copiarDatosLocked =
   plan === 'basic' &&
-  enviosMotoSeleccionados.length > 50
+  enviosMotoSeleccionados.length > (planFeatures?.max_pedidos_copiar ?? 50)
 
   useEffect(() => {
     async function cargar() {
@@ -584,6 +585,17 @@ setLoading(false)
       })
       .catch(() => {})
   }, [userId, plan])
+
+  // Límites por plan (métodos, copiar datos) desde la base de datos
+  useEffect(() => {
+    if (!userId) return
+    fetch(`/api/plan/features?user_id=${userId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && d.plan) setPlanFeatures(d)
+      })
+      .catch(() => {})
+  }, [userId])
 
   // Manejar retorno de MercadoPago
   useEffect(() => {
@@ -1422,6 +1434,7 @@ for (
   distritosMoto={distritosMoto}
   guardarConfiguracion={guardarConfiguracion}
   plan={plan}
+  maxMetodos={planFeatures?.max_metodos ?? null}
   onUpgrade={() => setMostrarUpgrade(true)}
 />
 
