@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { calcularFechaEntrega } from '@/lib/logistica/calcularFechaEntrega'
-import { checkEnvioLimit } from '@/lib/planLimits'
 import { computeEffectivePlan } from '@/lib/planGating'
 
 export async function GET(request: Request) {
@@ -136,10 +135,10 @@ export async function POST(req: Request) {
       )
     }
 
-    const { allowed, reason } = await checkEnvioLimit(user_id)
-    if (!allowed) {
-      return NextResponse.json({ error: reason }, { status: 403 })
-    }
+    // NOTA: el límite de envíos del plan se aplica SOLO en la exhibición del
+    // dashboard (los envíos más allá del tope se ocultan con aviso de upgrade),
+    // NUNCA en el registro. El formulario público siempre guarda el pedido,
+    // incluso si el mes supera los 50 envíos del plan Básico.
 
     // Deduplicación: si ya existe un envío idéntico creado en los últimos 30 segundos
     // (doble clic, doble tap o reintento), devolver el existente en lugar de duplicarlo.

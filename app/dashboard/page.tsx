@@ -86,8 +86,9 @@ const [mensajeToast, setMensajeToast] =
   useState<ConfigState>(initialConfigState)
 const [plan, setPlan] = useState('basic')
 const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
+const [enviosMesCount, setEnviosMesCount] = useState(0)
 const [shalomUso, setShalomUso] = useState<{ used: number; max: number | null }>({ used: 0, max: null })
-const [planFeatures, setPlanFeatures] = useState<{ max_metodos?: number | null; max_pedidos_copiar?: number | null } | null>(null)
+const [planFeatures, setPlanFeatures] = useState<{ max_metodos?: number | null; max_pedidos_copiar?: number | null; max_envios?: number | null } | null>(null)
 const [mostrarUpgrade, setMostrarUpgrade] = useState(false)
 const [agruparPor, setAgruparPor] = useState<'programada' | 'registro'>('programada')
 const [pestañaActiva, setPestañaActiva] = useState<'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos'>('resumen')
@@ -596,6 +597,29 @@ setLoading(false)
       })
       .catch(() => {})
   }, [userId])
+
+  // Contador de envíos del mes actual (solo relevante en plan Básico)
+  useEffect(() => {
+    if (!userId || plan !== 'basic') {
+      setEnviosMesCount(0)
+      return
+    }
+    const inicioMes = new Date()
+    inicioMes.setDate(1)
+    inicioMes.setHours(0, 0, 0, 0)
+    ;(async () => {
+      try {
+        const { count } = await supabase
+          .from('envios')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .gte('fecha_registro', inicioMes.toISOString())
+        setEnviosMesCount(count ?? 0)
+      } catch {
+        setEnviosMesCount(0)
+      }
+    })()
+  }, [userId, plan, supabase])
 
   // Manejar retorno de MercadoPago
   useEffect(() => {
@@ -1240,7 +1264,25 @@ if (tarifasError) {
 // AGRUPAR POR FECHA
 // ========================================
 
-const enviosAgrupados = envios.reduce(
+// En plan Básico solo se muestran los primeros `max_envios` (50) envíos del
+// mes actual; el resto del mes se oculta (aunque siguen guardados en la DB)
+// y se muestra un aviso de upgrade a Pro. En Pro/Business Plus no hay corte.
+const maxEnviosMes = plan === 'basic' ? (planFeatures?.max_envios ?? 50) : Infinity
+
+const enviosVisibles = plan !== 'basic'
+  ? envios
+  : (() => {
+      const inicioMes = new Date()
+      inicioMes.setDate(1)
+      inicioMes.setHours(0, 0, 0, 0)
+      const inicioMesIso = inicioMes.toISOString()
+      const delMes = envios.filter((e) => e.fecha_registro >= inicioMesIso)
+      const deOtrosMes = envios.filter((e) => e.fecha_registro < inicioMesIso)
+      const delMesVisibles = delMes.slice(0, maxEnviosMes)
+      return [...deOtrosMes, ...delMesVisibles]
+    })()
+
+const enviosAgrupados = enviosVisibles.reduce(
   (acc, envio) => {
 
     const fechaCampo = agruparPor === 'registro' ? envio.fecha_registro : envio.fecha_programada
@@ -1396,6 +1438,38 @@ for (
 
        {pestañaActiva === 'envios' && (
          <>
+           {plan === 'basic' && (
+             <div className="mb-4 space-y-3">
+               <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4">
+                 <div className="text-sm text-slate-600">
+                   <span className="font-semibold text-slate-900">Envíos este mes:</span>{' '}
+                   {enviosMesCount} de {maxEnviosMes === Infinity ? 'ilimitados' : maxEnviosMes}
+                 </div>
+                 {enviosMesCount >= maxEnviosMes && maxEnviosMes !== Infinity && (
+                   <button
+                     onClick={() => setMostrarUpgrade(true)}
+                     className="shrink-0 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 transition-colors"
+                   >
+                     Actualizar a Pro
+                   </button>
+                 )}
+               </div>
+
+               {maxEnviosMes !== Infinity && enviosMesCount >= maxEnviosMes && (
+                 <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+                   Tienes más solicitudes de las que tu plan dispone. Recomendamos pasar al plan{' '}
+                   <span className="font-semibold">Pro</span> para ver y gestionar todos tus envíos sin límite.
+                 </div>
+               )}
+               {maxEnviosMes !== Infinity && enviosMesCount >= maxEnviosMes - 5 && enviosMesCount < maxEnviosMes && (
+                 <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800">
+                   Te acercas al límite de {maxEnviosMes} envíos del plan Básico. Actualiza a{' '}
+                   <span className="font-semibold">Pro</span> para no interrumpir tu operación.
+                 </div>
+               )}
+             </div>
+           )}
+
            <EnvioGroupedList
              fechasAgrupadas={fechasAgrupadas}
              enviosAgrupados={enviosAgrupados}
@@ -1408,7 +1482,7 @@ for (
              onCambiarAgruparPor={setAgruparPor}
            />
 
-           {hasMore && (
+           {hasMore && (plan !== 'basic' || enviosMesCount <= maxEnviosMes) && (
              <div className="flex justify-center pt-4 pb-8">
                <button
                  onClick={cargarMas}
