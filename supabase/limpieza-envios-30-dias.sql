@@ -4,10 +4,20 @@
 -- (pro / business_plus NO se tocan). Las ventas vinculadas conservan su
 -- estado_envio (COMPLETADO) y solo se desvinculan (envio_id = NULL).
 --
--- Requiere la extensión pg_cron habilitada en Supabase:
---   Database  →  Extensions  →  habilitar "pg_cron"
--- Ejecutar este archivo en el SQL Editor de Supabase.
+-- Requiere la extensión pg_cron. Si el paso 1 falla con
+-- "schema cron does not exist", habilítala desde:
+--   Dashboard de Supabase → Database → Extensions → pg_cron → habilitar
+--   O ejecuta:  create extension if not exists pg_cron;
+--
+-- PASOS:
+--   1) Ejecutar SOLO el paso 1 (habilitar extensión) si hace falta
+--   2) Ejecutar el resto del archivo (tabla + función + programar cron)
 -- =============================================
+
+-- PASO 1: HABILITAR pg_cron (ejecutar aislado si el schema "cron" no existe)
+-- create extension if not exists pg_cron;
+
+-- PASO 2 en adelante:
 
 -- Tabla de auditoría de la limpieza (guarda trazabilidad y contadores)
 create table if not exists limpieza_envios_log (
@@ -111,12 +121,24 @@ $$;
 --          (total_envios - borrados) as no_eliminados
 --   from limpieza_envios_log order by id desc;
 
--- Programar la limpieza diaria a las 03:00 (hora del servidor, UTC)
-select cron.schedule(
-  'limpiar-envios-basico-30-dias',   -- nombre del job
-  '0 3 * * *',                        -- cron: todos los días a las 03:00
-  $$ select limpiar_envios_basico_antiguos(); $$
-);
+-- Programar la limpieza diaria (solo si la extensión pg_cron ya está activa;
+-- si "cron" no existe, avisa y termina sin romper el resto del script).
+do $$
+begin
+  if exists (select 1 from pg_namespace where nspname = 'cron') then
+    perform cron.schedule(
+      'limpiar-envios-basico-30-dias',  -- nombre del job
+      '0 3 * * *',                      -- cron: todos los días a las 03:00 UTC
+      $$ select limpiar_envios_basico_antiguos(); $$
+    );
+    raise notice 'Cron programado correctamente (diario 03:00 UTC).';
+  else
+    raise notice 'AVISO: la extensión pg_cron no está habilitada. '
+                 'Habilítala en Database -> Extensions -> pg_cron (o ejecuta: '
+                 'create extension if not exists pg_cron;) y vuelve a ejecutar '
+                 'este bloque. La función de limpieza ya quedó creada.';
+  end if;
+end $$;
 
 -- Para probar manualmente:
 -- select limpiar_envios_basico_antiguos();
