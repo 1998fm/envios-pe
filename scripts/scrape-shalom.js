@@ -22,7 +22,7 @@ const path = require('path');
 
   const transformed = raw.map(a => ({
     codigo: a.abrebiatura || '',
-    nombre: a.lugar || `${a.departamento} / ${a.provincia} / ${a.zona} / ${a.nombre}`,
+    nombre: a.nombre || '',
     direccion: a.direccion || '',
     telefono: a.telefono || '',
     horario: a.hora_atencion || (a.hora_atencion_web_lines && a.hora_atencion_web_lines[0]) || '',
