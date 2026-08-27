@@ -95,7 +95,7 @@ export default function OnboardingStep2Metodos({ config, upd }: Props) {
           <AutocompleteInput
             value={config.nuevoOrigen}
             onChange={(v) => upd('nuevoOrigen', v)}
-            options={agenciasShalom.map(a => a.nombre)}
+            options={agenciasShalom}
             placeholder="Buscar agencia Shalom"
             requireSelection
             errorMessage="Selecciona una agencia Shalom de la lista."
