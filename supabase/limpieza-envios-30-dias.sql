@@ -123,7 +123,7 @@ $$;
 
 -- Programar la limpieza diaria (solo si la extensión pg_cron ya está activa;
 -- si "cron" no existe, avisa y termina sin romper el resto del script).
-do $$
+do $cronbloque$
 begin
   if exists (select 1 from pg_namespace where nspname = 'cron') then
     perform cron.schedule(
@@ -138,7 +138,7 @@ begin
                  'create extension if not exists pg_cron;) y vuelve a ejecutar '
                  'este bloque. La función de limpieza ya quedó creada.';
   end if;
-end $$;
+end $cronbloque$;
 
 -- Para probar manualmente:
 -- select limpiar_envios_basico_antiguos();
