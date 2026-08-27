@@ -3,6 +3,7 @@ import { Dispatch, SetStateAction } from 'react'
 export type ConfigState = {
   vistaConfig: string
   empresa: string
+  rucEmpresa: string
   telefonoEmpresa: string
   direccionEmpresa: string
   nuevoOrigen: string
@@ -44,6 +45,7 @@ export type ConfigState = {
 export const initialConfigState: ConfigState = {
   vistaConfig: 'EMPRESA',
   empresa: '',
+  rucEmpresa: '',
   telefonoEmpresa: '',
   direccionEmpresa: '',
   nuevoOrigen: '',

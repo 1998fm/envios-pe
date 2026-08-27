@@ -13,7 +13,7 @@ import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade, planNivel } from '@/lib/planGating'
 import { beepOk, beepError } from '@/lib/beep'
 
-type Props = { userId: string; plan?: string }
+type Props = { userId: string; plan?: string; ruc?: string }
 
 const ESTADOS = ['COMPLETADA', 'ANULADA', 'PENDIENTE'] as const
 
@@ -23,7 +23,7 @@ const METODOS_PAGO = [
   { key: 'TARJETA', label: 'Tarjeta' },
 ] as const
 
-export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
+export default function SeccionVentas({ userId, plan = 'basic', ruc = '' }: Props) {
   const confirmar = useConfirm()
   const { startTour } = useOnboarding()
   const [ventas, setVentas] = useState<Venta[]>([])
@@ -610,7 +610,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
       )}
 
       <EscannerVentas abierto={showEscanner && planNivel(plan) >= 2} onCerrar={() => setShowEscanner(false)} onDetectar={manejarCodigoEscaneado} />
-      <ModalDetalleVenta venta={ventaDetalle} onCerrar={() => setVentaDetalle(null)} plan={plan} />
+      <ModalDetalleVenta venta={ventaDetalle} onCerrar={() => setVentaDetalle(null)} plan={plan} userId={userId} ruc={ruc} />
     </div>
   )
 }
