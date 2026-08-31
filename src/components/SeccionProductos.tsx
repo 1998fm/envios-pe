@@ -121,6 +121,12 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
 
   useEffect(() => { cargarProductos() }, [userId, busqueda])
 
+  useEffect(() => {
+    const limpiar = () => setImprimirProducto(null)
+    window.addEventListener('afterprint', limpiar)
+    return () => window.removeEventListener('afterprint', limpiar)
+  }, [])
+
   async function cargarMas() {
     setCargandoMas(true)
     await cargarProductos(productos.length, true)

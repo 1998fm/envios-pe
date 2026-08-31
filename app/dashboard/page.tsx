@@ -665,6 +665,12 @@ setLoading(false)
   useEffect(() => { fetchEnviosRef.current = fetchEnviosPage })
 
   useEffect(() => {
+    const limpiar = () => setEnviosEtiquetas([])
+    window.addEventListener('afterprint', limpiar)
+    return () => window.removeEventListener('afterprint', limpiar)
+  }, [])
+
+  useEffect(() => {
     if (!userId) return
     const channel = supabase
       .channel('envios-realtime')

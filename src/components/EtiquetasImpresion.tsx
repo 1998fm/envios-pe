@@ -27,12 +27,22 @@ export default function EtiquetasImpresion({
   enviosEtiquetas,
   logoUrl,
 }: Props) {
-  
+
+  if (enviosEtiquetas.length === 0) return null
+
   return (
     <div
       id="zona-impresion"
       className="fixed -left-[99999px] top-0"
     >
+        <style>{`
+          @media print {
+            #zona-etiquetas-producto,
+            #zona-etiquetas-producto * {
+              display: none !important;
+            }
+          }
+        `}</style>
 
         {/* 4 ETIQUETAS POR HOJA */}
 

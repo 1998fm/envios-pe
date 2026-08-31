@@ -32,6 +32,10 @@ export default function EtiquetasProducto({ productos, tamano }: Props) {
             size: ${tamano.anchoMm}mm ${tamano.altoMm}mm;
             margin: 0;
           }
+          #zona-impresion,
+          #zona-impresion * {
+            display: none !important;
+          }
         }
       `}</style>
 
