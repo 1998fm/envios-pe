@@ -1,10 +1,11 @@
 'use client'
 
-import { useDeferredValue, useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState, useRef, useLayoutEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Check } from 'lucide-react'
 
 // Maximo de opciones visibles en el dropdown (las demas quedan en scroll).
-const MAX_VISIBLES = 12
+const MAX_VISIBLES = 16
 
 type Props = {
   value: string
@@ -28,11 +29,12 @@ const inputClass = `
 `
 
 const dropdownClass = `
-  absolute z-50 mt-1.5 w-full min-w-[300px] max-w-full
+  fixed z-[9999]
   bg-white 
   border border-slate-200 
-  rounded-xl shadow-lg 
+  rounded-xl shadow-2xl 
   max-h-[45vh] overflow-y-auto
+  py-1
 `
 
 const optionClass = `
@@ -51,6 +53,8 @@ export default function AutocompleteInput({
   errorMessage,
 }: Props) {
   const [abierto, setAbierto] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null)
 
   // Texto diferido: mantiene la UI fluida al teclear aunque options sean
   // cientos de items (evita bloquear el hilo principal en cada keystroke).
@@ -72,34 +76,44 @@ export default function AutocompleteInput({
       .slice(0, MAX_VISIBLES)
   }, [busqueda, options])
 
-  return (
-    <div>
-      <div className="relative">
-        <input
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => {
-            onChange(e.target.value)
-            setAbierto(true)
-          }}
-          onFocus={() => setAbierto(true)}
-          onBlur={() => setTimeout(() => setAbierto(false), 150)}
-          autoComplete="off"
-          autoCorrect="off"
-          className={`${inputClass} ${
-            mostrarError
-              ? 'border-red-400 focus:ring-red-500/40 focus:border-red-500'
-              : ''
-          }`}
-          aria-invalid={mostrarError}
-        />
+  const abrir = useCallback(() => {
+    const el = inputRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    setPos({ top: r.bottom + 6, left: r.left, width: r.width })
+    setAbierto(true)
+  }, [])
 
-        {abierto && filtrados.length > 0 && (
-          <div className={dropdownClass}>
+  const cerrar = useCallback(() => setAbierto(false), [])
+
+  // Mantiene la posicion del portal al hacer scroll/resize.
+  useLayoutEffect(() => {
+    if (!abierto) return
+    const actualizar = () => {
+      const el = inputRef.current
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      setPos({ top: r.bottom + 6, left: r.left, width: r.width })
+    }
+    actualizar()
+    window.addEventListener('scroll', actualizar, true)
+    window.addEventListener('resize', actualizar)
+    return () => {
+      window.removeEventListener('scroll', actualizar, true)
+      window.removeEventListener('resize', actualizar)
+    }
+  }, [abierto])
+
+  const dropdown =
+    abierto && pos && filtrados.length > 0
+      ? createPortal(
+          <div
+            className={dropdownClass}
+            style={{ top: pos.top, left: pos.left, width: pos.width }}
+          >
             {filtrados.map((item) => {
               const seleccionado =
-                value.trim() &&
-                item.toLowerCase() === value.trim().toLowerCase()
+                value.trim() && item.toLowerCase() === value.trim().toLowerCase()
               return (
                 <button
                   key={item}
@@ -107,7 +121,7 @@ export default function AutocompleteInput({
                   onMouseDown={(e) => {
                     e.preventDefault()
                     onChange(item)
-                    setAbierto(false)
+                    cerrar()
                   }}
                   className={`${optionClass} ${
                     seleccionado ? 'bg-sky-50 font-semibold' : ''
@@ -122,9 +136,32 @@ export default function AutocompleteInput({
                 </button>
               )
             })}
-          </div>
-        )}
-      </div>
+          </div>,
+          document.body
+        )
+      : null
+
+  return (
+    <div>
+      <input
+        ref={inputRef}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => {
+          onChange(e.target.value)
+          abrir()
+        }}
+        onFocus={abrir}
+        onBlur={() => setTimeout(cerrar, 150)}
+        autoComplete="off"
+        autoCorrect="off"
+        className={`${inputClass} ${
+          mostrarError ? 'border-red-400 focus:ring-red-500/40 focus:border-red-500' : ''
+        }`}
+        aria-invalid={mostrarError}
+      />
+
+      {dropdown}
 
       {mostrarError && (
         <p className="mt-1.5 text-xs font-medium text-red-600">
