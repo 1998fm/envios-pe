@@ -1,14 +1,15 @@
 'use client'
 
+import { memo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import AutocompleteInput from '@/components/AutocompleteInput'
-import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
 import provinciasOlva from '@/data/provincias-olva.json'
 import distritosMoto from '@/data/distritos-moto.json'
 
 type Props = {
   metodo: string
+  agenciasShalom: string[]
   agencia: string
   setAgencia: (v: string) => void
   provincia: string
@@ -49,8 +50,7 @@ function FieldsWrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default function ConditionalFields(props: Props) {
-  const { agencias: agenciasShalom } = useAgenciasShalom()
+export default memo(function ConditionalFields(props: Props) {
 
   return (
     <AnimatePresence mode="wait">
@@ -59,7 +59,7 @@ export default function ConditionalFields(props: Props) {
           <AutocompleteInput
             value={props.agencia}
             onChange={props.setAgencia}
-            options={agenciasShalom}
+            options={props.agenciasShalom}
             placeholder="Buscar agencia Shalom"
             requireSelection
             errorMessage="Selecciona una agencia Shalom de la lista."
@@ -141,4 +141,4 @@ export default function ConditionalFields(props: Props) {
       )}
     </AnimatePresence>
   )
-}
+})

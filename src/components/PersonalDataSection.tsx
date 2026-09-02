@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { User, Fingerprint, Phone } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -30,7 +31,7 @@ const iconClass = `
   pointer-events-none
 `
 
-export default function PersonalDataSection({
+export default memo(function PersonalDataSection({
   nombre, setNombre,
   dni, setDni,
   telefono, setTelefono,
@@ -74,4 +75,4 @@ export default function PersonalDataSection({
       </p>
     </motion.div>
   )
-}
+})

@@ -14,6 +14,7 @@ import SuccessScreen from '@/components/SuccessScreen'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
 import provinciasOlva from '@/data/provincias-olva.json'
 import distritosMoto from '@/data/distritos-moto.json'
+import { existeEnLista } from '@/lib/listaValida'
 
 type Props = {
   userId: string
@@ -40,13 +41,6 @@ type Props = {
 }
 
 type MetodoDisponible = { value: string; label: string }
-
-// Valida que el texto coincida EXACTAMENTE (ignorando mayúsculas) con una
-// opción de la lista. El cliente debe elegir de la lista, no escribir a mano
-// un nombre inventado.
-function existeEnLista(lista: string[], valor: string) {
-  return lista.some((it) => it.toLowerCase() === valor.trim().toLowerCase())
-}
 
 // ============================================================
 // Llave de idempotencia ("ticket"): se genera una vez por sesión
@@ -82,6 +76,12 @@ function liberarLlave(userId: string) {
   try {
     sessionStorage.removeItem(`tori_form_idem_${userId}`)
   } catch {}
+}
+
+function formatearFecha(fechaStr: string): string {
+  const [y, m, d] = fechaStr.split('-').map(Number)
+  const fecha = new Date(y, m - 1, d)
+  return fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
 export default function PublicForm({
@@ -153,7 +153,7 @@ export default function PublicForm({
   const [fechaSeleccionada, setFechaSeleccionada] = useState('')
   const [cargandoFechas, setCargandoFechas] = useState(false)
 
-  async function activarEscogerDia() {
+  const activarEscogerDia = useCallback(async () => {
     setEscogerDia(true)
     setCargandoFechas(true)
     try {
@@ -164,25 +164,19 @@ export default function PublicForm({
       setFechasDisponibles([])
     }
     setCargandoFechas(false)
-  }
+  }, [userId])
 
-  function desactivarEscogerDia() {
+  const desactivarEscogerDia = useCallback(() => {
     setEscogerDia(false)
     setFechasDisponibles([])
     setFechaSeleccionada('')
-  }
+  }, [])
 
   useEffect(() => {
     if (metodo !== 'MOTORIZADO') {
       desactivarEscogerDia()
     }
-  }, [metodo])
-
-  function formatearFecha(fechaStr: string): string {
-    const [y, m, d] = fechaStr.split('-').map(Number)
-    const fecha = new Date(y, m - 1, d)
-    return fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' })
-  }
+  }, [metodo, desactivarEscogerDia])
 
   const handleDistritoChange = useCallback(async (nuevoDistrito: string) => {
     setDistrito(nuevoDistrito)
@@ -388,6 +382,7 @@ export default function PublicForm({
           ) : (
             <ConditionalFields
               metodo={metodo}
+              agenciasShalom={agenciasShalom}
               agencia={agencia}
               setAgencia={setAgencia}
               provincia={provincia}

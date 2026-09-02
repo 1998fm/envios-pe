@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { Bike, Building2, Truck, Ship, Flower2, Package, Store } from 'lucide-react'
 
@@ -22,7 +23,7 @@ const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
 
 const defaultIcon = Package
 
-export default function ShippingMethodCards({ metodos, selected, onSelect }: Props) {
+export default memo(function ShippingMethodCards({ metodos, selected, onSelect }: Props) {
   if (metodos.length === 0) return null
 
   return (
@@ -83,4 +84,4 @@ export default function ShippingMethodCards({ metodos, selected, onSelect }: Pro
       </div>
     </motion.div>
   )
-}
+})
