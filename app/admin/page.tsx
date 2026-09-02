@@ -19,9 +19,10 @@ import {
   Ban,
   Unlock,
   ExternalLink,
+  Activity,
 } from 'lucide-react'
 
-type Tab = 'resumen' | 'empresas' | 'planes' | 'shalom' | 'auditoria'
+type Tab = 'resumen' | 'empresas' | 'planes' | 'shalom' | 'auditoria' | 'actividad'
 
 const PLANES = ['basic', 'pro', 'business_plus']
 const PLAN_LABEL: Record<string, string> = {
@@ -75,6 +76,21 @@ type PlanRow = {
   control_logistico: boolean
 }
 
+type Activo = {
+  id: string
+  empresa: string
+  slug: string
+  email: string
+  disabled: boolean
+  plan: string
+  ultima_actividad: string | null
+  total_acciones: number
+  envios: number
+  ventas: number
+  compras: number
+  gastos: number
+}
+
 // ---------- helpers de presentación ----------
 const fmtNum = (n: number) => n.toLocaleString('es-PE')
 const fmtMoney = (n: number) => `S/ ${n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -117,6 +133,7 @@ function Kpi({ label, value, sub }: { label: string; value: string; sub?: string
 const tabsList: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: 'resumen', label: 'Resumen', icon: <LayoutDashboard size={16} /> },
   { key: 'empresas', label: 'Empresas', icon: <Building2 size={16} /> },
+  { key: 'actividad', label: 'Actividad (7 días)', icon: <Activity size={16} /> },
   { key: 'planes', label: 'Planes', icon: <CreditCard size={16} /> },
   { key: 'shalom', label: 'Agencias Shalom', icon: <Truck size={16} /> },
   { key: 'auditoria', label: 'Auditoría', icon: <History size={16} /> },
@@ -136,6 +153,9 @@ export default function AdminPage() {
   const [filtroPlan, setFiltroPlan] = useState('')
   const [paginaE, setPaginaE] = useState(1)
   const [planRows, setPlanRows] = useState<PlanRow[] | null>(null)
+  const [activos, setActivos] = useState<Activo[]>([])
+  const [totalActivos, setTotalActivos] = useState(0)
+  const [desdeActivos, setDesdeActivos] = useState('')
   const [shalomEstado, setShalomEstado] = useState<{ total: number; activas: number; inactivas: number; actualizada_en: string | null } | null>(null)
   const [sincronizando, setSincronizando] = useState(false)
   const [auditoria, setAuditoria] = useState<{ id: number; admin_email: string; accion: string; detalle: unknown; created_at: string }[]>([])
@@ -212,6 +232,17 @@ export default function AdminPage() {
     }
   }, [fetchJson])
 
+  const cargarActividad = useCallback(async () => {
+    try {
+      const d = await fetchJson('/api/admin/actividad')
+      setActivos(d.activos)
+      setTotalActivos(d.total_activos)
+      setDesdeActivos(d.desde)
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }, [fetchJson])
+
   const cargarShalom = useCallback(async () => {
     try {
       const d = await fetchJson('/api/admin/shalom')
@@ -241,6 +272,7 @@ export default function AdminPage() {
     if (tab === 'resumen') cargarOverview()
     if (tab === 'empresas') cargarEmpresas()
     if (tab === 'planes') cargarPlanes()
+    if (tab === 'actividad') cargarActividad()
     if (tab === 'shalom') cargarShalom()
     if (tab === 'auditoria') cargarAuditoria()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -250,6 +282,7 @@ export default function AdminPage() {
     if (tab === 'resumen') cargarOverview()
     if (tab === 'empresas') cargarEmpresas()
     if (tab === 'planes') cargarPlanes()
+    if (tab === 'actividad') cargarActividad()
     if (tab === 'shalom') cargarShalom()
     if (tab === 'auditoria') cargarAuditoria()
   }
@@ -662,6 +695,70 @@ export default function AdminPage() {
                   {sincronizando ? 'Sincronizando...' : 'Sincronizar ahora'}
                 </span>
               </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ============ ACTIVIDAD ============ */}
+        {tab === 'actividad' && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <p className="text-sm text-slate-600">
+                Empresas con actividad en los últimos <strong>7 días</strong> (envíos, ventas, compras o gastos registrados).
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Kpi label="Activos" value={fmtNum(totalActivos)} />
+                <Kpi label="Envíos (7d)" value={fmtNum(activos.reduce((a, r) => a + r.envios, 0))} />
+                <Kpi label="Ventas (7d)" value={fmtNum(activos.reduce((a, r) => a + r.ventas, 0))} />
+                <Kpi label="Gastos (7d)" value={fmtNum(activos.reduce((a, r) => a + r.gastos, 0))} />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">Empresa</th>
+                      <th className="px-4 py-3 font-semibold">Plan</th>
+                      <th className="px-4 py-3 font-semibold text-right">Envíos</th>
+                      <th className="px-4 py-3 font-semibold text-right">Ventas</th>
+                      <th className="px-4 py-3 font-semibold text-right">Compras</th>
+                      <th className="px-4 py-3 font-semibold text-right">Gastos</th>
+                      <th className="px-4 py-3 font-semibold text-right">Total</th>
+                      <th className="px-4 py-3 font-semibold">Última actividad</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {activos.map((a) => (
+                      <tr key={a.id} className="hover:bg-slate-50/70">
+                        <td className="px-4 py-3">
+                          <p className="font-semibold text-slate-900">{a.empresa || '—'}</p>
+                          <p className="text-xs text-slate-400">{a.email || a.slug}</p>
+                        </td>
+                        <td className="px-4 py-3"><BadgePlan plan={a.plan} /></td>
+                        <td className="px-4 py-3 text-right font-medium text-slate-700">{a.envios}</td>
+                        <td className="px-4 py-3 text-right font-medium text-slate-700">{a.ventas}</td>
+                        <td className="px-4 py-3 text-right font-medium text-slate-700">{a.compras}</td>
+                        <td className="px-4 py-3 text-right font-medium text-slate-700">{a.gastos}</td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-700">
+                            {a.total_acciones}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{fmtDate(a.ultima_actividad)}</td>
+                      </tr>
+                    ))}
+                    {activos.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+                          Sin actividad en los últimos 7 días.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
