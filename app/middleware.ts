@@ -29,6 +29,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  if (!user && request.nextUrl.pathname.startsWith('/admin')) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
   if (!user && request.nextUrl.pathname.startsWith('/onboarding')) {
     return NextResponse.redirect(new URL('/register', request.url))
   }
@@ -41,5 +45,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/onboarding', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/onboarding', '/login', '/register'],
 }
