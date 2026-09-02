@@ -12,7 +12,7 @@ function cargarAgencias(): Promise<string[]> {
 
   cachePromesa = (async () => {
     try {
-      const res = await fetch('/api/shalom/agencias', { cache: 'force-cache' })
+      const res = await fetch('/api/shalom/agencias', { cache: 'no-store' })
       if (res.ok) {
         const json = await res.json()
         const lista = Array.isArray(json?.agencias) ? json.agencias : null

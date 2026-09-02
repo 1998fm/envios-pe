@@ -23,7 +23,7 @@ export async function GET() {
         { origen: 'bd', agencias: etiquetas },
         {
           headers: {
-            'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+            'Cache-Control': 's-maxage=60, stale-while-revalidate=3600',
           },
         }
       )
@@ -37,7 +37,7 @@ export async function GET() {
     { origen: 'fallback', agencias: agenciasFallback },
     {
       headers: {
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': 's-maxage=60, stale-while-revalidate=3600',
       },
     }
   )
