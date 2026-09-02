@@ -32,11 +32,11 @@ const dropdownClass = `
   bg-white 
   border border-slate-200 
   rounded-xl shadow-lg 
-  max-h-72 overflow-y-auto
+  max-h-[45vh] overflow-y-auto
 `
 
 const optionClass = `
-  w-full text-left px-4 py-2.5
+  w-full text-left px-3 py-2
   text-sm text-slate-700 leading-snug
   hover:bg-sky-50
   cursor-pointer
