@@ -28,16 +28,16 @@ const inputClass = `
 `
 
 const dropdownClass = `
-  absolute z-50 mt-1.5 w-full
+  absolute z-50 mt-1.5 w-full min-w-[300px] max-w-full
   bg-white 
   border border-slate-200 
   rounded-xl shadow-lg 
-  max-h-60 overflow-y-auto
+  max-h-72 overflow-y-auto
 `
 
 const optionClass = `
   w-full text-left px-4 py-2.5
-  text-sm text-slate-700 
+  text-sm text-slate-700 leading-snug
   hover:bg-sky-50
   cursor-pointer
 `
@@ -113,10 +113,10 @@ export default function AutocompleteInput({
                     seleccionado ? 'bg-sky-50 font-semibold' : ''
                   }`}
                 >
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="truncate">{item}</span>
+                  <span className="flex items-start justify-between gap-2 min-w-0">
+                    <span className="break-words whitespace-normal">{item}</span>
                     {seleccionado && (
-                      <Check size={14} className="text-sky-600 shrink-0" />
+                      <Check size={14} className="text-sky-600 shrink-0 mt-0.5" />
                     )}
                   </span>
                 </button>
