@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import AutocompleteInput from '@/components/AutocompleteInput'
-import agenciasShalom from '@/data/agencias-shalom.json'
+import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
 import provinciasOlva from '@/data/provincias-olva.json'
 import distritosMoto from '@/data/distritos-moto.json'
 
@@ -50,6 +50,8 @@ function FieldsWrapper({ children }: { children: React.ReactNode }) {
 }
 
 export default function ConditionalFields(props: Props) {
+  const { agencias: agenciasShalom } = useAgenciasShalom()
+
   return (
     <AnimatePresence mode="wait">
       {props.metodo === 'SHALOM' && (

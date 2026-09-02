@@ -2,7 +2,7 @@
 
 import AutocompleteInput from '@/components/AutocompleteInput'
 import type { ConfigState } from '@/types/config'
-import agenciasShalom from '@/data/agencias-shalom.json'
+import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
 import { Bike, Truck, Package, Ship, Flower2, Plus, Store } from 'lucide-react'
 
 type Props = {
@@ -21,6 +21,8 @@ const metodos = [
 ]
 
 export default function OnboardingStep2Metodos({ config, upd }: Props) {
+  const { agencias: agenciasShalom } = useAgenciasShalom()
+
   return (
     <div className="space-y-6">
       <div>

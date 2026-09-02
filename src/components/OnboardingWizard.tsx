@@ -12,7 +12,7 @@ import OnboardingStep1Empresa from '@/components/OnboardingStep1Empresa'
 import OnboardingStep2Metodos from '@/components/OnboardingStep2Metodos'
 import OnboardingStep3Logistica from '@/components/OnboardingStep3Logistica'
 import OnboardingStep4Tarifas from '@/components/OnboardingStep4Tarifas'
-import agenciasShalom from '@/data/agencias-shalom.json'
+import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
 import {
   guardarPasoEmpresa,
   guardarPasoMetodos,
@@ -79,6 +79,8 @@ export default function OnboardingWizard() {
   const [error, setError] = useState('')
   const [copiado, setCopiado] = useState(false)
   const [slugEmpresa, setSlugEmpresa] = useState('')
+
+  const { agencias: agenciasShalom } = useAgenciasShalom()
 
   const firedConfetti = useRef(false)
 

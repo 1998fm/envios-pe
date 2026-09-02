@@ -1,8 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useDeferredValue, useMemo, useState } from 'react'
 import { Check } from 'lucide-react'
+
+// Maximo de opciones visibles en el dropdown (las demas quedan en scroll).
+const MAX_VISIBLES = 12
 
 type Props = {
   value: string
@@ -31,14 +33,12 @@ const dropdownClass = `
   border border-slate-200 
   rounded-xl shadow-lg 
   max-h-60 overflow-y-auto
-  backdrop-blur-sm
 `
 
 const optionClass = `
-  w-full text-left px-4 py-3
+  w-full text-left px-4 py-2.5
   text-sm text-slate-700 
   hover:bg-sky-50
-  transition-colors duration-150
   cursor-pointer
 `
 
@@ -52,24 +52,25 @@ export default function AutocompleteInput({
 }: Props) {
   const [abierto, setAbierto] = useState(false)
 
+  // Texto diferido: mantiene la UI fluida al teclear aunque options sean
+  // cientos de items (evita bloquear el hilo principal en cada keystroke).
+  const busqueda = useDeferredValue(value.trim().toLowerCase())
+
   const esValido = useMemo(() => {
     if (!requireSelection) return true
     if (!value.trim()) return false
-    return options.some(
-      (item) => item.toLowerCase() === value.trim().toLowerCase()
-    )
+    const v = value.trim().toLowerCase()
+    return options.some((item) => item.toLowerCase() === v)
   }, [requireSelection, value, options])
 
   const mostrarError = requireSelection && !esValido
 
   const filtrados = useMemo(() => {
-    if (!value.trim()) return options.slice(0, 20)
+    if (!busqueda) return options.slice(0, MAX_VISIBLES)
     return options
-      .filter((item) =>
-        item.toLowerCase().includes(value.toLowerCase())
-      )
-      .slice(0, 20)
-  }, [value, options])
+      .filter((item) => item.toLowerCase().includes(busqueda))
+      .slice(0, MAX_VISIBLES)
+  }, [busqueda, options])
 
   return (
     <div>
@@ -83,6 +84,8 @@ export default function AutocompleteInput({
           }}
           onFocus={() => setAbierto(true)}
           onBlur={() => setTimeout(() => setAbierto(false), 150)}
+          autoComplete="off"
+          autoCorrect="off"
           className={`${inputClass} ${
             mostrarError
               ? 'border-red-400 focus:ring-red-500/40 focus:border-red-500'
@@ -91,44 +94,36 @@ export default function AutocompleteInput({
           aria-invalid={mostrarError}
         />
 
-        <AnimatePresence>
-          {abierto && filtrados.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.96 }}
-              transition={{ duration: 0.15 }}
-              className={dropdownClass}
-            >
-              {filtrados.map((item) => {
-                const seleccionado =
-                  value.trim() &&
-                  item.toLowerCase() === value.trim().toLowerCase()
-                return (
-                  <button
-                    key={item}
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault()
-                      onChange(item)
-                      setAbierto(false)
-                    }}
-                    className={`${optionClass} ${
-                      seleccionado ? 'bg-sky-50 font-semibold' : ''
-                    }`}
-                  >
-                    <span className="flex items-center justify-between gap-2">
-                      <span>{item}</span>
-                      {seleccionado && (
-                        <Check size={14} className="text-sky-600 shrink-0" />
-                      )}
-                    </span>
-                  </button>
-                )
-              })}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {abierto && filtrados.length > 0 && (
+          <div className={dropdownClass}>
+            {filtrados.map((item) => {
+              const seleccionado =
+                value.trim() &&
+                item.toLowerCase() === value.trim().toLowerCase()
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    onChange(item)
+                    setAbierto(false)
+                  }}
+                  className={`${optionClass} ${
+                    seleccionado ? 'bg-sky-50 font-semibold' : ''
+                  }`}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="truncate">{item}</span>
+                    {seleccionado && (
+                      <Check size={14} className="text-sky-600 shrink-0" />
+                    )}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {mostrarError && (

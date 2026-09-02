@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/shalom/sync",
+      "schedule": "0 5 * * 1"
+    }
+  ]
+}

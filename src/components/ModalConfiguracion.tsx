@@ -3,7 +3,7 @@
 import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
 import AutocompleteInput from '@/components/AutocompleteInput'
-import agenciasShalom from '@/data/agencias-shalom.json'
+import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
 import { ConfigModalProps } from '@/types/config'
 import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store, Building, Phone, MapPin, Image, MessageCircle, Link2, Globe, Clock, DollarSign, Camera, Music, ExternalLink, Lock } from 'lucide-react'
 import TourHelpButton from '@/components/TourHelpButton'
@@ -19,6 +19,7 @@ export default function ModalConfiguracion({
 }: ConfigModalProps & { onUpgrade?: () => void }) {
   if (!abierto) return null
   const { startTour } = useOnboarding()
+  const { agencias: agenciasShalom } = useAgenciasShalom()
 
   useEffect(() => {
     if (trayectoDone() && !tourDone('modal-configuracion')) {
