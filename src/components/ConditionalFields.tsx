@@ -74,6 +74,8 @@ export default function ConditionalFields(props: Props) {
             onChange={props.setProvincia}
             options={provinciasOlva}
             placeholder="Provincia"
+            requireSelection
+            errorMessage="Selecciona una provincia de la lista."
           />
           <input
             placeholder="Dirección exacta"
@@ -97,6 +99,8 @@ export default function ConditionalFields(props: Props) {
             onChange={props.setDistrito}
             options={distritosMoto}
             placeholder="Distrito"
+            requireSelection
+            errorMessage="Selecciona un distrito de la lista."
           />
 
           {props.distrito && (

@@ -11,6 +11,9 @@ import SubmitButton from '@/components/SubmitButton'
 import ErrorBanner from '@/components/ErrorBanner'
 import SocialLinks from '@/components/SocialLinks'
 import SuccessScreen from '@/components/SuccessScreen'
+import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
+import provinciasOlva from '@/data/provincias-olva.json'
+import distritosMoto from '@/data/distritos-moto.json'
 
 type Props = {
   userId: string
@@ -37,6 +40,13 @@ type Props = {
 }
 
 type MetodoDisponible = { value: string; label: string }
+
+// Valida que el texto coincida EXACTAMENTE (ignorando mayúsculas) con una
+// opción de la lista. El cliente debe elegir de la lista, no escribir a mano
+// un nombre inventado.
+function existeEnLista(lista: string[], valor: string) {
+  return lista.some((it) => it.toLowerCase() === valor.trim().toLowerCase())
+}
 
 // ============================================================
 // Llave de idempotencia ("ticket"): se genera una vez por sesión
@@ -136,6 +146,8 @@ export default function PublicForm({
   const [direccion, setDireccion] = useState('')
   const [referencia, setReferencia] = useState('')
 
+  const { agencias: agenciasShalom } = useAgenciasShalom()
+
   const [escogerDia, setEscogerDia] = useState(false)
   const [fechasDisponibles, setFechasDisponibles] = useState<string[]>([])
   const [fechaSeleccionada, setFechaSeleccionada] = useState('')
@@ -231,22 +243,25 @@ export default function PublicForm({
       return
     }
 
-    if (metodo === 'SHALOM' && !agencia) {
-      setError('Selecciona una agencia.')
+    if (metodo === 'SHALOM' && !existeEnLista(agenciasShalom, agencia)) {
+      setError('Selecciona una agencia Shalom de la lista.')
       setLoading(false)
       enviandoRef.current = false
       return
     }
 
-    if (['OLVA', 'MARVISUR', 'FLORES', 'OTRO'].includes(metodo) && (!provincia || !direccion)) {
-      setError('Completa los datos de envío.')
+    if (
+      ['OLVA', 'MARVISUR', 'FLORES', 'OTRO'].includes(metodo) &&
+      (!existeEnLista(provinciasOlva, provincia) || !direccion)
+    ) {
+      setError('Selecciona una provincia de la lista y completa la dirección.')
       setLoading(false)
       enviandoRef.current = false
       return
     }
 
-    if (metodo === 'MOTORIZADO' && (!distrito || !direccion)) {
-      setError('Completa los datos de envío.')
+    if (metodo === 'MOTORIZADO' && (!existeEnLista(distritosMoto, distrito) || !direccion)) {
+      setError('Selecciona un distrito de la lista y completa la dirección.')
       setLoading(false)
       enviandoRef.current = false
       return
@@ -307,7 +322,7 @@ export default function PublicForm({
       setLoading(false)
       enviandoRef.current = false
     }
-  }, [nombre, dni, telefono, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey])
+  }, [nombre, dni, telefono, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom])
 
   if (enviado) {
     return (
