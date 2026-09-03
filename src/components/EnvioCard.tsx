@@ -14,6 +14,7 @@ type Envio = {
   estado: string
   tamano?: string | null
   detalle?: string | null
+  cantidad_productos?: number | null
   fecha_registro: string
   fecha_programada?: string | null
 }
@@ -79,6 +80,11 @@ export default function EnvioCard({
             <div className="flex flex-wrap gap-x-2 sm:gap-x-4 gap-y-0.5 mt-0.5 text-xs text-slate-500 ">
               <span>DNI {envio.dni}</span>
               <span>TLF {envio.telefono}</span>
+              {envio.cantidad_productos != null && (
+                <span className="font-semibold text-sky-600">
+                  {envio.cantidad_productos} {envio.cantidad_productos === 1 ? 'prenda' : 'prendas'}
+                </span>
+              )}
             </div>
             {mostrarFechaProgramada && envio.fecha_programada && (
               <div className="mt-1 text-[11px] text-slate-400  truncate">

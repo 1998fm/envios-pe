@@ -78,6 +78,8 @@ nombreMetodoOtro={profile.nombre_metodo_otro}
         metodoRecojo={profile.metodo_recojo}
 
         mensajeRecojo={profile.mensaje_recojo}
+
+        solicitarCantidadProductos={profile.solicitar_cantidad_productos ?? false}
       />
 
     </div>

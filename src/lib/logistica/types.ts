@@ -12,4 +12,5 @@ export type ConfiguracionLogistica = {
   logisticaAgenciasAnticipacion: number
   logisticaAgenciasLimitar: boolean
   logisticaAgenciasCupo: number
+  solicitarCantidadProductos?: boolean
 }

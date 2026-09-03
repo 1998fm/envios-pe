@@ -11,6 +11,7 @@ export type Envio = {
   referencia?: string
   detalle: string
   observaciones?: string
+  cantidad_productos?: number | null
   tamano?: string
   estado: 'NO_EMPACADO' | 'EMPACADO' | 'ENVIADO'
   fecha_registro: string

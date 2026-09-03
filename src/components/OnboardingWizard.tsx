@@ -60,6 +60,7 @@ const initialConfig: ConfigState = {
   logisticaAgenciasAnticipacion: 1,
   logisticaAgenciasLimitar: false,
   logisticaAgenciasCupo: 0,
+  solicitarCantidadProductos: false,
   tarifas: {},
 }
 

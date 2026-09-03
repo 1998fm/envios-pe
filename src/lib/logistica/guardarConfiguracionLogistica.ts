@@ -42,6 +42,9 @@ export function obtenerConfiguracionLogistica(
     logistica_agencias_cupo:
       config.logisticaAgenciasCupo,
 
+    solicitar_cantidad_productos:
+      config.solicitarCantidadProductos ?? false,
+
   }
 
 }

@@ -38,6 +38,7 @@ export type ConfigState = {
   logisticaAgenciasAnticipacion: number
   logisticaAgenciasLimitar: boolean
   logisticaAgenciasCupo: number
+  solicitarCantidadProductos: boolean
   tarifas: Record<string, string>
 }
 
@@ -79,6 +80,7 @@ export const initialConfigState: ConfigState = {
   logisticaAgenciasAnticipacion: 1,
   logisticaAgenciasLimitar: false,
   logisticaAgenciasCupo: 0,
+  solicitarCantidadProductos: false,
   tarifas: {},
 }
 

@@ -424,7 +424,8 @@ if (crearPerfilError) {
  logistica_agencias_usa_hora_corte,
  logistica_agencias_anticipacion,
  logistica_agencias_limitar,
- logistica_agencias_cupo
+ logistica_agencias_cupo,
+ solicitar_cantidad_productos
     `)
     .eq('id', user.id)
     .maybeSingle()
@@ -498,6 +499,7 @@ setConfig(prev => ({
   logisticaAgenciasAnticipacion: profile?.logistica_agencias_anticipacion ?? 1,
   logisticaAgenciasLimitar: profile?.logistica_agencias_limitar ?? false,
   logisticaAgenciasCupo: profile?.logistica_agencias_cupo ?? 0,
+  solicitarCantidadProductos: profile?.solicitar_cantidad_productos ?? false,
   tarifas: tarifasObj,
 }))
 
@@ -1182,6 +1184,8 @@ mensaje_recojo:
   logisticaAgenciasAnticipacion: plan === 'basic' ? 1 : config.logisticaAgenciasAnticipacion,
   logisticaAgenciasLimitar: plan === 'basic' ? false : config.logisticaAgenciasLimitar,
   logisticaAgenciasCupo: plan === 'basic' ? 0 : config.logisticaAgenciasCupo,
+
+  solicitarCantidadProductos: config.solicitarCantidadProductos,
 
 }),
 

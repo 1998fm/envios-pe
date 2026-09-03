@@ -38,6 +38,7 @@ type Props = {
   nombreMetodoOtro?: string
   metodoRecojo?: boolean
   mensajeRecojo?: string
+  solicitarCantidadProductos?: boolean
 }
 
 type MetodoDisponible = { value: string; label: string }
@@ -106,6 +107,7 @@ export default function PublicForm({
   nombreMetodoOtro,
   metodoRecojo,
   mensajeRecojo,
+  solicitarCantidadProductos = false,
 }: Props) {
   const [loading, setLoading] = useState(false)
   const [enviado, setEnviado] = useState(false)
@@ -117,6 +119,7 @@ export default function PublicForm({
   const [nombre, setNombre] = useState('')
   const [dni, setDni] = useState('')
   const [telefono, setTelefono] = useState('')
+  const [cantidadProductos, setCantidadProductos] = useState('')
 
   const nombreOtro = nombreMetodoOtro ?? ''
 
@@ -237,6 +240,13 @@ export default function PublicForm({
       return
     }
 
+    if (solicitarCantidadProductos && (!cantidadProductos.trim() || Number(cantidadProductos) < 1)) {
+      setError('Indica la cantidad de prendas a recibir (mínimo 1).')
+      setLoading(false)
+      enviandoRef.current = false
+      return
+    }
+
     if (metodo === 'SHALOM' && !existeEnLista(agenciasShalom, agencia)) {
       setError('Selecciona una agencia Shalom de la lista.')
       setLoading(false)
@@ -280,6 +290,9 @@ export default function PublicForm({
           nombre,
           dni,
           telefono,
+          ...(solicitarCantidadProductos && cantidadProductos.trim()
+            ? { cantidad_productos: Number(cantidadProductos) }
+            : {}),
           metodo,
           nombre_metodo: metodo === 'OTRO' ? nombreOtro : null,
           destino:
@@ -316,7 +329,7 @@ export default function PublicForm({
       setLoading(false)
       enviandoRef.current = false
     }
-  }, [nombre, dni, telefono, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom])
+  }, [nombre, dni, telefono, cantidadProductos, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom, solicitarCantidadProductos])
 
   if (enviado) {
     return (
@@ -358,6 +371,23 @@ export default function PublicForm({
             telefono={telefono}
             setTelefono={setTelefono}
           />
+
+          {solicitarCantidadProductos && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <label className="block font-semibold text-slate-900 mb-2 text-sm">
+                Cantidad de prendas a recibir
+              </label>
+              <input
+                type="number"
+                min={1}
+                inputMode="numeric"
+                value={cantidadProductos}
+                onChange={(e) => setCantidadProductos(e.target.value)}
+                placeholder="Ej: 3"
+                className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400"
+              />
+            </div>
+          )}
 
           <ShippingMethodCards
             metodos={metodosDisponibles}

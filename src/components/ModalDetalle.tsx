@@ -388,6 +388,19 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
             </div>
           </section>
 
+          {/* CANTIDAD DE PRENDAS */}
+          {envio.cantidad_productos != null && (
+            <section>
+              <SectionTitle>Cantidad de prendas</SectionTitle>
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3">
+                <Package size={18} className="shrink-0 text-sky-600" />
+                <span className="text-sm font-semibold text-slate-800">
+                  {envio.cantidad_productos} {envio.cantidad_productos === 1 ? 'prenda' : 'prendas'}
+                </span>
+              </div>
+            </section>
+          )}
+
           {/* PRODUCTOS DEL CLIENTE */}
           <section>
             <div className="mb-2 flex items-center gap-2">

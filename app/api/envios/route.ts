@@ -72,9 +72,20 @@ export async function POST(req: Request) {
       detalle,
       observaciones,
 
+      cantidad_productos: cantidadProductosBody,
+
       fecha_programada: fechaProgramadaBody,
       idempotency_key: idempotencyKeyBody,
     } = body
+
+    let cantidadProductos: number | null = null
+    if (
+      typeof cantidadProductosBody === 'number' &&
+      Number.isFinite(cantidadProductosBody) &&
+      cantidadProductosBody >= 1
+    ) {
+      cantidadProductos = Math.floor(cantidadProductosBody)
+    }
 
     // Llave de idempotencia: 1 llave = 1 envío. Si el cliente reintenta
     // (recarga, error de red, doble envío), se devuelve el envío original.
@@ -119,7 +130,8 @@ export async function POST(req: Request) {
           logistica_agencias_hora_corte,
           logistica_agencias_anticipacion,
           logistica_agencias_limitar,
-          logistica_agencias_cupo
+          logistica_agencias_cupo,
+          solicitar_cantidad_productos
         `)
         .eq('id', user_id)
         .single()
@@ -268,6 +280,9 @@ export async function POST(req: Request) {
 
       fecha_programada:
         fechaProgramada.toISOString(),
+    }
+    if (cantidadProductos !== null) {
+      insertPayload.cantidad_productos = cantidadProductos
     }
     if (idempotencyKey) insertPayload.idempotency_key = idempotencyKey
 

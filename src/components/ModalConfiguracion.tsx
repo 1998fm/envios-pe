@@ -395,6 +395,21 @@ export default function ModalConfiguracion({
                   </div>
                 </div>
 
+                <label className="flex items-start gap-3 bg-white border border-slate-200 rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:border-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={config.solicitarCantidadProductos}
+                    onChange={(e) => upd('solicitarCantidadProductos', e.target.checked)}
+                    className="accent-sky-600 w-4 h-4 shrink-0 mt-0.5"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm">Solicitar cantidad de productos</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Pide al cliente el número de prendas a recibir. El dato se guarda junto al envío.
+                    </p>
+                  </div>
+                </label>
+
                 <div className="space-y-6">
                   {config.metodoMotorizado && (
                     <div className="bg-white border border-slate-200 rounded-2xl p-5">
