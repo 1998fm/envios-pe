@@ -40,7 +40,7 @@ type Props = {
   mensajeRecojo?: string
   solicitarCantidadProductos?: boolean
   mostrarEscogerFecha?: boolean
-  cerrarFormulario?: boolean
+  formularioDeshabilitado?: boolean
   cerrarFormularioMensaje?: string
 }
 
@@ -112,7 +112,7 @@ export default function PublicForm({
   mensajeRecojo,
   solicitarCantidadProductos = false,
   mostrarEscogerFecha = true,
-  cerrarFormulario = false,
+  formularioDeshabilitado = false,
   cerrarFormularioMensaje = '',
 }: Props) {
   const [loading, setLoading] = useState(false)
@@ -337,7 +337,7 @@ export default function PublicForm({
     }
   }, [nombre, dni, telefono, cantidadProductos, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom, solicitarCantidadProductos])
 
-  if (cerrarFormulario) {
+  if (formularioDeshabilitado) {
     return (
       <div className="max-w-xl mx-auto mt-6 sm:mt-10 px-3 sm:px-4">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 relative overflow-hidden text-center">

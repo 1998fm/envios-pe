@@ -1,6 +1,7 @@
 import { supabaseServer } from 'app/f/[slug]/lib/supabase/server'
 import PublicForm from '@/components/PublicForm'
 import { computeEffectivePlan } from '@/lib/planGating'
+import { validarHoraCorte } from '@/lib/logistica/validarHoraCorte'
 
 export default async function FormPage({
   params,
@@ -26,6 +27,18 @@ export default async function FormPage({
   const planEfectivo = computeEffectivePlan(profile)
   const isPro = planEfectivo.plan !== 'basic'
   const isBusinessPlus = planEfectivo.plan === 'business_plus'
+
+  const superaCorteMoto =
+    (profile.logistica_moto_usa_hora_corte ?? false) &&
+    validarHoraCorte(profile.logistica_moto_hora_corte ?? '18:00')
+
+  const superaCorteAgencias =
+    (profile.logistica_agencias_usa_hora_corte ?? false) &&
+    validarHoraCorte(profile.logistica_agencias_hora_corte ?? '18:00')
+
+  const formularioDeshabilitado =
+    (profile.cerrar_formulario ?? false) &&
+    (superaCorteMoto || superaCorteAgencias)
 
   return (
 
@@ -81,7 +94,7 @@ nombreMetodoOtro={profile.nombre_metodo_otro}
 
         solicitarCantidadProductos={profile.solicitar_cantidad_productos ?? false}
         mostrarEscogerFecha={profile.mostrar_escoger_fecha ?? true}
-        cerrarFormulario={profile.cerrar_formulario ?? false}
+        formularioDeshabilitado={formularioDeshabilitado}
         cerrarFormularioMensaje={profile.cerrar_formulario_mensaje ?? ''}
       />
 
