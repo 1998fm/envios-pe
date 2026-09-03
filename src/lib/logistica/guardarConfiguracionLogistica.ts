@@ -45,6 +45,9 @@ export function obtenerConfiguracionLogistica(
     solicitar_cantidad_productos:
       config.solicitarCantidadProductos ?? false,
 
+    mostrar_escoger_fecha:
+      config.mostrarEscogerFecha ?? true,
+
   }
 
 }

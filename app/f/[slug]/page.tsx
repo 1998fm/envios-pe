@@ -80,6 +80,7 @@ nombreMetodoOtro={profile.nombre_metodo_otro}
         mensajeRecojo={profile.mensaje_recojo}
 
         solicitarCantidadProductos={profile.solicitar_cantidad_productos ?? false}
+        mostrarEscogerFecha={profile.mostrar_escoger_fecha ?? true}
       />
 
     </div>

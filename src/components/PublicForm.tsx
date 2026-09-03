@@ -39,6 +39,7 @@ type Props = {
   metodoRecojo?: boolean
   mensajeRecojo?: string
   solicitarCantidadProductos?: boolean
+  mostrarEscogerFecha?: boolean
 }
 
 type MetodoDisponible = { value: string; label: string }
@@ -108,6 +109,7 @@ export default function PublicForm({
   metodoRecojo,
   mensajeRecojo,
   solicitarCantidadProductos = false,
+  mostrarEscogerFecha = true,
 }: Props) {
   const [loading, setLoading] = useState(false)
   const [enviado, setEnviado] = useState(false)
@@ -411,7 +413,7 @@ export default function PublicForm({
             />
           )}
 
-          {metodo === 'MOTORIZADO' && isPro && (
+          {metodo === 'MOTORIZADO' && isPro && mostrarEscogerFecha && (
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600 ">
                 <input

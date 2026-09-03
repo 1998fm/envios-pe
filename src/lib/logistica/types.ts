@@ -13,4 +13,5 @@ export type ConfiguracionLogistica = {
   logisticaAgenciasLimitar: boolean
   logisticaAgenciasCupo: number
   solicitarCantidadProductos?: boolean
+  mostrarEscogerFecha?: boolean
 }

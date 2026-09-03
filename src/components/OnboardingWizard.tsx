@@ -61,6 +61,7 @@ const initialConfig: ConfigState = {
   logisticaAgenciasLimitar: false,
   logisticaAgenciasCupo: 0,
   solicitarCantidadProductos: false,
+  mostrarEscogerFecha: true,
   tarifas: {},
 }
 
