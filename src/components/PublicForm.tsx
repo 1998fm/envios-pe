@@ -372,23 +372,6 @@ export default function PublicForm({
             setTelefono={setTelefono}
           />
 
-          {solicitarCantidadProductos && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <label className="block font-semibold text-slate-900 mb-2 text-sm">
-                Cantidad de prendas a recibir
-              </label>
-              <input
-                type="number"
-                min={1}
-                inputMode="numeric"
-                value={cantidadProductos}
-                onChange={(e) => setCantidadProductos(e.target.value)}
-                placeholder="Ej: 3"
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400"
-              />
-            </div>
-          )}
-
           <ShippingMethodCards
             metodos={metodosDisponibles}
             selected={metodo}
@@ -475,6 +458,23 @@ export default function PublicForm({
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {solicitarCantidadProductos && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <label className="block font-semibold text-slate-900 mb-2 text-sm">
+                Cantidad de prendas a recibir
+              </label>
+              <input
+                type="number"
+                min={1}
+                inputMode="numeric"
+                value={cantidadProductos}
+                onChange={(e) => setCantidadProductos(e.target.value)}
+                placeholder="Ej: 3"
+                className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400"
+              />
             </div>
           )}
 
