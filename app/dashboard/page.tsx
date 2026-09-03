@@ -426,7 +426,9 @@ if (crearPerfilError) {
  logistica_agencias_limitar,
  logistica_agencias_cupo,
  solicitar_cantidad_productos,
- mostrar_escoger_fecha
+ mostrar_escoger_fecha,
+ cerrar_formulario,
+ cerrar_formulario_mensaje
     `)
     .eq('id', user.id)
     .maybeSingle()
@@ -502,6 +504,8 @@ setConfig(prev => ({
   logisticaAgenciasCupo: profile?.logistica_agencias_cupo ?? 0,
   solicitarCantidadProductos: profile?.solicitar_cantidad_productos ?? false,
   mostrarEscogerFecha: profile?.mostrar_escoger_fecha ?? true,
+  cerrarFormulario: profile?.cerrar_formulario ?? false,
+  cerradoFormularioMensaje: profile?.cerrar_formulario_mensaje ?? '',
   tarifas: tarifasObj,
 }))
 
@@ -1190,6 +1194,10 @@ mensaje_recojo:
   solicitarCantidadProductos: config.solicitarCantidadProductos,
 
   mostrarEscogerFecha: config.mostrarEscogerFecha,
+
+  cerrarFormulario: config.cerrarFormulario,
+
+  cerradoFormularioMensaje: config.cerradoFormularioMensaje,
 
 }),
 

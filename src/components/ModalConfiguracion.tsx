@@ -481,6 +481,38 @@ export default function ModalConfiguracion({
                     </div>
                   </label>
                 </div>
+
+                <div className="mt-6 pt-5 border-t border-slate-200">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={config.cerrarFormulario}
+                      onChange={(e) => upd('cerrarFormulario', e.target.checked)}
+                      className="accent-rose-600 w-4 h-4"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Deshabilitar el formulario</p>
+                      <p className="text-xs text-slate-500">
+                        Oculta el formulario de envíos y muestra solo un mensaje a tus clientes
+                      </p>
+                    </div>
+                  </label>
+
+                  {config.cerrarFormulario && (
+                    <div className="mt-4 ml-7">
+                      <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                        Mensaje para tus clientes
+                      </label>
+                      <textarea
+                        value={config.cerradoFormularioMensaje}
+                        onChange={(e) => upd('cerradoFormularioMensaje', e.target.value)}
+                        rows={3}
+                        className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400"
+                        placeholder="Ej: Estamos en mantenimiento, volvemos pronto. ¡Gracias!"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -48,6 +48,12 @@ export function obtenerConfiguracionLogistica(
     mostrar_escoger_fecha:
       config.mostrarEscogerFecha ?? true,
 
+    cerrar_formulario:
+      config.cerrarFormulario ?? false,
+
+    cerrar_formulario_mensaje:
+      config.cerradoFormularioMensaje ?? '',
+
   }
 
 }

@@ -14,4 +14,6 @@ export type ConfiguracionLogistica = {
   logisticaAgenciasCupo: number
   solicitarCantidadProductos?: boolean
   mostrarEscogerFecha?: boolean
+  cerrarFormulario?: boolean
+  cerradoFormularioMensaje?: string
 }

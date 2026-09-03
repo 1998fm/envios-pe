@@ -62,6 +62,8 @@ const initialConfig: ConfigState = {
   logisticaAgenciasCupo: 0,
   solicitarCantidadProductos: false,
   mostrarEscogerFecha: true,
+  cerrarFormulario: false,
+  cerradoFormularioMensaje: '',
   tarifas: {},
 }
 

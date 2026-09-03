@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 
-import { Store } from 'lucide-react'
+import { Store, Package } from 'lucide-react'
 import FormHeader from '@/components/FormHeader'
 import PersonalDataSection from '@/components/PersonalDataSection'
 import ShippingMethodCards from '@/components/ShippingMethodCards'
@@ -40,6 +40,8 @@ type Props = {
   mensajeRecojo?: string
   solicitarCantidadProductos?: boolean
   mostrarEscogerFecha?: boolean
+  cerrarFormulario?: boolean
+  cerrarFormularioMensaje?: string
 }
 
 type MetodoDisponible = { value: string; label: string }
@@ -110,6 +112,8 @@ export default function PublicForm({
   mensajeRecojo,
   solicitarCantidadProductos = false,
   mostrarEscogerFecha = true,
+  cerrarFormulario = false,
+  cerrarFormularioMensaje = '',
 }: Props) {
   const [loading, setLoading] = useState(false)
   const [enviado, setEnviado] = useState(false)
@@ -332,6 +336,25 @@ export default function PublicForm({
       enviandoRef.current = false
     }
   }, [nombre, dni, telefono, cantidadProductos, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom, solicitarCantidadProductos])
+
+  if (cerrarFormulario) {
+    return (
+      <div className="max-w-xl mx-auto mt-6 sm:mt-10 px-3 sm:px-4">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 relative overflow-hidden text-center">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600" />
+          <div className="flex flex-col items-center gap-4">
+            <FormHeader logoUrl={isPro ? logoUrl : undefined} />
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center">
+              <Package size={24} className="text-slate-500" />
+            </div>
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-line">
+              {cerrarFormularioMensaje || 'En este momento no estamos recibiendo pedidos. ¡Gracias por tu comprensión!'}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (enviado) {
     return (

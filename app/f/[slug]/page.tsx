@@ -81,6 +81,8 @@ nombreMetodoOtro={profile.nombre_metodo_otro}
 
         solicitarCantidadProductos={profile.solicitar_cantidad_productos ?? false}
         mostrarEscogerFecha={profile.mostrar_escoger_fecha ?? true}
+        cerrarFormulario={profile.cerrar_formulario ?? false}
+        cerrarFormularioMensaje={profile.cerrar_formulario_mensaje ?? ''}
       />
 
     </div>
