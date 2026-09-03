@@ -343,7 +343,15 @@ export default function PublicForm({
         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 relative overflow-hidden text-center">
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600" />
           <div className="flex flex-col items-center gap-4">
-            <FormHeader logoUrl={isPro ? logoUrl : undefined} />
+            {isPro && logoUrl && (
+              <div className="flex justify-center">
+                <img
+                  src={logoUrl}
+                  alt="Logo"
+                  className="max-h-20 object-contain"
+                />
+              </div>
+            )}
             <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center">
               <Package size={24} className="text-slate-500" />
             </div>
