@@ -418,6 +418,19 @@ export default function ModalConfiguracion({
                         bloqueado={isBasic}
                         onUpgrade={onUpgrade}
                       />
+
+                      <label className="flex items-center gap-3 cursor-pointer mt-5 pt-4 border-t border-slate-100">
+                        <input
+                          type="checkbox"
+                          checked={config.mostrarEscogerFecha}
+                          onChange={(e) => upd('mostrarEscogerFecha', e.target.checked)}
+                          className="accent-sky-600 w-4 h-4"
+                        />
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700">Mostrar "Escoger día de entrega"</p>
+                          <p className="text-xs text-slate-500">Deja que el cliente elija la fecha. Si está oculta, se asigna la más cercana automáticamente</p>
+                        </div>
+                      </label>
                     </div>
                   )}
 
@@ -465,19 +478,6 @@ export default function ModalConfiguracion({
                     <div>
                       <p className="text-sm font-semibold text-slate-700">Solicitar cantidad de productos</p>
                       <p className="text-xs text-slate-500">Pide al cliente el número de prendas a recibir</p>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center gap-3 cursor-pointer mt-5">
-                    <input
-                      type="checkbox"
-                      checked={config.mostrarEscogerFecha}
-                      onChange={(e) => upd('mostrarEscogerFecha', e.target.checked)}
-                      className="accent-sky-600 w-4 h-4"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-slate-700">Mostrar "Escoger día de entrega"</p>
-                      <p className="text-xs text-slate-500">Deja que el cliente elija la fecha. Si está oculta, se asigna la más cercana automáticamente</p>
                     </div>
                   </label>
                 </div>
