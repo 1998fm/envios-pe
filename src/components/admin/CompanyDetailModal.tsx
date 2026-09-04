@@ -58,6 +58,7 @@ type Detalle = {
     utilidadEstimada: number
     ultimaActividad: string | null
     porEstado: Record<string, number>
+    porMetodo: Record<string, number>
   }
   serie: { dia: string; envios: number; ventas: number }[]
   enviosRecientes: { id: string; estado: string; fecha_registro: string | null }[]
@@ -74,6 +75,16 @@ const ESTADO_LABEL: Record<string, string> = {
   EMPACADO: 'Empacado',
   ENVIADO: 'Enviado',
   ENTREGADO: 'Entregado',
+}
+
+const METODO_LABEL: Record<string, string> = {
+  MOTORIZADO: 'Motorizado',
+  SHALOM: 'Shalom',
+  OLVA: 'Olva',
+  MARVISUR: 'Marvisur',
+  FLORES: 'Flores',
+  RECOJO: 'Recojo',
+  OTRO: 'Otro',
 }
 
 const fmtMoney = (n: number) =>
@@ -261,6 +272,22 @@ export default function CompanyDetailModal({
                     {Object.entries(detalle.metricas.porEstado).map(([k, v]) => (
                       <span key={k} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700">
                         <span className="w-2 h-2 rounded-full bg-sky-500" /> {ESTADO_LABEL[k] ?? k}: {fmtNum(v)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Envíos por método de envío */}
+              {Object.keys(detalle.metricas.porMetodo).length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <h4 className="text-sm font-semibold text-slate-900 mb-2">Envíos por método</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(detalle.metricas.porMetodo)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([k, v]) => (
+                      <span key={k} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500" /> {METODO_LABEL[k] ?? k}: {fmtNum(v)}
                       </span>
                     ))}
                   </div>

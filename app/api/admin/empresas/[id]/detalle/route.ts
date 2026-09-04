@@ -40,7 +40,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   // Totales históricos por tabla.
   const [envios, ventas, gastos, compras, productos] = await Promise.all([
-    supabaseAdmin.from('envios').select('id, fecha_registro, estado').eq('user_id', id),
+    supabaseAdmin.from('envios').select('id, fecha_registro, estado, metodo').eq('user_id', id),
     supabaseAdmin.from('ventas').select('total, estado, created_at').eq('profile_id', id),
     supabaseAdmin.from('gastos').select('monto, created_at').eq('profile_id', id),
     supabaseAdmin.from('compras').select('id, total, created_at').eq('profile_id', id),
@@ -82,6 +82,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   listaEnvios.forEach((e) => {
     const k = e.estado || 'SIN_ESTADO'
     porEstado[k] = (porEstado[k] ?? 0) + 1
+  })
+
+  // Envíos por método de envío.
+  const porMetodo: Record<string, number> = {}
+  listaEnvios.forEach((e) => {
+    const k = e.metodo || 'SIN_METODO'
+    porMetodo[k] = (porMetodo[k] ?? 0) + 1
   })
 
   // Serie de actividad (últimos DIAS_SERIE días).
@@ -142,6 +149,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       utilidadEstimada: Math.round((montoVentas - montoCompras - montoGastos) * 100) / 100,
       ultimaActividad,
       porEstado,
+      porMetodo,
     },
     serie,
     enviosRecientes,
