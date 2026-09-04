@@ -24,7 +24,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const appUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin
+
+  // Resolver la URL de la app de forma robusta:
+  // 1. Variable de entorno explícita
+  // 2. Host header del request (funciona tanto en Vercel como en local)
+  const host = request.headers.get('host')
+  const proto = request.headers.get('x-forwarded-proto') || 'https'
+  const appUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (host ? `${proto}://${host}` : '') ||
+    new URL(request.url).origin
+
   const redirectTo = new URL('/dashboard', appUrl).toString()
 
   // Genera un magic link para iniciar sesión como la empresa objetivo.
