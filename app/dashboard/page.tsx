@@ -725,29 +725,44 @@ setLoading(false)
 
 async function exportarSeleccionados() {
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
   let lista: Envio[] = []
 
   if (seleccionados.length > 0) {
 
-    lista = envios.filter(
-      (envio) =>
-        seleccionados.includes(
-          envio.id
-        ) &&
-        envio.metodo === 'SHALOM'
-    )
+    const { data, error } =
+      await supabase
+        .from('envios')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('metodo', 'SHALOM')
+        .eq('estado', 'EMPACADO')
+        .in('id', seleccionados)
+
+    if (error) {
+      toast.error(error.message)
+      return
+    }
+
+    lista = data || []
+
+    const descartados = seleccionados.length - lista.length
+    if (descartados > 0) {
+      toast.warning(
+        `${descartados} envío(s) descartados (ya no están empacados o no son SHALOM).`
+      )
+    }
 
     setMensajeExportar(
       `¿Está seguro que desea exportar los ${lista.length} envíos seleccionados?`
     )
 
   } else {
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) return
 
     const { data, error } =
       await supabase
