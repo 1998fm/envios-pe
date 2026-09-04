@@ -20,9 +20,17 @@ import {
   Unlock,
   ExternalLink,
   Activity,
+  Eye,
+  FileDown,
+  ShieldCheck,
+  Bell,
+  UserX,
+  UserCheck,
+  Star,
 } from 'lucide-react'
+import CompanyDetailModal from '@/components/admin/CompanyDetailModal'
 
-type Tab = 'resumen' | 'empresas' | 'planes' | 'shalom' | 'auditoria' | 'actividad'
+type Tab = 'resumen' | 'empresas' | 'planes' | 'shalom' | 'auditoria' | 'actividad' | 'admins'
 
 const PLANES = ['basic', 'pro', 'business_plus']
 const PLAN_LABEL: Record<string, string> = {
@@ -91,6 +99,23 @@ type Activo = {
   gastos: number
 }
 
+type AdminRow = {
+  id: string
+  empresa: string
+  slug: string
+  email: string
+  esYo: boolean
+  created_at: string | null
+}
+
+type Alerta = {
+  tipo: 'trial' | 'plan_vencido' | 'inactiva' | 'cuota'
+  nivel: 'warning' | 'danger' | 'info'
+  titulo: string
+  descripcion: string
+  empresaId?: string
+}
+
 // ---------- helpers de presentación ----------
 const fmtNum = (n: number) => n.toLocaleString('es-PE')
 const fmtMoney = (n: number) => `S/ ${n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -130,6 +155,36 @@ function Kpi({ label, value, sub }: { label: string; value: string; sub?: string
   )
 }
 
+// Exporta filas a CSV (descarga local).
+function exportarCSV(nombre: string, headers: string[], filas: (string | number)[][]) {
+  const esc = (v: string | number) => {
+    const s = String(v ?? '')
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+  }
+  const contenido = [headers.join(','), ...filas.map((f) => f.map(esc).join(','))].join('\n')
+  const blob = new Blob(['\uFEFF' + contenido], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${nombre.toLowerCase().replace(/[^a-z0-9_-]+/g, '_')}.csv`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+// Botón de exportar reutilizable.
+function BotonExportar({ onClick, label, className = '' }: { onClick: () => void; label: string; className?: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-600 hover:border-sky-500 hover:text-sky-700 transition-colors ${className}`}
+    >
+      <FileDown size={14} /> {label}
+    </button>
+  )
+}
+
 const tabsList: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: 'resumen', label: 'Resumen', icon: <LayoutDashboard size={16} /> },
   { key: 'empresas', label: 'Empresas', icon: <Building2 size={16} /> },
@@ -137,6 +192,7 @@ const tabsList: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: 'planes', label: 'Planes', icon: <CreditCard size={16} /> },
   { key: 'shalom', label: 'Agencias Shalom', icon: <Truck size={16} /> },
   { key: 'auditoria', label: 'Auditoría', icon: <History size={16} /> },
+  { key: 'admins', label: 'Admins', icon: <ShieldCheck size={16} /> },
 ]
 
 export default function AdminPage() {
@@ -162,6 +218,10 @@ export default function AdminPage() {
   const [totalAuditoria, setTotalAuditoria] = useState(0)
   const [totalPaginasA, setTotalPaginasA] = useState(1)
   const [paginaA, setPaginaA] = useState(1)
+  const [admins, setAdmins] = useState<AdminRow[]>([])
+  const [alertas, setAlertas] = useState<Alerta[]>([])
+  const [detallando, setDetallando] = useState<Empresa | null>(null)
+  const [alertasVisible, setAlertasVisible] = useState(false)
 
   // modal editar empresa
   const [editando, setEditando] = useState<Empresa | null>(null)
@@ -266,6 +326,24 @@ export default function AdminPage() {
     }
   }, [fetchJson, paginaA])
 
+  const cargarAdmins = useCallback(async () => {
+    try {
+      const d = await fetchJson('/api/admin/roles')
+      setAdmins(d.items)
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }, [fetchJson])
+
+  const cargarAlertas = useCallback(async () => {
+    try {
+      const d = await fetchJson('/api/admin/alertas')
+      setAlertas(d.alertas ?? [])
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }, [fetchJson])
+
   // Carga según la pestaña activa
   useEffect(() => {
     if (!sesion) return
@@ -275,6 +353,8 @@ export default function AdminPage() {
     if (tab === 'actividad') cargarActividad()
     if (tab === 'shalom') cargarShalom()
     if (tab === 'auditoria') cargarAuditoria()
+    if (tab === 'admins') cargarAdmins()
+    if (tab === 'resumen') cargarAlertas()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sesion, tab, paginaE, paginaA])
 
@@ -285,6 +365,8 @@ export default function AdminPage() {
     if (tab === 'actividad') cargarActividad()
     if (tab === 'shalom') cargarShalom()
     if (tab === 'auditoria') cargarAuditoria()
+    if (tab === 'admins') cargarAdmins()
+    if (tab === 'resumen') cargarAlertas()
   }
 
   const logout = async () => {
@@ -306,7 +388,64 @@ export default function AdminPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Error')
       if (data.aviso) setError(data.aviso)
+      setDetallando((d) => (d && d.id === emp.id ? { ...d, disabled: nuevo } : d))
       refetchCurrent()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  // Acción: reset contraseña (genera contraseña temporal)
+  const resetPassword = async (emp: Empresa) => {
+    if (!window.confirm(`¿Generar una contraseña temporal para "${emp.empresa || emp.slug}"?\nEl usuario deberá iniciar sesión con ella.`)) return
+    setError('')
+    try {
+      const res = await fetch(`/api/admin/empresas/${emp.id}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Error')
+      window.alert(
+        `Contraseña temporal generada para ${emp.empresa || emp.slug}:\n\n${data.password}\n\nGuárdala y compártela con el usuario.`
+      )
+      refetchCurrent()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  // Acción: entrar como empresa (impersonación por magic link)
+  const impersonate = async (emp: Empresa) => {
+    if (!window.confirm(`¿Entrar como "${emp.empresa || emp.slug}"?\nSe abrirá su dashboard en una pestaña nueva.`)) return
+    setError('')
+    try {
+      const res = await fetch(`/api/admin/empresas/${emp.id}/impersonate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Error')
+      window.open(data.link, '_blank', 'noopener,noreferrer')
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  // Acción: revocar admin
+  const revocarAdmin = async (a: AdminRow) => {
+    if (a.esYo) return
+    if (!window.confirm(`¿Revocar el acceso de super admin a "${a.empresa || a.email}"?`)) return
+    setError('')
+    try {
+      const res = await fetch('/api/admin/roles/revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: a.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Error')
+      setAdmins((prev) => prev.filter((x) => x.id !== a.id))
     } catch (e) {
       setError((e as Error).message)
     }
@@ -432,6 +571,54 @@ export default function AdminPage() {
         {/* ============ RESUEN ============ */}
         {tab === 'resumen' && overview && (
           <div className="space-y-5">
+            {alertas.length > 0 && (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <button
+                  onClick={() => setAlertasVisible((v) => !v)}
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50"
+                >
+                  <div className="flex items-center gap-2">
+                    <Bell size={16} className="text-sky-600" />
+                    <span className="text-sm font-semibold text-slate-800">
+                      Alertas ({alertas.filter((a) => a.nivel !== 'info').length} requieren atención)
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-400">{alertasVisible ? 'Ocultar' : 'Mostrar'}</span>
+                </button>
+                {alertasVisible && (
+                  <div className="divide-y divide-slate-100">
+                    {alertas.map((a, i) => (
+                      <div
+                        key={i}
+                        className={`px-4 py-3 flex items-start gap-3 ${
+                          a.nivel === 'danger' ? 'bg-red-50/60' : a.nivel === 'warning' ? 'bg-amber-50/60' : 'bg-slate-50/60'
+                        }`}
+                      >
+                        <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${
+                          a.nivel === 'danger' ? 'bg-red-500' : a.nivel === 'warning' ? 'bg-amber-500' : 'bg-slate-400'
+                        }`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-semibold ${a.nivel === 'danger' ? 'text-red-700' : a.nivel === 'warning' ? 'text-amber-700' : 'text-slate-600'}`}>{a.titulo}</p>
+                          <p className="text-xs text-slate-500">{a.descripcion}</p>
+                        </div>
+                        {a.empresaId && (
+                          <button
+                            onClick={() => {
+                              const emp = empresas.find((x) => x.id === a.empresaId)
+                              if (emp) setDetallando(emp)
+                            }}
+                            className="text-xs font-semibold text-sky-700 hover:underline shrink-0"
+                          >
+                            Ver
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Kpi label="Empresas totales" value={fmtNum(overview.total)} />
               <Kpi label="Activas" value={fmtNum(overview.activas)} sub={`${fmtNum(overview.desactivadas)} bloqueadas`} />
@@ -523,6 +710,22 @@ export default function AdminPage() {
                   <option key={p} value={p}>{PLAN_LABEL[p]}</option>
                 ))}
               </Select>
+              <BotonExportar
+                label="Exportar CSV"
+                onClick={() =>
+                  exportarCSV('empresas', ['Empresa', 'Slug', 'Email', 'Plan', 'Estado', 'Pro hasta', 'Trial hasta', 'Registro', 'Rol'], empresas.map((e) => [
+                    e.empresa,
+                    e.slug,
+                    e.email,
+                    PLAN_LABEL[e.plan] ?? e.plan,
+                    e.disabled ? 'Bloqueada' : e.role === 'super_admin' ? 'Admin' : 'Activa',
+                    e.pro_until ? new Date(e.pro_until).toLocaleDateString('es-PE') : '',
+                    e.trial_end ? new Date(e.trial_end).toLocaleDateString('es-PE') : '',
+                    e.created_at ? new Date(e.created_at).toLocaleDateString('es-PE') : '',
+                    e.role,
+                  ]))
+                }
+              />
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
@@ -557,11 +760,18 @@ export default function AdminPage() {
                                 target="_blank"
                                 rel="noreferrer"
                                 className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"
-                                title="Ver formulario"
+                                title="Ver formulario público"
                               >
                                 <ExternalLink size={15} />
-                              </a>
+                      </a>
                             )}
+                            <button
+                              onClick={() => setDetallando(e)}
+                              className="p-2 rounded-lg text-sky-700 bg-sky-50 hover:bg-sky-100"
+                              title="Ver detalle y métricas"
+                            >
+                              <Eye size={15} />
+                            </button>
                             <button
                               onClick={() => setEditando(e)}
                               className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100"
@@ -703,9 +913,29 @@ export default function AdminPage() {
         {tab === 'actividad' && (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <p className="text-sm text-slate-600">
-                Empresas con actividad en los últimos <strong>7 días</strong> (envíos, ventas, compras o gastos registrados).
-              </p>
+              <div>
+                <p className="text-sm text-slate-600">
+                  Empresas con actividad en los últimos <strong>7 días</strong> (envíos, ventas, compras o gastos registrados).
+                </p>
+                <BotonExportar
+                  className="mt-2"
+                  label="Exportar CSV"
+                  onClick={() =>
+                    exportarCSV('actividad_7dias', ['Empresa', 'Slug', 'Email', 'Plan', 'Envíos', 'Ventas', 'Compras', 'Gastos', 'Total', 'Última actividad'], activos.map((a) => [
+                      a.empresa,
+                      a.slug,
+                      a.email,
+                      PLAN_LABEL[a.plan] ?? a.plan,
+                      a.envios,
+                      a.ventas,
+                      a.compras,
+                      a.gastos,
+                      a.total_acciones,
+                      a.ultima_actividad ? new Date(a.ultima_actividad).toLocaleString('es-PE') : '',
+                    ]))
+                  }
+                />
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Kpi label="Activos" value={fmtNum(totalActivos)} />
                 <Kpi label="Envíos (7d)" value={fmtNum(activos.reduce((a, r) => a + r.envios, 0))} />
@@ -766,6 +996,19 @@ export default function AdminPage() {
         {/* ============ AUDITORÍA ============ */}
         {tab === 'auditoria' && (
           <div className="space-y-4">
+            <div className="flex justify-end">
+              <BotonExportar
+                label="Exportar CSV"
+                onClick={() =>
+                  exportarCSV('auditoria', ['Fecha', 'Admin', 'Acción', 'Detalle'], auditoria.map((a) => [
+                    a.created_at,
+                    a.admin_email,
+                    a.accion,
+                    JSON.stringify(a.detalle),
+                  ]))
+                }
+              />
+            </div>
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -810,6 +1053,70 @@ export default function AdminPage() {
                 <Button type="secondary" className="!px-4 !py-2 text-sm" disabled={paginaA >= totalPaginasA} onClick={() => setPaginaA((p) => p + 1)}>
                   Siguiente
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============ ADMINS ============ */}
+        {tab === 'admins' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <ShieldCheck size={18} className="text-sky-600" />
+              Usuarios con acceso de <strong>super admin</strong> al panel. Cualquier empresa puede ser elevada a admin desde sus acciones.
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">Admin</th>
+                      <th className="px-4 py-3 font-semibold">Rol</th>
+                      <th className="px-4 py-3 font-semibold">Registro</th>
+                      <th className="px-4 py-3 font-semibold text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {admins.map((a) => (
+                      <tr key={a.id} className="hover:bg-slate-50/70">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600">
+                              <ShieldCheck size={15} />
+                            </span>
+                            <div>
+                              <p className="font-semibold text-slate-900">{a.empresa || a.email || '—'}</p>
+                              <p className="text-xs text-slate-400">{a.email || a.slug}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200">
+                            <Star size={11} /> Super admin
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-500">{a.created_at ? new Date(a.created_at).toLocaleDateString('es-PE') : '—'}</td>
+                        <td className="px-4 py-3 text-right">
+                          {a.esYo ? (
+                            <span className="text-xs text-slate-400">Eres tú</span>
+                          ) : (
+                            <button
+                              onClick={() => revocarAdmin(a)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100"
+                            >
+                              <UserX size={13} /> Revocar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {admins.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-10 text-center text-slate-400">Sin administradores.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -873,6 +1180,20 @@ export default function AdminPage() {
           </div>
         )}
       </Modal>
+
+      {/* ============ MODAL DETALLE EMPRESA ============ */}
+      <CompanyDetailModal
+        open={!!detallando}
+        empresa={detallando}
+        onClose={() => setDetallando(null)}
+        onToggleBlock={(emp) => toggleBlock(emp)}
+        onResetPassword={(emp) => resetPassword(emp)}
+        onImpersonate={(emp) => impersonate(emp)}
+        onEditar={(emp) => {
+          setDetallando(null)
+          setEditando(emp)
+        }}
+      />
     </div>
   )
 }
