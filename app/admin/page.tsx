@@ -276,7 +276,7 @@ export default function AdminPage() {
     if (tab === 'shalom') cargarShalom()
     if (tab === 'auditoria') cargarAuditoria()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sesion, tab])
+  }, [sesion, tab, paginaE, paginaA])
 
   const refetchCurrent = () => {
     if (tab === 'resumen') cargarOverview()
