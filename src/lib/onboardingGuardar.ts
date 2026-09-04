@@ -132,6 +132,11 @@ export async function guardarPasoTarifas(
   userId: string,
   config: ConfigState
 ) {
+  await supabase
+    .from('profiles')
+    .update({ moto_region: config.motoRegion })
+    .eq('id', userId)
+
   const tarifasObj = Object.fromEntries(
     Object.entries(config.tarifas)
       .filter(([, precio]) => precio !== '')

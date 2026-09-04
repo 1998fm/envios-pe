@@ -40,6 +40,21 @@ export default async function FormPage({
     (profile.cerrar_formulario ?? false) &&
     (superaCorteMoto || superaCorteAgencias)
 
+  // Para usuarios de PROVINCIA, el formulario lista SOLO los distritos que
+  // configuró (las claves de sus tarifas). Para LIMA se usa la lista de
+  // distritos-metropolitanos precargada.
+  let distritosMotorizado: string[] | undefined
+  if ((profile.moto_region ?? 'lima') === 'provincia') {
+    const { data: tarifas } = await supabaseServer
+      .from('tarifas_moto')
+      .select('tarifas')
+      .eq('profile_id', profile.id)
+      .maybeSingle()
+    if (tarifas?.tarifas) {
+      distritosMotorizado = Object.keys(tarifas.tarifas)
+    }
+  }
+
   return (
 
   <main
@@ -96,6 +111,7 @@ nombreMetodoOtro={profile.nombre_metodo_otro}
         mostrarEscogerFecha={profile.mostrar_escoger_fecha ?? true}
         formularioDeshabilitado={formularioDeshabilitado}
         cerrarFormularioMensaje={profile.cerrar_formulario_mensaje ?? ''}
+        distritosMotorizado={distritosMotorizado}
       />
 
     </div>

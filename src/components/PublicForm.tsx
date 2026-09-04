@@ -42,6 +42,7 @@ type Props = {
   mostrarEscogerFecha?: boolean
   formularioDeshabilitado?: boolean
   cerrarFormularioMensaje?: string
+  distritosMotorizado?: string[]
 }
 
 type MetodoDisponible = { value: string; label: string }
@@ -114,7 +115,9 @@ export default function PublicForm({
   mostrarEscogerFecha = true,
   formularioDeshabilitado = false,
   cerrarFormularioMensaje = '',
+  distritosMotorizado,
 }: Props) {
+  const distritosMotoList = distritosMotorizado ?? (distritosMoto as string[])
   const [loading, setLoading] = useState(false)
   const [enviado, setEnviado] = useState(false)
   const [fechaProgramada, setFechaProgramada] = useState('')
@@ -131,7 +134,7 @@ export default function PublicForm({
 
   const metodosDisponibles = useMemo<MetodoDisponible[]>(() => {
     const all: (MetodoDisponible | null)[] = [
-      metodoMotorizado ? { value: 'MOTORIZADO', label: 'Motorizado' } : null,
+      metodoMotorizado && distritosMotoList.length > 0 ? { value: 'MOTORIZADO', label: 'Motorizado' } : null,
       metodoShalom ? { value: 'SHALOM', label: 'Shalom' } : null,
       metodoOlva ? { value: 'OLVA', label: 'Olva' } : null,
       metodoMarvisur ? { value: 'MARVISUR', label: 'Marvisur' } : null,
@@ -142,7 +145,7 @@ export default function PublicForm({
       metodoRecojo ? { value: 'RECOJO', label: 'Recojo en tienda' } : null,
     ]
     return all.filter((item): item is MetodoDisponible => item !== null)
-  }, [metodoMotorizado, metodoShalom, metodoOlva, metodoMarvisur, metodoFlores, metodoOtro, nombreOtro, metodoRecojo])
+  }, [metodoMotorizado, metodoShalom, metodoOlva, metodoMarvisur, metodoFlores, metodoOtro, nombreOtro, metodoRecojo, distritosMotoList])
 
   const [metodo, setMetodo] = useState(
     metodosDisponibles.length > 0 ? metodosDisponibles[0].value : ''
@@ -270,7 +273,7 @@ export default function PublicForm({
       return
     }
 
-    if (metodo === 'MOTORIZADO' && (!existeEnLista(distritosMoto, distrito) || !direccion)) {
+    if (metodo === 'MOTORIZADO' && (!existeEnLista(distritosMotoList, distrito) || !direccion)) {
       setError('Selecciona un distrito de la lista y completa la dirección.')
       setLoading(false)
       enviandoRef.current = false
@@ -335,7 +338,7 @@ export default function PublicForm({
       setLoading(false)
       enviandoRef.current = false
     }
-  }, [nombre, dni, telefono, cantidadProductos, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom, solicitarCantidadProductos])
+  }, [nombre, dni, telefono, cantidadProductos, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom, solicitarCantidadProductos, distritosMotoList])
 
   if (formularioDeshabilitado) {
     return (
@@ -441,6 +444,7 @@ export default function PublicForm({
               setReferencia={setReferencia}
               tarifaMotorizado={tarifaMotorizado}
               cargandoTarifa={cargandoTarifa}
+              distritosMotorizado={distritosMotoList}
             />
           )}
 

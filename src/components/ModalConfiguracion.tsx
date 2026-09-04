@@ -2,6 +2,7 @@
 
 import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
+import TarifasEditor from '@/components/TarifasEditor'
 import AutocompleteInput from '@/components/AutocompleteInput'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
 import { ConfigModalProps } from '@/types/config'
@@ -545,21 +546,11 @@ export default function ModalConfiguracion({
                   <p className="text-xs text-slate-500">Define cuánto cobrar por cada distrito.</p>
                 </div>
               </div>
-              <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                {distritosMoto.map((distrito: string) => (
-                  <div key={distrito}
-                    className="flex items-center justify-between gap-4 bg-white border border-slate-200 rounded-xl px-4 py-3 hover:border-sky-200 transition-colors">
-                    <div className="font-medium text-slate-700 text-sm">{distrito}</div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-400 text-sm">S/</span>
-                      <input type="number" min="0" step="0.50"
-                        value={config.tarifas[distrito] || ''}
-                        onChange={(e) => upd('tarifas', { ...config.tarifas, [distrito]: e.target.value })}
-                        className="w-24 border border-slate-200 rounded-lg px-3 py-2 text-right bg-white text-slate-900" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <TarifasEditor
+                config={config}
+                upd={upd}
+                distritosMoto={distritosMoto}
+              />
             </div>
           )}
         </div>

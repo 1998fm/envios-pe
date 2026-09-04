@@ -22,6 +22,7 @@ type Props = {
   setReferencia: (v: string) => void
   tarifaMotorizado: number | null
   cargandoTarifa: boolean
+  distritosMotorizado?: string[]
 }
 
 const inputClass = `
@@ -97,7 +98,7 @@ export default memo(function ConditionalFields(props: Props) {
           <AutocompleteInput
             value={props.distrito}
             onChange={props.setDistrito}
-            options={distritosMoto}
+            options={props.distritosMotorizado ?? (distritosMoto as string[])}
             placeholder="Distrito"
             requireSelection
             errorMessage="Selecciona un distrito de la lista."

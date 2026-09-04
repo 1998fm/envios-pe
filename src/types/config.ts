@@ -42,6 +42,7 @@ export type ConfigState = {
   mostrarEscogerFecha: boolean
   cerrarFormulario: boolean
   cerradoFormularioMensaje: string
+  motoRegion: 'lima' | 'provincia'
   tarifas: Record<string, string>
 }
 
@@ -87,6 +88,7 @@ export const initialConfigState: ConfigState = {
   mostrarEscogerFecha: true,
   cerrarFormulario: false,
   cerradoFormularioMensaje: '',
+  motoRegion: 'lima',
   tarifas: {},
 }
 

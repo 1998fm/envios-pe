@@ -64,6 +64,7 @@ const initialConfig: ConfigState = {
   mostrarEscogerFecha: true,
   cerrarFormulario: false,
   cerradoFormularioMensaje: '',
+  motoRegion: 'lima',
   tarifas: {},
 }
 

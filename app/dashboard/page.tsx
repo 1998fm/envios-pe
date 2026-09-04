@@ -429,7 +429,8 @@ if (crearPerfilError) {
  solicitar_cantidad_productos,
  mostrar_escoger_fecha,
  cerrar_formulario,
- cerrar_formulario_mensaje
+ cerrar_formulario_mensaje,
+ moto_region
     `)
     .eq('id', user.id)
     .maybeSingle()
@@ -456,21 +457,30 @@ setOrigenShalom(
 const tarifasCrudas: Record<string, unknown> =
   tarifasData?.tarifas ?? {}
 
-// Re-mapea las claves guardadas a los nombres actuales del JSON de distritos,
-// por coincidencia normalizada, para que la UI y el guardado usen siempre el
-// mismo nombre (evita claves desincronizadas tipo "STA. CLARA" vs "SANTA CLARA").
+// Unifica las claves guardadas de LIMA con los nombres actuales del JSON de
+// distritos (coincidencia normalizada). Para PROVINCIA las claves son distritos
+// personalizados del usuario y se respetan tal cual.
+const esProvincia = profile?.moto_region === 'provincia'
+
 const mapaNormalizado = new Map<string, string>()
 for (const d of distritosMoto) {
   const n = normalizarDistrito(d)
   if (!mapaNormalizado.has(n)) mapaNormalizado.set(n, d)
 }
 
-const tarifasObj: Record<string, string> = Object.fromEntries(
-  Object.entries(tarifasCrudas).map(([distrito, precio]) => {
-    const claveJson = mapaNormalizado.get(normalizarDistrito(distrito))
-    return [claveJson ?? distrito, String(precio)]
-  })
-)
+const tarifasObj: Record<string, string> = esProvincia
+  ? Object.fromEntries(
+      Object.entries(tarifasCrudas).map(([distrito, precio]) => [
+        distrito,
+        String(precio),
+      ])
+    )
+  : Object.fromEntries(
+      Object.entries(tarifasCrudas).map(([distrito, precio]) => {
+        const claveJson = mapaNormalizado.get(normalizarDistrito(distrito))
+        return [claveJson ?? distrito, String(precio)]
+      })
+    )
 
 setConfig(prev => ({
   ...prev,
@@ -512,6 +522,7 @@ setConfig(prev => ({
   mostrarEscogerFecha: profile?.mostrar_escoger_fecha ?? true,
   cerrarFormulario: profile?.cerrar_formulario ?? false,
   cerradoFormularioMensaje: profile?.cerrar_formulario_mensaje ?? '',
+  motoRegion: (profile?.moto_region ?? 'lima') as 'lima' | 'provincia',
   tarifas: tarifasObj,
 }))
 
@@ -1195,6 +1206,9 @@ metodo_recojo:
 
 mensaje_recojo:
   config.mensajeRecojo,
+
+moto_region:
+  config.motoRegion,
 
   ...obtenerConfiguracionLogistica({
 
