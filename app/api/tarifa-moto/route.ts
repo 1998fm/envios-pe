@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { computeEffectivePlan } from '@/lib/planGating'
+import { buscarPrecioPorDistrito } from '@/lib/normalizarDistrito'
 
 export async function GET(req: NextRequest) {
 
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
 
   }
 
-  const precio = data.tarifas[distrito]
+  const precio = buscarPrecioPorDistrito(data.tarifas, distrito)
 
   return NextResponse.json({
     precio: precio ?? null,

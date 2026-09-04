@@ -35,6 +35,7 @@ import {
 /*======================================== */
 import distritosMoto
 from '@/data/distritos-moto.json'
+import { normalizarDistrito } from '@/lib/normalizarDistrito'
 import ModalUpgrade from '@/components/ModalUpgrade'
 import PanelResumen from '@/components/PanelResumen'
 import { ConfigState, initialConfigState } from '@/types/config'
@@ -452,19 +453,24 @@ setOrigenShalom(
   profile?.origen_shalom || ''
 )
 
-const tarifasObj: Record<string, string> =
-  tarifasData?.tarifas
-    ? Object.fromEntries(
-        Object.entries(
-          tarifasData.tarifas
-        ).map(
-          ([distrito, precio]) => [
-            distrito,
-            String(precio),
-          ]
-        )
-      )
-    : {}
+const tarifasCrudas: Record<string, unknown> =
+  tarifasData?.tarifas ?? {}
+
+// Re-mapea las claves guardadas a los nombres actuales del JSON de distritos,
+// por coincidencia normalizada, para que la UI y el guardado usen siempre el
+// mismo nombre (evita claves desincronizadas tipo "STA. CLARA" vs "SANTA CLARA").
+const mapaNormalizado = new Map<string, string>()
+for (const d of distritosMoto) {
+  const n = normalizarDistrito(d)
+  if (!mapaNormalizado.has(n)) mapaNormalizado.set(n, d)
+}
+
+const tarifasObj: Record<string, string> = Object.fromEntries(
+  Object.entries(tarifasCrudas).map(([distrito, precio]) => {
+    const claveJson = mapaNormalizado.get(normalizarDistrito(distrito))
+    return [claveJson ?? distrito, String(precio)]
+  })
+)
 
 setConfig(prev => ({
   ...prev,
