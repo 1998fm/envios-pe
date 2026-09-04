@@ -94,8 +94,8 @@ export default function EnvioCard({
           </div>
         </div>
 
-        {/* Center: destino - hidden on mobile, visible on sm+ */}
-        <div className="hidden sm:block flex-1 text-center text-xs text-slate-600  leading-relaxed min-w-0 self-center">
+        {/* Center: destino - visible on all screens, full row on mobile */}
+        <div className="w-full sm:w-auto flex-[1_0_100%] sm:flex-1 text-center text-xs text-slate-600  leading-relaxed min-w-0 self-center order-last sm:order-none">
           {envio.detalle || '—'}
         </div>
 
