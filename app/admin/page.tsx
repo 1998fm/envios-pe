@@ -44,6 +44,7 @@ type Empresa = {
   id: string
   empresa: string
   slug: string
+  telefono: string
   email: string
   plan: string
   isTrial: boolean
@@ -713,10 +714,11 @@ export default function AdminPage() {
               <BotonExportar
                 label="Exportar CSV"
                 onClick={() =>
-                  exportarCSV('empresas', ['Empresa', 'Slug', 'Email', 'Plan', 'Estado', 'Pro hasta', 'Trial hasta', 'Registro', 'Rol'], empresas.map((e) => [
+                  exportarCSV('empresas', ['Empresa', 'Slug', 'Email', 'Teléfono', 'Plan', 'Estado', 'Pro hasta', 'Trial hasta', 'Registro', 'Rol'], empresas.map((e) => [
                     e.empresa,
                     e.slug,
                     e.email,
+                    e.telefono,
                     PLAN_LABEL[e.plan] ?? e.plan,
                     e.disabled ? 'Bloqueada' : e.role === 'super_admin' ? 'Admin' : 'Activa',
                     e.pro_until ? new Date(e.pro_until).toLocaleDateString('es-PE') : '',
@@ -734,6 +736,7 @@ export default function AdminPage() {
                   <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                     <tr>
                       <th className="px-4 py-3 font-semibold">Empresa</th>
+                      <th className="px-4 py-3 font-semibold">Teléfono</th>
                       <th className="px-4 py-3 font-semibold">Plan</th>
                       <th className="px-4 py-3 font-semibold">Estado</th>
                       <th className="px-4 py-3 font-semibold">Pro hasta</th>
@@ -748,6 +751,7 @@ export default function AdminPage() {
                           <p className="font-semibold text-slate-900">{e.empresa || '—'}</p>
                           <p className="text-xs text-slate-400">{e.email || e.slug}</p>
                         </td>
+                        <td className="px-4 py-3 text-slate-600">{e.telefono || '—'}</td>
                         <td className="px-4 py-3"><BadgePlan plan={e.plan} /></td>
                         <td className="px-4 py-3"><BadgeEstado disabled={e.disabled} esAdmin={e.role === 'super_admin'} /></td>
                         <td className="px-4 py-3 text-slate-600">{e.pro_until ? new Date(e.pro_until).toLocaleDateString('es-PE') : '—'}</td>
@@ -795,7 +799,7 @@ export default function AdminPage() {
                     ))}
                     {empresas.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+                        <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
                           No se encontraron empresas.
                         </td>
                       </tr>

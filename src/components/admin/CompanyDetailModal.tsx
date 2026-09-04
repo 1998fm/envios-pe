@@ -17,6 +17,7 @@ import {
   User,
   LogIn,
   List,
+  Phone,
 } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
@@ -25,6 +26,7 @@ type Empresa = {
   id: string
   empresa: string
   slug: string
+  telefono: string
   email: string
   plan: string
   isTrial: boolean
@@ -180,6 +182,9 @@ export default function CompanyDetailModal({
             <div className="min-w-0">
               <h3 className="font-bold text-slate-900 truncate">{detalle?.empresa || empresa?.empresa || 'Empresa'}</h3>
               <p className="text-xs text-slate-400 truncate">{detalle?.email || empresa?.email || '—'}</p>
+              {empresa?.telefono && (
+                <p className="text-xs text-slate-500 truncate flex items-center gap-1"><Phone size={11} /> {empresa.telefono}</p>
+              )}
             </div>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 shrink-0">
