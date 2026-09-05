@@ -4,6 +4,7 @@ import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
 import SelectorDias from '@/components/SelectorDias'
 import AyudaLogistica from '@/components/AyudaLogistica'
+import AyudaCerrarFormulario from '@/components/AyudaCerrarFormulario'
 import TarifasEditor from '@/components/TarifasEditor'
 import AutocompleteInput from '@/components/AutocompleteInput'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
@@ -488,20 +489,23 @@ export default function ModalConfiguracion({
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-slate-200">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={config.cerrarFormulario}
-                      onChange={(e) => upd('cerrarFormulario', e.target.checked)}
-                      className="accent-rose-600 w-4 h-4"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-slate-700">Deshabilitar el formulario</p>
-                      <p className="text-xs text-slate-500">
-                        Oculta el formulario de envíos y muestra solo un mensaje a tus clientes
-                      </p>
-                    </div>
-                  </label>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-3 cursor-pointer flex-1">
+                      <input
+                        type="checkbox"
+                        checked={config.cerrarFormulario}
+                        onChange={(e) => upd('cerrarFormulario', e.target.checked)}
+                        className="accent-rose-600 w-4 h-4"
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-slate-700">Deshabilitar el formulario</p>
+                        <p className="text-xs text-slate-500">
+                          Oculta el formulario de envíos y muestra solo un mensaje a tus clientes
+                        </p>
+                      </div>
+                    </label>
+                    <AyudaCerrarFormulario />
+                  </div>
 
                   {config.cerrarFormulario && (
                     <div className="mt-4 ml-7">
