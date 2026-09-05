@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { exportarShalom } from 'app/f/[slug]/lib/shalomExport'
+import { exportarShalom, MAX_ENVIOS_POR_ARCHIVO } from 'app/f/[slug]/lib/shalomExport'
 import { toast } from 'sonner'
 import { obtenerConfiguracionLogistica } from '@/lib/logistica/guardarConfiguracionLogistica'
 import { sincronizarVentasEnviadas } from '@/lib/sincronizarVentasEnviadas'
@@ -869,6 +869,13 @@ setEnvios(
 setSeleccionados([])
 
 setMostrarModalExportar(false)
+
+  const archivosDescargar = Math.ceil(enviosExportar.length / MAX_ENVIOS_POR_ARCHIVO)
+  toast.success(
+    archivosDescargar > 1
+      ? `${archivosDescargar} archivos descargados (Shalom Pro permite max ${MAX_ENVIOS_POR_ARCHIVO} por archivo)`
+      : `${enviosExportar.length} envíos exportados`
+  )
 }
 
 async function aplicarCambioMasivo() {

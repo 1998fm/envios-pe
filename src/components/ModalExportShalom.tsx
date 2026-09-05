@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect } from 'react'
+import { FileSpreadsheet } from 'lucide-react'
 
 import TourHelpButton from '@/components/TourHelpButton'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
+import { MAX_ENVIOS_POR_ARCHIVO } from 'app/f/[slug]/lib/shalomExport'
 
 type Props = {
   abierto: boolean
@@ -16,6 +18,8 @@ type Props = {
   onCerrar: () => void
   onConfirmar: () => void
 }
+
+const NUMERO_ARCHIVOS = (total: number) => Math.ceil(total / MAX_ENVIOS_POR_ARCHIVO)
 
 export default function ModalExportShalom({
   abierto,
@@ -75,6 +79,33 @@ export default function ModalExportShalom({
               </div>
             </div>
           </div>
+
+          {envios.length > MAX_ENVIOS_POR_ARCHIVO && (
+            <div className="border border-amber-200 bg-amber-50 rounded-2xl p-5">
+              <div className="text-sm font-bold text-amber-800">
+                Se descargarán {NUMERO_ARCHIVOS(envios.length)} archivos
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-amber-700">
+                Shalom Pro acepta máximo {MAX_ENVIOS_POR_ARCHIVO} envíos por archivo, así que Tori los separa
+                automáticamente. Sube cada archivo por separado en Shalom Pro.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {Array.from({ length: NUMERO_ARCHIVOS(envios.length) }).map((_, i) => {
+                  const desde = i * MAX_ENVIOS_POR_ARCHIVO + 1
+                  const hasta = Math.min((i + 1) * MAX_ENVIOS_POR_ARCHIVO, envios.length)
+                  return (
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-white border border-amber-300 px-3 py-1 text-xs font-semibold text-amber-800"
+                    >
+                      <FileSpreadsheet size={13} className="shrink-0 text-amber-700" />
+                      envios-shalom-{i + 1}.xlsx · {desde}-{hasta}
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center gap-4 bg-slate-50  border border-slate-200  rounded-2xl p-5">
             <input

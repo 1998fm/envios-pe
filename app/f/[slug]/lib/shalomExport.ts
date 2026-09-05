@@ -1,5 +1,7 @@
 import * as XLSX from 'xlsx'
 
+export const MAX_ENVIOS_POR_ARCHIVO = 50
+
 const TAMANOS = {
   'PAQUETE XS': {
     alto: 0.15,
@@ -51,65 +53,45 @@ function obtenerMedidas(
   )
 }
 
-export function exportarShalom(
-  envios: any[],
-  origen: string
-) {
+// Shalom Pro acepta máximo 50 envíos por archivo. Si hay más,
+// se divide automáticamente y se descarga un archivo por lote
+// (el último puede llevar menos que 50).
+export function exportarShalom(lote: any[], origen: string) {
+  const grupos: any[][] = []
+  for (let i = 0; i < lote.length; i += MAX_ENVIOS_POR_ARCHIVO) {
+    grupos.push(lote.slice(i, i + MAX_ENVIOS_POR_ARCHIVO))
+  }
 
-  const filas = envios.map((envio) => {
+  grupos.forEach((envios, idx) => {
+    const filas = envios.map((envio) => {
+      const medidas = obtenerMedidas(envio.tamano)
 
-    const medidas = obtenerMedidas(
-      envio.tamano
-    )
+      return {
+        'DESTINATARIO (DOC)': envio.dni,
+        'TELF. DESTINATARIO': envio.telefono,
+        'CONTACTO (DOC)': '',
+        'TELF. CONTACTO': '',
+        'NRO GRR': '',
+        ORIGEN: obtenerDestino(origen),
+        DESTINO: obtenerDestino(envio.detalle),
+        MERCADERIA: envio.tamano || 'PAQUETE XS',
+        ALTO: medidas.alto,
+        ANCHO: medidas.ancho,
+        LARGO: medidas.largo,
+        PESO: medidas.peso,
+        CANTIDAD: 1,
+      }
+    })
 
-    return {
-      'DESTINATARIO (DOC)': envio.dni,
+    const ws = XLSX.utils.json_to_sheet(filas)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'SHALOM')
 
-      'TELF. DESTINATARIO':
-        envio.telefono,
+    const nombre =
+      grupos.length === 1
+        ? 'envios-shalom.xlsx'
+        : `envios-shalom-${idx + 1}.xlsx`
 
-      'CONTACTO (DOC)': '',
-
-      'TELF. CONTACTO': '',
-
-      'NRO GRR': '',
-
-      ORIGEN: obtenerDestino(origen),
-
-      DESTINO: obtenerDestino(
-        envio.detalle
-      ),
-
-      MERCADERIA:
-        envio.tamano ||
-        'PAQUETE XS',
-
-      ALTO: medidas.alto,
-
-      ANCHO: medidas.ancho,
-
-      LARGO: medidas.largo,
-
-      PESO: medidas.peso,
-
-      CANTIDAD: 1,
-    }
+    XLSX.writeFile(wb, nombre)
   })
-
-  const ws =
-    XLSX.utils.json_to_sheet(filas)
-
-  const wb =
-    XLSX.utils.book_new()
-
-  XLSX.utils.book_append_sheet(
-    wb,
-    ws,
-    'SHALOM'
-  )
-
-  XLSX.writeFile(
-    wb,
-    'envios-shalom.xlsx'
-  )
 }
