@@ -2,6 +2,7 @@
 
 import type { ConfigState } from '@/types/config'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
+import AyudaLogistica from '@/components/AyudaLogistica'
 
 type Props = {
   config: ConfigState
@@ -23,10 +24,14 @@ export default function OnboardingStep3Logistica({ config, upd }: Props) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-bold text-slate-900 mb-1">Horarios y disponibilidad</h3>
-        <p className="text-sm text-slate-500">Tori usará esto para calcular automáticamente la fecha de entrega de cada pedido.</p>
-      </div>
+<div>
+                <h3 className="text-lg font-bold text-slate-900 mb-1">Horarios y disponibilidad</h3>
+                <p className="text-sm text-slate-500">Tori usará esto para calcular automáticamente la fecha de entrega de cada pedido.</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <AyudaLogistica />
+                  <span className="text-xs text-slate-400 font-medium">Toca el botón para ver cómo funciona y ejemplos</span>
+                </div>
+              </div>
 
       <div className="space-y-6">
         {config.metodoMotorizado && (

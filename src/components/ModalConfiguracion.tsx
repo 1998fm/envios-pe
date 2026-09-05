@@ -3,6 +3,7 @@
 import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
 import SelectorDias from '@/components/SelectorDias'
+import AyudaLogistica from '@/components/AyudaLogistica'
 import TarifasEditor from '@/components/TarifasEditor'
 import AutocompleteInput from '@/components/AutocompleteInput'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
@@ -403,6 +404,7 @@ export default function ModalConfiguracion({
                       <div className="flex items-center gap-2 mb-4">
                         <Bike size={18} className="text-sky-600" />
                         <h4 className="font-semibold text-slate-900">Motorizado</h4>
+                        <AyudaLogistica className="ml-auto" />
                       </div>
                       <ConfiguracionMetodo
                         dias={config.logisticaMotoDias}
@@ -444,6 +446,7 @@ export default function ModalConfiguracion({
                         <div className="flex items-center gap-2 mb-4">
                           <Truck size={18} className="text-indigo-600" />
                           <h4 className="font-semibold text-slate-900">Agencias</h4>
+                          <AyudaLogistica className="ml-auto" />
                         </div>
                         <ConfiguracionMetodo
                           dias={config.logisticaAgenciasDias}
