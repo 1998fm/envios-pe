@@ -3,8 +3,6 @@ import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { validarHoraCorte } from '@/lib/logistica/validarHoraCorte'
 import { computeEffectivePlan } from '@/lib/planGating'
 
-const DIAS_SEMANA = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
-
 async function contarEnviosDelDia(userId: string, fecha: string): Promise<number> {
   const inicio = new Date(fecha + 'T00:00:00.000Z').toISOString()
   const fin = new Date(fecha + 'T23:59:59.999Z').toISOString()
@@ -35,7 +33,10 @@ export async function GET(request: NextRequest) {
 
   const esPro = computeEffectivePlan(perfil).plan !== 'basic'
 
-  const diasDisponibles: string[] = perfil?.logistica_moto_dias ?? ['MONDAY']
+  const diasConfig: string[] = perfil?.logistica_moto_dias ?? ['MONDAY']
+  // Respaldo de seguridad: el form ya oculta motorizado sin días; el lunes solo
+  // evita un loop infinito ante una llamada directa a la API.
+  const diasDisponibles = diasConfig.length > 0 ? diasConfig : ['MONDAY']
   const usaHora = esPro ? (perfil?.logistica_moto_usa_hora_corte ?? false) : false
   const horaCorte = esPro ? (perfil?.logistica_moto_hora_corte ?? '18:00') : '18:00'
   const anticipacion = esPro ? (perfil?.logistica_moto_anticipacion ?? 1) : 1
@@ -54,7 +55,9 @@ export async function GET(request: NextRequest) {
   candidata.setDate(candidata.getDate() + offset)
 
   while (fechasDisponibles.length < 3) {
-    const nombreDia = DIAS_SEMANA[candidata.getDay()]
+    const nombreDia = candidata
+      .toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/Lima' })
+      .toUpperCase()
     if (diasDisponibles.includes(nombreDia)) {
       const fechaStr = candidata.toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
       const count = limitar ? await contarEnviosDelDia(userId, fechaStr) : 0

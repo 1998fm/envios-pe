@@ -58,6 +58,13 @@ export default async function FormPage({
     }
   }
 
+  // Motorizado solo aparece en el formulario si el negocio marcó al menos un
+  // día de entrega. Sin días configurados, es como si no lo hubiera elegido.
+  const motorizadoActivo =
+    (profile.metodo_motorizado ?? false) &&
+    Array.isArray(profile.logistica_moto_dias) &&
+    profile.logistica_moto_dias.length > 0
+
   return (
 
   <main
@@ -92,7 +99,7 @@ export default async function FormPage({
         tiktokUrl={profile.tiktok_url}
         webUrl={profile.web_url}
         whatsappUrl={profile.whatsapp_url}
-        metodoMotorizado={profile.metodo_motorizado}
+        metodoMotorizado={motorizadoActivo}
 
 metodoShalom={profile.metodo_shalom}
 

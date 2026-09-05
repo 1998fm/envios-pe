@@ -14,10 +14,18 @@ export async function calcularFechaEntrega(
   fechaActual = new Date(),
 ): Promise<Date> {
 
-  const dias =
+  const diasConfig =
     metodo === 'MOTO'
       ? configuracion.logisticaMotoDias
       : configuracion.logisticaAgenciasDias
+
+  // Respaldo de seguridad: el formulario público ya oculta motorizado cuando el
+// negocio no marcó ningún día, así que esto solo debería ocurrir ante una
+// llamada directa a la API. El lunes evita un loop infinito.
+  const dias =
+    Array.isArray(diasConfig) && diasConfig.length > 0
+      ? diasConfig
+      : ['MONDAY']
 
   const usaHora =
     metodo === 'MOTO'
@@ -118,15 +126,15 @@ if (limitar) {
 
     }
 
+    // El día objetivo está lleno: ir al siguiente día disponible A PARTIR de su
+    // fecha (siguienteDiaDisponible ya avanza 1 día). Antes se pasaba
+    // fecha+1 día, con lo que en días seguidos se saltaba también el siguiente
+    // día disponible.
     fechaEntrega = siguienteDiaDisponible(
 
       dias,
 
-      new Date(
-
-        fechaEntrega.getTime() + 86400000
-
-      ),
+      fechaEntrega,
 
     )
 

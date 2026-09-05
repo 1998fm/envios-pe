@@ -3,18 +3,6 @@ export function siguienteDiaDisponible(
   fecha: Date = new Date()
 ): Date {
 
-  const diasSemana = [
-
-    'SUNDAY',
-    'MONDAY',
-    'TUESDAY',
-    'WEDNESDAY',
-    'THURSDAY',
-    'FRIDAY',
-    'SATURDAY',
-
-  ]
-
   const resultado = new Date(fecha)
 
   while (true) {
@@ -24,9 +12,12 @@ export function siguienteDiaDisponible(
     )
 
     const nombreDia =
-      diasSemana[
-        resultado.getDay()
-      ]
+      resultado
+        .toLocaleDateString(
+          'en-US',
+          { weekday: 'long', timeZone: 'America/Lima' }
+        )
+        .toUpperCase()
 
     if (
       diasDisponibles.includes(
