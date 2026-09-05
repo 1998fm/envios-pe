@@ -2,6 +2,7 @@
 
 import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
+import SelectorDias from '@/components/SelectorDias'
 import TarifasEditor from '@/components/TarifasEditor'
 import AutocompleteInput from '@/components/AutocompleteInput'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
@@ -511,6 +512,22 @@ export default function ModalConfiguracion({
                         className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400"
                         placeholder="Ej: Estamos en mantenimiento, volvemos pronto. ¡Gracias!"
                       />
+                    </div>
+                  )}
+
+                  {config.cerrarFormulario && (
+                    <div className="mt-4 ml-7">
+                      <label className="block text-xs font-semibold text-slate-600 mb-2">
+                        Cerrar también estos días de la semana
+                      </label>
+                      <SelectorDias
+                        value={config.cerrarFormularioDias}
+                        onChange={(dias) => upd('cerrarFormularioDias', dias)}
+                      />
+                      <p className="mt-2 text-xs text-slate-400">
+                        Estos días el formulario estará cerrado. Se suma al cierre por hora de corte si lo tienes
+                        activo; alcanza con que una de las dos condiciones se cumpla.
+                      </p>
                     </div>
                   )}
                 </div>

@@ -479,6 +479,7 @@ setConfig(prev => ({
   mostrarEscogerFecha: profile?.mostrar_escoger_fecha ?? true,
   cerrarFormulario: profile?.cerrar_formulario ?? false,
   cerradoFormularioMensaje: profile?.cerrar_formulario_mensaje ?? '',
+  cerrarFormularioDias: profile?.cerrar_formulario_dias ?? [],
   motoRegion: (profile?.moto_region ?? 'lima') as 'lima' | 'provincia',
   tarifas: tarifasObj,
 }))
@@ -1210,6 +1211,13 @@ mensaje_recojo:
   await supabase
     .from('profiles')
     .update({ moto_region: config.motoRegion })
+    .eq('id', user.id)
+
+  // Best-effort: días específicos de cierre, igual que moto_region (migración
+  // propia), para que un SQL pendiente no rompa el guardado de configuración.
+  await supabase
+    .from('profiles')
+    .update({ cerrar_formulario_dias: config.cerrarFormularioDias ?? [] })
     .eq('id', user.id)
 
   

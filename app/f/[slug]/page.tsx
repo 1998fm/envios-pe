@@ -2,6 +2,7 @@ import { supabaseServer } from 'app/f/[slug]/lib/supabase/server'
 import PublicForm from '@/components/PublicForm'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { validarHoraCorte } from '@/lib/logistica/validarHoraCorte'
+import { esDiaDeshabilitado } from '@/lib/logistica/esDiaDeshabilitado'
 
 export default async function FormPage({
   params,
@@ -36,9 +37,11 @@ export default async function FormPage({
     (profile.logistica_agencias_usa_hora_corte ?? false) &&
     validarHoraCorte(profile.logistica_agencias_hora_corte ?? '18:00')
 
+  const cerradoPorDia = esDiaDeshabilitado(profile.cerrar_formulario_dias ?? [])
+
   const formularioDeshabilitado =
     (profile.cerrar_formulario ?? false) &&
-    (superaCorteMoto || superaCorteAgencias)
+    (superaCorteMoto || superaCorteAgencias || cerradoPorDia)
 
   // Para usuarios de PROVINCIA, el formulario lista SOLO los distritos que
   // configuró (las claves de sus tarifas). Para LIMA se usa la lista de
