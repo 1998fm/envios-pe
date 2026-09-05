@@ -769,7 +769,7 @@ async function exportarSeleccionados() {
 
 }
 
-async function confirmarExportacion() {
+async function confirmarExportacion(seleccion: boolean[]) {
 
   if (!origenShalom) {
 
@@ -817,7 +817,8 @@ async function confirmarExportacion() {
 
   exportarShalom(
   enviosExportar,
-  origenShalom
+  origenShalom,
+  seleccion
 )
 
 if (marcarComoEnviado) {
@@ -870,10 +871,11 @@ setSeleccionados([])
 
 setMostrarModalExportar(false)
 
-  const archivosDescargar = Math.ceil(enviosExportar.length / MAX_ENVIOS_POR_ARCHIVO)
+  const archivosDescargar = seleccion.filter(Boolean).length
+  const totalPendientes = Math.ceil(enviosExportar.length / MAX_ENVIOS_POR_ARCHIVO)
   toast.success(
-    archivosDescargar > 1
-      ? `${archivosDescargar} archivos descargados (Shalom Pro permite max ${MAX_ENVIOS_POR_ARCHIVO} por archivo)`
+    totalPendientes > 1
+      ? `${archivosDescargar} de ${totalPendientes} archivos descargados`
       : `${enviosExportar.length} envíos exportados`
   )
 }
@@ -1557,7 +1559,7 @@ for (
   marcarEnviado={marcarComoEnviado}
   onCambiarMarcarEnviado={setMarcarComoEnviado}
   onCerrar={() => setMostrarModalExportar(false)}
-  onConfirmar={confirmarExportacion}
+  onConfirmar={(seleccion) => confirmarExportacion(seleccion)}
 />
 
 <ModalDetalle

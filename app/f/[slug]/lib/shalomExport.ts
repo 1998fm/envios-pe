@@ -54,15 +54,29 @@ function obtenerMedidas(
 }
 
 // Shalom Pro acepta máximo 50 envíos por archivo. Si hay más,
-// se divide automáticamente y se descarga un archivo por lote
-// (el último puede llevar menos que 50).
-export function exportarShalom(lote: any[], origen: string) {
+// se divide automáticamente en grupos de 50 (el último puede llevar menos).
+export function dividirGrupos(lote: any[]): any[][] {
   const grupos: any[][] = []
   for (let i = 0; i < lote.length; i += MAX_ENVIOS_POR_ARCHIVO) {
     grupos.push(lote.slice(i, i + MAX_ENVIOS_POR_ARCHIVO))
   }
+  return grupos
+}
+
+function nombreArchivo(total: number, idx: number) {
+  return total === 1 ? 'envios-shalom.xlsx' : `envios-shalom-${idx + 1}.xlsx`
+}
+
+// Descarga solo los archivos que estén seleccionados (por defecto todos).
+// Sirve para re-descargar únicamente el lote que falló en Shalom Pro
+// sin volver a bajar los que ya se subieron bien.
+export function exportarShalom(lote: any[], origen: string, seleccionados?: boolean[]) {
+  const grupos = dividirGrupos(lote)
+  const activos = seleccionados ?? grupos.map(() => true)
 
   grupos.forEach((envios, idx) => {
+    if (!activos[idx]) return
+
     const filas = envios.map((envio) => {
       const medidas = obtenerMedidas(envio.tamano)
 
@@ -86,12 +100,8 @@ export function exportarShalom(lote: any[], origen: string) {
     const ws = XLSX.utils.json_to_sheet(filas)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'SHALOM')
-
-    const nombre =
-      grupos.length === 1
-        ? 'envios-shalom.xlsx'
-        : `envios-shalom-${idx + 1}.xlsx`
-
-    XLSX.writeFile(wb, nombre)
+    XLSX.writeFile(wb, nombreArchivo(grupos.length, idx))
   })
+
+  return grupos.filter((_, i) => activos[i]).length
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { FileSpreadsheet } from 'lucide-react'
 
 import { tourDone, trayectoDone } from '@/lib/tours'
@@ -16,10 +16,10 @@ type Props = {
   marcarEnviado: boolean
   onCambiarMarcarEnviado: (value: boolean) => void
   onCerrar: () => void
-  onConfirmar: () => void
+  onConfirmar: (seleccion: boolean[]) => void
 }
 
-const NUMERO_ARCHIVOS = (total: number) => Math.ceil(total / MAX_ENVIOS_POR_ARCHIVO)
+const NUMERO_ARCHIVOS = (total: number) => Math.max(1, Math.ceil(total / MAX_ENVIOS_POR_ARCHIVO))
 
 export default function ModalExportShalom({
   abierto,
@@ -34,12 +34,29 @@ export default function ModalExportShalom({
   if (!abierto) return null
   const { startTour } = useOnboarding()
 
+  const [seleccion, setSeleccion] = useState<boolean[]>([])
+
   useEffect(() => {
     if (trayectoDone() && !tourDone('modal-exportar-shalom')) {
       const t = setTimeout(() => startTour('modal-exportar-shalom'), 400)
       return () => clearTimeout(t)
     }
   }, [abierto, startTour])
+
+  useEffect(() => {
+    setSeleccion(Array.from({ length: NUMERO_ARCHIVOS(envios.length) }, () => true))
+  }, [abierto, envios.length])
+
+  const numeroArchivos = NUMERO_ARCHIVOS(envios.length)
+  const seleccionadosCount = seleccion.filter(Boolean).length
+  const todos = numeroArchivos > 0 && seleccionadosCount === numeroArchivos
+  const ninguno = seleccionadosCount === 0
+
+  const alternar = (i: number) =>
+    setSeleccion((prev) => prev.map((v, idx) => (idx === i ? !v : v)))
+
+  const marcarTodos = () => setSeleccion(Array.from({ length: numeroArchivos }, () => true))
+  const desmarcarTodos = () => setSeleccion(Array.from({ length: numeroArchivos }, () => false))
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -57,7 +74,7 @@ export default function ModalExportShalom({
         </div>
 
         <div className="p-8 space-y-6 overflow-y-auto">
-          <div className="bg-slate-50  border border-slate-200  rounded-2xl p-6">
+          <div data-tour="export-resumen" className="bg-slate-50  border border-slate-200  rounded-2xl p-6">
             <div className="text-sm uppercase tracking-wider text-slate-400  font-semibold">
               Envíos a exportar
             </div>
@@ -80,34 +97,69 @@ export default function ModalExportShalom({
             </div>
           </div>
 
-          {envios.length > MAX_ENVIOS_POR_ARCHIVO && (
-            <div className="border border-amber-200 bg-amber-50 rounded-2xl p-5">
+          <div className="border border-amber-200 bg-amber-50 rounded-2xl p-5">
+            <div className="flex items-center justify-between">
               <div className="text-sm font-bold text-amber-800">
-                Se descargarán {NUMERO_ARCHIVOS(envios.length)} archivos
+                Archivos a descargar
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-amber-700">
-                Shalom Pro acepta máximo {MAX_ENVIOS_POR_ARCHIVO} envíos por archivo, así que Tori los separa
-                automáticamente. Sube cada archivo por separado en Shalom Pro.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {Array.from({ length: NUMERO_ARCHIVOS(envios.length) }).map((_, i) => {
-                  const desde = i * MAX_ENVIOS_POR_ARCHIVO + 1
-                  const hasta = Math.min((i + 1) * MAX_ENVIOS_POR_ARCHIVO, envios.length)
-                  return (
-                    <span
-                      key={i}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-white border border-amber-300 px-3 py-1 text-xs font-semibold text-amber-800"
-                    >
-                      <FileSpreadsheet size={13} className="shrink-0 text-amber-700" />
-                      envios-shalom-{i + 1}.xlsx · {desde}-{hasta}
-                    </span>
-                  )
-                })}
+              <div className="flex items-center gap-3 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={marcarTodos}
+                  className="text-amber-700 hover:text-amber-900"
+                >
+                  Todos
+                </button>
+                <span className="text-amber-400">·</span>
+                <button
+                  type="button"
+                  onClick={desmarcarTodos}
+                  className="text-amber-700 hover:text-amber-900"
+                >
+                  Ninguno
+                </button>
               </div>
             </div>
-          )}
+            <p className="mt-1 text-xs leading-relaxed text-amber-700">
+              Shalom Pro acepta máximo {MAX_ENVIOS_POR_ARCHIVO} envíos por archivo, así que se descarga uno por lote.
+              Si uno falla en Shalom Pro (ej. un cliente no registrado), vuelve aquí, desmarca los que ya subiste bien
+              y descarga solo el que falló.
+            </p>
 
-          <div className="flex items-center gap-4 bg-slate-50  border border-slate-200  rounded-2xl p-5">
+            <div className="mt-3 space-y-2">
+              {Array.from({ length: numeroArchivos }).map((_, i) => {
+                const desde = i * MAX_ENVIOS_POR_ARCHIVO + 1
+                const hasta = Math.min((i + 1) * MAX_ENVIOS_POR_ARCHIVO, envios.length)
+                const marcado = seleccion[i] ?? true
+                return (
+                  <label
+                    key={i}
+                    className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm cursor-pointer transition-colors ${
+                      marcado
+                        ? 'bg-white border-amber-300 text-amber-900'
+                        : 'bg-amber-50/40 border-amber-200 text-amber-600/70'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={marcado}
+                      onChange={() => alternar(i)}
+                      className="w-4 h-4 accent-amber-600 cursor-pointer shrink-0"
+                    />
+                    <FileSpreadsheet size={16} className={`shrink-0 ${marcado ? 'text-amber-700' : 'text-amber-500/50'}`} />
+                    <span className={`font-semibold ${marcado ? 'text-amber-900' : 'text-amber-600/60'}`}>
+                      {numeroArchivos === 1 ? 'envios-shalom.xlsx' : `envios-shalom-${i + 1}.xlsx`}
+                    </span>
+                    <span className={`ml-auto text-xs font-medium ${marcado ? 'text-amber-700' : 'text-amber-600/50'}`}>
+                      {desde}-{hasta}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+
+          <div data-tour="export-marcar" className="flex items-center gap-4 bg-slate-50  border border-slate-200  rounded-2xl p-5">
             <input
               type="checkbox"
               checked={marcarEnviado}
@@ -132,10 +184,14 @@ export default function ModalExportShalom({
             Cancelar
           </button>
           <button
-            onClick={onConfirmar}
-            className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:shadow-lg hover:shadow-sky-500/20 text-white px-7 py-3 rounded-xl font-semibold transition-all"
+            data-tour="export-confirmar"
+            onClick={() => onConfirmar(seleccion)}
+            disabled={ninguno}
+            className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:shadow-lg hover:shadow-sky-500/20 text-white px-7 py-3 rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
           >
-            {marcarEnviado ? 'Exportar y enviar' : 'Exportar'}
+            {ninguno
+              ? 'Selecciona un archivo'
+              : `${marcarEnviado ? 'Exportar y enviar' : 'Descargar'}${numeroArchivos > 1 ? ` (${seleccionadosCount} archivo${seleccionadosCount === 1 ? '' : 's'})` : ''}`}
           </button>
         </div>
 
