@@ -16,7 +16,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   // Perfil de la empresa.
   const { data: perfil, error: errPerfil } = await supabaseAdmin
     .from('profiles')
-    .select('id, empresa, slug, plan, trial_end, pro_until, disabled, role, created_at')
+    .select('*')
     .eq('id', id)
     .maybeSingle()
 

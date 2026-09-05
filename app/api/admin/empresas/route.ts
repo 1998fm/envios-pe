@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   // porque el "plan efectivo" se calcula, no está como columna.
   const { data: profiles, error } = await supabaseAdmin
     .from('profiles')
-    .select('id, empresa, slug, telefono, plan, trial_end, pro_until, disabled, role, created_at')
+    .select('*')
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

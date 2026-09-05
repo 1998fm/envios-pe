@@ -113,26 +113,7 @@ export async function POST(req: Request) {
     const { data: perfil, error: perfilError } =
       await supabaseAdmin
         .from('profiles')
-        .select(`
-          plan,
-          trial_end,
-          pro_until,
-
-          logistica_moto_dias,
-          logistica_moto_usa_hora_corte,
-          logistica_moto_hora_corte,
-          logistica_moto_anticipacion,
-          logistica_moto_limitar,
-          logistica_moto_cupo,
-
-          logistica_agencias_dias,
-          logistica_agencias_usa_hora_corte,
-          logistica_agencias_hora_corte,
-          logistica_agencias_anticipacion,
-          logistica_agencias_limitar,
-          logistica_agencias_cupo,
-          solicitar_cantidad_productos
-        `)
+        .select('*')
         .eq('id', user_id)
         .single()
 

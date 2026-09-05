@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   const { data: perfil, error } = await supabaseAdmin
     .from('profiles')
-    .select('plan, trial_end, pro_until, logistica_moto_dias, logistica_moto_usa_hora_corte, logistica_moto_hora_corte, logistica_moto_anticipacion, logistica_moto_limitar, logistica_moto_cupo')
+    .select('*')
     .eq('id', userId)
     .single()
 

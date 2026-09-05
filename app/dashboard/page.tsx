@@ -381,57 +381,14 @@ if (crearPerfilError) {
   )
 
 }
+  // IMPORTANTE: usar select('*') para que futuras columnas (pendientes de
+  // migración SQL) no hagan fallar toda la consulta. Si una columna nueva
+  // aún no existe, simplemente no aparece y se usa el default del código;
+  // el plan (plan/trial_end/pro_until) siempre se lee bien.
   const { data: profile } =
   await supabase
     .from('profiles')
-    .select(`
-      empresa,
-      slug,
-      plan,
-      trial_end,
-      pro_until,
-      telefono,
-      direccion,
-
-      origen_shalom,
-      logo_url,
-      redirect_url,
-      redirect_message,
-      redirect_message_image,
-
-      instagram_url,
-      facebook_url,
-      tiktok_url,
-      web_url,
-      whatsapp_url,
-      metodo_motorizado,
- metodo_shalom,
- metodo_olva,
- metodo_marvisur,
- metodo_flores,
-  metodo_otro,
-  nombre_metodo_otro,
-  metodo_recojo,
-  mensaje_recojo,
- logistica_moto_dias,
- logistica_moto_hora_corte,
- logistica_moto_usa_hora_corte,
- logistica_moto_anticipacion,
- logistica_moto_limitar,
- logistica_moto_cupo,
-
- logistica_agencias_dias,
- logistica_agencias_hora_corte,
- logistica_agencias_usa_hora_corte,
- logistica_agencias_anticipacion,
- logistica_agencias_limitar,
- logistica_agencias_cupo,
- solicitar_cantidad_productos,
- mostrar_escoger_fecha,
- cerrar_formulario,
- cerrar_formulario_mensaje,
- moto_region
-    `)
+    .select('*')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -1207,9 +1164,6 @@ metodo_recojo:
 mensaje_recojo:
   config.mensajeRecojo,
 
-moto_region:
-  config.motoRegion,
-
   ...obtenerConfiguracionLogistica({
 
   logisticaMotoDias: config.logisticaMotoDias,
@@ -1250,6 +1204,13 @@ moto_region:
   setOrigenShalom(
     config.nuevoOrigen
   )
+
+  // Best-effort: guardar moto_region aparte. Si el SQL de la migración aún
+  // no se ejecutó, este update puede fallar sin afectar el resto del guardado.
+  await supabase
+    .from('profiles')
+    .update({ moto_region: config.motoRegion })
+    .eq('id', user.id)
 
   
 // ========================================
