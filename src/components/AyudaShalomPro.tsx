@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import {
-  BookOpen,
+  Info,
   X,
   ListOrdered,
   FileSpreadsheet,
@@ -50,12 +50,11 @@ export default function AyudaShalomPro({ className = '' }: { className?: string 
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        title="Guía para usar Shalom Pro"
+        title="Ver guía de Shalom Pro"
         aria-label="Ver guía de Shalom Pro"
-        className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-sky-700 bg-sky-50 border border-sky-200 hover:bg-sky-100 hover:border-sky-300 hover:shadow-sm active:scale-95 transition-all ${className}`}
+        className={`inline-flex items-center justify-center w-7 h-7 shrink-0 rounded-full border border-sky-200 bg-sky-50 text-sky-600 hover:bg-sky-100 hover:border-sky-300 hover:shadow-sm active:scale-95 transition-all ${className}`}
       >
-        <BookOpen size={14} className="shrink-0" />
-        Ver guía
+        <Info size={14} />
       </button>
 
       {abierto && (
