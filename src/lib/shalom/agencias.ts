@@ -42,6 +42,9 @@ export type AgenciaShalom = {
   telefono: string
   latitud: string
   longitud: string
+  // false = la agencia NO recibe paquetes (centro de acopio interno,
+  // solo-envío, pendiente, etc.). Se deriva de `ter_categoria_recibe`.
+  recibe: boolean
 }
 
 type RawAgencia = {
@@ -55,6 +58,7 @@ type RawAgencia = {
   telefono?: string
   latitud?: string
   longitud?: string
+  ter_categoria_recibe?: string
 }
 
 function generarToken(): string {
@@ -144,6 +148,7 @@ export async function obtenerAgenciasShalom(): Promise<{
         telefono: (raw.telefono || '').trim(),
         latitud: (raw.latitud || '').trim(),
         longitud: (raw.longitud || '').trim(),
+        recibe: ((raw.ter_categoria_recibe || '').trim() !== ''),
       }))
 
     // Version opcional (para detectar cambios), sin romper si falla.

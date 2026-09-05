@@ -9,12 +9,17 @@ export const dynamic = 'force-dynamic'
 //   1) Tabla agencias_shalom (sincronizada con Shalom) si tiene datos.
 //   2) JSON estático como respaldo automático si la tabla está vacía
 //      o la consulta falla (el sistema nunca se queda sin lista).
+// IMPORTANTE: solo se muestran agencias con `recibe = true`. Las agencias
+// sin categoría de recepción (centros de acopio internos, terminales
+// aeroportuarias, solo-envío, pendientes...) NO aceptan paquetes, por eso
+// se ocultan del formulario.
 export async function GET() {
   try {
     const { data, error } = await supabaseServer
       .from('agencias_shalom')
       .select('etiqueta')
       .eq('activa', true)
+      .eq('recibe', true)
       .order('etiqueta', { ascending: true })
 
     if (!error && Array.isArray(data) && data.length > 0) {
@@ -32,7 +37,7 @@ export async function GET() {
     console.error('[shalom/agencias] error leyendo BD:', e)
   }
 
-  // Fallback al JSON estático (sin caída).
+  // Fallback al JSON estático (sin caída). El JSON ya viene filtrado.
   return NextResponse.json(
     { origen: 'fallback', agencias: agenciasFallback },
     {

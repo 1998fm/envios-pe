@@ -36,6 +36,7 @@ export async function ejecutarSyncShalom(): Promise<SyncResult> {
         telefono: a.telefono,
         latitud: a.latitud,
         longitud: a.longitud,
+        recibe: a.recibe,
         activa: true,
         actualizada_en: new Date().toISOString(),
       })),
