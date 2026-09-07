@@ -27,10 +27,11 @@ import {
   UserX,
   UserCheck,
   Star,
+  Receipt,
 } from 'lucide-react'
 import CompanyDetailModal from '@/components/admin/CompanyDetailModal'
 
-type Tab = 'resumen' | 'empresas' | 'planes' | 'shalom' | 'auditoria' | 'actividad' | 'admins'
+type Tab = 'resumen' | 'empresas' | 'planes' | 'shalom' | 'auditoria' | 'actividad' | 'facturacion' | 'admins'
 
 const PLANES = ['basic', 'pro', 'business_plus']
 const PLAN_LABEL: Record<string, string> = {
@@ -107,6 +108,19 @@ type AdminRow = {
   email: string
   esYo: boolean
   created_at: string | null
+}
+
+type Factura = {
+  id: string
+  empresa: string
+  slug: string
+  email: string
+  plan: string
+  planDeclarado: string
+  pro_until: string | null
+  estado: 'vigente' | 'vencido'
+  dias: number
+  mrr: number
 }
 
 type Alerta = {
@@ -189,6 +203,7 @@ function BotonExportar({ onClick, label, className = '' }: { onClick: () => void
 const tabsList: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: 'resumen', label: 'Resumen', icon: <LayoutDashboard size={16} /> },
   { key: 'empresas', label: 'Empresas', icon: <Building2 size={16} /> },
+  { key: 'facturacion', label: 'Facturación', icon: <Receipt size={16} /> },
   { key: 'actividad', label: 'Actividad (7 días)', icon: <Activity size={16} /> },
   { key: 'planes', label: 'Planes', icon: <CreditCard size={16} /> },
   { key: 'shalom', label: 'Agencias Shalom', icon: <Truck size={16} /> },
@@ -220,6 +235,8 @@ export default function AdminPage() {
   const [totalPaginasA, setTotalPaginasA] = useState(1)
   const [paginaA, setPaginaA] = useState(1)
   const [admins, setAdmins] = useState<AdminRow[]>([])
+  const [facturas, setFacturas] = useState<Factura[]>([])
+  const [filtroEstado, setFiltroEstado] = useState('')
   const [alertas, setAlertas] = useState<Alerta[]>([])
   const [detallando, setDetallando] = useState<Empresa | null>(null)
   const [alertasVisible, setAlertasVisible] = useState(false)
@@ -336,6 +353,16 @@ export default function AdminPage() {
     }
   }, [fetchJson])
 
+  const cargarFacturacion = useCallback(async () => {
+    try {
+      const q = filtroEstado ? `?estado=${filtroEstado}` : ''
+      const d = await fetchJson(`/api/admin/facturacion${q}`)
+      setFacturas(d.items)
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }, [fetchJson, filtroEstado])
+
   const cargarAlertas = useCallback(async () => {
     try {
       const d = await fetchJson('/api/admin/alertas')
@@ -354,6 +381,7 @@ export default function AdminPage() {
     if (tab === 'actividad') cargarActividad()
     if (tab === 'shalom') cargarShalom()
     if (tab === 'auditoria') cargarAuditoria()
+    if (tab === 'facturacion') cargarFacturacion()
     if (tab === 'admins') cargarAdmins()
     if (tab === 'resumen') cargarAlertas()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -366,6 +394,7 @@ export default function AdminPage() {
     if (tab === 'actividad') cargarActividad()
     if (tab === 'shalom') cargarShalom()
     if (tab === 'auditoria') cargarAuditoria()
+    if (tab === 'facturacion') cargarFacturacion()
     if (tab === 'admins') cargarAdmins()
     if (tab === 'resumen') cargarAlertas()
   }
@@ -909,6 +938,99 @@ export default function AdminPage() {
                   {sincronizando ? 'Sincronizando...' : 'Sincronizar ahora'}
                 </span>
               </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ============ FACTURACIÓN ============ */}
+        {tab === 'facturacion' && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <p className="text-sm text-slate-600">
+                  Empresas que han pagado (con <strong>pro_until</strong> registrado). Un pago vigente los mantiene en Pro/Business Plus.
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <select
+                    value={filtroEstado}
+                    onChange={(e) => setFiltroEstado(e.target.value)}
+                    className="px-3 py-2 rounded-xl text-sm border border-slate-200 bg-white text-slate-700"
+                  >
+                    <option value="">Todos</option>
+                    <option value="vigente">Vigentes</option>
+                    <option value="vencido">Vencidos</option>
+                  </select>
+                  <BotonExportar
+                    label="Exportar CSV"
+                    onClick={() =>
+                      exportarCSV('facturacion', ['Empresa', 'Email', 'Plan', 'Estado', 'Pagó hasta', 'Días', 'MRR'], facturas.map((f) => [
+                        f.empresa || f.slug,
+                        f.email,
+                        PLAN_LABEL[f.plan] ?? f.plan,
+                        f.estado,
+                        f.pro_until ? new Date(f.pro_until).toLocaleString('es-PE') : '',
+                        f.estado === 'vigente' ? `Restan ${f.dias}` : `Vencido hace ${Math.abs(f.dias)}`,
+                        f.mrr,
+                      ]))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Kpi label="Pagadores" value={fmtNum(facturas.length)} />
+                <Kpi label="Vigentes" value={fmtNum(facturas.filter((f) => f.estado === 'vigente').length)} />
+                <Kpi label="Vencidos" value={fmtNum(facturas.filter((f) => f.estado === 'vencido').length)} />
+                <Kpi label="MRR vigentes" value={fmtMoney(facturas.filter((f) => f.estado === 'vigente').reduce((a, f) => a + f.mrr, 0))} />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">Empresa</th>
+                      <th className="px-4 py-3 font-semibold">Plan</th>
+                      <th className="px-4 py-3 font-semibold">Estado</th>
+                      <th className="px-4 py-3 font-semibold">Pagó hasta</th>
+                      <th className="px-4 py-3 font-semibold text-right">Días</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {facturas.map((f) => (
+                      <tr key={f.id} className="hover:bg-slate-50/70">
+                        <td className="px-4 py-3">
+                          <p className="font-semibold text-slate-900">{f.empresa || '—'}</p>
+                          <p className="text-xs text-slate-400">{f.email || f.slug}</p>
+                        </td>
+                        <td className="px-4 py-3"><BadgePlan plan={f.plan} /></td>
+                        <td className="px-4 py-3">
+                          {f.estado === 'vigente' ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                              Pagando
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                              Vencido
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{fmtDate(f.pro_until)}</td>
+                        <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${f.estado === 'vigente' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                          {f.estado === 'vigente' ? `Restan ${f.dias} días` : `Vencido hace ${Math.abs(f.dias)} días`}
+                        </td>
+                      </tr>
+                    ))}
+                    {facturas.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                          Sin empresas que hayan pagado o sin resultados con el filtro actual.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
