@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin } from '@/lib/adminAuth'
+import { computeEffectivePlan } from '@/lib/planGating'
 
 const DIAS = 7
 
@@ -34,7 +35,7 @@ export async function GET() {
   // Mapa de perfiles.
   const { data: profiles, error: errProfiles } = await supabaseAdmin
     .from('profiles')
-    .select('id, empresa, slug, plan, disabled')
+    .select('id, empresa, slug, plan, trial_end, pro_until, disabled')
 
   if (errProfiles) {
     return NextResponse.json({ error: errProfiles.message }, { status: 500 })
@@ -98,7 +99,7 @@ export async function GET() {
       slug: p.slug ?? '',
       email: emails.get(p.id) ?? '',
       disabled: !!p.disabled,
-      plan: p.plan ?? 'basic',
+      plan: computeEffectivePlan(p).plan,
       ultima_actividad: r.ultima,
       total_acciones: r.envios + r.ventas + r.compras + r.gastos,
       envios: r.envios,
