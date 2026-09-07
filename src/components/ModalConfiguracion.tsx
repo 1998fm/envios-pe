@@ -5,6 +5,10 @@ import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
 import SelectorDias from '@/components/SelectorDias'
 import AyudaLogistica from '@/components/AyudaLogistica'
 import AyudaCerrarFormulario from '@/components/AyudaCerrarFormulario'
+import AyudaEmpresa from '@/components/AyudaEmpresa'
+import AyudaMetodos from '@/components/AyudaMetodos'
+import AyudaTarifas from '@/components/AyudaTarifas'
+import AyudaLogisticaOpciones from '@/components/AyudaLogisticaOpciones'
 import TarifasEditor from '@/components/TarifasEditor'
 import AutocompleteInput from '@/components/AutocompleteInput'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
@@ -94,6 +98,7 @@ export default function ModalConfiguracion({
                     <Building size={18} className="text-white" />
                   </div>
                   <h3 className="text-lg font-bold text-slate-900">Datos del negocio</h3>
+                  <AyudaEmpresa className="ml-auto" />
                 </div>
                 <div className="space-y-3">
                   <div className="relative">
@@ -292,13 +297,16 @@ export default function ModalConfiguracion({
 
           {config.vistaConfig === 'METODOS' && (
             <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 mb-1">Métodos de envío</h3>
-                <p className="text-sm text-slate-500">
-                  {isBasic
-                    ? `Selecciona hasta ${maxMetodos ?? 2} métodos de envío para ofrecer a tus clientes.`
-                    : 'Activa los métodos que ofrecerás a tus clientes.'}
-                </p>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-1">Métodos de envío</h3>
+                  <p className="text-sm text-slate-500">
+                    {isBasic
+                      ? `Selecciona hasta ${maxMetodos ?? 2} métodos de envío para ofrecer a tus clientes.`
+                      : 'Activa los métodos que ofrecerás a tus clientes.'}
+                  </p>
+                </div>
+                <AyudaMetodos />
               </div>
 
               <div className="space-y-3">
@@ -474,7 +482,7 @@ export default function ModalConfiguracion({
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-slate-200">
-                  <label className="flex items-center gap-3 cursor-pointer">
+                  <label className="flex items-center gap-3 cursor-pointer flex-1">
                     <input
                       type="checkbox"
                       checked={config.solicitarCantidadProductos}
@@ -486,6 +494,7 @@ export default function ModalConfiguracion({
                       <p className="text-xs text-slate-500">Pide al cliente el número de prendas a recibir</p>
                     </div>
                   </label>
+                  <AyudaLogisticaOpciones />
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-slate-200">
@@ -569,6 +578,7 @@ export default function ModalConfiguracion({
                   <h3 className="text-lg font-bold text-slate-900">Tarifas motorizado</h3>
                   <p className="text-xs text-slate-500">Define cuánto cobrar por cada distrito.</p>
                 </div>
+                <AyudaTarifas className="ml-auto" />
               </div>
               <TarifasEditor
                 config={config}
