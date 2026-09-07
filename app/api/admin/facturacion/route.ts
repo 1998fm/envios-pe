@@ -40,6 +40,50 @@ export async function GET(request: Request) {
 
   const now = new Date()
 
+  // Comprobantes de pago registrados (recibos de MercadoPago via webhook/reconciliación).
+  let recibos: {
+    id: string
+    user_id: string
+    empresa: string
+    slug: string
+    email: string
+    plan: string
+    monto: number
+    periodo_meses: number
+    pro_until: string | null
+    origen: string
+    pagado_en: string | null
+  }[] = []
+
+  try {
+    const { data: comprobantes } = await supabaseAdmin
+      .from('pagos')
+      .select('id, user_id, preapproval_id, plan, monto, periodo_meses, pro_until, origen, created_at')
+      .order('pro_until', { ascending: false })
+      .limit(200)
+
+    const perfilesPorId = new Map((profiles ?? []).map((p) => [p.id, p]))
+
+    recibos = (comprobantes ?? []).map((c) => {
+      const perfil = perfilesPorId.get(c.user_id)
+      return {
+        id: c.id,
+        user_id: c.user_id,
+        empresa: perfil?.empresa ?? '',
+        slug: perfil?.slug ?? '',
+        email: emails.get(c.user_id) ?? '',
+        plan: c.plan,
+        monto: Number(c.monto),
+        periodo_meses: c.periodo_meses,
+        pro_until: c.pro_until,
+        origen: c.origen,
+        pagado_en: c.created_at,
+      }
+    })
+  } catch (e) {
+    console.warn('[admin] tabla pagos no disponible:', (e as Error).message)
+  }
+
   const filas = (profiles ?? [])
     .filter((p) => p.pro_until != null)
     .map((p) => {
@@ -90,6 +134,7 @@ export async function GET(request: Request) {
     vigentes,
     vencidos,
     mrr,
+    recibos,
     ahora: now.toISOString(),
   })
 }
