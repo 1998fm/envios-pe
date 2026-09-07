@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { calcularFechaEntrega } from '@/lib/logistica/calcularFechaEntrega'
 import { computeEffectivePlan } from '@/lib/planGating'
+import { checkEnvioLimit } from '@/lib/planLimits'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -186,6 +187,12 @@ export async function POST(req: Request) {
     }
 
     const esPro = computeEffectivePlan(perfil).plan !== 'basic'
+
+    // Límite mensual de envíos según plan (50/mes en Básico, ilimitado en Pro+).
+    const limiteEnvio = await checkEnvioLimit(user_id)
+    if (!limiteEnvio.allowed) {
+      return NextResponse.json({ error: limiteEnvio.reason }, { status: 403 })
+    }
 
     // Para básico la configuración logística personalizada (días, hora de corte, cupo) no aplica
     const logistica = esPro

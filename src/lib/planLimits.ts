@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { computeEffectivePlan } from '@/lib/planGating'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,49 +58,28 @@ export async function checkTrialStatus(userId: string): Promise<TrialStatus> {
 
   const now = new Date()
   const proUntil = profile.pro_until ? new Date(profile.pro_until) : null
-  const isPaidActive = proUntil && proUntil > now
+  const isPaidActive = proUntil != null && proUntil > now
 
-  const planActivo = profile.plan === 'business_plus' ? 'business_plus' : 'pro'
+  // Lógica única de plan efectivo (compartida con dashboard y APIs).
+  const eff = computeEffectivePlan(profile)
 
-  // 1. Pro/Business Plus pagado activo
-  if (isPaidActive) {
-    const daysRemaining = Math.ceil((proUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    return {
-      plan: planActivo,
-      isTrial: false,
-      isPaid: true,
-      trialEnd: profile.trial_end,
-      proUntil: profile.pro_until,
-      daysRemaining,
-    }
-  }
-
-  // 2. Trial activo (solo si no tiene pro_until activo)
-  const trialEnd = profile.trial_end ? new Date(profile.trial_end) : null
-  const isTrialActive =
-    trialEnd && trialEnd > now && (profile.plan === 'pro' || profile.plan === 'business_plus')
-
-  if (isTrialActive) {
-    const daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    return {
-      plan: planActivo,
-      isTrial: true,
-      isPaid: false,
-      trialEnd: profile.trial_end,
-      proUntil: null,
-      daysRemaining,
-    }
-  }
-
-  // 3. Sin plan activo — auto-downgrade a basic
-  if (profile.plan === 'pro' || profile.plan === 'business_plus') {
+  // Auto-downgrade (lazy): sin plan activo → basic. Se conserva trial_end
+  // como historial; computeEffectivePlan ignora los trials ya vencidos.
+  if (eff.plan === 'basic' && (profile.plan === 'pro' || profile.plan === 'business_plus')) {
     await supabaseAdmin
       .from('profiles')
-      .update({ plan: 'basic', trial_end: null })
+      .update({ plan: 'basic' })
       .eq('id', userId)
   }
 
-  return { plan: 'basic', isTrial: false, isPaid: false, trialEnd: null, proUntil: null, daysRemaining: null }
+  return {
+    plan: eff.plan,
+    isTrial: eff.isTrial,
+    isPaid: eff.plan !== 'basic' && !eff.isTrial,
+    trialEnd: eff.isTrial ? profile.trial_end : null,
+    proUntil: isPaidActive ? profile.pro_until : null,
+    daysRemaining: eff.diasRestantes,
+  }
 }
 
 export async function checkEnvioLimit(userId: string): Promise<{ allowed: boolean; reason?: string }> {

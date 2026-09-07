@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     if (topic === 'preapproval') {
       const preapproval = await obtenerSuscripcion(id)
 
-      const userId = String(preapproval.external_reference ?? '').split('__')[0]
+      const [userId, planRef] = String(preapproval.external_reference ?? '').split('__')
       const status = preapproval.status
 
       if (!userId) {
@@ -52,9 +52,20 @@ export async function POST(request: Request) {
       }
 
       if (status === 'authorized') {
+        // Plan desde external_reference (userId__plan); el monto solo de respaldo.
         const monto = preapproval.auto_recurring?.transaction_amount ?? 29.90
-        const { plan, meses } = planDesdeMonto(monto)
-        const proUntil = new Date()
+        const { plan: planMonto, meses } = planDesdeMonto(monto)
+        const plan = planRef === 'business_plus' || planRef === 'pro' ? planRef : planMonto
+
+        // Extender desde max(hoy, pro_until actual) para no perder días ya pagados.
+        const { data: perfil } = await supabaseAdmin
+          .from('profiles')
+          .select('pro_until')
+          .eq('id', userId)
+          .maybeSingle()
+
+        const base = perfil?.pro_until && new Date(perfil.pro_until) > new Date() ? new Date(perfil.pro_until) : new Date()
+        const proUntil = new Date(base)
         proUntil.setMonth(proUntil.getMonth() + meses)
 
         await supabaseAdmin
