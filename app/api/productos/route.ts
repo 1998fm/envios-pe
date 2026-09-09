@@ -6,6 +6,9 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('user_id')
   const busqueda = searchParams.get('busqueda') || ''
+  // Por defecto solo se listan los activos (no archivados). Con archivado=true
+  // se listan los archivados, para la vista correspondiente.
+  const archivado = searchParams.get('archivado')
   const offset = parseInt(searchParams.get('offset') || '0')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 1000)
 
@@ -17,6 +20,7 @@ export async function GET(request: Request) {
     .from('productos')
     .select('*', { count: 'exact' })
     .eq('profile_id', userId)
+    .eq('archivado', archivado === 'true')
 
   if (busqueda) {
     query = query.ilike('nombre', `%${busqueda}%`)

@@ -134,10 +134,18 @@ export async function checkRecordLimit(
     return { allowed: true, used: 0, max: null }
   }
 
-  const { count, error } = await supabaseAdmin
+  let query = supabaseAdmin
     .from(tabla)
     .select('*', { count: 'exact', head: true })
     .eq('profile_id', userId)
+
+  // En productos, los archivados no ocupan espacio del límite del plan:
+  // se pueden archivar en lugar de eliminar.
+  if (tabla === 'productos' && limite !== null) {
+    query = query.eq('archivado', false)
+  }
+
+  const { count, error } = await query
 
   if (error) {
     return { allowed: false, used: 0, max: limite, reason: 'Error al verificar límite' }

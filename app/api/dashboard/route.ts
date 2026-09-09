@@ -230,6 +230,7 @@ export async function GET(request: Request) {
         .from('productos')
         .select('nombre, stock_actual, stock_minimo, unidad')
         .eq('profile_id', userId)
+        .eq('archivado', false)
         .or('stock_actual.lte.stock_minimo')
         .order('stock_actual', { ascending: true })
         .limit(5),
@@ -308,6 +309,7 @@ async function countProductosStockBajo(client: typeof supabaseAdmin, userId: str
     .from('productos')
     .select('id')
     .eq('profile_id', userId)
+    .eq('archivado', false)
     .or('stock_actual.lte.stock_minimo')
   return data?.length ?? 0
 }

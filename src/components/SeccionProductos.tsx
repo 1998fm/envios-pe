@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ChangeEvent } from 'react'
-import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera, Archive, ArchiveRestore, CheckSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Producto } from '@/types/inventario'
 import { UNIDADES_MEDIDA } from '@/types/inventario'
@@ -84,6 +84,11 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   const [productos, setProductos] = useState<Producto[]>([])
   const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading] = useState(true)
+  const [vista, setVista] = useState<'activos' | 'archivados'>('activos')
+  const [conteoActivos, setConteoActivos] = useState(0)
+  const [conteoArchivados, setConteoArchivados] = useState(0)
+  const [modoSeleccion, setModoSeleccion] = useState(false)
+  const [seleccion, setSeleccion] = useState<Set<string>>(new Set())
   const [insertandoEjemplos, setInsertandoEjemplos] = useState(false)
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Partial<Producto>>({})
@@ -106,8 +111,17 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
     unidad: 'unidad',
   })
 
+  async function cargarConteos() {
+    const [a, ar] = await Promise.all([
+      fetch(`/api/productos?user_id=${userId}&archivado=false&limit=1`).then((r) => r.json()).catch(() => ({ total: 0 })),
+      fetch(`/api/productos?user_id=${userId}&archivado=true&limit=1`).then((r) => r.json()).catch(() => ({ total: 0 })),
+    ])
+    setConteoActivos(a.total ?? 0)
+    setConteoArchivados(ar.total ?? 0)
+  }
+
   async function cargarProductos(offset = 0, append = false) {
-    const params = new URLSearchParams({ user_id: userId })
+    const params = new URLSearchParams({ user_id: userId, archivado: String(vista === 'archivados') })
     if (busqueda) params.set('busqueda', busqueda)
     params.set('offset', String(offset))
     const res = await fetch(`/api/productos?${params}`)
@@ -119,7 +133,12 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
     setLoading(false)
   }
 
-  useEffect(() => { cargarProductos() }, [userId, busqueda])
+  async function cargarProductosYConteos(offset = 0, append = false) {
+    await cargarProductos(offset, append)
+    cargarConteos()
+  }
+
+  useEffect(() => { cargarProductosYConteos() }, [userId, busqueda, vista])
 
   useEffect(() => {
     const limpiar = () => setImprimirProducto(null)
@@ -213,7 +232,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
       setEditFoto(null)
       toast.success('Producto actualizado')
       setEditandoId(null)
-      cargarProductos()
+      cargarProductosYConteos()
     } else {
       toast.error('Error al guardar')
     }
@@ -224,10 +243,78 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
     const res = await fetch(`/api/productos/${id}`, { method: 'DELETE' })
     if (res.ok) {
       toast.success('Producto eliminado')
-      cargarProductos()
+      cargarProductosYConteos()
     } else {
       toast.error('Error al eliminar')
     }
+  }
+
+  async function cambiarArchivo(ids: string[], archivado: boolean, mensajeExito: string) {
+    const res = await fetch('/api/productos/batch', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, archivado }),
+    })
+    if (res.ok) {
+      toast.success(mensajeExito)
+      setSeleccion(new Set())
+      setModoSeleccion(false)
+      cargarProductosYConteos()
+    } else {
+      toast.error('Error al actualizar')
+    }
+  }
+
+  async function archivarProducto(p: Producto) {
+    if (!(await confirmar({ message: `¿Archivar "${p.nombre}"?`, confirmLabel: 'Sí, archivar' }))) return
+    cambiarArchivo([p.id], true, 'Producto archivado')
+  }
+
+  async function restaurarProducto(p: Producto) {
+    cambiarArchivo([p.id], false, 'Producto restaurado')
+  }
+
+  async function archivarSeleccion() {
+    const n = seleccion.size
+    if (n === 0) return
+    if (!(await confirmar({ message: `¿Archivar ${n} producto${n === 1 ? '' : 's'}?`, confirmLabel: `Sí, archivar ${n}` }))) return
+    cambiarArchivo([...seleccion], true, `${n} producto${n === 1 ? '' : 's'} archivado${n === 1 ? '' : 's'}`)
+  }
+
+  async function restaurarSeleccion() {
+    const n = seleccion.size
+    if (n === 0) return
+    cambiarArchivo([...seleccion], false, `${n} producto${n === 1 ? '' : 's'} restaurado${n === 1 ? '' : 's'}`)
+  }
+
+  function toggleSeleccion() {
+    setModoSeleccion((m) => !m)
+    setSeleccion(new Set())
+    setEditandoId(null)
+  }
+
+  function toggleUno(id: string) {
+    setSeleccion((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleTodos() {
+    setSeleccion((prev) =>
+      prev.size === productos.length ? new Set() : new Set(productos.map((p) => p.id))
+    )
+  }
+
+  function cambiarVista(nueva: 'activos' | 'archivados') {
+    if (nueva === vista) return
+    setVista(nueva)
+    setBusqueda('')
+    setSeleccion(new Set())
+    setModoSeleccion(false)
+    setLoading(true)
   }
 
   async function crearProducto() {
@@ -263,7 +350,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
       toast.success('Producto creado')
       setShowNuevo(false)
       setNuevoForm({ nombre: '', sku: '', precio_venta: 0, precio_compra: 0, stock_actual: 0, stock_minimo: 0, unidad: 'unidad' })
-      cargarProductos()
+      cargarProductosYConteos()
     } else {
       // El producto no se creó: limpiar la imagen subida para no dejar basura en el bucket
       if (rutaSubida) {
@@ -290,7 +377,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
     }
     toast.success(`${EJEMPLOS.length} productos de ejemplo creados`)
     setInsertandoEjemplos(false)
-    cargarProductos()
+    cargarProductosYConteos()
   }
 
   function SelectUnidad({ value, onChange }: { value: string, onChange: (v: string) => void }) {
@@ -312,16 +399,62 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
+          <button
+            data-tour="productos-vista-activos"
+            onClick={() => cambiarVista('activos')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+              vista === 'activos'
+                ? 'bg-white shadow text-slate-900'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Activos
+            {conteoActivos > 0 && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${vista === 'activos' ? 'bg-sky-100 text-sky-700' : 'bg-slate-200 text-slate-500'}`}>
+                {conteoActivos}
+              </span>
+            )}
+          </button>
+          <button
+            data-tour="productos-vista-archivados"
+            onClick={() => cambiarVista('archivados')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+              vista === 'archivados'
+                ? 'bg-white shadow text-slate-900'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Archivados
+            {conteoArchivados > 0 && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${vista === 'archivados' ? 'bg-sky-100 text-sky-700' : 'bg-slate-200 text-slate-500'}`}>
+                {conteoArchivados}
+              </span>
+            )}
+          </button>
+        </div>
+
         <div data-tour="productos-buscar" className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Buscar producto..."
+            placeholder={vista === 'archivados' ? 'Buscar en archivados...' : 'Buscar producto...'}
             value={busqueda}
             onChange={(e) => { setBusqueda(e.target.value); setLoading(true) }}
             className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
           />
         </div>
+
+        {productos.length > 0 && !modoSeleccion && (
+          <button
+            data-tour="productos-seleccionar"
+            onClick={toggleSeleccion}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all"
+          >
+            <CheckSquare size={15} /> Seleccionar
+          </button>
+        )}
+
         <button
           data-tour="productos-nuevo"
           onClick={() => setShowNuevo(true)}
@@ -329,7 +462,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
         >
           <Plus size={16} /> Nuevo
         </button>
-        {productos.length === 0 && (
+        {productos.length === 0 && vista === 'activos' && (
           <button
             data-tour="productos-ejemplos"
             onClick={insertarEjemplos}
@@ -341,10 +474,57 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
         )}
       </div>
 
+      {modoSeleccion && (
+        <div data-tour="productos-seleccion-bar" className="flex items-center gap-3 flex-wrap rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3">
+          <button
+            onClick={toggleSeleccion}
+            className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors"
+            title="Salir del modo selección"
+          >
+            <X size={16} />
+            <span>Cancelar</span>
+          </button>
+          <span className="text-sm font-semibold text-slate-700">{seleccion.size} seleccionado{seleccion.size === 1 ? '' : 's'}</span>
+          {vista === 'activos' ? (
+            <button
+              onClick={archivarSeleccion}
+              disabled={seleccion.size === 0}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50 transition-all"
+            >
+              <Archive size={15} /> Archivar
+            </button>
+          ) : (
+            <button
+              onClick={restaurarSeleccion}
+              disabled={seleccion.size === 0}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-all"
+            >
+              <ArchiveRestore size={15} /> Restaurar
+            </button>
+          )}
+          <button
+            onClick={toggleTodos}
+            disabled={productos.length === 0}
+            className="text-sm font-semibold text-sky-600 hover:text-sky-700 disabled:opacity-50 transition-colors"
+          >
+            {seleccion.size === productos.length && productos.length > 0 ? 'Quitar todos' : 'Todos'}
+          </button>
+        </div>
+      )}
+
       {productos.length === 0 && !loading && (
         <div data-tour="productos-vacio" className="text-center py-16 text-slate-400">
-          <p className="text-lg font-semibold text-slate-500">No hay productos</p>
-          <p className="text-sm mt-1">Agrega tu primer producto o inserta ejemplos para empezar</p>
+          {vista === 'archivados' ? (
+            <>
+              <p className="text-lg font-semibold text-slate-500">No hay productos archivados</p>
+              <p className="text-sm mt-1">Los productos que archivas aparecen aquí; puedes restaurarlos cuando quieras</p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-semibold text-slate-500">No hay productos</p>
+              <p className="text-sm mt-1">Agrega tu primer producto o inserta ejemplos para empezar</p>
+            </>
+          )}
         </div>
       )}
 
@@ -353,6 +533,17 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                {modoSeleccion && (
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={productos.length > 0 && seleccion.size === productos.length}
+                      onChange={toggleTodos}
+                      className="accent-sky-600 w-4 h-4 cursor-pointer"
+                      title="Seleccionar todos"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">SKU</th>
                 <th className="px-4 py-3 text-right">Stock</th>
@@ -367,7 +558,18 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                 const editando = editandoId === p.id
                 const bajoStock = p.stock_actual <= p.stock_minimo && p.stock_minimo > 0
                 return (
-                  <tr key={p.id} className={`hover:bg-slate-50 transition-colors ${bajoStock ? 'bg-red-50' : ''}`}>
+                  <tr key={p.id} className={`transition-colors ${bajoStock ? 'bg-red-50' : ''} ${modoSeleccion ? 'cursor-pointer hover:bg-sky-50' : 'hover:bg-slate-50'}`} onClick={modoSeleccion ? () => toggleUno(p.id) : undefined}>
+                    {modoSeleccion && (
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={seleccion.has(p.id)}
+                          onChange={() => toggleUno(p.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="accent-sky-600 w-4 h-4 cursor-pointer"
+                        />
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       {editando ? (
                         <div className="flex items-center gap-2">
@@ -481,8 +683,19 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                             <X size={16} />
                           </button>
                         </div>
+                      ) : modoSeleccion ? (
+                        <span className="inline-block w-6" />
                       ) : (
                         <div className="flex items-center justify-end gap-1">
+                          {vista === 'archivados' ? (
+                            <button onClick={() => restaurarProducto(p)} className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors" title="Restaurar">
+                              <ArchiveRestore size={16} />
+                            </button>
+                          ) : (
+                            <button onClick={() => archivarProducto(p)} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Archivar">
+                              <Archive size={16} />
+                            </button>
+                          )}
                           <button onClick={() => { if (planNivel(plan) < 1) { openUpgrade(); return } setImprimirProducto(p); setMostrarModalImprimir(true) }} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title={planNivel(plan) < 1 ? 'Disponible en Pro y Business Plus' : 'Imprimir etiqueta'}>
                             <Printer size={16} />
                           </button>
