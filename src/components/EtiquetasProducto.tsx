@@ -20,19 +20,6 @@ export const TAMANOS_ETIQUETA_PRODUCTO: TamanoEtiquetaProducto[] = [
 
 export const COPIAS_A4_OPCIONES = Array.from({ length: 30 }, (_, i) => i + 1)
 
-const COLUMNAS_A4: Record<number, number> = {
-  1: 1,
-  2: 2,
-  3: 2,
-  4: 2,
-  5: 3,
-  6: 3,
-  7: 3,
-  8: 3,
-  9: 3,
-  10: 4,
-}
-
 const ALTO_PAGINA_MM = 297
 const ANCHO_PAGINA_MM = 210
 const MARGEN_PAGINA_MM = 8
@@ -68,7 +55,7 @@ export default function EtiquetasProducto({
     const anchoUtilMm = ANCHO_PAGINA_MM - MARGEN_PAGINA_MM
     const altoUtilMm = ALTO_PAGINA_MM - MARGEN_PAGINA_MM
 
-    const columnas = copiasA4 <= 10 ? COLUMNAS_A4[copiasA4] || 1 : 4
+    const columnas = 4
     const filas = Math.ceil(copiasA4 / columnas)
     const anchoPorCol = (anchoUtilMm - GAP_A4_MM * (columnas - 1)) / columnas
     const altoPorFila = (altoUtilMm - GAP_A4_MM * (filas - 1)) / filas
