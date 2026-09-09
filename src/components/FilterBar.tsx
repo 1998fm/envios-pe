@@ -1,6 +1,7 @@
 'use client'
 
-import { Search, X } from 'lucide-react'
+import { Search, Calendar, X, ChevronDown } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
 import MultiSelect from '@/components/ui/MultiSelect'
 
 type Metodo = { value: string; label: string }
@@ -34,6 +35,16 @@ export default function FilterBar({
   fechaDesde, onFechaDesdeChange,
   fechaHasta, onFechaHastaChange,
 }: Props) {
+  const [abierto, setAbierto] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setAbierto(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [])
   return (
     <div data-tour="filter-bar" className="
       bg-white 
@@ -60,35 +71,63 @@ export default function FilterBar({
          />
        </div>
 
-<div data-tour="filtro-fecha" className="flex flex-wrap items-center gap-1.5 text-slate-500">
-          <input
-            type="date"
-            value={fechaDesde}
-            max={fechaHasta || undefined}
-            onChange={(e) => onFechaDesdeChange(e.target.value)}
-            placeholder="Desde"
-            title="Desde (fecha de registro)"
-            className="w-auto min-w-[6rem] bg-transparent text-sm text-slate-700 placeholder:text-slate-400 border-none focus:outline-none focus:ring-1 focus:ring-sky-500 rounded px-1.5 py-1"
-          />
-          <span className="text-[11px] font-medium">–</span>
-          <input
-            type="date"
-            value={fechaHasta}
-            min={fechaDesde || undefined}
-            onChange={(e) => onFechaHastaChange(e.target.value)}
-            placeholder="Hasta"
-            title="Hasta (fecha de registro)"
-            className="w-auto min-w-[6rem] bg-transparent text-sm text-slate-700 placeholder:text-slate-400 border-none focus:outline-none focus:ring-1 focus:ring-sky-500 rounded px-1.5 py-1"
-          />
-          {(fechaDesde || fechaHasta) && (
+<div className="flex items-center gap-1">
+          <div className="relative" ref={ref}>
             <button
-              onClick={() => { onFechaDesdeChange(''); onFechaHastaChange('') }}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-              title="Quitar filtro de fecha"
+              type="button"
+              onClick={() => setAbierto(!abierto)}
+              className={`flex items-center gap-1 rounded-xl px-3 py-2 text-sm text-slate-600 transition-colors ${
+                abierto ? 'bg-sky-50 text-sky-600' : 'hover:bg-slate-100'
+              }`}
+              aria-label="Filtrar por fecha"
             >
-              <X size={12} />
+              <Calendar size={16} />
+              <span className="hidden sm:inline">
+                {fechaDesde || fechaHasta
+                  ? `${fechaDesde || '…'} – ${fechaHasta || '…'}`
+                  : 'Fecha'}
+              </span>
+              <ChevronDown size={14} className={abierto ? 'rotate-180' : ''} />
             </button>
-          )}
+
+            {abierto && (
+              <div
+                className="absolute right-0 top-full mt-1.5 z-20 w-56 rounded-xl border border-slate-200 bg-white shadow-lg p-3"
+                data-tour="filtro-fecha"
+              >
+                <div className="grid gap-2 text-sm">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-0.5">Desde</label>
+                    <input
+                      type="date"
+                      value={fechaDesde}
+                      max={fechaHasta || undefined}
+                      onChange={(e) => onFechaDesdeChange(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-0.5">Hasta</label>
+                    <input
+                      type="date"
+                      value={fechaHasta}
+                      min={fechaDesde || undefined}
+                      onChange={(e) => onFechaHastaChange(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                    />
+                  </div>
+                  {(fechaDesde || fechaHasta) && (
+                    <button
+                      onClick={() => { onFechaDesdeChange(''); onFechaHastaChange('') }}
+                      className="mt-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-rose-500 hover:text-rose-600"
+                    >
+                      <X size={12} /> Quitar
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
        <div data-tour="filtro-estado" className="flex gap-3 flex-wrap">
