@@ -2,21 +2,7 @@
 
 import { QRCodeSVG } from 'qrcode.react'
 
-export type TamanoEtiquetaProducto = {
-  nombre: string
-  anchoMm: number
-  altoMm: number
-}
-
 export type ModoEtiquetaProducto = 'A4' | 'INDIVIDUAL'
-
-export const TAMANOS_ETIQUETA_PRODUCTO: TamanoEtiquetaProducto[] = [
-  { nombre: '40 × 30 mm', anchoMm: 40, altoMm: 30 },
-  { nombre: '50 × 25 mm', anchoMm: 50, altoMm: 25 },
-  { nombre: '60 × 40 mm', anchoMm: 60, altoMm: 40 },
-  { nombre: '70 × 35 mm', anchoMm: 70, altoMm: 35 },
-  { nombre: '100 × 50 mm', anchoMm: 100, altoMm: 50 },
-]
 
 export const COPIAS_A4_OPCIONES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
@@ -43,46 +29,6 @@ type Props = {
   productos: ProductoEtiqueta[]
   modo?: ModoEtiquetaProducto
   copias?: number
-  tamano?: TamanoEtiquetaProducto
-}
-
-function ContenidoEtiqueta({
-  producto,
-  qrSize,
-  qrPadding,
-  padding,
-  medidas,
-}: {
-  producto: ProductoEtiqueta
-  qrSize: number
-  qrPadding: string
-  padding?: string
-  medidas?: { anchoMm: number; altoMm: number }
-}) {
-  return (
-    <div
-      className="flex h-full items-stretch gap-1 overflow-hidden bg-white"
-      style={{
-        padding: padding || undefined,
-        width: medidas ? `${medidas.anchoMm}mm` : undefined,
-        height: medidas ? `${medidas.altoMm}mm` : undefined,
-      }}
-    >
-      <div className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-        <div className="line-clamp-2 text-[10px] font-bold leading-tight text-slate-900">
-          {producto.nombre}
-        </div>
-        {producto.sku && (
-          <div className="mt-0.5 truncate font-mono text-[8px] leading-none text-slate-600">
-            {producto.sku}
-          </div>
-        )}
-      </div>
-      <div className={`flex shrink-0 items-center justify-center ${qrPadding}`}>
-        <QRCodeSVG value={producto.sku || producto.id} size={qrSize} level="M" />
-      </div>
-    </div>
-  )
 }
 
 function copiasValidas(copias: number) {
@@ -95,7 +41,6 @@ export default function EtiquetasProducto({
   productos,
   modo = 'INDIVIDUAL',
   copias = 4,
-  tamano = TAMANOS_ETIQUETA_PRODUCTO[0],
 }: Props) {
   if (productos.length === 0) return null
 
@@ -141,7 +86,21 @@ export default function EtiquetasProducto({
                   className="overflow-hidden rounded-lg border-2 border-gray-300"
                   style={{ height: `${altoCeldaMm}mm` }}
                 >
-                  <ContenidoEtiqueta producto={p} qrSize={qrSize} qrPadding="pl-1 pr-0.5" padding="2mm" />
+                  <div className="flex h-full items-stretch gap-1 overflow-hidden bg-white p-[2mm]">
+                    <div className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
+                      <div className="line-clamp-2 text-[10px] font-bold leading-tight text-slate-900">
+                        {p.nombre}
+                      </div>
+                      {p.sku && (
+                        <div className="mt-0.5 truncate font-mono text-[8px] leading-none text-slate-600">
+                          {p.sku}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 items-center justify-center pl-1 pr-0.5">
+                      <QRCodeSVG value={p.sku || p.id} size={qrSize} level="M" />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -151,15 +110,11 @@ export default function EtiquetasProducto({
     )
   }
 
-  /* ================= ETIQUETA INDIVIDUAL (según impresora) ================= */
+  /* ================= ETIQUETA INDIVIDUAL (página completa, se adapta a la impresora) ================= */
   return (
     <>
       <style>{`
         @media print {
-          @page {
-            size: ${tamano.anchoMm}mm ${tamano.altoMm}mm;
-            margin: 0;
-          }
           #zona-impresion,
           #zona-impresion * {
             display: none !important;
@@ -169,14 +124,22 @@ export default function EtiquetasProducto({
 
       <div id="zona-etiquetas-producto" className="fixed -left-[99999px] top-0">
         {productos.map((p) => (
-          <ContenidoEtiqueta
-            key={p.id}
-            producto={p}
-            medidas={tamano}
-            qrSize={Math.min(tamano.altoMm - Math.max(2, tamano.altoMm * 0.14), tamano.anchoMm * 0.42) * 3.78}
-            qrPadding="pl-1"
-            padding={`${Math.max(1, tamano.altoMm * 0.07)}mm ${Math.max(1, tamano.anchoMm * 0.05)}mm`}
-          />
+          <div key={p.id} className="min-h-screen break-after-page bg-white p-6">
+            <div className="flex h-[95vh] flex-col items-center justify-center gap-8 rounded-2xl border-2 border-gray-300 bg-white">
+              <div className="text-center">
+                <div className="text-sm font-bold uppercase tracking-widest text-slate-400">
+                  Producto
+                </div>
+                <div className="mx-auto mt-2 max-w-md break-words text-center text-3xl font-bold text-slate-900">
+                  {p.nombre}
+                </div>
+                {p.sku && (
+                  <div className="mt-3 font-mono text-xl text-slate-500">{p.sku}</div>
+                )}
+              </div>
+              <QRCodeSVG value={p.sku || p.id} size={220} level="M" />
+            </div>
+          </div>
         ))}
       </div>
     </>
