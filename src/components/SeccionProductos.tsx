@@ -10,7 +10,7 @@ import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade, planNivel } from '@/lib/planGating'
-import EtiquetasProducto, { TAMANOS_ETIQUETA_PRODUCTO, type TamanoEtiquetaProducto } from '@/components/EtiquetasProducto'
+import EtiquetasProducto, { COPIAS_A4_OPCIONES, TAMANOS_ETIQUETA_PRODUCTO, type TamanoEtiquetaProducto } from '@/components/EtiquetasProducto'
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { comprimirImagen, rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 
@@ -98,6 +98,8 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   const [mostrarModalImprimir, setMostrarModalImprimir] = useState(false)
   const [imprimirProducto, setImprimirProducto] = useState<Producto | null>(null)
   const [tamanoEtiqueta, setTamanoEtiqueta] = useState<TamanoEtiquetaProducto>(TAMANOS_ETIQUETA_PRODUCTO[0])
+  const [modoEtiqueta, setModoEtiqueta] = useState<'A4' | 'INDIVIDUAL'>('A4')
+  const [copiasEtiqueta, setCopiasEtiqueta] = useState(4)
   const [nuevaFoto, setNuevaFoto] = useState<FotoPendiente | null>(null)
   const [editFoto, setEditFoto] = useState<FotoPendiente | null>(null)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
@@ -909,7 +911,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
 
       {mostrarModalImprimir && imprimirProducto && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => { setMostrarModalImprimir(false); setImprimirProducto(null) }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Imprimir etiqueta</h3>
               <button onClick={() => { setMostrarModalImprimir(false); setImprimirProducto(null) }} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors" title="Cerrar">
@@ -929,23 +931,83 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tamaño de etiqueta</label>
-              <select
-                value={`${tamanoEtiqueta.anchoMm}x${tamanoEtiqueta.altoMm}`}
-                onChange={(e) => {
-                  const t = TAMANOS_ETIQUETA_PRODUCTO.find(
-                    (t) => `${t.anchoMm}x${t.altoMm}` === e.target.value
-                  )
-                  if (t) setTamanoEtiqueta(t)
-                }}
-                className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-              >
-                {TAMANOS_ETIQUETA_PRODUCTO.map((t) => (
-                  <option key={`${t.anchoMm}x${t.altoMm}`} value={`${t.anchoMm}x${t.altoMm}`}>
-                    {t.nombre}
-                  </option>
-                ))}
-              </select>
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Formato de impresión</label>
+              <div className="mt-2 space-y-2">
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors ${
+                    modoEtiqueta === 'A4' ? 'border-sky-500 bg-sky-50/60' : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    checked={modoEtiqueta === 'A4'}
+                    onChange={() => setModoEtiqueta('A4')}
+                    className="mt-1"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-slate-900">Hoja A4</div>
+                    <div className="mt-1.5 flex items-center gap-2 text-sm text-slate-500">
+                      Etiquetas por hoja:
+                      <select
+                        value={copiasEtiqueta}
+                        onChange={(e) => setCopiasEtiqueta(Number(e.target.value))}
+                        onClick={(e) => e.stopPropagation()}
+                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                      >
+                        {COPIAS_A4_OPCIONES.map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="mt-1 text-xs text-slate-400">
+                      {copiasEtiqueta} {copiasEtiqueta === 1 ? 'etiqueta' : 'etiquetas'} en una sola hoja A4.
+                    </div>
+                  </div>
+                </label>
+
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors ${
+                    modoEtiqueta === 'INDIVIDUAL'
+                      ? 'border-sky-500 bg-sky-50/60'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    checked={modoEtiqueta === 'INDIVIDUAL'}
+                    onChange={() => setModoEtiqueta('INDIVIDUAL')}
+                    className="mt-1"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-slate-900">Etiqueta individual</div>
+                    <div className="mt-1.5 flex items-center gap-2 text-sm text-slate-500">
+                      Tamaño:
+                      <select
+                        value={`${tamanoEtiqueta.anchoMm}x${tamanoEtiqueta.altoMm}`}
+                        onChange={(e) => {
+                          const t = TAMANOS_ETIQUETA_PRODUCTO.find(
+                            (t) => `${t.anchoMm}x${t.altoMm}` === e.target.value
+                          )
+                          if (t) setTamanoEtiqueta(t)
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                      >
+                        {TAMANOS_ETIQUETA_PRODUCTO.map((t) => (
+                          <option key={`${t.anchoMm}x${t.altoMm}`} value={`${t.anchoMm}x${t.altoMm}`}>
+                            {t.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="mt-1 text-xs text-slate-400">
+                      Se ajusta al tamaño de tu impresora de etiquetas.
+                    </div>
+                  </div>
+                </label>
+              </div>
             </div>
 
             <div className="flex gap-3 pt-1">
@@ -971,6 +1033,8 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
       {imprimirProducto && (
         <EtiquetasProducto
           productos={[imprimirProducto]}
+          modo={modoEtiqueta}
+          copias={copiasEtiqueta}
           tamano={tamanoEtiqueta}
         />
       )}
