@@ -8,6 +8,7 @@ type Metodo = { value: string; label: string }
 const estadoOptions = [
   { value: 'NO_EMPACADO', label: 'No Empacado' },
   { value: 'EMPACADO', label: 'Empacado' },
+  { value: 'EN_OBSERVACION', label: 'En Observación' },
   { value: 'ENVIADO', label: 'Enviado' },
 ]
 

@@ -10,10 +10,10 @@ export type Envio = {
   direccion: string
   referencia?: string
   detalle: string
-  observaciones?: string
+  observaciones?: string | null
   cantidad_productos?: number | null
   tamano?: string
-  estado: 'NO_EMPACADO' | 'EMPACADO' | 'ENVIADO'
+  estado: 'NO_EMPACADO' | 'EMPACADO' | 'ENVIADO' | 'EN_OBSERVACION'
   fecha_registro: string
   fecha_programada: string
   created_at?: string

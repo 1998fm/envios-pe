@@ -83,11 +83,13 @@ const METODO_COLORS = ['#0ea5e9', '#6366f1', '#14b8a6', '#f59e0b', '#ef4444', '#
 const ESTADO_ENVIO_COLORS: Record<string, string> = {
   NO_EMPACADO: '#f87171',
   EMPACADO: '#fbbf24',
+  EN_OBSERVACION: '#a855f7',
   ENVIADO: '#34d399',
 }
 const ESTADO_ENVIO_LABEL: Record<string, string> = {
   NO_EMPACADO: 'Sin empacar',
   EMPACADO: 'Empacados',
+  EN_OBSERVACION: 'En observación',
   ENVIADO: 'Enviados',
 }
 
@@ -346,8 +348,8 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
     .filter((e) => e.count > 0)
     .sort(
       (a, b) =>
-        ['NO_EMPACADO', 'EMPACADO', 'ENVIADO'].indexOf(a.estado) -
-        ['NO_EMPACADO', 'EMPACADO', 'ENVIADO'].indexOf(b.estado)
+        ['NO_EMPACADO', 'EMPACADO', 'EN_OBSERVACION', 'ENVIADO'].indexOf(a.estado) -
+        ['NO_EMPACADO', 'EMPACADO', 'EN_OBSERVACION', 'ENVIADO'].indexOf(b.estado)
     )
   const totalEstados = estadosData.reduce((a, e) => a + e.count, 0)
 

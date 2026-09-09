@@ -153,7 +153,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="filtro-estado"]',
-        text: 'Filtra por estado: No empacado, Empacado o Enviado. Los colores te ayudan a saber en qué va cada pedido.',
+        text: 'Filtra por estado: No empacado, Empacado, En Observación o Enviado. Los colores te ayudan a saber en qué va cada pedido.',
       },
       {
         target: '[data-tour="envio-list"]',
@@ -161,7 +161,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="envio-card"] [data-tour="estado"]',
-        text: 'Cambia el estado aquí: No empacado → Empacado → Enviado. Es así de simple, un clic.',
+        text: 'Cambia el estado aquí: No empacado → Empacado → En Observación → Enviado. Es así de simple, un clic.',
       },
       {
         target: '[data-tour="envio-card"] [data-tour="checkbox"]',
@@ -458,7 +458,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="detalle-envio-estado"]',
-        text: 'Aquí cambias el estado del pedido: No empacado → Empacado → Enviado. Así llevas el control de cada entrega.',
+        text: 'Aquí cambias el estado del pedido: No empacado → Empacado → En Observación → Enviado. Así llevas el control de cada entrega.',
       },
       {
         target: '[data-tour="detalle-envio-fecha"]',
@@ -512,7 +512,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="cambio-estados"]',
-        text: 'De qué estado a qué nuevo estado quieres pasar los pedidos. Por ejemplo: de "Empacado" a "Enviado".',
+        text: 'De qué estado a qué nuevo estado quieres pasar los pedidos. Por ejemplo: de "Empacado" a "En Observación" o a "Enviado".',
       },
       {
         target: '[data-tour="cambio-seleccionados"]',

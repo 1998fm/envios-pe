@@ -14,6 +14,7 @@ type Props = {
 const options = [
   { value: 'NO_EMPACADO', label: 'No Empacado' },
   { value: 'EMPACADO', label: 'Empacado' },
+  { value: 'EN_OBSERVACION', label: 'En Observación' },
   { value: 'ENVIADO', label: 'Enviado' },
 ]
 
@@ -23,6 +24,8 @@ function badge(value: string) {
       return { label: 'Enviado', className: 'bg-emerald-100  text-emerald-700  border-emerald-200 ' }
     case 'EMPACADO':
       return { label: 'Empacado', className: 'bg-amber-100  text-amber-700  border-amber-200 ' }
+    case 'EN_OBSERVACION':
+      return { label: 'En Obs.', className: 'bg-purple-100  text-purple-700  border-purple-200 ' }
     default:
       return { label: 'No Emp.', className: 'bg-red-100  text-red-700  border-red-200 ' }
   }

@@ -206,6 +206,10 @@ export default function ModalCambioMasivo({
       Empacado
     </option>
 
+    <option value="EN_OBSERVACION">
+      En Observación
+    </option>
+
     <option value="ENVIADO">
       Enviado
     </option>

@@ -31,6 +31,7 @@ type Props = {
 const colorBorder = (estado: string) =>
   estado === 'ENVIADO' ? 'border-l-emerald-500' :
   estado === 'EMPACADO' ? 'border-l-amber-500' :
+  estado === 'EN_OBSERVACION' ? 'border-l-purple-500' :
   'border-l-red-500'
 
 export default function EnvioCard({

@@ -51,7 +51,15 @@ type VentaConItems = {
 const ESTADO_ENVIO_STYLES: Record<string, string> = {
   NO_EMPACADO: 'bg-slate-100 text-slate-600',
   EMPACADO: 'bg-amber-100 text-amber-700',
+  EN_OBSERVACION: 'bg-purple-100 text-purple-700',
   ENVIADO: 'bg-emerald-100 text-emerald-700',
+}
+
+const ESTADO_ENVIO_LABEL: Record<string, string> = {
+  NO_EMPACADO: 'No Empacado',
+  EMPACADO: 'Empacado',
+  EN_OBSERVACION: 'En Observación',
+  ENVIADO: 'Enviado',
 }
 
 const VENTA_ENVIO_STYLES: Record<string, string> = {
@@ -95,6 +103,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
   const [fechaProgramada, setFechaProgramada] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState('')
+  const [observacion, setObservacion] = useState('')
   const [confirmandoEliminar, setConfirmandoEliminar] = useState(false)
   const [ventasCliente, setVentasCliente] = useState<VentaConItems[]>([])
   const [loadingVentas, setLoadingVentas] = useState(false)
@@ -105,6 +114,10 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
       cargarVentasCliente()
     }
   }, [envio?.id])
+
+  useEffect(() => {
+    setObservacion(envio?.observaciones ?? '')
+  }, [envio?.observaciones])
 
   if (!envio) return null
 
@@ -226,6 +239,40 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     setGuardando(false)
   }
 
+  async function guardarObservacion() {
+    const texto = observacion.trim()
+    if (!texto || texto === (current.observaciones || '').trim()) return
+    setGuardando(true)
+    const { error } = await supabase
+      .from('envios')
+      .update({ observaciones: texto })
+      .eq('id', current.id)
+    if (error) {
+      toast.error('Error al guardar: ' + error.message)
+    } else {
+      toast.success('Observación guardada')
+      onUpdate?.({ ...current, observaciones: texto } as Envio)
+    }
+    setGuardando(false)
+  }
+
+  async function limpiarObservacion() {
+    if (!(await confirmar({ message: '¿Quitar la observación de este pedido?', confirmLabel: 'Sí, quitar' }))) return
+    setGuardando(true)
+    const { error } = await supabase
+      .from('envios')
+      .update({ observaciones: null })
+      .eq('id', current.id)
+    if (error) {
+      toast.error('Error al quitar: ' + error.message)
+    } else {
+      toast.success('Observación eliminada')
+      setObservacion('')
+      onUpdate?.({ ...current, observaciones: null } as Envio)
+    }
+    setGuardando(false)
+  }
+
   async function eliminarEnvio() {
     const { error } = await supabase
       .from('envios')
@@ -329,7 +376,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                   <span
                     className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${estadoEnvioStyle}`}
                   >
-                    {envio.estado}
+                    {ESTADO_ENVIO_LABEL[envio.estado] || envio.estado}
                   </span>
                 }
               />
@@ -385,6 +432,43 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
               <div className="whitespace-pre-line text-sm leading-relaxed text-slate-800">
                 {envio.detalle}
               </div>
+            </div>
+          </section>
+
+          {/* OBSERVACIÓN */}
+          <section data-tour="detalle-envio-observacion">
+            <SectionTitle>Observación / incidentes</SectionTitle>
+            <div className="rounded-2xl border border-slate-100 bg-white p-4">
+              <textarea
+                value={observacion}
+                onChange={(e) => setObservacion(e.target.value)}
+                rows={3}
+                placeholder="Registra cualquier incidente: dato faltante, dirección incompleta, paquete con inconvenientes, etc."
+                className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+              />
+              <div className="mt-2 flex items-center justify-end gap-2">
+                {observacion.trim() ? (
+                  <button
+                    onClick={limpiarObservacion}
+                    disabled={guardando}
+                    className="rounded-xl px-3 py-2 text-xs font-semibold text-rose-500 transition-colors hover:bg-rose-50 disabled:opacity-50"
+                  >
+                    Quitar
+                  </button>
+                ) : null}
+                <button
+                  onClick={guardarObservacion}
+                  disabled={guardando || !observacion.trim() || observacion.trim() === (current.observaciones || '').trim()}
+                  className="rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 px-4 py-2 text-xs font-semibold text-white transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/20 disabled:opacity-40"
+                >
+                  {guardando ? 'Guardando...' : (current.observaciones ? 'Actualizar observación' : 'Guardar observación')}
+                </button>
+              </div>
+              {current.observaciones && (
+                <p className="mt-2 text-[11px] text-slate-400">
+                  Este pedido tiene una observación registrada. Edítala y presiona guardar para actualizarla.
+                </p>
+              )}
             </div>
           </section>
 
