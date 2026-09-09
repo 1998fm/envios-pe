@@ -10,7 +10,7 @@ import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade, planNivel } from '@/lib/planGating'
-import EtiquetasProducto, { COPIAS_A4_OPCIONES } from '@/components/EtiquetasProducto'
+import EtiquetasProducto, { COPIAS_A4_OPCIONES, TAMANOS_ETIQUETA_PRODUCTO, type TamanoEtiquetaProducto } from '@/components/EtiquetasProducto'
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { comprimirImagen, rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 
@@ -99,6 +99,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   const [imprimirProducto, setImprimirProducto] = useState<Producto | null>(null)
   const [modoEtiqueta, setModoEtiqueta] = useState<'A4' | 'INDIVIDUAL'>('A4')
   const [copiasEtiqueta, setCopiasEtiqueta] = useState(4)
+  const [tamanoEtiqueta, setTamanoEtiqueta] = useState<TamanoEtiquetaProducto | null>(null)
   const [nuevaFoto, setNuevaFoto] = useState<FotoPendiente | null>(null)
   const [editFoto, setEditFoto] = useState<FotoPendiente | null>(null)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
@@ -981,8 +982,33 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                   />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold text-slate-900">Etiqueta individual</div>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                      Tamaño de papel:
+                      <select
+                        value={tamanoEtiqueta ? `${tamanoEtiqueta.anchoMm}x${tamanoEtiqueta.altoMm}` : 'completa'}
+                        onChange={(e) => {
+                          if (e.target.value === 'completa') {
+                            setTamanoEtiqueta(null)
+                            return
+                          }
+                          const t = TAMANOS_ETIQUETA_PRODUCTO.find(
+                            (t) => `${t.anchoMm}x${t.altoMm}` === e.target.value
+                          )
+                          if (t) setTamanoEtiqueta(t)
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                      >
+                        <option value="completa">Página completa (según impresora)</option>
+                        {TAMANOS_ETIQUETA_PRODUCTO.map((t) => (
+                          <option key={`${t.anchoMm}x${t.altoMm}`} value={`${t.anchoMm}x${t.altoMm}`}>
+                            {t.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     <div className="mt-1 text-xs text-slate-400">
-                      Una etiqueta a página completa que se adapta al tamaño configurado en tu impresora.
+                      Elige el tamaño de tu etiqueta (ej. 40 × 30 mm para bolsas) y escógelo igual en tu impresora. El QR y el texto se escalan para que todo quepa.
                     </div>
                   </div>
                 </label>
@@ -1014,6 +1040,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
           productos={[imprimirProducto]}
           modo={modoEtiqueta}
           copias={copiasEtiqueta}
+          tamano={tamanoEtiqueta}
         />
       )}
     </div>
