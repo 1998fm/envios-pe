@@ -37,7 +37,7 @@ const ALTO_PAGINA_MM = 297
 const ANCHO_PAGINA_MM = 210
 const MARGEN_PAGINA_MM = 8
 const GAP_A4_MM = 3
-const PROPORCION_A4 = 1.8
+const PROPORCION_A4 = 2.4
 
 type ProductoEtiqueta = { id: string; nombre: string; sku?: string | null }
 
@@ -74,7 +74,7 @@ export default function EtiquetasProducto({
     const altoCeldaMm = Math.min(anchoPorCol / PROPORCION_A4, altoPorFila)
     const anchoCeldaMm = altoCeldaMm * PROPORCION_A4
     const qrSize = Math.min(anchoCeldaMm * 0.4, altoCeldaMm * 0.65) * 3.78
-    const fuenteNombreMm = Math.min(altoCeldaMm * 0.13, anchoCeldaMm * 0.08)
+    const fuenteNombreMm = Math.min(altoCeldaMm * 0.1, anchoCeldaMm * 0.06)
     const fuenteSkuMm = fuenteNombreMm * 0.72
 
     return (
