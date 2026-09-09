@@ -71,6 +71,8 @@ const [hasMore, setHasMore] = useState(false)
   const [busqueda, setBusqueda] = useState('')
   const [filtrosEstado, setFiltrosEstado] = useState<string[]>(['NO_EMPACADO', 'EMPACADO', 'EN_OBSERVACION'])
   const [filtrosMetodo, setFiltrosMetodo] = useState<string[]>([])
+  const [fechaDesde, setFechaDesde] = useState('')
+  const [fechaHasta, setFechaHasta] = useState('')
 
   const [seleccionados, setSeleccionados] =
     useState<string[]>([])
@@ -629,6 +631,8 @@ setLoading(false)
       busqueda,
       estados: filtrosEstado.join(','),
       metodos: filtrosMetodo.join(','),
+      fecha_desde: fechaDesde,
+      fecha_hasta: fechaHasta,
     })
     const res = await fetch(`/api/envios?${params}`)
     const json = await res.json()
@@ -642,7 +646,7 @@ setLoading(false)
       setEnvios(result.data)
       setHasMore(result.hasMore)
     })
-  }, [userId, busqueda, filtrosEstado, filtrosMetodo])
+  }, [userId, busqueda, filtrosEstado, filtrosMetodo, fechaDesde, fechaHasta])
 
   const fetchEnviosRef = useRef(fetchEnviosPage)
   useEffect(() => { fetchEnviosRef.current = fetchEnviosPage })
@@ -1464,6 +1468,10 @@ for (
           filtrosMetodo={filtrosMetodo}
           onFiltrosMetodoChange={setFiltrosMetodo}
           metodosDisponibles={metodosDisponibles}
+          fechaDesde={fechaDesde}
+          onFechaDesdeChange={setFechaDesde}
+          fechaHasta={fechaHasta}
+          onFechaHastaChange={setFechaHasta}
         />
        </div>
     )}

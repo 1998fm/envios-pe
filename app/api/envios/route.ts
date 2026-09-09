@@ -12,6 +12,8 @@ export async function GET(request: Request) {
   const busqueda = searchParams.get('busqueda') || ''
   const estados = searchParams.get('estados')?.split(',').filter(Boolean) || []
   const metodos = searchParams.get('metodos')?.split(',').filter(Boolean) || []
+  const fechaDesde = searchParams.get('fecha_desde')
+  const fechaHasta = searchParams.get('fecha_hasta')
 
   if (!userId) {
     return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
@@ -34,6 +36,14 @@ export async function GET(request: Request) {
 
   if (metodos.length > 0) {
     query = query.in('metodo', metodos)
+  }
+
+  if (fechaDesde) {
+    query = query.gte('fecha_registro', new Date(`${fechaDesde}T00:00:00`).toISOString())
+  }
+
+  if (fechaHasta) {
+    query = query.lte('fecha_registro', new Date(`${fechaHasta}T23:59:59.999`).toISOString())
   }
 
   const { data, count, error } = await query
