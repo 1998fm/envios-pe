@@ -39,22 +39,6 @@ const MARGEN_PAGINA_MM = 8
 const GAP_A4_MM = 3
 const PROPORCION_A4 = 2.4
 
-function elegirColumnas(n: number) {
-  let mejor = 1
-  let mejorRatio = -1
-  for (let c = 1; c <= 10; c++) {
-    const r = Math.ceil(n / c)
-    const w = (ANCHO_PAGINA_MM - MARGEN_PAGINA_MM - GAP_A4_MM * (c - 1)) / c
-    const h = (ALTO_PAGINA_MM - MARGEN_PAGINA_MM - GAP_A4_MM * (r - 1)) / r
-    const ratio = w / h
-    if (ratio > mejorRatio) {
-      mejorRatio = ratio
-      mejor = c
-    }
-  }
-  return mejor
-}
-
 type ProductoEtiqueta = { id: string; nombre: string; sku?: string | null }
 
 type Props = {
@@ -84,18 +68,15 @@ export default function EtiquetasProducto({
     const anchoUtilMm = ANCHO_PAGINA_MM - MARGEN_PAGINA_MM
     const altoUtilMm = ALTO_PAGINA_MM - MARGEN_PAGINA_MM
 
-    const usarAspecto = copiasA4 <= 10
-    const columnas = usarAspecto ? COLUMNAS_A4[copiasA4] || 1 : elegirColumnas(copiasA4)
+    const columnas = copiasA4 <= 10 ? COLUMNAS_A4[copiasA4] || 1 : 4
     const filas = Math.ceil(copiasA4 / columnas)
     const anchoPorCol = (anchoUtilMm - GAP_A4_MM * (columnas - 1)) / columnas
     const altoPorFila = (altoUtilMm - GAP_A4_MM * (filas - 1)) / filas
 
-    const altoCeldaMm = usarAspecto ? Math.min(anchoPorCol / PROPORCION_A4, altoPorFila) : altoPorFila
-    const anchoCeldaMm = usarAspecto ? altoCeldaMm * PROPORCION_A4 : anchoPorCol
+    const altoCeldaMm = Math.min(anchoPorCol / PROPORCION_A4, altoPorFila)
+    const anchoCeldaMm = altoCeldaMm * PROPORCION_A4
     const qrSize = Math.min(anchoCeldaMm * 0.4, altoCeldaMm * 0.65) * 3.78
-    const fuenteNombreMm = usarAspecto
-      ? Math.min(altoCeldaMm * 0.1, anchoCeldaMm * 0.06)
-      : Math.min(altoCeldaMm * 0.22, anchoCeldaMm * 0.09)
+    const fuenteNombreMm = Math.min(altoCeldaMm * 0.1, anchoCeldaMm * 0.06)
     const fuenteSkuMm = fuenteNombreMm * 0.72
 
     return (
