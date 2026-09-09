@@ -34,8 +34,10 @@ const COLUMNAS_A4: Record<number, number> = {
 }
 
 const ALTO_PAGINA_MM = 297
+const ANCHO_PAGINA_MM = 210
 const MARGEN_PAGINA_MM = 8
-const GAP_A4_MM = 2.2
+const GAP_A4_MM = 3
+const PROPORCION_A4 = 1.8
 
 type ProductoEtiqueta = { id: string; nombre: string; sku?: string | null }
 
@@ -65,15 +67,22 @@ export default function EtiquetasProducto({
     const copiasA4 = copiasValidas(copias)
     const columnas = COLUMNAS_A4[copiasA4] || 1
     const filas = Math.ceil(copiasA4 / columnas)
-    const altoCeldaMm = (ALTO_PAGINA_MM - MARGEN_PAGINA_MM - GAP_A4_MM * (filas - 1)) / filas
-    const qrSize = copiasA4 <= 2 ? 140 : copiasA4 <= 4 ? 100 : 72
+    const anchoUtilMm = ANCHO_PAGINA_MM - MARGEN_PAGINA_MM
+    const altoUtilMm = ALTO_PAGINA_MM - MARGEN_PAGINA_MM
+    const anchoPorCol = (anchoUtilMm - GAP_A4_MM * (columnas - 1)) / columnas
+    const altoPorFila = (altoUtilMm - GAP_A4_MM * (filas - 1)) / filas
+    const altoCeldaMm = Math.min(anchoPorCol / PROPORCION_A4, altoPorFila)
+    const anchoCeldaMm = altoCeldaMm * PROPORCION_A4
+    const qrSize = Math.min(anchoCeldaMm * 0.4, altoCeldaMm * 0.65) * 3.78
+    const fuenteNombreMm = Math.min(altoCeldaMm * 0.13, anchoCeldaMm * 0.08)
+    const fuenteSkuMm = fuenteNombreMm * 0.72
 
     return (
       <>
         <style>{`
           @media print {
             @page {
-              size: 210mm 297mm;
+              size: ${ANCHO_PAGINA_MM}mm ${ALTO_PAGINA_MM}mm;
               margin: 0;
             }
             #zona-impresion,
@@ -90,30 +99,28 @@ export default function EtiquetasProducto({
               className="break-after-page"
               style={{
                 height: `${ALTO_PAGINA_MM}mm`,
-                padding: `${MARGEN_PAGINA_MM / 2}mm`,
+                width: '100%',
                 display: 'grid',
-                gridTemplateColumns: `repeat(${columnas}, 1fr)`,
+                gridTemplateColumns: `repeat(${columnas}, ${anchoCeldaMm}mm)`,
+                gridTemplateRows: `repeat(${filas}, ${altoCeldaMm}mm)`,
                 gap: `${GAP_A4_MM}mm`,
+                placeContent: 'center',
               }}
             >
               {Array.from({ length: copiasA4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="overflow-hidden rounded-lg border-2 border-gray-300"
-                  style={{ height: `${altoCeldaMm}mm` }}
-                >
-                  <div className="flex h-full items-stretch gap-1 overflow-hidden bg-white p-[2mm]">
+                <div key={i} className="overflow-hidden rounded-lg border-2 border-gray-300">
+                  <div className="flex h-full w-full items-stretch gap-[1mm] overflow-hidden bg-white p-[2mm]">
                     <div className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
                       <div
                         className="line-clamp-2 font-bold leading-tight text-slate-900"
-                        style={{ fontSize: '3.5mm' }}
+                        style={{ fontSize: `${fuenteNombreMm}mm` }}
                       >
                         {p.nombre}
                       </div>
                       {p.sku && (
                         <div
                           className="mt-[0.5mm] truncate font-mono leading-none text-slate-600"
-                          style={{ fontSize: '2.6mm' }}
+                          style={{ fontSize: `${fuenteSkuMm}mm` }}
                         >
                           {p.sku}
                         </div>
