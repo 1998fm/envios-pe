@@ -9,7 +9,6 @@ import {
   Check,
   X,
   Loader2,
-  User,
   Phone,
   Hash,
   Calendar,
@@ -17,6 +16,7 @@ import {
   Clock,
   Ruler,
   Trash2,
+  AlertCircle,
   type LucideIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -62,6 +62,13 @@ const ESTADO_ENVIO_LABEL: Record<string, string> = {
   ENVIADO: 'Enviado',
 }
 
+const ESTADO_ENVIO_BAR: Record<string, string> = {
+  NO_EMPACADO: 'bg-red-400',
+  EMPACADO: 'bg-amber-400',
+  EN_OBSERVACION: 'bg-purple-400',
+  ENVIADO: 'bg-emerald-400',
+}
+
 const VENTA_ENVIO_STYLES: Record<string, string> = {
   ENVIADO: 'bg-emerald-100 text-emerald-700',
   EMPACADO: 'bg-amber-100 text-amber-700',
@@ -69,11 +76,30 @@ const VENTA_ENVIO_STYLES: Record<string, string> = {
   COMPLETADO: 'bg-emerald-100 text-emerald-700',
 }
 
-function SectionTitle({ children }: { children: ReactNode }) {
+function Card({
+  title,
+  icon: Icon,
+  right,
+  children,
+  className = '',
+}: {
+  title: string
+  icon: LucideIcon
+  right?: ReactNode
+  children: ReactNode
+  className?: string
+}) {
   return (
-    <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-      {children}
-    </h3>
+    <section className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Icon size={15} className="text-sky-600" />
+          <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+        </div>
+        {right}
+      </div>
+      <div className="p-4">{children}</div>
+    </section>
   )
 }
 
@@ -302,17 +328,41 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
       <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+        {/* Barra superior de color según el estado */}
+        <div className={`h-1 w-full shrink-0 ${ESTADO_ENVIO_BAR[current.estado] || 'bg-slate-300'}`} />
+
         {/* HEADER */}
-        <div className="flex shrink-0 items-start justify-between border-b border-slate-100 px-6 py-5">
-          <div>
-            <h2 className="text-xl font-extrabold tracking-tight text-slate-900">
-              Detalle del pedido
-            </h2>
-            <p className="mt-0.5 text-sm text-slate-500">
-              Información del envío seleccionado.
-            </p>
+        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-100 bg-white px-6 py-5">
+          <div className="flex min-w-0 items-center gap-3.5">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-lg font-extrabold text-white">
+              {envio.nombre.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Detalle del pedido
+              </p>
+              <p className="truncate text-lg font-bold text-slate-900">{envio.nombre}</p>
+              <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-slate-500">
+                {envio.dni && (
+                  <span className="flex items-center gap-1">
+                    <Hash size={13} /> {envio.dni}
+                  </span>
+                )}
+                {envio.telefono && (
+                  <span className="flex items-center gap-1">
+                    <Phone size={13} /> {envio.telefono}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
+            <span
+              data-tour="detalle-envio-estado"
+              className={`inline-block rounded-full px-3 py-1 text-xs font-bold whitespace-nowrap ${estadoEnvioStyle}`}
+            >
+              {ESTADO_ENVIO_LABEL[envio.estado] || envio.estado}
+            </span>
             <TourHelpButton tourId="modal-detalle-envio" />
             <button
               onClick={onCerrar}
@@ -325,35 +375,9 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
         </div>
 
         {/* BODY */}
-        <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
-          {/* CLIENTE */}
-          <section>
-            <SectionTitle>Cliente</SectionTitle>
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-lg font-extrabold text-white">
-                {envio.nombre.charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-lg font-bold text-slate-900">{envio.nombre}</p>
-                <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-slate-500">
-                  {envio.dni && (
-                    <span className="flex items-center gap-1">
-                      <Hash size={13} /> {envio.dni}
-                    </span>
-                  )}
-                  {envio.telefono && (
-                    <span className="flex items-center gap-1">
-                      <Phone size={13} /> {envio.telefono}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* INFORMACIÓN DEL ENVÍO */}
-          <section>
-            <SectionTitle>Envío</SectionTitle>
+        <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50/60 px-6 py-5">
+          {/* INFORMACIÓN DEL PEDIDO */}
+          <Card title="Información del pedido" icon={Package}>
             <div className="grid grid-cols-2 gap-3">
               <InfoTile
                 icon={Truck}
@@ -369,30 +393,24 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                   </span>
                 }
               />
-              <InfoTile
-                icon={Package}
-                label="Estado"
-                value={
-                  <span
-                    className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${estadoEnvioStyle}`}
-                  >
-                    {ESTADO_ENVIO_LABEL[envio.estado] || envio.estado}
-                  </span>
-                }
-              />
               <InfoTile icon={Ruler} label="Tamaño" value={envio.tamano || '—'} />
+              {envio.cantidad_productos != null && (
+                <InfoTile
+                  icon={Package}
+                  label="Prendas"
+                  value={`${envio.cantidad_productos} ${envio.cantidad_productos === 1 ? 'prenda' : 'prendas'}`}
+                />
+              )}
               <InfoTile
                 icon={Clock}
                 label="Registrado"
                 value={new Date(envio.fecha_registro).toLocaleDateString('es-PE')}
               />
             </div>
-          </section>
-
-          {/* FECHA PROGRAMADA */}
-          <section>
-            <SectionTitle>Fecha programada</SectionTitle>
-            <div className="flex items-center gap-2">
+            <div
+              data-tour="detalle-envio-fecha"
+              className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-4"
+            >
               <div className="relative flex-1">
                 <Calendar
                   size={16}
@@ -402,13 +420,13 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                   type="date"
                   value={fechaInicial}
                   onChange={(e) => setFechaProgramada(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
                 />
               </div>
               <button
                 onClick={guardarFecha}
                 disabled={guardando || !fechaProgramada || fechaProgramada === current.fecha_programada?.split('T')[0]}
-                className="shrink-0 rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:shadow-lg hover:shadow-sky-500/20 disabled:opacity-40"
+                className="shrink-0 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:shadow-lg hover:shadow-sky-500/20 disabled:opacity-40"
               >
                 {guardando ? '...' : 'Guardar'}
               </button>
@@ -422,23 +440,18 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                 {mensaje}
               </p>
             )}
-          </section>
+          </Card>
 
           {/* DESTINO */}
-          <section>
-            <SectionTitle>Destino</SectionTitle>
-            <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-white p-4">
-              <MapPin size={18} className="mt-0.5 shrink-0 text-sky-600" />
-              <div className="whitespace-pre-line text-sm leading-relaxed text-slate-800">
-                {envio.detalle}
-              </div>
+          <Card title="Destino" icon={MapPin}>
+            <div className="whitespace-pre-line text-sm leading-relaxed text-slate-800">
+              {envio.detalle}
             </div>
-          </section>
+          </Card>
 
           {/* OBSERVACIÓN */}
-          <section data-tour="detalle-envio-observacion">
-            <SectionTitle>Observación / incidentes</SectionTitle>
-            <div className="rounded-2xl border border-slate-100 bg-white p-4">
+          <div data-tour="detalle-envio-observacion">
+            <Card title="Observación / incidentes" icon={AlertCircle}>
               <textarea
                 value={observacion}
                 onChange={(e) => setObservacion(e.target.value)}
@@ -469,32 +482,21 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                   Este pedido tiene una observación registrada. Edítala y presiona guardar para actualizarla.
                 </p>
               )}
-            </div>
-          </section>
-
-          {/* CANTIDAD DE PRENDAS */}
-          {envio.cantidad_productos != null && (
-            <section>
-              <SectionTitle>Cantidad de prendas</SectionTitle>
-              <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3">
-                <Package size={18} className="shrink-0 text-sky-600" />
-                <span className="text-sm font-semibold text-slate-800">
-                  {envio.cantidad_productos} {envio.cantidad_productos === 1 ? 'prenda' : 'prendas'}
-                </span>
-              </div>
-            </section>
-          )}
+            </Card>
+          </div>
 
           {/* PRODUCTOS DEL CLIENTE */}
-          <section>
-            <div className="mb-2 flex items-center gap-2">
-              <SectionTitle>Productos del cliente</SectionTitle>
-              {totalProductosPendientes > 0 && (
+          <Card
+            title="Productos del cliente"
+            icon={Package}
+            right={
+              totalProductosPendientes > 0 ? (
                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
                   {totalProductosPendientes} por validar
                 </span>
-              )}
-            </div>
+              ) : undefined
+            }
+          >
 
             {loadingVentas ? (
               <div className="flex items-center justify-center py-10 text-slate-400">
@@ -571,7 +573,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                 Validar contenido del pedido
               </button>
             )}
-          </section>
+          </Card>
         </div>
 
         {/* FOOTER */}
