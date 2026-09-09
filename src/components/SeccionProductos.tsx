@@ -100,6 +100,12 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   const [modoEtiqueta, setModoEtiqueta] = useState<'A4' | 'INDIVIDUAL'>('A4')
   const [copiasEtiqueta, setCopiasEtiqueta] = useState(4)
   const [tamanoEtiqueta, setTamanoEtiqueta] = useState<TamanoEtiquetaProducto | null>(null)
+  const [tamanoPersonalizado, setTamanoPersonalizado] = useState<TamanoEtiquetaProducto>({
+    nombre: 'Personalizado',
+    anchoMm: 40,
+    altoMm: 30,
+  })
+  const [usarTamanoPersonalizado, setUsarTamanoPersonalizado] = useState(false)
   const [nuevaFoto, setNuevaFoto] = useState<FotoPendiente | null>(null)
   const [editFoto, setEditFoto] = useState<FotoPendiente | null>(null)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
@@ -985,16 +991,31 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                     <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                       Tamaño de papel:
                       <select
-                        value={tamanoEtiqueta ? `${tamanoEtiqueta.anchoMm}x${tamanoEtiqueta.altoMm}` : 'completa'}
+                        value={
+                          usarTamanoPersonalizado
+                            ? 'personalizado'
+                            : tamanoEtiqueta
+                            ? `${tamanoEtiqueta.anchoMm}x${tamanoEtiqueta.altoMm}`
+                            : 'completa'
+                        }
                         onChange={(e) => {
                           if (e.target.value === 'completa') {
                             setTamanoEtiqueta(null)
+                            setUsarTamanoPersonalizado(false)
+                            return
+                          }
+                          if (e.target.value === 'personalizado') {
+                            setUsarTamanoPersonalizado(true)
+                            setTamanoEtiqueta(tamanoPersonalizado)
                             return
                           }
                           const t = TAMANOS_ETIQUETA_PRODUCTO.find(
                             (t) => `${t.anchoMm}x${t.altoMm}` === e.target.value
                           )
-                          if (t) setTamanoEtiqueta(t)
+                          if (t) {
+                            setTamanoEtiqueta(t)
+                            setUsarTamanoPersonalizado(false)
+                          }
                         }}
                         onClick={(e) => e.stopPropagation()}
                         className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
@@ -1005,10 +1026,53 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                             {t.nombre}
                           </option>
                         ))}
+                        <option value="personalizado">Personalizado...</option>
                       </select>
                     </div>
+
+                    {usarTamanoPersonalizado && (
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          Ancho
+                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={297}
+                          value={tamanoPersonalizado.anchoMm}
+                          onChange={(e) => {
+                            const v = Math.min(297, Math.max(1, Number(e.target.value) || 1))
+                            const nuevo = { ...tamanoPersonalizado, anchoMm: v }
+                            setTamanoPersonalizado(nuevo)
+                            setTamanoEtiqueta(nuevo)
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                        />
+                        <span>mm</span>
+                        <span className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          Alto
+                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={297}
+                          value={tamanoPersonalizado.altoMm}
+                          onChange={(e) => {
+                            const v = Math.min(297, Math.max(1, Number(e.target.value) || 1))
+                            const nuevo = { ...tamanoPersonalizado, altoMm: v }
+                            setTamanoPersonalizado(nuevo)
+                            setTamanoEtiqueta(nuevo)
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                        />
+                        <span>mm</span>
+                      </div>
+                    )}
+
                     <div className="mt-1 text-xs text-slate-400">
-                      Elige el tamaño de tu etiqueta (ej. 40 × 30 mm para bolsas) y escógelo igual en tu impresora. El QR y el texto se escalan para que todo quepa.
+                      Elige un tamaño predefinido o escribe medidas personalizadas (ej. 15 × 30 mm). El QR y el texto se escalan para que todo quepa; usa el mismo tamaño en tu impresora.
                     </div>
                   </div>
                 </label>
