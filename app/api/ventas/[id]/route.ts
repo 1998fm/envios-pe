@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -88,6 +89,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }
     }
 
+    await sincronizarArchivoPorStock([
+      ...venta.items.map((it: any) => it.producto_id),
+      ...itemsData.map((it: any) => it.producto_id),
+    ].filter(Boolean))
+
     return NextResponse.json({ data })
   }
 
@@ -113,6 +119,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           .eq('id', item.producto_id)
       }
     }
+
+    await sincronizarArchivoPorStock(venta.items.map((it: any) => it.producto_id).filter(Boolean))
   } else if (estado === 'COMPLETADA') {
     if (venta.estado !== 'PENDIENTE') {
       return NextResponse.json({ error: 'Solo se puede completar una venta pendiente' }, { status: 400 })
@@ -157,6 +165,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
           .eq('id', item.producto_id)
       }
     }
+    await sincronizarArchivoPorStock(venta.items.map((it: any) => it.producto_id).filter(Boolean))
   }
 
   const { error } = await supabaseAdmin

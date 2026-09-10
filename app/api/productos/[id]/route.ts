@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
+import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 
 // La URL de la imagen solo se acepta si apunta al bucket público de productos
 function validarImagenUrl(valor: unknown): string | null {
@@ -64,6 +65,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (actual?.imagen_url && actual.imagen_url !== data.imagen_url) {
     await borrarArchivoProducto(actual.imagen_url)
   }
+
+  // Stock 0 o negativo archiva automáticamente; stock > 0 reactiva
+  await sincronizarArchivoPorStock([id])
 
   return NextResponse.json({ data })
 }

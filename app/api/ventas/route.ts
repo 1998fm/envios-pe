@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 import { checkRecordLimit } from '@/lib/planLimits'
 
 export async function GET(request: Request) {
@@ -133,6 +134,8 @@ export async function POST(request: Request) {
         .eq('id', item.producto_id)
     }
   }
+
+  await sincronizarArchivoPorStock(itemsData.map((it: any) => it.producto_id).filter(Boolean))
 
   return NextResponse.json({ data: venta })
 }

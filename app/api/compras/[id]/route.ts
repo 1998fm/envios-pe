@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -40,6 +41,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
   }
 
+  await sincronizarArchivoPorStock(compra.items.map((it: any) => it.producto_id).filter(Boolean))
+
   const { data, error } = await supabaseAdmin
     .from('compras')
     .update({ estado, updated_at: new Date().toISOString() })
@@ -78,6 +81,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
           .eq('id', item.producto_id)
       }
     }
+    await sincronizarArchivoPorStock(compra.items.map((it: any) => it.producto_id).filter(Boolean))
   }
 
   const { error } = await supabaseAdmin
