@@ -65,6 +65,10 @@ export async function POST(request: Request) {
       if (Object.keys(updates).length > 1) {
         await supabaseAdmin.from('personas').update(updates).eq('id', existing.id)
       }
+      const ventaBackfill: Record<string, any> = { updated_at: new Date().toISOString() }
+      if (telefono) ventaBackfill.persona_telefono = telefono
+      if (nombre) ventaBackfill.persona_nombre = nombre
+      await supabaseAdmin.from('ventas').update(ventaBackfill).eq('persona_id', existing.id)
       const { data: vinculo } = await supabaseAdmin
         .from('cliente_de')
         .select('id')
@@ -109,6 +113,10 @@ export async function POST(request: Request) {
       if (Object.keys(updates).length > 1) {
         await supabaseAdmin.from('personas').update(updates).eq('id', existing.id)
       }
+      const ventaBackfill: Record<string, any> = { updated_at: new Date().toISOString() }
+      if (telefono) ventaBackfill.persona_telefono = telefono
+      if (nombre) ventaBackfill.persona_nombre = nombre
+      await supabaseAdmin.from('ventas').update(ventaBackfill).eq('persona_id', existing.id)
       const { data: vinculo } = await supabaseAdmin
         .from('cliente_de')
         .select('id')

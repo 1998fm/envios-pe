@@ -411,21 +411,16 @@ export async function POST(req: Request) {
       personaId = newPersona!.id
     }
 
-    // Completar datos faltantes en las ventas de este cliente (backfill)
-    if (dni) {
-      await supabaseAdmin
-        .from('ventas')
-        .update({ persona_dni: dni })
-        .eq('persona_id', personaId)
-        .is('persona_dni', null)
-    }
-    if (nombre) {
-      await supabaseAdmin
-        .from('ventas')
-        .update({ persona_nombre: nombre })
-        .eq('persona_id', personaId)
-        .is('persona_nombre', null)
-    }
+    // Actualizar datos del cliente en TODAS sus ventas, siempre, para que
+    // las ventas ya creadas reflejen los datos más recientes del cliente.
+    const ventaBackfill: Record<string, any> = { updated_at: new Date().toISOString() }
+    if (dni) ventaBackfill.persona_dni = dni
+    if (nombre) ventaBackfill.persona_nombre = nombre
+    if (telefono) ventaBackfill.persona_telefono = telefono
+    await supabaseAdmin
+      .from('ventas')
+      .update(ventaBackfill)
+      .eq('persona_id', personaId)
 
     // Vincular con este negocio (si no existe ya)
     const { data: vinculoExistente } = await supabaseAdmin
