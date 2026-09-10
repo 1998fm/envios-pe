@@ -1,14 +1,17 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Pencil, Copy, Check, X, Users, Phone, Tag, ShoppingCart, Truck } from 'lucide-react'
+import { Search, Pencil, Copy, Check, X, Users, Phone, Tag, ShoppingCart, Truck, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 import TourHelpButton from '@/components/TourHelpButton'
+import { useConfirm } from '@/components/ConfirmDialog'
 
 type Cliente = {
   id: string
+  clave: string
+  ids: string[]
   nombre: string
   dni: string | null
   telefono: string | null
@@ -25,6 +28,7 @@ type Props = {
 
 export default function SeccionClientes({ userId }: Props) {
   const { startTour } = useOnboarding()
+  const confirmar = useConfirm()
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [busqueda, setBusqueda] = useState('')
   const [busquedaAplicada, setBusquedaAplicada] = useState('')
@@ -78,6 +82,7 @@ export default function SeccionClientes({ userId }: Props) {
         ...editForm,
         telefono: String(editForm.telefono).replace(/\s+/g, ''),
         user_id: userId,
+        ids: editando.ids,
       }),
     })
     setGuardando(false)
@@ -100,6 +105,22 @@ export default function SeccionClientes({ userId }: Props) {
       setTimeout(() => setUltimoCopiado(null), 1500)
     } catch {
       toast.error('No se pudo copiar')
+    }
+  }
+
+  async function eliminarCliente(c: Cliente) {
+    if (!(await confirmar({ message: `¿Eliminar a ${c.nombre}? Se quitará de tu lista de clientes.`, danger: true, confirmLabel: 'Sí, eliminar' }))) return
+    const res = await fetch(`/api/clientes/${c.id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, ids: c.ids }),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (res.ok) {
+      toast.success('Cliente eliminado')
+      cargarClientes()
+    } else {
+      toast.error(json.error || 'Error al eliminar')
     }
   }
 
@@ -172,7 +193,7 @@ export default function SeccionClientes({ userId }: Props) {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtrados.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                <tr key={c.clave} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-100 to-indigo-100 flex items-center justify-center text-xs font-bold text-sky-700 shrink-0">
@@ -218,13 +239,20 @@ export default function SeccionClientes({ userId }: Props) {
                   </td>
                   <td className="px-4 py-3 text-slate-500 text-xs">{formatFecha(c.ultimaActividad)}</td>
                   <td className="px-4 py-3 text-right">
-                    <div data-tour="clientes-botones" className="flex items-center justify-end">
+                    <div data-tour="clientes-botones" className="flex items-center justify-end gap-1">
                     <button
                       onClick={() => iniciarEdicion(c)}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
                       title="Editar cliente"
                     >
                       <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => eliminarCliente(c)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="Eliminar cliente"
+                    >
+                      <Trash2 size={16} />
                     </button>
                     </div>
                   </td>
