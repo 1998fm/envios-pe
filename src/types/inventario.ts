@@ -26,6 +26,7 @@ export type Venta = {
   persona_id: string
   persona_nombre: string
   persona_dni: string
+  persona_telefono?: string | null
   total: number
   estado: 'COMPLETADA' | 'ANULADA' | 'PENDIENTE'
   metodo_pago: MetodoPago

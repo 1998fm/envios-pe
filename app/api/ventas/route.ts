@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json()
-  const { user_id, persona_id, persona_nombre, persona_dni, items, metodo_pago, estado: estadoSolicitado } = body
+  const { user_id, persona_id, persona_nombre, persona_dni, persona_telefono, items, metodo_pago, estado: estadoSolicitado } = body
 
   if (!user_id || !persona_id || !items?.length) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
@@ -98,6 +98,7 @@ export async function POST(request: Request) {
       persona_id,
       persona_nombre,
       persona_dni: persona_dni || null,
+      persona_telefono: persona_telefono || null,
       total,
       estado,
       metodo_pago: pago,

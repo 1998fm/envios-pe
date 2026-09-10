@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Pencil, X, Plus, Minus, Check, Loader2 } from 'lucide-react'
+import { Pencil, X, Plus, Minus, Check, Loader2, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Venta, Producto } from '@/types/inventario'
 import { tourDone, trayectoDone } from '@/lib/tours'
@@ -313,6 +313,21 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
                   <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">DNI</p>
                   <p className="font-semibold text-slate-900 text-sm">{venta.persona_dni || '—'}</p>
                 </div>
+                {venta.persona_telefono && (
+                  <div className="bg-slate-50 rounded-2xl p-3">
+                    <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Número</p>
+                    <p className="font-semibold text-slate-900 text-sm flex items-center gap-1.5">
+                      <span className="font-mono">{venta.persona_telefono}</span>
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(String(venta.persona_telefono)); toast.success('Número copiado') }}
+                        className="p-1 rounded text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
+                        title="Copiar número"
+                      >
+                        <Copy size={13} />
+                      </button>
+                    </p>
+                  </div>
+                )}
                 <div className="bg-slate-50 rounded-2xl p-3">
                   <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Estado</p>
                   <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${badge}`}>

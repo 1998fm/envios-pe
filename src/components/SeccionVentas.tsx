@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Check, X, RotateCcw, Loader2, Eye, ScanBarcode, Lock } from 'lucide-react'
+import { Plus, Check, X, RotateCcw, Loader2, Eye, ScanBarcode, Lock, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Venta, Producto } from '@/types/inventario'
 import ModalDetalleVenta from '@/components/ModalDetalleVenta'
@@ -190,6 +190,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
         persona_id: personaSel.id,
         persona_nombre: personaSel.nombre,
         persona_dni: personaSel.dni,
+        persona_telefono: personaSel.telefono || null,
         metodo_pago: metodoPago,
         ...(metodoPago !== 'TARJETA' ? { estado: pagoEstado } : {}),
         items: itemsVenta.map((it) => ({
@@ -320,6 +321,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 <th className="px-4 py-3">Cliente</th>
                 <th className="px-4 py-3">DNI</th>
+                <th className="px-4 py-3">Número</th>
                 <th className="px-4 py-3 text-right">Productos</th>
                 <th className="px-4 py-3 text-right">Total</th>
                 {planNivel(plan) >= 1 && <th className="px-4 py-3 text-right">Ganancia</th>}
@@ -351,6 +353,22 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                   <tr key={v.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 font-medium text-slate-900">{v.persona_nombre}</td>
                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">{v.persona_dni}</td>
+                    <td className="px-4 py-3">
+                      {v.persona_telefono ? (
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-slate-600 font-mono text-xs">{v.persona_telefono}</span>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(String(v.persona_telefono)); toast.success('Número copiado') }}
+                            className="p-1 rounded text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
+                            title="Copiar número"
+                          >
+                            <Copy size={13} />
+                          </button>
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right text-slate-600">{v.items?.length ?? 0} ítems</td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-900">S/ {v.total.toFixed(2)}</td>
                     {planNivel(plan) >= 1 && (
