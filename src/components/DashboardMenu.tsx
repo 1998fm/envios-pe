@@ -16,6 +16,7 @@ import {
   Pin,
   LayoutDashboard,
   Receipt,
+  Users,
 } from 'lucide-react'
 import TourHelpButton from '@/components/TourHelpButton'
 import LockedFeature from '@/components/LockedFeature'
@@ -27,8 +28,8 @@ type Props = {
   showCopiarDatos: boolean
   copiarDatosLocked?: boolean
   shalomUso?: { used: number; max: number | null }
-  pestañaActiva: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos'
-  onNavegar: (p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos') => void
+  pestañaActiva: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes'
+  onNavegar: (p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes') => void
   onExportShalom: () => void
   onCambioMasivo: () => void
   onGenerarEtiquetas: () => void
@@ -73,9 +74,10 @@ export default function DashboardMenu({
     { key: 'productos' as const, label: 'Productos', icon: Package, tour: 'tab-productos' as TourId },
     { key: 'compras' as const, label: 'Compras', icon: Truck, tour: 'tab-compras' as TourId },
     { key: 'gastos' as const, label: 'Gastos', icon: Receipt, tour: 'tab-gastos' as TourId },
+    { key: 'clientes' as const, label: 'Clientes', icon: Users, tour: 'tab-clientes' as TourId },
   ]
 
-  function navegar(p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos') {
+  function navegar(p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes') {
     onNavegar(p)
     setHover(false)
     setFijado(false)

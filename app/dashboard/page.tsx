@@ -44,6 +44,7 @@ import SeccionProductos from '@/components/SeccionProductos'
 import SeccionVentas from '@/components/SeccionVentas'
 import SeccionCompras from '@/components/SeccionCompras'
 import SeccionGastos from '@/components/SeccionGastos'
+import SeccionClientes from '@/components/SeccionClientes'
 import { UPGRADE_EVENT, computeEffectivePlan } from '@/lib/planGating'
 import { useOnboarding } from '@/context/OnboardingContext'
 import {
@@ -94,7 +95,7 @@ const [shalomUso, setShalomUso] = useState<{ used: number; max: number | null }>
 const [planFeatures, setPlanFeatures] = useState<{ max_metodos?: number | null; max_pedidos_copiar?: number | null; max_envios?: number | null } | null>(null)
 const [mostrarUpgrade, setMostrarUpgrade] = useState(false)
 const [agruparPor, setAgruparPor] = useState<'programada' | 'registro'>('programada')
-const [pestañaActiva, setPestañaActiva] = useState<'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos'>('resumen')
+const [pestañaActiva, setPestañaActiva] = useState<'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes'>('resumen')
 // ========================================
 // ETIQUETAS
 // ========================================
@@ -1542,6 +1543,7 @@ for (
        {pestañaActiva === 'ventas' && <SeccionVentas userId={userId || ''} plan={plan} />}
        {pestañaActiva === 'compras' && <SeccionCompras userId={userId || ''} />}
        {pestañaActiva === 'gastos' && <SeccionGastos userId={userId || ''} />}
+       {pestañaActiva === 'clientes' && <SeccionClientes userId={userId || ''} />}
 
 <ModalConfiguracion
   abierto={mostrarConfig}

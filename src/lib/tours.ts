@@ -10,6 +10,7 @@ export type TourId =
   | 'tab-ventas'
   | 'tab-compras'
   | 'tab-gastos'
+  | 'tab-clientes'
   | 'modal-nueva-venta'
   | 'modal-detalle-venta'
   | 'modal-nueva-compra'
@@ -17,6 +18,7 @@ export type TourId =
   | 'modal-nuevo-producto'
   | 'modal-nuevo-gasto'
   | 'modal-detalle-envio'
+  | 'modal-editar-cliente'
   | 'modal-configuracion'
   | 'modal-cambio-masivo'
   | 'modal-exportar-shalom'
@@ -36,11 +38,12 @@ export const TRAYECTO_INICIAL: TourId[] = [
   'tab-envios',
   'tab-ventas',
   'tab-productos',
+  'tab-clientes',
   'tab-compras',
   'tab-gastos',
 ]
 
-export type TabKey = 'resumen' | 'envios' | 'ventas' | 'productos' | 'compras' | 'gastos'
+export type TabKey = 'resumen' | 'envios' | 'ventas' | 'productos' | 'compras' | 'gastos' | 'clientes'
 
 export const TOUR_TAB: Partial<Record<TourId, TabKey>> = {
   'tab-resumen': 'resumen',
@@ -49,6 +52,7 @@ export const TOUR_TAB: Partial<Record<TourId, TabKey>> = {
   'tab-productos': 'productos',
   'tab-compras': 'compras',
   'tab-gastos': 'gastos',
+  'tab-clientes': 'clientes',
 }
 
 const LEGACY_KEYS: Record<string, string> = {
@@ -282,6 +286,32 @@ export const TOURS: Tour[] = [
       {
         target: '[data-tour="gastos-vacio"]',
         text: 'Aún no hay gastos registrados. Anota el primero cuando salgas dinero.',
+      },
+    ],
+  },
+
+  // ==========================================
+  // TAB: CLIENTES
+  // ==========================================
+  {
+    id: 'tab-clientes',
+    titulo: 'Clientes',
+    steps: [
+      {
+        target: '[data-tour="clientes-buscar"]',
+        text: 'Bienvenido a Clientes. Aquí ves a todas las personas que te compran o te piden envíos, con sus datos en un solo lugar.',
+      },
+      {
+        target: '[data-tour="clientes-tabla"]',
+        text: 'Cada cliente muestra su teléfono (con botón para copiarlo), cuántas ventas y envíos ha hecho, y cuánto ha gastado.',
+      },
+      {
+        target: '[data-tour="clientes-botones"]',
+        text: 'Usa el lápiz de cada fila para corregir un dato del cliente. Los cambios se actualizan también en sus ventas y envíos.',
+      },
+      {
+        target: '[data-tour="clientes-vacio"]',
+        text: 'Aún no tienes clientes. Cuando hagas una venta o alguien te pida un envío, aparecerá aquí automáticamente.',
       },
     ],
   },
@@ -590,6 +620,33 @@ export const TOURS: Tour[] = [
       {
         target: '[data-tour="copiar-botones"]',
         text: 'Aquí copias la lista o la exportas para pasársela a tu repartidor. Así no se pierde ninguna dirección.',
+      },
+    ],
+  },
+
+  // ==========================================
+  // MODAL: EDITAR CLIENTE
+  // ==========================================
+  {
+    id: 'modal-editar-cliente',
+    titulo: 'Editar cliente',
+    modal: true,
+    steps: [
+      {
+        target: '[data-tour="editar-cliente-nombre"]',
+        text: 'Corrige aquí el nombre del cliente. Lo que escribas se guardará también en sus ventas y envíos anteriores.',
+      },
+      {
+        target: '[data-tour="editar-cliente-dni"]',
+        text: 'Si el cliente tiene DNI, escríbelo aquí. Cada DNI solo puede usarse una vez.',
+      },
+      {
+        target: '[data-tour="editar-cliente-telefono"]',
+        text: 'Actualiza el teléfono si cambió. Así podrás copiarlo rápido cuando necesites contactarlo.',
+      },
+      {
+        target: '[data-tour="editar-cliente-guardar"]',
+        text: 'Pulsa Guardar para aplicar los cambios en todo el historial del cliente.',
       },
     ],
   },
