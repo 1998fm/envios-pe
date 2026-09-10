@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ChangeEvent } from 'react'
-import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera, Archive, ArchiveRestore, CheckSquare } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera, Archive, ArchiveRestore, CheckSquare, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Producto } from '@/types/inventario'
 import { UNIDADES_MEDIDA } from '@/types/inventario'
@@ -118,6 +118,10 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
     stock_minimo: 0,
     unidad: 'unidad',
   })
+  const [tipoCreacion, setTipoCreacion] = useState<'individual' | 'variantes'>('individual')
+  const [variantes, setVariantes] = useState<{ nombre: string; cantidad: number }[]>([
+    { nombre: '', cantidad: 1 },
+  ])
 
   async function cargarConteos() {
     const [a, ar] = await Promise.all([
@@ -326,9 +330,21 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   }
 
   async function crearProducto() {
-    if (!nuevoForm.nombre.trim()) {
-      toast.error('El nombre es requerido')
-      return
+    if (tipoCreacion === 'variantes') {
+      const validas = variantes.filter((v) => v.nombre.trim())
+      if (validas.length === 0) {
+        toast.error('Añade al menos una variante')
+        return
+      }
+      if (!nuevoForm.nombre.trim()) {
+        toast.error('El nombre base es requerido')
+        return
+      }
+    } else {
+      if (!nuevoForm.nombre.trim()) {
+        toast.error('El nombre es requerido')
+        return
+      }
     }
 
     let imagenUrl: string | undefined
@@ -347,6 +363,55 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
       setSubiendoFoto(false)
     }
 
+    if (tipoCreacion === 'variantes') {
+      const validas = variantes.filter((v) => v.nombre.trim())
+      let creados = 0
+      let errorAlCrear = false
+
+      for (const v of validas) {
+        const nombreCompleto = `${nuevoForm.nombre.trim()} - ${v.nombre.trim()}`
+        const sku = generarSKU(nombreCompleto)
+
+        const res = await fetch('/api/productos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: nombreCompleto,
+            sku,
+            precio_venta: nuevoForm.precio_venta,
+            precio_compra: nuevoForm.precio_compra,
+            stock_actual: v.cantidad,
+            stock_minimo: nuevoForm.stock_minimo,
+            unidad: nuevoForm.unidad,
+            user_id: userId,
+            ...(imagenUrl ? { imagen_url: imagenUrl } : {}),
+          }),
+        })
+
+        if (res.ok) creados++
+        else errorAlCrear = true
+      }
+
+      if (nuevaFoto?.preview) URL.revokeObjectURL(nuevaFoto.preview)
+      if (rutaSubida) {
+        try { await supabase.storage.from('productos').remove([rutaSubida]) } catch {}
+      }
+
+      if (creados > 0) {
+        toast.success(`${creados} producto${creados === 1 ? '' : 's'} creado${creados === 1 ? '' : 's'}`)
+        setShowNuevo(false)
+        setTipoCreacion('individual')
+        setNuevoForm({ nombre: '', sku: '', precio_venta: 0, precio_compra: 0, stock_actual: 0, stock_minimo: 0, unidad: 'unidad' })
+        setVariantes([{ nombre: '', cantidad: 1 }])
+        setNuevaFoto(null)
+        cargarProductosYConteos()
+      } else if (errorAlCrear) {
+        toast.error('Error al crear las variantes')
+      }
+      return
+    }
+
+    /* ===== MODO INDIVIDUAL (código original) ===== */
     const res = await fetch('/api/productos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -360,7 +425,6 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
       setNuevoForm({ nombre: '', sku: '', precio_venta: 0, precio_compra: 0, stock_actual: 0, stock_minimo: 0, unidad: 'unidad' })
       cargarProductosYConteos()
     } else {
-      // El producto no se creó: limpiar la imagen subida para no dejar basura en el bucket
       if (rutaSubida) {
         try { await supabase.storage.from('productos').remove([rutaSubida]) } catch {}
       }
@@ -743,27 +807,137 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                 <h3 className="text-lg font-bold text-slate-900">Nuevo producto</h3>
                 <TourHelpButton tourId="modal-nuevo-producto" />
               </div>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</label>
-                <div data-tour="nuevo-producto-nombre">
-                <input
-                  value={nuevoForm.nombre}
-                  onChange={(e) => setNuevoForm({ ...nuevoForm, nombre: e.target.value, sku: generarSKU(e.target.value) })}
-                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                  placeholder="Ej: Polera básica"
-                />
+
+              {/* Selector de tipo de creación */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">Tipo de creación</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTipoCreacion('individual')}
+                    className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                      tipoCreacion === 'individual'
+                        ? 'bg-sky-600 text-white shadow-sm'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Package size={16} /> Individual
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTipoCreacion('variantes')}
+                    className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                      tipoCreacion === 'variantes'
+                        ? 'bg-sky-600 text-white shadow-sm'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+<Package size={16} /> Serie con variantes
+                    </span>
+                  </button>
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">SKU</label>
-                <input
-                  value={nuevoForm.sku}
-                  onChange={(e) => setNuevoForm({ ...nuevoForm, sku: e.target.value })}
-                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm bg-slate-50 text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                  placeholder="Se genera automáticamente"
-                />
-              </div>
+
+            {/* ============ CAMPOS SEGÚN TIPO ============ */}
+            <>
+              {tipoCreacion === 'individual' ? (
+                /* ============ FORMULARIO INDIVIDUAL ============ */
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</label>
+                    <div data-tour="nuevo-producto-nombre">
+                    <input
+                      value={nuevoForm.nombre}
+                      onChange={(e) => setNuevoForm({ ...nuevoForm, nombre: e.target.value, sku: generarSKU(e.target.value) })}
+                      className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                      placeholder="Ej: Polera básica"
+                    />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">SKU</label>
+                    <input
+                      value={nuevoForm.sku}
+                      onChange={(e) => setNuevoForm({ ...nuevoForm, sku: e.target.value })}
+                      className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm bg-slate-50 text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                      placeholder="Se genera automáticamente"
+                    />
+                  </div>
+                </div>
+              ) : (
+                /* ============ SERIE CON VARIANTES ============ */
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre base</label>
+                    <div data-tour="nuevo-producto-nombre-base">
+                    <input
+                      value={nuevoForm.nombre}
+                      onChange={(e) => setNuevoForm({ ...nuevoForm, nombre: e.target.value })}
+                      className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                      placeholder="Ej: Buzo Carla L"
+                    />
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-400">Se creará un producto por variante: "Buzo Carla L - AMARILLO", "Buzo Carla L - VERDE"...</p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Variantes</label>
+                    <div className="space-y-2">
+                      {variantes.map((v, i) => (
+                        <div key={i} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
+                          <input
+                            type="text"
+                            value={v.nombre}
+                            onChange={(e) => {
+                              const nv = [...variantes]
+                              nv[i] = { ...nv[i], nombre: e.target.value }
+                              setVariantes(nv)
+                            }}
+                            placeholder={i === 0 ? 'Color / Talla (ej: AMARILLO)' : 'Color / Talla'}
+                            className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                          />
+                          <input
+                            type="number"
+                            min={1}
+                            value={v.cantidad}
+                            onChange={(e) => {
+                              const nv = [...variantes]
+                              nv[i] = { ...nv[i], cantidad: parseInt(e.target.value, 10) || 1 }
+                              setVariantes(nv)
+                            }}
+                            className="w-20 px-3 py-2 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                          />
+                          <span className="text-[11px] text-slate-400">uds</span>
+                          {variantes.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setVariantes(variantes.filter((_, idx) => idx !== i))}
+                              className="text-red-500 hover:text-red-600 p-1"
+                              title="Eliminar variante"
+                            >
+                              <X size={16} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setVariantes([...variantes, { nombre: '', cantidad: 1 }])}
+                        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-sky-600 hover:text-sky-700 py-2"
+                      >
+                        <Plus size={16} /> Añadir variante
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+
+            {/* ============ CAMPOS COMUNES (FOTO, STOCK, PRECIOS, UNIDAD) ============ */}
+            <div>
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Foto del producto (opcional)</label>
                 <div className="mt-1 flex items-center gap-3">
