@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { checkRecordLimit } from '@/lib/planLimits'
+import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -80,6 +81,9 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  // Un producto nuevo con stock 0 debe nacer archivado
+  await sincronizarArchivoPorStock([data.id])
 
   return NextResponse.json({ data })
 }
