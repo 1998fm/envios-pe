@@ -647,7 +647,13 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
       )}
 
       <EscannerVentas abierto={showEscanner && planNivel(plan) >= 2} onCerrar={() => setShowEscanner(false)} onDetectar={manejarCodigoEscaneado} />
-      <ModalDetalleVenta venta={ventaDetalle} onCerrar={() => setVentaDetalle(null)} plan={plan} />
+      <ModalDetalleVenta
+          venta={ventaDetalle}
+          onCerrar={() => setVentaDetalle(null)}
+          onGuardar={(v) => { if (v) setVentaDetalle(v); cargarVentas() }}
+          plan={plan}
+          userId={userId}
+        />
     </div>
   )
 }
