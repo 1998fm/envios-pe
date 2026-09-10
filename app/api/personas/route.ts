@@ -34,17 +34,8 @@ export async function GET(request: Request) {
 
   if (porTel) return NextResponse.json({ data: porTel })
 
-  // Búsqueda parcial
-  const { data: resultados } = await supabaseAdmin
-    .from('personas')
-    .select('*')
-    .or(`nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%,telefono.ilike.%${busqueda}%`)
-    .limit(5)
-
-  if (resultados && resultados.length > 0) {
-    return NextResponse.json({ data: resultados[0] })
-  }
-
+  // Solo se busca por DNI o teléfono exactos. No se busca por nombre:
+  // un nombre repetido (p. ej. "Juana") podría tomar un cliente equivocado.
   return NextResponse.json({ data: null })
 }
 

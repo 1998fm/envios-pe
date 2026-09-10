@@ -542,7 +542,7 @@ Todas las rutas están en `app/api/`. Usan `service_role` (admin). **No validan 
 | DELETE | `/api/compras/[id]` | Eliminar (restaura stock) | — |
 | GET/POST | `/api/gastos` | Listar (filtro categoría) / crear | — |
 | PUT/DELETE | `/api/gastos/[id]` | Editar / eliminar | — |
-| GET/POST | `/api/personas` | Buscar cliente (DNI→teléfono→parcial) / crear (dedupe por DNI/teléfono + vincula `cliente_de`) | — |
+| GET/POST | `/api/personas` | Buscar cliente por DNI o teléfono **exactos** (sin nombre) / crear (dedupe por DNI/teléfono + vincula `cliente_de`) | — |
 | POST | `/api/register` | Crea usuario Auth + perfil Pro trial 30 días (slug único) | — |
 | POST | `/api/mercadopago/create-subscription` | Crea preapproval; devuelve `init_point` | — |
 | POST | `/api/webhooks/mercadopago` | Verifica firma; `preapproval authorized` → `pro_until = now + meses` | — |
