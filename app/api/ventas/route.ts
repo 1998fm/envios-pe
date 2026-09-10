@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json()
-  const { user_id, persona_id, persona_nombre, persona_dni, items, metodo_pago } = body
+  const { user_id, persona_id, persona_nombre, persona_dni, items, metodo_pago, estado: estadoSolicitado } = body
 
   if (!user_id || !persona_id || !items?.length) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
@@ -47,7 +47,8 @@ export async function POST(request: Request) {
   }
 
   const pago = metodo_pago === 'YAPE_PLIN' || metodo_pago === 'TARJETA' ? metodo_pago : 'EFECTIVO'
-  const estado = pago === 'TARJETA' ? 'PENDIENTE' : 'COMPLETADA'
+  // TARJETA siempre queda pendiente hasta confirmar; EFECTIVO y YAPE_PLIN respetan si el cliente ya pagó
+  const estado = pago === 'TARJETA' ? 'PENDIENTE' : (estadoSolicitado === 'PENDIENTE' ? 'PENDIENTE' : 'COMPLETADA')
 
   let total = 0
   const itemsData = items.map((it: any) => {

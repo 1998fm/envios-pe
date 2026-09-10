@@ -308,7 +308,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="nueva-venta-pago"]',
-        text: 'Elige cómo pagó tu cliente: Efectivo, Yape/Plin o Tarjeta. Si eliges Tarjeta, la venta queda "Pendiente" hasta que confirmes el pago.',
+        text: 'Elige cómo pagó tu cliente: Efectivo, Yape/Plin o Tarjeta. Con Efectivo y Yape/Plin indica si ya pagó o si quedó pendiente; con Tarjeta la venta queda "Pendiente" hasta que confirmes el pago.',
       },
       {
         target: '[data-tour="nueva-venta-crear"]',

@@ -47,6 +47,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   const [showEscanner, setShowEscanner] = useState(false)
   const [itemsVenta, setItemsVenta] = useState<{ producto_id: string; nombre: string; cantidad: string; precio: number }[]>([])
   const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'YAPE_PLIN' | 'TARJETA'>('EFECTIVO')
+  const [pagoEstado, setPagoEstado] = useState<'COMPLETADA' | 'PENDIENTE'>('COMPLETADA')
   const [creando, setCreando] = useState(false)
 
   async function cargarVentas(offset = 0, append = false) {
@@ -190,6 +191,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
         persona_nombre: personaSel.nombre,
         persona_dni: personaSel.dni,
         metodo_pago: metodoPago,
+        ...(metodoPago !== 'TARJETA' ? { estado: pagoEstado } : {}),
         items: itemsVenta.map((it) => ({
           producto_id: it.producto_id,
           producto_nombre: it.nombre,
@@ -222,6 +224,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     setItemsVenta([])
     setBusquedaProd('')
     setMetodoPago('EFECTIVO')
+    setPagoEstado('COMPLETADA')
     setMostrarNuevoCliente(false)
     setNuevoCliForm({ dni: '', nombre: '', telefono: '' })
   }
@@ -571,7 +574,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
               )}
 
               {itemsVenta.length > 0 && (
-                <div>
+                <div data-tour="nueva-venta-pago">
                   <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Método de pago</label>
                   <div className="mt-1 grid grid-cols-3 gap-2">
                     {METODOS_PAGO.map((m) => (
@@ -588,6 +591,38 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                       </button>
                     ))}
                   </div>
+                  {metodoPago !== 'TARJETA' && (
+                    <div className="mt-2" data-tour="nueva-venta-pago-estado">
+                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">¿El pago ya se realizó?</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => setPagoEstado('COMPLETADA')}
+                          className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                            pagoEstado === 'COMPLETADA'
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/20'
+                              : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-400 hover:text-emerald-700'
+                          }`}
+                        >
+                          <Check size={15} /> Sí, ya pagó
+                        </button>
+                        <button
+                          onClick={() => setPagoEstado('PENDIENTE')}
+                          className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                            pagoEstado === 'PENDIENTE'
+                              ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20'
+                              : 'bg-white text-slate-600 border-slate-200 hover:border-amber-400 hover:text-amber-700'
+                          }`}
+                        >
+                          Pendiente
+                        </button>
+                      </div>
+                      {pagoEstado === 'PENDIENTE' && (
+                        <p className="mt-1.5 text-xs text-amber-600">
+                          La venta se registrará como <strong>Pendiente</strong> hasta que confirmes el pago.
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {metodoPago === 'TARJETA' && (
                     <p className="mt-1.5 text-xs text-amber-600">
                       El pago con tarjeta se registrará como <strong>Pendiente</strong> hasta que se confirme el pago.
