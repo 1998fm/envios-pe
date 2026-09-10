@@ -83,6 +83,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   const { startTour } = useOnboarding()
   const [productos, setProductos] = useState<Producto[]>([])
   const [busqueda, setBusqueda] = useState('')
+  const [busquedaAplicada, setBusquedaAplicada] = useState('')
   const [loading, setLoading] = useState(true)
   const [vista, setVista] = useState<'activos' | 'archivados'>('activos')
   const [conteoActivos, setConteoActivos] = useState(0)
@@ -134,7 +135,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
 
   async function cargarProductos(offset = 0, append = false) {
     const params = new URLSearchParams({ user_id: userId, archivado: String(vista === 'archivados') })
-    if (busqueda) params.set('busqueda', busqueda)
+    if (busquedaAplicada) params.set('busqueda', busquedaAplicada)
     params.set('offset', String(offset))
     const res = await fetch(`/api/productos?${params}`)
     const json = await res.json()
@@ -150,7 +151,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
     cargarConteos()
   }
 
-  useEffect(() => { cargarProductosYConteos() }, [userId, busqueda, vista])
+  useEffect(() => { cargarProductosYConteos() }, [userId, busquedaAplicada, vista])
 
   useEffect(() => {
     const limpiar = () => setImprimirProducto(null)
@@ -528,9 +529,15 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder={vista === 'archivados' ? 'Buscar en archivados...' : 'Buscar producto...'}
+            placeholder={vista === 'archivados' ? 'Buscar en archivados...' : 'Buscar producto... (Enter para buscar)'}
             value={busqueda}
-            onChange={(e) => { setBusqueda(e.target.value); setLoading(true) }}
+            onChange={(e) => setBusqueda(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setBusquedaAplicada(busqueda.trim())
+                setLoading(true)
+              }
+            }}
             className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
           />
         </div>
