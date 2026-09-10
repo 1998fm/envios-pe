@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       profile_id: user_id,
       persona_id,
       persona_nombre,
-      persona_dni,
+      persona_dni: persona_dni || null,
       total,
       estado,
       metodo_pago: pago,

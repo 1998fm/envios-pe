@@ -212,7 +212,9 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
         setCreando(false)
         return
       }
-      toast.error('Error al crear venta')
+      const texto = await res.text()
+      const data = (() => { try { return JSON.parse(texto) } catch { return {} } })()
+      toast.error(data.error || texto || 'Error al crear venta')
     }
     setCreando(false)
   }
