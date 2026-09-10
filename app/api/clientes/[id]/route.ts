@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 
+function norm(v: string | null | undefined): string {
+  return (v || '').replace(/\s+/g, '').toUpperCase()
+}
+
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const body = await request.json()
@@ -9,6 +13,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (!user_id) {
     return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
   }
+
+  // Limpiar datos: sin espacios ni caracteres invisibles
+  const dniLimpio = dni !== undefined && dni !== null ? String(dni).replace(/\s+/g, '') : undefined
+  const telLimpio = telefono !== undefined && telefono !== null ? String(telefono).replace(/\s+/g, '') : undefined
 
   // Un cliente puede ser un grupo de personas duplicadas (mismo dni o teléfono)
   const idsPersona = Array.isArray(body.ids) && body.ids.length ? body.ids : [id]
@@ -26,22 +34,23 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 
   // Chequear que el nuevo DNI no le pertenezca a otra persona (dni único)
-  if (dni) {
-    const { data: duplicado } = await supabaseAdmin
+  if (dniLimpio) {
+    const { data: personasTodas } = await supabaseAdmin
       .from('personas')
-      .select('id')
-      .eq('dni', dni)
-      .not('id', 'in', `(${idsPersona.join(',')})`)
-      .maybeSingle()
+      .select('id, dni')
+      .neq('dni', null)
+    const duplicado = (personasTodas || []).find(
+      (p: any) => norm(p.dni) === norm(dniLimpio) && !idsPersona.includes(p.id)
+    )
     if (duplicado) {
       return NextResponse.json({ error: 'Ese DNI ya está registrado en otro cliente' }, { status: 400 })
     }
   }
 
   const updates: Record<string, any> = { updated_at: new Date().toISOString() }
-  if (nombre) updates.nombre = nombre
-  if (dni !== undefined) updates.dni = dni || null
-  if (telefono !== undefined) updates.telefono = telefono || null
+  if (nombre) updates.nombre = (nombre as string).trim()
+  if (dni !== undefined) updates.dni = dniLimpio || null
+  if (telefono !== undefined) updates.telefono = telLimpio || null
 
   const { error: updateError } = await supabaseAdmin
     .from('personas')
@@ -54,9 +63,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   // Backfill a ventas (datos snapshot del momento de la venta)
   const ventaBackfill: Record<string, any> = { updated_at: new Date().toISOString() }
-  if (nombre) ventaBackfill.persona_nombre = nombre
-  if (dni !== undefined) ventaBackfill.persona_dni = dni || null
-  if (telefono !== undefined) ventaBackfill.persona_telefono = telefono || null
+  if (nombre) ventaBackfill.persona_nombre = (nombre as string).trim()
+  if (dni !== undefined) ventaBackfill.persona_dni = dniLimpio || null
+  if (telefono !== undefined) ventaBackfill.persona_telefono = telLimpio || null
   await supabaseAdmin
     .from('ventas')
     .update(ventaBackfill)
@@ -69,24 +78,32 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (dni !== undefined) envioBackfill.dni = dni || null
   if (telefono !== undefined) envioBackfill.telefono = telefono || null
   if (Object.keys(envioBackfill).length > 0) {
-    const matchFiltros: string[] = []
+    // Buscar envíos que coincidan con los dni/teléfonos anteriores del grupo (normalizados)
+    const { data: envios } = await supabaseAdmin
+      .from('envios')
+      .select('id, dni, telefono')
+      .eq('user_id', user_id)
+
     const vistos = new Set<string>()
     for (const p of personas) {
-      if (p.dni && !vistos.has(p.dni)) {
-        matchFiltros.push(`dni.eq.${p.dni}`)
-        vistos.add(p.dni)
+      const pdni = norm(p.dni)
+      const ptel = norm(p.telefono)
+      if (pdni && !vistos.has(`d:${pdni}`)) {
+        for (const e of envios ?? []) {
+          if (norm(e.dni) === pdni) {
+            await supabaseAdmin.from('envios').update(envioBackfill).eq('id', e.id)
+          }
+        }
+        vistos.add(`d:${pdni}`)
       }
-      if (p.telefono && !vistos.has(`t:${p.telefono}`)) {
-        matchFiltros.push(`telefono.eq.${p.telefono}`)
-        vistos.add(`t:${p.telefono}`)
+      if (ptel && !vistos.has(`t:${ptel}`)) {
+        for (const e of envios ?? []) {
+          if (norm(e.telefono) === ptel) {
+            await supabaseAdmin.from('envios').update(envioBackfill).eq('id', e.id)
+          }
+        }
+        vistos.add(`t:${ptel}`)
       }
-    }
-    if (matchFiltros.length > 0) {
-      await supabaseAdmin
-        .from('envios')
-        .update(envioBackfill)
-        .eq('user_id', user_id)
-        .or(matchFiltros.join(','))
     }
   }
 

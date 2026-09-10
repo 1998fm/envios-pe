@@ -348,28 +348,33 @@ export async function POST(req: Request) {
     // Buscar primero por DNI; si no hay DNI o no se encuentra, buscar por teléfono
     let personaId: string | null = null
 
-    // 1) Buscar por DNI
+    // 1) Buscar por DNI (comparación normalizada: sin espacios)
     if (dni) {
-      const { data: porDni } = await supabaseAdmin
+      const { data: personasPorDni } = await supabaseAdmin
         .from('personas')
         .select('id, nombre, telefono')
-        .eq('dni', dni)
-        .maybeSingle()
+        .neq('dni', null)
+      const porDni = (personasPorDni || []).find(
+        (p: any) => String(p.dni || '').replace(/\s+/g, '') === String(dni).replace(/\s+/g, '')
+      )
       if (porDni) personaId = porDni.id
     }
 
-    // 2) Buscar por teléfono como respaldo
+    // 2) Buscar por teléfono como respaldo (comparación normalizada)
     if (!personaId && telefono) {
       const { data: personasTel } = await supabaseAdmin
         .from('personas')
-        .select('id, nombre, dni')
-        .eq('telefono', telefono)
-        .limit(10)
+        .select('id, nombre, dni, telefono')
+        .neq('telefono', null)
 
-      if (personasTel && personasTel.length > 0) {
+      const coincidencias = (personasTel || []).filter(
+        (p: any) => String(p.telefono || '').replace(/\s+/g, '') === String(telefono).replace(/\s+/g, '')
+      )
+
+      if (coincidencias.length > 0) {
         // Preferir una persona ya vinculada a este negocio; si no, la primera
-        let match = personasTel[0]
-        for (const p of personasTel) {
+        let match = coincidencias[0]
+        for (const p of coincidencias) {
           const { data: vinculo } = await supabaseAdmin
             .from('cliente_de')
             .select('id')
@@ -388,9 +393,9 @@ export async function POST(req: Request) {
     if (personaId) {
       // Actualizar datos que falten o sean diferentes
       const updates: Record<string, any> = { updated_at: new Date().toISOString() }
-      if (dni) updates.dni = dni
+      if (dni) updates.dni = String(dni).replace(/\s+/g, '')
       if (nombre) updates.nombre = nombre
-      if (telefono) updates.telefono = telefono
+      if (telefono) updates.telefono = String(telefono).replace(/\s+/g, '')
       const { error: updErr } = await supabaseAdmin
         .from('personas')
         .update(updates)
@@ -405,7 +410,7 @@ export async function POST(req: Request) {
     } else {
       const { data: newPersona } = await supabaseAdmin
         .from('personas')
-        .insert({ dni: dni || null, nombre, telefono: telefono || null })
+        .insert({ dni: dni ? String(dni).replace(/\s+/g, '') : null, nombre, telefono: telefono ? String(telefono).replace(/\s+/g, '') : null })
         .select('id')
         .single()
       personaId = newPersona!.id

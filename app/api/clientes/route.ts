@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 
+// Normaliza dni/teléfono para comparaciones: quita espacios y caracteres invisibles
+function norm(v: string | null | undefined): string {
+  return (v || '').replace(/\s+/g, '').toUpperCase()
+}
+
 // Union-find para agrupar personas que comparten dni o teléfono (misma persona).
 function agruparPersonas(personas: any[]) {
   const parent = personas.map((_, i) => i)
@@ -15,13 +20,15 @@ function agruparPersonas(personas: any[]) {
   const porTelefono = new Map<string, number>()
 
   personas.forEach((p, i) => {
-    if (p.dni) {
-      if (porDni.has(p.dni)) union(porDni.get(p.dni)!, i)
-      else porDni.set(p.dni, i)
+    const dni = norm(p.dni)
+    const telefono = norm(p.telefono)
+    if (dni) {
+      if (porDni.has(dni)) union(porDni.get(dni)!, i)
+      else porDni.set(dni, i)
     }
-    if (p.telefono) {
-      if (porTelefono.has(p.telefono)) union(porTelefono.get(p.telefono)!, i)
-      else porTelefono.set(p.telefono, i)
+    if (telefono) {
+      if (porTelefono.has(telefono)) union(porTelefono.get(telefono)!, i)
+      else porTelefono.set(telefono, i)
     }
   })
 
@@ -86,14 +93,14 @@ export async function GET(request: Request) {
     )
     const totalVentas = misVentas.reduce((sum: number, v: any) => sum + Number(v.total || 0), 0)
 
-    const dniPreferido = miembros.find((p) => p.dni)?.dni || null
-    const telPreferido = miembros.find((p) => p.telefono)?.telefono || null
+    const dniPreferido = miembros.find((p) => norm(p.dni))?.dni || null
+    const telPreferido = miembros.find((p) => norm(p.telefono))?.telefono || null
 
     const idsEnvios = new Set<string>()
     for (const e of envios ?? []) {
       const coincide =
-        (dniPreferido && e.dni === dniPreferido) ||
-        (telPreferido && e.telefono === telPreferido)
+        (dniPreferido && norm(e.dni) === norm(dniPreferido)) ||
+        (telPreferido && norm(e.telefono) === norm(telPreferido))
       if (coincide) idsEnvios.add(e.id)
     }
 
@@ -110,8 +117,8 @@ export async function GET(request: Request) {
       busqueda &&
       !(
         (principal.nombre || '').toLowerCase().includes(busqueda) ||
-        (dniPreferido || '').toLowerCase().includes(busqueda) ||
-        (telPreferido || '').toLowerCase().includes(busqueda)
+        norm(dniPreferido).toLowerCase().includes(busqueda) ||
+        norm(telPreferido).toLowerCase().includes(busqueda)
       )
     ) {
       continue
@@ -124,9 +131,9 @@ export async function GET(request: Request) {
       id: idCliente,
       clave: idPersonas.slice().sort().join('|'),
       ids: idPersonas,
-      nombre: principal.nombre,
-      dni: dniPreferido,
-      telefono: telPreferido,
+      nombre: (principal.nombre || '').trim(),
+      dni: dniPreferido ? dniPreferido.trim() : null,
+      telefono: telPreferido ? telPreferido.trim() : null,
       ventas: misVentas.length,
       totalVentas,
       envios: idsEnvios.size,

@@ -1,30 +1,36 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 
+function norm(v: string | null | undefined): string {
+  return (v || '').replace(/\s+/g, '').toUpperCase()
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('user_id')
-  const busqueda = searchParams.get('busqueda') || ''
+  const busqueda = (searchParams.get('busqueda') || '').trim()
 
   if (!userId || !busqueda) {
     return NextResponse.json({ data: null })
   }
 
+  const qNorm = norm(busqueda)
+
   // Buscar por DNI exacto (lo más común)
-  const { data: porDni } = await supabaseAdmin
+  const { data: personasDni } = await supabaseAdmin
     .from('personas')
     .select('*')
-    .eq('dni', busqueda)
-    .maybeSingle()
+    .neq('dni', null)
+  const porDni = (personasDni || []).find((p: any) => norm(p.dni) === qNorm)
 
   if (porDni) return NextResponse.json({ data: porDni })
 
   // Buscar por teléfono exacto
-  const { data: porTel } = await supabaseAdmin
+  const { data: personasTel } = await supabaseAdmin
     .from('personas')
     .select('*')
-    .eq('telefono', busqueda)
-    .maybeSingle()
+    .neq('telefono', null)
+  const porTel = (personasTel || []).find((p: any) => norm(p.telefono) === qNorm)
 
   if (porTel) return NextResponse.json({ data: porTel })
 
@@ -44,19 +50,21 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json()
-  const { user_id, dni, nombre, telefono } = body
+  const { user_id, nombre } = body
+  const dni = body.dni ? String(body.dni).replace(/\s+/g, '') : null
+  const telefono = body.telefono ? String(body.telefono).replace(/\s+/g, '') : null
 
   if (!user_id || !nombre) {
     return NextResponse.json({ error: 'user_id y nombre son requeridos' }, { status: 400 })
   }
 
-  // Buscar por DNI primero
+  // Buscar por DNI primero (comparación normalizada: sin espacios)
   if (dni) {
-    const { data: existing } = await supabaseAdmin
+    const { data: personasPorDni } = await supabaseAdmin
       .from('personas')
       .select('id, telefono, nombre')
-      .eq('dni', dni)
-      .maybeSingle()
+      .neq('dni', null)
+    const existing = (personasPorDni || []).find((p: any) => norm(p.dni) === norm(dni))
 
     if (existing) {
       const updates: Record<string, any> = { updated_at: new Date().toISOString() }
@@ -82,17 +90,18 @@ export async function POST(request: Request) {
     }
   }
 
-  // Buscar por teléfono si no se encontró por DNI
+  // Buscar por teléfono si no se encontró por DNI (comparación normalizada)
   if (telefono) {
     const { data: personasTel } = await supabaseAdmin
       .from('personas')
-      .select('id, dni, nombre')
-      .eq('telefono', telefono)
-      .limit(10)
+      .select('id, dni, nombre, telefono')
+      .neq('telefono', null)
 
-    let existing = personasTel && personasTel.length > 0 ? personasTel[0] : null
-    if (personasTel && personasTel.length > 1) {
-      for (const p of personasTel) {
+    const coincidencias = (personasTel || []).filter((p: any) => norm(p.telefono) === norm(telefono))
+
+    let existing = coincidencias.length > 0 ? coincidencias[0] : null
+    if (coincidencias.length > 1) {
+      for (const p of coincidencias) {
         const { data: vinculo } = await supabaseAdmin
           .from('cliente_de')
           .select('id')
