@@ -119,7 +119,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
     unidad: 'unidad',
   })
   const [tipoCreacion, setTipoCreacion] = useState<'individual' | 'variantes'>('individual')
-  const [variantes, setVariantes] = useState<{ nombre: string; cantidad: number }[]>([
+  const [variantes, setVariantes] = useState<{ nombre: string; cantidad: number; foto?: FotoPendiente }[]>([
     { nombre: '', cantidad: 1 },
   ])
 
@@ -350,7 +350,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
     let imagenUrl: string | undefined
     let rutaSubida: string | undefined
 
-    if (nuevaFoto) {
+    if (nuevaFoto && tipoCreacion === 'individual') {
       setSubiendoFoto(true)
       try {
         imagenUrl = await subirFoto(nuevaFoto)
@@ -372,6 +372,19 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
         const nombreCompleto = `${nuevoForm.nombre.trim()} - ${v.nombre.trim()}`
         const sku = generarSKU(nombreCompleto)
 
+        let imagenUrlVariante: string | undefined
+        let rutaSubidaVariante: string | undefined
+        if (v.foto) {
+          try {
+            imagenUrlVariante = await subirFoto(v.foto)
+            rutaSubidaVariante = rutaDesdeUrlProducto(imagenUrlVariante) ?? undefined
+          } catch (err: any) {
+            toast.error(`Error subiendo foto de ${v.nombre}: ${err?.message}`)
+            errorAlCrear = true
+            continue
+          }
+        }
+
         const res = await fetch('/api/productos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -384,18 +397,23 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
             stock_minimo: nuevoForm.stock_minimo,
             unidad: nuevoForm.unidad,
             user_id: userId,
-            ...(imagenUrl ? { imagen_url: imagenUrl } : {}),
+            ...(imagenUrlVariante ? { imagen_url: imagenUrlVariante } : {}),
           }),
         })
 
-        if (res.ok) creados++
-        else errorAlCrear = true
+        if (res.ok) {
+          creados++
+          if (v.foto?.preview) URL.revokeObjectURL(v.foto.preview)
+        } else {
+          errorAlCrear = true
+          if (rutaSubidaVariante) {
+            try { await supabase.storage.from('productos').remove([rutaSubidaVariante]) } catch {}
+          }
+        }
       }
 
+      variantes.forEach((v) => { if (v.foto?.preview) URL.revokeObjectURL(v.foto.preview) })
       if (nuevaFoto?.preview) URL.revokeObjectURL(nuevaFoto.preview)
-      if (rutaSubida) {
-        try { await supabase.storage.from('productos').remove([rutaSubida]) } catch {}
-      }
 
       if (creados > 0) {
         toast.success(`${creados} producto${creados === 1 ? '' : 's'} creado${creados === 1 ? '' : 's'}`)
@@ -406,7 +424,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
         setNuevaFoto(null)
         cargarProductosYConteos()
       } else if (errorAlCrear) {
-        toast.error('Error al crear las variantes')
+        toast.error('Error al crear algunas variantes')
       }
       return
     }
@@ -888,33 +906,57 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                     <div className="space-y-2">
                       {variantes.map((v, i) => (
                         <div key={i} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
-                          <input
-                            type="text"
-                            value={v.nombre}
-                            onChange={(e) => {
-                              const nv = [...variantes]
-                              nv[i] = { ...nv[i], nombre: e.target.value }
-                              setVariantes(nv)
-                            }}
-                            placeholder={i === 0 ? 'Color / Talla (ej: AMARILLO)' : 'Color / Talla'}
-                            className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                          />
-                          <input
-                            type="number"
-                            min={1}
-                            value={v.cantidad}
-                            onChange={(e) => {
-                              const nv = [...variantes]
-                              nv[i] = { ...nv[i], cantidad: parseInt(e.target.value, 10) || 1 }
-                              setVariantes(nv)
-                            }}
-                            className="w-20 px-3 py-2 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                          />
-                          <span className="text-[11px] text-slate-400">uds</span>
+                          <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 cursor-pointer border border-slate-200" onClick={() => document.getElementById(`foto-variante-${i}`)?.click()} title="Foto de la variante">
+                            {v.foto ? (
+                              <img src={v.foto.preview} alt="Variante" className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
+                                <Camera size={20} />
+                              </span>
+                            )}
+                            <input id={`foto-variante-${i}`} type="file" accept="image/*" className="hidden" onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              comprimirImagen(file).then((blob) => {
+                                if (v.foto?.preview) URL.revokeObjectURL(v.foto.preview)
+                                const nv = [...variantes]
+                                nv[i] = { ...nv[i], foto: { blob, preview: URL.createObjectURL(blob), kb: Math.max(1, Math.round(blob.size / 1024)) } }
+                                setVariantes(nv)
+                              })
+                            }} />
+                          </div>
+                          <div className="flex-1 flex items-center gap-2 min-w-0">
+                            <input
+                              type="text"
+                              value={v.nombre}
+                              onChange={(e) => {
+                                const nv = [...variantes]
+                                nv[i] = { ...nv[i], nombre: e.target.value }
+                                setVariantes(nv)
+                              }}
+                              placeholder={i === 0 ? 'Color / Talla (ej: AMARILLO)' : 'Color / Talla'}
+                              className="min-w-0 flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                            />
+                            <input
+                              type="number"
+                              min={1}
+                              value={v.cantidad}
+                              onChange={(e) => {
+                                const nv = [...variantes]
+                                nv[i] = { ...nv[i], cantidad: parseInt(e.target.value, 10) || 1 }
+                                setVariantes(nv)
+                              }}
+                              className="w-20 px-3 py-2 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                            />
+                            <span className="text-[11px] text-slate-400">uds</span>
+                          </div>
                           {variantes.length > 1 && (
                             <button
                               type="button"
-                              onClick={() => setVariantes(variantes.filter((_, idx) => idx !== i))}
+                              onClick={() => {
+                                if (v.foto?.preview) URL.revokeObjectURL(v.foto.preview)
+                                setVariantes(variantes.filter((_, idx) => idx !== i))
+                              }}
                               className="text-red-500 hover:text-red-600 p-1"
                               title="Eliminar variante"
                             >
@@ -936,9 +978,10 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
               )}
             </>
 
-            {/* ============ CAMPOS COMUNES (FOTO, STOCK, PRECIOS, UNIDAD) ============ */}
+            {/* ============ CAMPOS COMUNES (FOTO solo individual, STOCK, PRECIOS, UNIDAD) ============ */}
             <div>
-              <div>
+              {tipoCreacion === 'individual' && (
+                <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Foto del producto (opcional)</label>
                 <div className="mt-1 flex items-center gap-3">
                   <label
@@ -973,6 +1016,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                   </div>
                 </div>
               </div>
+              )}
               <div data-tour="nuevo-producto-stock" className="grid grid-cols-2 gap-3">
                 <div>
                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Stock</label>
@@ -1073,7 +1117,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
               </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <button onClick={() => { setShowNuevo(false); quitarFoto('nuevo') }} className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">
+              <button onClick={() => { setShowNuevo(false); quitarFoto('nuevo'); variantes.forEach(v => { if (v.foto?.preview) URL.revokeObjectURL(v.foto.preview) }) }} className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">
                 Cancelar
               </button>
                <button
