@@ -119,7 +119,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="resumen-saldo"]',
-        text: 'Tu saldo disponible: lo que te queda tras ventas, compras y gastos. Se calcula solo: Ventas − Compras − Gastos.',
+        text: 'Tu saldo disponible: lo que te queda tras ventas cobradas, compras y gastos. Las ventas pendientes de pago no suman hasta que las cobres. Se calcula solo: Ventas cobradas − Compras − Gastos.',
       },
       {
         target: '[data-tour="resumen-kpis"]',

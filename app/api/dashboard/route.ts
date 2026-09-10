@@ -112,7 +112,7 @@ export async function GET(request: Request) {
     countEnvios(new Date(0), undefined, ['NO_EMPACADO']),
     countEnvios(new Date(0), undefined, ['EMPACADO']),
     countProductosStockBajo(supabaseAdmin, userId),
-    sumVentas(new Date(0), undefined, ['COMPLETADA', 'PENDIENTE']),
+    sumVentas(new Date(0), undefined, ['COMPLETADA']),
     sumCompras(new Date(0), undefined, ['COMPLETADA']),
     sumGastos(startOfMonth, startOfNextMonth),
     sumGastos(startOfPrevMonth, startOfMonth),

@@ -408,7 +408,9 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
               <p className="text-4xl sm:text-5xl font-extrabold mt-1.5 leading-none tracking-tight">
                 {fmtSoles(data.kpis.saldoDisponible)}
               </p>
-              <p className="text-[11px] text-white/60 mt-2">Ventas totales − Compras − Gastos</p>
+              <p className="text-[11px] text-white/60 mt-2">
+                Ventas cobradas − Compras − Gastos (las ventas pendientes aún no suman)
+              </p>
             </div>
             <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:pb-1">
               {[
