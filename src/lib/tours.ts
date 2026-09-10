@@ -296,19 +296,19 @@ export const TOURS: Tour[] = [
     steps: [
       {
         target: '[data-tour="nueva-venta-cliente"]',
-        text: 'Este es el formulario de "Nueva venta". Primero busca al cliente por DNI o teléfono. Si no existe, usa "Registro rápido" para crearlo.',
+        text: 'Paso 1 de 3 — Cliente. Busca al cliente por DNI o teléfono. Si no existe, usa "Registro rápido" para crearlo y luego "Continuar".',
       },
       {
         target: '[data-tour="nueva-venta-productos"]',
-        text: 'Aquí eliges los productos que vendió. Escribe para buscar y toca uno para agregarlo a la venta.',
+        text: 'Paso 2 de 3 — Productos. Escribe para buscar y toca un producto para agregarlo a la venta; verás el carrito en el panel derecho, donde puedes cambiar cantidades con +/–.',
       },
       {
         target: '[data-tour="nueva-venta-items"]',
-        text: 'Revisa la lista: puedes cambiar la cantidad y el precio si hiciste un descuento. El total se calcula solo.',
+        text: 'Este es el carrito de la venta: revisa cantidades y precios (por si hubo descuento). El total se calcula solo.',
       },
       {
         target: '[data-tour="nueva-venta-pago"]',
-        text: 'Elige cómo pagó tu cliente: Efectivo, Yape/Plin o Tarjeta. Con Efectivo y Yape/Plin indica si ya pagó o si quedó pendiente; con Tarjeta la venta queda "Pendiente" hasta que confirmes el pago.',
+        text: 'Paso 3 de 3 — Pago. Elige cómo pagó tu cliente: Efectivo, Yape/Plin o Tarjeta. Con Efectivo y Yape/Plin indica si ya pagó o si quedó pendiente; con Tarjeta la venta queda "Pendiente" hasta que confirmes el pago.',
       },
       {
         target: '[data-tour="nueva-venta-crear"]',
