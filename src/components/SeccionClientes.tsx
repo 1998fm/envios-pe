@@ -7,6 +7,7 @@ import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 import TourHelpButton from '@/components/TourHelpButton'
 import { useConfirm } from '@/components/ConfirmDialog'
+import ModalDetalleCliente from '@/components/ModalDetalleCliente'
 
 type Cliente = {
   id: string
@@ -41,6 +42,7 @@ export default function SeccionClientes({ userId }: Props) {
   })
   const [guardando, setGuardando] = useState(false)
   const [ultimoCopiado, setUltimoCopiado] = useState<string | null>(null)
+  const [detalleCliente, setDetalleCliente] = useState<Cliente | null>(null)
 
   async function cargarClientes() {
     setLoading(true)
@@ -193,7 +195,12 @@ export default function SeccionClientes({ userId }: Props) {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtrados.map((c) => (
-                <tr key={c.clave} className="hover:bg-slate-50 transition-colors">
+                <tr
+                  key={c.clave}
+                  onDoubleClick={() => setDetalleCliente(c)}
+                  className="hover:bg-slate-50 transition-colors cursor-pointer"
+                  title="Doble clic para ver historial"
+                >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
                       <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-100 to-indigo-100 flex items-center justify-center text-xs font-bold text-sky-700 shrink-0">
@@ -261,6 +268,15 @@ export default function SeccionClientes({ userId }: Props) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {detalleCliente && (
+        <ModalDetalleCliente
+          userId={userId}
+          clienteId={detalleCliente.id}
+          ids={detalleCliente.ids}
+          onClose={() => setDetalleCliente(null)}
+        />
       )}
 
       {editando && (

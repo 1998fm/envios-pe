@@ -5,6 +5,78 @@ function norm(v: string | null | undefined): string {
   return (v || '').replace(/\s+/g, '').toUpperCase()
 }
 
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const { searchParams } = new URL(request.url)
+  const user_id = searchParams.get('user_id')
+  const ids = (searchParams.get('ids') || '').split(',').filter(Boolean)
+
+  if (!user_id) {
+    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
+  }
+
+  // Un cliente puede ser un grupo de personas duplicadas (mismo dni o teléfono)
+  const idsPersona = ids.length > 0 ? ids : [id]
+
+  const [{ data: personas, error: perr }, { data: ventas }, { data: envios }] = await Promise.all([
+    supabaseAdmin.from('personas').select('*').in('id', idsPersona),
+    supabaseAdmin
+      .from('ventas')
+      .select('*, items:venta_items(*)')
+      .in('persona_id', idsPersona)
+      .eq('profile_id', user_id)
+      .order('created_at', { ascending: false }),
+    supabaseAdmin
+      .from('envios')
+      .select('*')
+      .eq('user_id', user_id)
+      .order('fecha_registro', { ascending: false }),
+  ])
+
+  if (perr) {
+    return NextResponse.json({ error: perr.message }, { status: 500 })
+  }
+  if (!personas || personas.length === 0) {
+    return NextResponse.json({ error: 'No se encontró el cliente' }, { status: 404 })
+  }
+
+  const principal = [...personas].sort((a: any, b: any) => {
+    const score = (p: any) => (p.dni ? 2 : 0) + (p.telefono ? 1 : 0) + (p.nombre ? 0.5 : 0)
+    return score(b) - score(a)
+  })[0]
+
+  const dniPreferido = personas.find((p: any) => norm(p.dni))?.dni || null
+  const telPreferido = personas.find((p: any) => norm(p.telefono))?.telefono || null
+
+  const misVentas = (ventas ?? []).filter(
+    (v: any) => idsPersona.includes(v.persona_id) && (v.estado === 'COMPLETADA' || v.estado === 'PENDIENTE')
+  )
+
+  const enviosCliente = (envios ?? []).filter((e: any) => {
+    return (
+      (dniPreferido && norm(e.dni) === norm(dniPreferido)) ||
+      (telPreferido && norm(e.telefono) === norm(telPreferido))
+    )
+  })
+
+  return NextResponse.json({
+    data: {
+      id: principal.id,
+      ids: idsPersona,
+      nombre: (principal.nombre || '').trim(),
+      dni: dniPreferido ? dniPreferido.trim() : null,
+      telefono: telPreferido ? telPreferido.trim() : null,
+      ventas: misVentas,
+      envios: enviosCliente,
+      totalVentas: misVentas.reduce((s: number, v: any) => s + Number(v.total || 0), 0),
+      ultimoRegistro:
+        [...misVentas.map((v: any) => v.created_at), ...enviosCliente.map((e: any) => e.fecha_registro)]
+          .sort()
+          .pop() || null,
+    },
+  })
+}
+
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const body = await request.json()
