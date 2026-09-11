@@ -448,7 +448,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                       <span className="hidden md:inline cursor-help text-sky-600 font-semibold border-b border-dashed border-sky-300 group relative">
                         {v.items?.length ?? 0} ítems
                         {(v.items || []).length > 0 && (
-                          <span className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden group-hover:block min-w-56 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xl">
+                          <span className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden group-hover:block min-w-96 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xl">
                             <div className="divide-y divide-slate-100">
                               {(v.items || []).map((it, ii) => (
                                 <div key={it.id || ii} className="flex items-baseline justify-between gap-4 py-1.5">
