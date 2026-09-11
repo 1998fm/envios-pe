@@ -1329,9 +1329,7 @@ const enviosAgrupados = enviosVisibles.reduce(
 
     const fecha =
       fechaCampo
-        ? new Date(fechaCampo)
-            .toISOString()
-            .split('T')[0]
+        ? new Date(fechaCampo).toLocaleDateString('en-CA')
         : 'SIN_FECHA'
 
     if (!acc[fecha]) {
