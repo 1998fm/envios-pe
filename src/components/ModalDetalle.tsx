@@ -203,13 +203,14 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     let idsVentas: string[] = []
     let ventas: any[] = []
 
-    // 1) Ventas ya vinculadas directamente a este envío (relación confiable)
+    // 1) Ventas ya vinculadas directamente a este envío (relación confiable).
+    //    No se filtran por estado_envio: al pasar el envío a ENVIADO las ventas
+    //    quedan como COMPLETADO y deben seguir viéndose (historial del pedido).
     const { data: porEnvio, error: errEnvio } = await supabase
       .from('ventas')
       .select('*')
       .eq('envio_id', current.id)
       .in('estado', ['COMPLETADA', 'PENDIENTE'])
-      .not('estado_envio', 'eq', 'COMPLETADO')
       .order('created_at', { ascending: false })
 
     if (!errEnvio && porEnvio && porEnvio.length > 0) {
