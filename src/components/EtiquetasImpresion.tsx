@@ -77,7 +77,7 @@ export default function EtiquetasImpresion({
   bg-white
   flex
   flex-col
-  min-h-[46vh]
+  ${grupo.length === 2 ? 'min-h-[92vh]' : 'min-h-[46vh]'}
 "
 >
 
