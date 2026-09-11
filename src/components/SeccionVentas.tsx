@@ -418,7 +418,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                 return (
                   <Fragment key={v.id}>
                     <tr className="hover:bg-slate-50 transition-colors">
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3 md:hidden">
                         <button
                           onClick={() => setVentaExpandida(ventaExpandida === v.id ? null : v.id)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
@@ -444,7 +444,30 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                         <span className="text-slate-300">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right text-slate-600">{v.items?.length ?? 0} ítems</td>
+                    <td className="relative px-4 py-3 text-right">
+                      <span className="hidden md:inline cursor-help text-sky-600 font-semibold border-b border-dashed border-sky-300 group relative">
+                        {v.items?.length ?? 0} ítems
+                        {(v.items || []).length > 0 && (
+                          <span className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden group-hover:block min-w-56 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xl">
+                            <div className="divide-y divide-slate-100">
+                              {(v.items || []).map((it, ii) => (
+                                <div key={it.id || ii} className="flex items-baseline justify-between gap-4 py-1.5">
+                                  <span className="text-sm font-medium text-slate-800">{it.producto_nombre}</span>
+                                  <span className="shrink-0 text-xs text-slate-500">
+                                    x{it.cantidad} · S/ {(it.subtotal ?? 0).toFixed(2)}
+                                  </span>
+                                </div>
+                              ))}
+                              <div className="flex items-baseline justify-between gap-4 border-t border-slate-100 pt-1.5">
+                                <span className="text-xs font-bold text-slate-500">Total</span>
+                                <span className="text-sm font-bold text-slate-900">S/ {v.total.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </span>
+                        )}
+                      </span>
+                      <span className="md:hidden text-slate-600">{v.items?.length ?? 0} ítems</span>
+                    </td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-900">S/ {v.total.toFixed(2)}</td>
                     {planNivel(plan) >= 1 && (
                       <td className="px-4 py-3 text-right">
