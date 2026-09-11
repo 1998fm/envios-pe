@@ -127,23 +127,20 @@ export default function TrackingBox({
   onCerrar: () => void
 }) {
   const [dni, setDni] = useState('')
-  const [telefono, setTelefono] = useState('')
   const [buscando, setBuscando] = useState(false)
   const [envios, setEnvios] = useState<TrackingEnvio[] | null>(null)
   const [error, setError] = useState('')
   const [desplegados, setDesplegados] = useState<Record<string, boolean>>({})
 
   async function buscar() {
-    if (!dni.trim() && !telefono.trim()) {
-      setError('Ingresa tu DNI o teléfono para consultar tu pedido.')
+    if (!dni.trim()) {
+      setError('Ingresa tu DNI para consultar tu pedido.')
       return
     }
     setError('')
     setBuscando(true)
     try {
-      const params = new URLSearchParams({ user_id: userId })
-      if (dni.trim()) params.set('dni', dni.trim())
-      if (telefono.trim()) params.set('telefono', telefono.trim())
+      const params = new URLSearchParams({ user_id: userId, dni: dni.trim() })
       const res = await fetch(`/api/tracking?${params.toString()}`)
       const json = await res.json()
       setEnvios(json.data ?? [])
@@ -190,7 +187,7 @@ export default function TrackingBox({
           </div>
 
           <p className="mt-3 text-sm text-slate-500">
-            Ingresa tu DNI y/o teléfono para ver el estado de tus pedidos en este local.
+            Ingresa tu DNI para ver el estado de tus pedidos en este local.
           </p>
 
           <div className="mt-4 space-y-3">
@@ -200,16 +197,7 @@ export default function TrackingBox({
               value={dni}
               onChange={(e) => setDni(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && buscar()}
-              placeholder="DNI (opcional si ingresas teléfono)"
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
-            />
-            <input
-              type="tel"
-              inputMode="tel"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && buscar()}
-              placeholder="Teléfono (opcional si ingresas DNI)"
+              placeholder="Tu DNI"
               className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
             />
             <button

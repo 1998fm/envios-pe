@@ -13,15 +13,14 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('user_id')
   const dni = norm(searchParams.get('dni'))
-  const telefono = norm(searchParams.get('telefono'))
 
-  if (!userId || (!dni && !telefono)) {
+  if (!userId || !dni) {
     return NextResponse.json({ data: null })
   }
 
   // Envíos del local (user_id) del último año, con sus ventas e items.
-  // Se filtran por coincidencia normalizada de DNI o teléfono en memoria:
-  // tolera espacios/formatos distintos a como se guardaron.
+  // Se filtran por coincidencia normalizada de DNI en memoria: tolera
+  // espacios/formatos distintos a como se guardaron.
   const haceUnAno = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString()
   const { data: envios, error } = await supabaseAdmin
     .from('envios')
@@ -35,13 +34,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const coinciden = (envios || []).filter((e: any) => {
-    const d = norm(e.dni)
-    const t = norm(e.telefono)
-    if (dni && telefono) return d === dni && t === telefono
-    if (dni) return d === dni
-    return t === telefono
-  })
+  const coinciden = (envios || []).filter((e: any) => norm(e.dni) === dni)
 
   if (coinciden.length === 0) {
     return NextResponse.json({ data: [] })
