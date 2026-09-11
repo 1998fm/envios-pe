@@ -91,6 +91,7 @@ function InfoTile({ icon: Icon, label, value }: { icon: any; label: string; valu
 
 function formatFecha(fecha: string | null | undefined) {
   if (!fecha) return '—'
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return fecha.split('-').reverse().join('/')
   return new Date(fecha).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 

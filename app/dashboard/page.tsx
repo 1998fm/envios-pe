@@ -1327,9 +1327,15 @@ const enviosAgrupados = enviosVisibles.reduce(
 
     const fechaCampo = agruparPor === 'registro' ? envio.fecha_registro : envio.fecha_programada
 
+    // fecha_programada es una columna date ("YYYY-MM-DD", neutral a zona horaria).
+    // fecha_registro es timestamptz: se convierte a la fecha local del usuario.
+    // Convertir una date con new Date() la trata como medianoche UTC y, al
+    // formatear en Lima (UTC-5), retrocede al día anterior.
     const fecha =
       fechaCampo
-        ? new Date(fechaCampo).toLocaleDateString('en-CA')
+        ? /^\d{4}-\d{2}-\d{2}$/.test(fechaCampo)
+          ? fechaCampo
+          : new Date(fechaCampo).toLocaleDateString('en-CA')
         : 'SIN_FECHA'
 
     if (!acc[fecha]) {
