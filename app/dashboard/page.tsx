@@ -95,7 +95,24 @@ const [shalomUso, setShalomUso] = useState<{ used: number; max: number | null }>
 const [planFeatures, setPlanFeatures] = useState<{ max_metodos?: number | null; max_pedidos_copiar?: number | null; max_envios?: number | null } | null>(null)
 const [mostrarUpgrade, setMostrarUpgrade] = useState(false)
 const [agruparPor, setAgruparPor] = useState<'programada' | 'registro'>('programada')
-const [pestañaActiva, setPestañaActiva] = useState<'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes'>('resumen')
+const PESTANAS = ['resumen', 'envios', 'productos', 'ventas', 'compras', 'gastos', 'clientes'] as const
+type PESTANA = typeof PESTANAS[number]
+
+const [pestañaActiva, setPestañaActiva] = useState<PESTANA>('resumen')
+
+// Restaura la pestaña activa desde el URL (?v=...) al recargar o compartir enlace.
+useEffect(() => {
+  const v = new URLSearchParams(window.location.search).get('v')
+  if (v && (PESTANAS as readonly string[]).includes(v)) {
+    setPestañaActiva(v as PESTANA)
+  }
+}, [])
+
+const cambiarPestaña = (tab: PESTANA) => {
+  setPestañaActiva(tab)
+  const url = tab === 'resumen' ? '/dashboard' : `/dashboard?v=${tab}`
+  window.history.replaceState({}, '', url)
+}
 // ========================================
 // ETIQUETAS
 // ========================================
@@ -1434,7 +1451,7 @@ for (
       copiarDatosLocked={copiarDatosLocked}
       shalomUso={shalomUso}
       pestañaActiva={pestañaActiva}
-      onNavegar={setPestañaActiva}
+      onNavegar={cambiarPestaña}
       onExportShalom={exportarSeleccionados}
       onCambioMasivo={() => setMostrarModalEstado(true)}
       onGenerarEtiquetas={async () => {
@@ -1479,7 +1496,7 @@ for (
       onConfig={() => setMostrarConfig(true)}
     />
 
-    {userId && pestañaActiva === 'resumen' && <PanelResumen userId={userId} onNavegar={setPestañaActiva} />}
+    {userId && pestañaActiva === 'resumen' && <PanelResumen userId={userId} onNavegar={cambiarPestaña} />}
 
     {pestañaActiva === 'envios' && (
       <div className="space-y-4 mb-8">
