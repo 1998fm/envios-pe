@@ -673,6 +673,27 @@ setLoading(false)
           }
         },
       )
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'envios' },
+        (payload) => {
+          const nuevo = payload.new as any
+          if (nuevo?.user_id !== userId) return
+          // Si el filtro actual está activo podría no corresponder, recargamos la
+          // primera página completa para mantener consistencia.
+          fetchEnviosRef.current(0).then((result) => {
+            setEnvios(result.data)
+            setHasMore(result.hasMore)
+          })
+        },
+      )
+      .on('postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'envios' },
+        (payload) => {
+          const viejo = payload.old as any
+          if (viejo?.user_id !== userId) return
+          setEnvios((prev) => prev.filter((e) => e.id !== viejo.id))
+        },
+      )
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [userId])

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Check, X, RotateCcw, Loader2, Eye, ScanBarcode, Lock, Copy, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import type { Venta, Producto } from '@/types/inventario'
 import ModalDetalleVenta from '@/components/ModalDetalleVenta'
 import EscannerVentas from '@/components/EscannerVentas'
@@ -70,6 +71,28 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   }
 
   useEffect(() => { cargarVentas(0); setPagina(0) }, [userId, filtroEstado, busqueda])
+
+  // Realtime: si otra sesión o pestaña registra una venta, refresca la lista
+  useEffect(() => {
+    if (!userId) return
+    const supabase = createClient()
+    const channel = supabase
+      .channel('ventas-realtime')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'ventas' },
+        () => cargarVentas(0),
+      )
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'ventas' },
+        () => cargarVentas(0),
+      )
+      .on('postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'ventas' },
+        () => cargarVentas(0),
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [userId, filtroEstado, busqueda])
 
   async function cargarMas(paginaObjetivo: number) {
     setCargandoMas(true)

@@ -43,6 +43,7 @@ type VentaItemInfo = {
 
 type VentaConItems = {
   id: string
+  codigo?: string | null
   estado: string
   estado_envio: string
   total: number
@@ -270,6 +271,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
 
     const ventasConItems: VentaConItems[] = ventas.map((venta: any) => ({
       id: venta.id,
+      codigo: venta.codigo,
       estado: venta.estado,
       estado_envio: venta.estado_envio || 'PENDIENTE',
       total: venta.total,
@@ -470,7 +472,14 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Detalle del pedido
               </p>
-              <p className="truncate text-lg font-bold text-slate-900">{envio.nombre}</p>
+              <p className="truncate text-lg font-bold text-slate-900">
+                {envio.nombre}
+                {envio.codigo && (
+                  <span className="ml-2 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500 align-middle ring-1 ring-slate-200">
+                    {envio.codigo}
+                  </span>
+                )}
+              </p>
               <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-slate-500">
                 {envio.dni && (
                   <span className="flex items-center gap-1">
@@ -674,7 +683,11 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                         <div className="flex min-w-0 items-center gap-2">
                           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
                           <span className="truncate text-sm font-bold text-slate-700">
-                            Venta #{venta.id.slice(0, 8)}
+                            {venta.codigo ? (
+                              `Venta ${venta.codigo}`
+                            ) : (
+                              `Venta #${venta.id.slice(0, 6)}`
+                            )}
                           </span>
                         </div>
                         <span

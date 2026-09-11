@@ -99,15 +99,38 @@ export async function POST(request: Request) {
 
   // Foto del costo de cada producto al momento de la venta
   const productoIds = itemsData.map((it: any) => it.producto_id).filter(Boolean)
+  const stockPorId = new Map<string, number>()
   if (productoIds.length > 0) {
     const { data: productos } = await supabaseAdmin
       .from('productos')
-      .select('id, precio_compra')
+      .select('id, precio_compra, stock_actual')
       .in('id', productoIds)
     const costoPorId = new Map((productos || []).map((p: any) => [p.id, p.precio_compra ?? 0]))
+    for (const p of productos || []) {
+      stockPorId.set(p.id, p.stock_actual ?? 0)
+    }
     for (const it of itemsData) {
       if (it.producto_id) it.costo_unitario = costoPorId.get(it.producto_id) ?? 0
     }
+  }
+
+  // Validar stock disponible antes de crear la venta (evita stock negativo)
+  const faltantes = itemsData
+    .filter((it: any) => {
+      if (!it.producto_id) return false
+      const disponible = stockPorId.get(it.producto_id) ?? 0
+      return disponible < it.cantidad
+    })
+    .map((it: any) => `"${it.producto_nombre}" (disponible: ${stockPorId.get(it.producto_id) ?? 0}, requerido: ${it.cantidad})`)
+
+  if (faltantes.length > 0) {
+    return NextResponse.json(
+      {
+        error: `Stock insuficiente para ${faltantes.join(', ')}. Actualiza el stock o reduce la cantidad.`,
+        faltantes,
+      },
+      { status: 409 }
+    )
   }
 
   // Vincular cliente con este negocio si no existe

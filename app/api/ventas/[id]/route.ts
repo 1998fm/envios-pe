@@ -20,6 +20,59 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const esEdicion = Array.isArray(items)
 
   if (esEdicion) {
+    const itemsData = items.map((it: any) => ({
+      venta_id: id,
+      producto_id: it.producto_id || null,
+      producto_nombre: it.producto_nombre,
+      cantidad: it.cantidad,
+      precio_unitario: it.precio_unitario,
+      costo_unitario: it.costo_unitario ?? 0,
+      subtotal: (it.precio_unitario ?? 0) * (it.cantidad ?? 0),
+    }))
+
+    // Validar stock disponible (se restaura lo vendido antes, así que se suma
+    // lo de los items viejos del mismo producto) para evitar stock negativo.
+    const stockViejoPorProducto = new Map<string, number>()
+    for (const item of venta.items) {
+      if (!item.producto_id) continue
+      stockViejoPorProducto.set(
+        item.producto_id,
+        (stockViejoPorProducto.get(item.producto_id) || 0) + item.cantidad
+      )
+    }
+    const idsViejos = [...stockViejoPorProducto.keys()]
+    const stockActual = new Map<string, number>()
+    if (idsViejos.length > 0) {
+      const { data: prods } = await supabaseAdmin
+        .from('productos')
+        .select('id, stock_actual')
+        .in('id', idsViejos)
+      for (const p of prods || []) stockActual.set(p.id, p.stock_actual ?? 0)
+    }
+    const faltantes = itemsData
+      .filter((it: any) => {
+        if (!it.producto_id) return false
+        const disp =
+          (stockViejoPorProducto.get(it.producto_id) || 0) +
+          (stockActual.get(it.producto_id) ?? 0)
+        return disp < it.cantidad
+      })
+      .map((it: any) => {
+        const disp =
+          (stockViejoPorProducto.get(it.producto_id) || 0) +
+          (stockActual.get(it.producto_id) ?? 0)
+        return `"${it.producto_nombre}" (disponible: ${disp}, requerido: ${it.cantidad})`
+      })
+    if (faltantes.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Stock insuficiente para ${faltantes.join(', ')}. Actualiza el stock o reduce la cantidad.`,
+          faltantes,
+        },
+        { status: 409 }
+      )
+    }
+
     for (const item of venta.items) {
       if (!item.producto_id) continue
       const { data: prod } = await supabaseAdmin
@@ -36,16 +89,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     await supabaseAdmin.from('venta_items').delete().eq('venta_id', id)
-
-    const itemsData = items.map((it: any) => ({
-      venta_id: id,
-      producto_id: it.producto_id || null,
-      producto_nombre: it.producto_nombre,
-      cantidad: it.cantidad,
-      precio_unitario: it.precio_unitario,
-      costo_unitario: it.costo_unitario ?? 0,
-      subtotal: (it.precio_unitario ?? 0) * (it.cantidad ?? 0),
-    }))
 
     const { error: itemsError } = await supabaseAdmin.from('venta_items').insert(itemsData)
     if (itemsError) {

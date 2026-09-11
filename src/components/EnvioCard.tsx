@@ -6,6 +6,7 @@ import TamanoSelect from '@/components/TamanoSelect'
 
 type Envio = {
   id: string
+  codigo?: string | null
   nombre: string
   dni: string
   telefono: string
@@ -77,6 +78,11 @@ export default function EnvioCard({
           <div data-tour="info" className="min-w-0 flex-1 sm:w-[200px] sm:shrink-0">
             <div className="font-bold text-slate-900  truncate">
               {envio.nombre}
+              {envio.codigo && (
+                <span className="ml-2 inline-block rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 align-middle">
+                  {envio.codigo}
+                </span>
+              )}
             </div>
             <div className="flex flex-wrap gap-x-2 sm:gap-x-4 gap-y-0.5 mt-0.5 text-xs text-slate-500 ">
               <span>DNI {envio.dni}</span>

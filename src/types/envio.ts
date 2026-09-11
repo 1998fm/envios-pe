@@ -1,5 +1,6 @@
 export type Envio = {
   id: string
+  codigo?: string | null
   user_id: string
   nombre: string
   dni: string
