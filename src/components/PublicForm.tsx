@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 
-import { Store, Package } from 'lucide-react'
+import { Store, Package, Truck, ChevronRight } from 'lucide-react'
 import FormHeader from '@/components/FormHeader'
 import PersonalDataSection from '@/components/PersonalDataSection'
 import ShippingMethodCards from '@/components/ShippingMethodCards'
@@ -11,6 +11,7 @@ import SubmitButton from '@/components/SubmitButton'
 import ErrorBanner from '@/components/ErrorBanner'
 import SocialLinks from '@/components/SocialLinks'
 import SuccessScreen from '@/components/SuccessScreen'
+import TrackingBox from '@/components/TrackingBox'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
 import provinciasOlva from '@/data/provincias-olva.json'
 import distritosMoto from '@/data/distritos-moto.json'
@@ -123,6 +124,7 @@ export default function PublicForm({
   const [pedidoPendienteExistente, setPedidoPendienteExistente] = useState(false)
   const [fechaProgramada, setFechaProgramada] = useState('')
   const [error, setError] = useState('')
+  const [mostrandoTracking, setMostrandoTracking] = useState(false)
   const enviandoRef = useRef(false)
   const [idempotencyKey] = useState(() => leerOcrearLlave(userId))
 
@@ -422,6 +424,23 @@ export default function PublicForm({
         <div className="space-y-6 mt-2">
           <FormHeader logoUrl={isPro ? logoUrl : undefined} />
 
+          <button
+            type="button"
+            onClick={() => setMostrandoTracking(true)}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3 text-left transition-all duration-200 hover:border-sky-300 hover:bg-sky-50"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-sm">
+                <Truck size={18} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">¿Ya hiciste un pedido?</p>
+                <p className="text-xs text-slate-500">Rastrea el estado de tu pedido</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="shrink-0 text-sky-500" />
+          </button>
+
           <PersonalDataSection
             nombre={nombre}
             setNombre={setNombre}
@@ -567,6 +586,10 @@ export default function PublicForm({
           Quiero usar Tori en mi emprendimiento
         </a>
       </div>
+
+      {mostrandoTracking && (
+        <TrackingBox userId={userId} onCerrar={() => setMostrandoTracking(false)} />
+      )}
     </div>
   )
 }
