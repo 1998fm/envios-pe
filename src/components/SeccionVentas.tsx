@@ -385,7 +385,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="w-10 px-3 py-3"></th>
+                <th className="w-10 px-3 py-3 md:hidden"></th>
                 <th className="px-4 py-3">Cliente</th>
                 <th className="px-4 py-3">Número</th>
                 <th className="px-4 py-3 text-right">Productos</th>
@@ -528,7 +528,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                   </tr>
                     {ventaExpandida === v.id && (
                       <tr className="bg-sky-50/40">
-                        <td colSpan={planNivel(plan) >= 1 ? 11 : 10} className="px-4 py-3">
+                        <td colSpan={planNivel(plan) >= 1 ? 12 : 11} className="px-4 py-3">
                           {(v.items || []).length === 0 ? (
                             <p className="text-sm text-slate-400">Esta venta no tiene productos registrados.</p>
                           ) : (
