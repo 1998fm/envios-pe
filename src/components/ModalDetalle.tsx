@@ -17,6 +17,8 @@ import {
   Ruler,
   Trash2,
   AlertCircle,
+  Wallet,
+  CircleCheck,
   type LucideIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -49,10 +51,10 @@ type VentaConItems = {
 }
 
 const ESTADO_ENVIO_STYLES: Record<string, string> = {
-  NO_EMPACADO: 'bg-slate-100 text-slate-600',
-  EMPACADO: 'bg-amber-100 text-amber-700',
-  EN_OBSERVACION: 'bg-purple-100 text-purple-700',
-  ENVIADO: 'bg-emerald-100 text-emerald-700',
+  NO_EMPACADO: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
+  EMPACADO: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+  EN_OBSERVACION: 'bg-purple-50 text-purple-700 ring-1 ring-purple-200',
+  ENVIADO: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
 }
 
 const ESTADO_ENVIO_LABEL: Record<string, string> = {
@@ -63,38 +65,72 @@ const ESTADO_ENVIO_LABEL: Record<string, string> = {
 }
 
 const ESTADO_ENVIO_BAR: Record<string, string> = {
-  NO_EMPACADO: 'bg-red-400',
+  NO_EMPACADO: 'bg-slate-400',
   EMPACADO: 'bg-amber-400',
   EN_OBSERVACION: 'bg-purple-400',
   ENVIADO: 'bg-emerald-400',
 }
 
+const PALETA_PASO: Record<
+  string,
+  { caja: string; ring: string; texto: string; barra: string }
+> = {
+  NO_EMPACADO: { caja: 'bg-sky-500', ring: 'ring-sky-200', texto: 'text-sky-700', barra: 'bg-sky-400' },
+  EN_OBSERVACION: { caja: 'bg-purple-500', ring: 'ring-purple-200', texto: 'text-purple-700', barra: 'bg-purple-400' },
+  EMPACADO: { caja: 'bg-amber-500', ring: 'ring-amber-200', texto: 'text-amber-700', barra: 'bg-amber-400' },
+  ENVIADO: { caja: 'bg-emerald-500', ring: 'ring-emerald-200', texto: 'text-emerald-700', barra: 'bg-emerald-400' },
+}
+
 const VENTA_ENVIO_STYLES: Record<string, string> = {
-  ENVIADO: 'bg-emerald-100 text-emerald-700',
-  EMPACADO: 'bg-amber-100 text-amber-700',
-  ENTREGADO: 'bg-green-100 text-green-700',
-  COMPLETADO: 'bg-emerald-100 text-emerald-700',
+  ENVIADO: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+  EMPACADO: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+  ENTREGADO: 'bg-green-50 text-green-700 ring-1 ring-green-200',
+  COMPLETADO: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+}
+
+const VENTA_ESTADO_STYLES: Record<string, string> = {
+  PENDIENTE: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+  COMPLETADA: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+  ANULADA: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200',
 }
 
 function Card({
   title,
+  subtitle,
   icon: Icon,
   right,
   children,
+  accent = 'sky',
   className = '',
 }: {
   title: string
+  subtitle?: string
   icon: LucideIcon
   right?: ReactNode
   children: ReactNode
+  accent?: 'sky' | 'purple' | 'amber' | 'emerald' | 'rose'
   className?: string
 }) {
+  const acentos: Record<string, string> = {
+    sky: 'bg-sky-100 text-sky-600',
+    purple: 'bg-purple-100 text-purple-600',
+    amber: 'bg-amber-100 text-amber-600',
+    emerald: 'bg-emerald-100 text-emerald-600',
+    rose: 'bg-rose-100 text-rose-600',
+  }
   return (
-    <section className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>
+    <section
+      className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}
+    >
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <Icon size={15} className="text-sky-600" />
-          <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${acentos[accent]}`}>
+            <Icon size={15} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-bold text-slate-900">{title}</h3>
+            {subtitle && <p className="truncate text-[11px] text-slate-400">{subtitle}</p>}
+          </div>
         </div>
         {right}
       </div>
@@ -123,6 +159,14 @@ function InfoTile({
   )
 }
 
+function AccionCobro() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200">
+      <Wallet size={12} /> Cobrado
+    </span>
+  )
+}
+
 export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Props) {
   const supabase = createClient()
   const confirmar = useConfirm()
@@ -140,6 +184,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     if (envio?.dni || envio?.telefono) {
       cargarVentasCliente()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [envio?.id])
 
   useEffect(() => {
@@ -286,7 +331,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     if (error) {
       setMensaje('Error al guardar: ' + error.message)
     } else {
-      setMensaje('✅ Fecha actualizada')
+      setMensaje('Fecha actualizada')
       onUpdate?.({ ...current, fecha_programada: nuevaFecha } as Envio)
     }
     setGuardando(false)
@@ -350,27 +395,61 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     return fecha.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })
   }
 
-  const ventasPendientes = ventasCliente.filter((v) => v.estado_envio !== 'EMPACADO' && v.estado_envio !== 'COMPLETADO')
+  function formatFechaCompleta(s?: string | null) {
+    if (!s) return '—'
+    const fecha = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T12:00:00') : new Date(s)
+    if (isNaN(fecha.getTime())) return '—'
+    return fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' })
+  }
+
+  // ---------- Datos derivados ----------
+  const ventasPendientes = ventasCliente.filter(
+    (v) => v.estado_envio !== 'EMPACADO' && v.estado_envio !== 'COMPLETADO'
+  )
   const totalProductosPendientes = ventasPendientes.reduce(
     (sum, v) => sum + v.items.length,
+    0
+  )
+  const totalPrendas = ventasCliente.reduce(
+    (sum, v) => sum + v.items.reduce((s, i) => s + i.cantidad, 0),
     0
   )
 
   const ventasPorCobrar = ventasCliente.filter((v) => v.estado === 'PENDIENTE')
   const totalPorCobrar = ventasPorCobrar.reduce((sum, v) => sum + Number(v.total || 0), 0)
+  const ventasCobradas = ventasCliente.filter((v) => v.estado === 'COMPLETADA')
+  const totalCobrado = ventasCobradas.reduce((sum, v) => sum + Number(v.total || 0), 0)
 
-  // Timeline del pedido: paso según el estado del envío y sus ventas vinculadas
+  // Paso actual del envío + progreso visual
   const ventasValidados = ventasCliente.some(
     (v) => v.estado_envio === 'EMPACADO' || v.estado_envio === 'COMPLETADO' || v.estado_envio === 'ENVIADO'
   )
   const ordenEstados = ['NO_EMPACADO', 'EN_OBSERVACION', 'EMPACADO', 'ENVIADO']
   const pasoActual = ordenEstados.indexOf(current.estado)
-  const pasosTimeline = [
-    { etiqueta: 'Recibido', descripcion: 'Pedido registrado', fecha: formatFechaCorta(current.fecha_registro) },
-    { etiqueta: 'Validado', descripcion: 'Contenido verificado', fecha: ventasValidados ? 'Validado' : undefined, completado: ventasValidados },
-    { etiqueta: 'Empacado', descripcion: 'Listo para envío', fecha: current.estado === 'EMPACADO' ? 'En proceso' : undefined, completado: current.estado === 'ENVIADO' },
-    { etiqueta: 'Enviado', descripcion: 'En camino al destino', fecha: current.estado === 'ENVIADO' ? formatFechaCorta(current.fecha_registro) : undefined, completado: current.estado === 'ENVIADO' },
+
+  const pasosSeguimiento = [
+    {
+      etiqueta: 'Recibido',
+      fecha: formatFechaCorta(current.fecha_registro),
+      completo: true,
+    },
+    {
+      etiqueta: 'Validado',
+      fecha: ventasValidados ? 'Listo' : undefined,
+      completo: ventasValidados,
+    },
+    {
+      etiqueta: 'Empacado',
+      fecha: pasoActual >= 2 ? formatFechaCorta(current.fecha_registro) : undefined,
+      completo: pasoActual >= 2,
+    },
+    {
+      etiqueta: 'Enviado',
+      fecha: pasoActual >= 3 ? formatFechaCorta(current.fecha_programada) : undefined,
+      completo: pasoActual >= 3,
+    },
   ]
+  const paleta = PALETA_PASO[current.estado] || PALETA_PASO.NO_EMPACADO
 
   const estadoEnvioStyle =
     ESTADO_ENVIO_STYLES[current.estado] || ESTADO_ENVIO_STYLES.NO_EMPACADO
@@ -381,10 +460,10 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
         {/* Barra superior de color según el estado */}
         <div className={`h-1 w-full shrink-0 ${ESTADO_ENVIO_BAR[current.estado] || 'bg-slate-300'}`} />
 
-        {/* HEADER */}
+        {/* ============================ HEADER ============================ */}
         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-100 bg-white px-6 py-5">
           <div className="flex min-w-0 items-center gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-lg font-extrabold text-white">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 text-lg font-extrabold text-white shadow-md">
               {envio.nombre.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
@@ -424,10 +503,62 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
           </div>
         </div>
 
-        {/* BODY */}
+        {/* ============================ BODY ============================ */}
         <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50/60 px-6 py-5">
-          {/* INFORMACIÓN DEL PEDIDO */}
-          <Card title="Información del pedido" icon={Package}>
+          {/* 1. SEGUIMIENTO */}
+          <Card
+            title="Seguimiento del pedido"
+            subtitle={ESTADO_ENVIO_LABEL[current.estado] || current.estado}
+            icon={Clock}
+            accent="sky"
+            right={
+              <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${estadoEnvioStyle}`}>
+                {ESTADO_ENVIO_LABEL[current.estado] || current.estado}
+              </span>
+            }
+          >
+            <div className="flex items-start">
+              {pasosSeguimiento.map((paso, idx) => {
+                const completo = paso.completo
+                const esActual = idx === pasoActual
+                return (
+                  <div key={paso.etiqueta} className="relative flex flex-1 flex-col items-center text-center">
+                    {idx > 0 && (
+                      <span
+                        className={`absolute right-1/2 top-3.5 h-0.5 w-full -translate-y-1/2 ${
+                          pasosSeguimiento[idx - 1].completo ? 'bg-emerald-400' : 'bg-slate-200'
+                        }`}
+                      />
+                    )}
+                    <span
+                      className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold transition-all ${
+                        completo
+                          ? 'bg-emerald-500 text-white shadow-sm'
+                          : esActual
+                          ? `${paleta.caja} text-white ring-4 ${paleta.ring} shadow-sm`
+                          : 'bg-white text-slate-400 ring-1 ring-slate-200'
+                      }`}
+                    >
+                      {completo ? <Check size={13} strokeWidth={3} /> : idx + 1}
+                    </span>
+                    <p
+                      className={`mt-1.5 text-[11px] font-bold ${
+                        esActual ? paleta.texto : completo ? 'text-slate-700' : 'text-slate-400'
+                      }`}
+                    >
+                      {paso.etiqueta}
+                    </p>
+                    <p className="text-[10px] font-medium text-slate-400">
+                      {paso.fecha ?? '\u00A0'}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+
+          {/* 2. DESTINO DEL ENVÍO */}
+          <Card title="Destino del envío" subtitle="A dónde y cómo va el pedido" icon={MapPin} accent="sky">
             <div className="grid grid-cols-2 gap-3">
               <InfoTile
                 icon={Truck}
@@ -444,19 +575,28 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                 }
               />
               <InfoTile icon={Ruler} label="Tamaño" value={envio.tamano || '—'} />
-              {envio.cantidad_productos != null && (
+              {envio.cantidad_productos != null ? (
                 <InfoTile
                   icon={Package}
                   label="Prendas"
                   value={`${envio.cantidad_productos} ${envio.cantidad_productos === 1 ? 'prenda' : 'prendas'}`}
                 />
+              ) : (
+                <InfoTile icon={Package} label="Prendas" value="—" />
               )}
               <InfoTile
                 icon={Clock}
                 label="Registrado"
-                value={new Date(envio.fecha_registro).toLocaleDateString('es-PE')}
+                value={formatFechaCompleta(envio.fecha_registro)}
               />
             </div>
+
+            <div className="mt-3 rounded-2xl bg-slate-50/70 p-3.5 ring-1 ring-inset ring-slate-100">
+              <div className="whitespace-pre-line text-sm leading-relaxed text-slate-800">
+                {envio.detalle}
+              </div>
+            </div>
+
             <div
               data-tour="detalle-envio-fecha"
               className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-4"
@@ -492,68 +632,149 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
             )}
           </Card>
 
-          {/* TIMELINE DEL PEDIDO */}
-          <Card title="Estado del pedido" icon={Clock}>
-            <ol className="relative space-y-4 pl-1">
-              {pasosTimeline.map((paso, idx) => {
-                const activo = idx === pasoActual || (paso.completado && idx < pasoActual + 1)
-                const completo = paso.completado || (pasoActual >= 0 && idx < pasoActual)
-                const esActual = idx === pasoActual
-                return (
-                  <li key={paso.etiqueta} className="relative flex gap-3">
-                    {idx < pasosTimeline.length - 1 && (
-                      <span
-                        className={`absolute left-[13px] top-7 h-full w-0.5 ${
-                          completo ? 'bg-emerald-300' : 'bg-slate-200'
-                        }`}
-                      />
-                    )}
-                    <span
-                      className={`relative z-10 mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
-                        completo
-                          ? 'bg-emerald-500 text-white'
-                          : esActual
-                          ? 'bg-sky-500 text-white ring-4 ring-sky-100'
-                          : 'bg-slate-100 text-slate-400'
-                      }`}
+          {/* 3. CONTENIDO / PRODUCTOS */}
+          <Card
+            title="Contenido del pedido"
+            subtitle="Revisa y valida que todo lo listado esté correcto"
+            icon={Package}
+            accent="amber"
+            right={
+              totalProductosPendientes > 0 ? (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 ring-1 ring-amber-200">
+                  {totalProductosPendientes} por validar
+                </span>
+              ) : ventasCliente.length > 0 ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
+                  <Check size={11} strokeWidth={3} /> Validado
+                </span>
+              ) : undefined
+            }
+          >
+            {loadingVentas ? (
+              <div className="flex items-center justify-center py-10 text-slate-400">
+                <Loader2 size={18} className="mr-2 animate-spin" />
+                Cargando productos...
+              </div>
+            ) : ventasCliente.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400">
+                <Package size={20} />
+                No se encontraron ventas para este cliente
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {ventasCliente.map((venta) => {
+                  const ventaEnvioStyle =
+                    VENTA_ENVIO_STYLES[venta.estado_envio] || 'bg-slate-100 text-slate-500'
+                  return (
+                    <div
+                      key={venta.id}
+                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
                     >
-                      {completo ? <Check size={13} /> : idx + 1}
-                    </span>
-                    <div className="min-w-0 flex-1 pb-1">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <p
-                          className={`text-sm font-semibold ${
-                            esActual ? 'text-slate-900' : completo ? 'text-slate-700' : 'text-slate-400'
-                          }`}
-                        >
-                          {paso.etiqueta}
-                        </p>
-                        {paso.fecha && (
-                          <span className="shrink-0 text-[11px] font-medium text-slate-400">
-                            {paso.fecha}
+                      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-2.5">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
+                          <span className="truncate text-sm font-bold text-slate-700">
+                            Venta #{venta.id.slice(0, 8)}
                           </span>
-                        )}
+                        </div>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${ventaEnvioStyle}`}
+                        >
+                          {venta.estado_envio || 'PENDIENTE'}
+                        </span>
                       </div>
-                      {paso.descripcion && (
-                        <p className="text-[11px] text-slate-400">{paso.descripcion}</p>
-                      )}
+
+                      <div className="divide-y divide-slate-50">
+                        {venta.items.map((item) => (
+                          <div key={item.id} className="flex items-center gap-3 px-4 py-2.5">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-slate-800">
+                                {item.producto_nombre}
+                              </p>
+                              <p className="text-xs text-slate-400">
+                                x{item.cantidad} · {formatMoney(item.precio_unitario)}
+                              </p>
+                            </div>
+                            <span className="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500 ring-1 ring-slate-200">
+                              <Package size={12} /> {item.cantidad} u
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="border-t border-slate-100 px-4 py-2.5 text-right text-sm font-bold text-slate-900">
+                        Total: {formatMoney(venta.total)}
+                      </div>
                     </div>
-                  </li>
-                )
-              })}
-            </ol>
+                  )
+                })}
+              </div>
+            )}
+
+            {ventasCliente.length > 0 && ventasPendientes.length > 0 && (
+              <button
+                onClick={validarContenido}
+                disabled={marcandoEnvio}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-sm font-bold text-white transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50"
+              >
+                {marcandoEnvio ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Check size={16} strokeWidth={3} />
+                )}
+                {marcandoEnvio ? 'Validando...' : 'Validar contenido del pedido'}
+              </button>
+            )}
+            {ventasCliente.length > 0 && ventasPendientes.length === 0 && (
+              <div className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                <CircleCheck size={16} /> Contenido validado · listo para envío
+              </div>
+            )}
           </Card>
 
-          {/* DESTINO */}
-          <Card title="Destino" icon={MapPin}>
-            <div className="whitespace-pre-line text-sm leading-relaxed text-slate-800">
-              {envio.detalle}
-            </div>
-          </Card>
+          {/* 4. COBRO */}
+          {ventasCliente.length > 0 && (
+            <Card
+              title="Cobro del pedido"
+              subtitle="Confirma que el pago del cliente fue recibido"
+              icon={Wallet}
+              accent={ventasPorCobrar.length > 0 ? 'amber' : 'emerald'}
+            >
+              {ventasPorCobrar.length > 0 ? (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm text-slate-600">
+                    {ventasPorCobrar.length} venta{ventasPorCobrar.length === 1 ? '' : 's'} por cobrar ·{' '}
+                    <span className="font-bold text-slate-900">{formatMoney(totalPorCobrar)}</span>
+                  </div>
+                  <button
+                    onClick={cobrarVentasPendientes}
+                    disabled={cobrandoVentas}
+                    className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-bold text-white transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50"
+                  >
+                    {cobrandoVentas ? <Loader2 size={14} className="animate-spin" /> : <Wallet size={14} />}
+                    {cobrandoVentas ? 'Registrando...' : 'Registrar pago'}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm text-slate-600">
+                    Pago registrado por{' '}
+                    <span className="font-bold text-slate-900">{formatMoney(totalCobrado)}</span>
+                  </div>
+                  <AccionCobro />
+                </div>
+              )}
+            </Card>
+          )}
 
-          {/* OBSERVACIÓN */}
+          {/* 5. OBSERVACIONES */}
           <div data-tour="detalle-envio-observacion">
-            <Card title="Observación / incidentes" icon={AlertCircle}>
+            <Card
+              title="Observación / incidentes"
+              subtitle="Registra cualquier novedad del pedido"
+              icon={AlertCircle}
+              accent={current.observaciones ? 'rose' : 'purple'}
+            >
               <textarea
                 value={observacion}
                 onChange={(e) => setObservacion(e.target.value)}
@@ -586,127 +807,9 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
               )}
             </Card>
           </div>
-
-          {/* PRODUCTOS DEL CLIENTE */}
-          <Card
-            title="Productos del cliente"
-            icon={Package}
-            right={
-              totalProductosPendientes > 0 ? (
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-                  {totalProductosPendientes} por validar
-                </span>
-              ) : undefined
-            }
-          >
-
-            {loadingVentas ? (
-              <div className="flex items-center justify-center py-10 text-slate-400">
-                <Loader2 size={18} className="mr-2 animate-spin" />
-                Cargando productos...
-              </div>
-            ) : ventasCliente.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400">
-                <Package size={20} />
-                No se encontraron ventas para este cliente
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {ventasCliente.map((venta) => {
-                  const ventaEnvioStyle =
-                    VENTA_ENVIO_STYLES[venta.estado_envio] || 'bg-slate-100 text-slate-500'
-                  return (
-                    <div
-                      key={venta.id}
-                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
-                    >
-                      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-2.5">
-                        <span className="text-sm font-semibold text-slate-700">
-                          Venta #{venta.id.slice(0, 8)}
-                        </span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${ventaEnvioStyle}`}
-                        >
-                          {venta.estado_envio || 'PENDIENTE'}
-                        </span>
-                      </div>
-
-                      <div className="divide-y divide-slate-50">
-                        {venta.items.map((item) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center gap-3 px-4 py-2.5"
-                          >
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-slate-800">
-                                {item.producto_nombre}
-                              </p>
-                              <p className="text-xs text-slate-400">
-                                x{item.cantidad} · {formatMoney(item.precio_unitario)}
-                              </p>
-                            </div>
-                            <span className="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500">
-                              <Package size={12} /> {item.cantidad} u
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="border-t border-slate-100 px-4 py-2.5 text-right text-sm font-bold text-slate-900">
-                        Total: {formatMoney(venta.total)}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {ventasCliente.length > 0 && ventasPendientes.length > 0 && (
-              <button
-                onClick={validarContenido}
-                disabled={marcandoEnvio}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-sm font-bold text-white transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50"
-              >
-                {marcandoEnvio ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Check size={16} />
-                )}
-                Validar contenido del pedido
-              </button>
-            )}
-          </Card>
-
-          {/* COBRO DEL PEDIDO */}
-          {ventasPorCobrar.length > 0 && (
-            <Card
-              title="Cobro del pedido"
-              icon={Check}
-              right={
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-                  {ventasPorCobrar.length} pendiente(s)
-                </span>
-              }
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm text-slate-600">
-                  Total por cobrar:{' '}
-                  <span className="font-bold text-slate-900">{formatMoney(totalPorCobrar)}</span>
-                </div>
-                <button
-                  onClick={cobrarVentasPendientes}
-                  disabled={cobrandoVentas}
-                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-bold text-white transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50"
-                >
-                  {cobrandoVentas ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                  {cobrandoVentas ? 'Registrando...' : 'Registrar pago'}
-                </button>
-              </div>
-            </Card>
-          )}
         </div>
 
-        {/* FOOTER */}
+        {/* ============================ FOOTER ============================ */}
         <div className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-white px-6 py-4">
           {confirmandoEliminar ? (
             <div className="flex items-center gap-2">
