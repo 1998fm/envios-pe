@@ -50,6 +50,16 @@ const ESTADO_STYLE: Record<string, string> = {
   ENVIADO: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200',
 }
 
+const METODO_LABEL: Record<string, string> = {
+  MOTORIZADO: 'Motorizado',
+  SHALOM: 'Shalom',
+  OLVA: 'Olva',
+  MARVISUR: 'Marvisur',
+  FLORES: 'Flores Express',
+  RECOJO: 'Recojo en tienda',
+  OTRO: 'Otro',
+}
+
 function formatearFecha(s?: string | null) {
   if (!s) return '—'
   const fecha = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T12:00:00') : new Date(s)
@@ -269,6 +279,20 @@ export default function TrackingBox({
 
                     <StepperEnvio estado={activoActual.estado} />
 
+                    {activoActual.metodo && (
+                      <div className="flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2.5 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-sky-100">
+                        <Truck size={13} className="shrink-0 text-sky-600" />
+                        Método de envío:{' '}
+                        <span className="font-bold text-slate-900">
+                          {METODO_LABEL[activoActual.metodo] ||
+                            METODO_LABEL.OTRO}
+                          {activoActual.nombre_metodo
+                            ? ` · ${activoActual.nombre_metodo}`
+                            : ''}
+                        </span>
+                      </div>
+                    )}
+
                     {activoActual.fecha_programada && (
                       <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-500 ring-1 ring-inset ring-slate-100">
                         <Package size={13} className="shrink-0 text-sky-500" />
@@ -382,8 +406,11 @@ export default function TrackingBox({
                           {abierto && (
                             <div className="border-t border-slate-100 px-4 py-3 space-y-3">
                               <p className="text-xs text-slate-500">
-                                Enviado con {e.metodo || '—'}
-                                {e.nombre_metodo ? ` · ${e.nombre_metodo}` : ''} ·{' '}
+                                Enviado con{' '}
+                                {e.metodo
+                                  ? METODO_LABEL[e.metodo] || e.metodo
+                                  : '—'}
+                                {e.nombre_metodo ? ` (${e.nombre_metodo})` : ''} ·{' '}
                                 {formatearFecha(e.fecha_registro)}
                               </p>
                               {e.ventas.length > 0 ? (
