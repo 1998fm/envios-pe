@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { Plus, Check, X, RotateCcw, Loader2, Eye, ScanBarcode, Lock, Copy, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useEffect, useRef, useState, Fragment } from 'react'
+import { Plus, Check, X, RotateCcw, Loader2, Eye, ScanBarcode, Lock, Copy, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import type { Venta, Producto } from '@/types/inventario'
@@ -40,6 +40,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   const ultimoFetchRef = useRef(0)
 
   const [ventaDetalle, setVentaDetalle] = useState<Venta | null>(null)
+  const [ventaExpandida, setVentaExpandida] = useState<string | null>(null)
 
   const [busquedaCli, setBusquedaCli] = useState('')
   const [personaSel, setPersonaSel] = useState<{ id: string; nombre: string; dni: string; telefono?: string } | null>(null)
@@ -384,6 +385,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="w-10 px-3 py-3"></th>
                 <th className="px-4 py-3">Cliente</th>
                 <th className="px-4 py-3">DNI</th>
                 <th className="px-4 py-3">Número</th>
@@ -415,8 +417,18 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                 const gananciaText = `S/ ${ganancia.toFixed(2)}`
 
                 return (
-                  <tr key={v.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-slate-900">{v.persona_nombre}</td>
+                  <Fragment key={v.id}>
+                    <tr className="hover:bg-slate-50 transition-colors">
+                      <td className="px-3 py-3">
+                        <button
+                          onClick={() => setVentaExpandida(ventaExpandida === v.id ? null : v.id)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
+                          title={ventaExpandida === v.id ? 'Ocultar productos' : 'Ver productos'}
+                        >
+                          {ventaExpandida === v.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-slate-900">{v.persona_nombre}</td>
                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">{v.persona_dni}</td>
                     <td className="px-4 py-3">
                       {v.persona_telefono ? (
@@ -493,6 +505,34 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                       </div>
                     </td>
                   </tr>
+                    {ventaExpandida === v.id && (
+                      <tr className="bg-sky-50/40">
+                        <td colSpan={11} className="px-4 py-3">
+                          {(v.items || []).length === 0 ? (
+                            <p className="text-sm text-slate-400">Esta venta no tiene productos registrados.</p>
+                          ) : (
+                            <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+                              {(v.items || []).map((it, ii) => {
+                                const subtotal = (it.costo_unitario ?? 0) * it.cantidad
+                                return (
+                                  <div key={it.id || ii} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                                    <div className="flex min-w-0 flex-col">
+                                      <span className="text-sm font-medium text-slate-800 truncate">{it.producto_nombre}</span>
+                                      <span className="text-[11px] text-slate-400">Costo · S/ {(it.costo_unitario ?? 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="shrink-0 text-right">
+                                      <span className="text-xs text-slate-500">x{it.cantidad} · S/ {(it.precio_unitario ?? 0).toFixed(2)}</span>
+                                      <span className="block text-sm font-semibold text-slate-900">S/ {(it.subtotal ?? 0).toFixed(2)}</span>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 )
               })}
             </tbody>
