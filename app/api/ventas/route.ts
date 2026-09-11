@@ -79,22 +79,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: reason }, { status: 403 })
   }
 
-  // Avisar si el cliente ya tiene un envío pendiente con una venta vinculada.
-  // Evita registrar dos veces la misma venta (causa de productos duplicados).
-  if (!body.no_avisar_duplicado) {
-    const aviso = await avisoVentaDuplicada(user_id, persona_dni, persona_telefono)
-    if (aviso) {
-      return NextResponse.json(
-        {
-          error: aviso.error,
-          code: 'VENTA_DUPLICADA',
-          envio_id: aviso.envio_id,
-        },
-        { status: 409 }
-      )
-    }
-  }
-
   const pago = metodo_pago === 'YAPE_PLIN' || metodo_pago === 'TARJETA' ? metodo_pago : 'EFECTIVO'
   // TARJETA siempre queda pendiente hasta confirmar; EFECTIVO y YAPE_PLIN respetan si el cliente ya pagó
   const estado = pago === 'TARJETA' ? 'PENDIENTE' : (estadoSolicitado === 'PENDIENTE' ? 'PENDIENTE' : 'COMPLETADA')
@@ -167,9 +151,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 })
   }
 
-  // Vincular la venta al envío pendiente del mismo cliente (si existe y aún no
-  // está asignado a otra venta). Así el pedido del dashboard muestra los
-  // productos correctos en vez de adivinar por DNI/teléfono.
+  // Vincular la venta al envío pendiente más reciente del cliente. Mientras el
+  // pedido no se marque como enviado, TODAS las ventas del cliente se acumulan
+  // en ese mismo envío (aunque ya tenga ventas vinculadas). Si el envío ya fue
+  // enviado o el cliente aún no tiene pedido, la venta queda libre (envio_id null)
+  // y se adjudicará a su próxima solicitud de envío.
   const envioId = await buscarEnvioPendiente(user_id, persona_dni, persona_telefono)
   if (envioId) {
     await supabaseAdmin
@@ -217,57 +203,19 @@ async function buscarEnvioPendiente(userId: string, dni: string | null | undefin
   const telN = await normalizar(telefono)
   if (!dniN && !telN) return null
 
-  // Envíos pendientes del cliente (mismo DNI o teléfono normalizado), sin venta vinculada
+  // Envío pendiente (NO enviado) más reciente del cliente. Se toma aunque ya
+  // tenga ventas vinculadas: todas las compras se acumulan hasta que el pedido
+  // se marque como enviado.
   const { data: envios } = await supabaseAdmin
     .from('envios')
-    .select('id, dni, telefono')
+    .select('id, dni, telefono, estado')
     .eq('user_id', userId)
-    .in('estado', ['NO_EMPACADO', 'EN_OBSERVACION'])
+    .in('estado', ['NO_EMPACADO', 'EMPACADO', 'EN_OBSERVACION'])
     .order('fecha_registro', { ascending: false })
     .limit(50)
 
   for (const envio of envios || []) {
-    if (!(await matchEnvioCliente(envio, dni, telefono))) continue
-    const { data: ventaVinculada } = await supabaseAdmin
-      .from('ventas')
-      .select('id')
-      .eq('envio_id', envio.id)
-      .neq('estado', 'ANULADA')
-      .maybeSingle()
-    if (ventaVinculada) continue
-    return envio.id
-  }
-
-  return null
-}
-
-async function avisoVentaDuplicada(userId: string, dni: string | null | undefined, telefono: string | null | undefined) {
-  const dniN = await normalizar(dni)
-  const telN = await normalizar(telefono)
-  if (!dniN && !telN) return null
-
-  const { data: envios } = await supabaseAdmin
-    .from('envios')
-    .select('id, dni, telefono')
-    .eq('user_id', userId)
-    .in('estado', ['NO_EMPACADO', 'EN_OBSERVACION'])
-    .order('fecha_registro', { ascending: false })
-    .limit(50)
-
-  for (const envio of envios || []) {
-    if (!(await matchEnvioCliente(envio, dni, telefono))) continue
-    const { data: ventaVinculada } = await supabaseAdmin
-      .from('ventas')
-      .select('id')
-      .eq('envio_id', envio.id)
-      .neq('estado', 'ANULADA')
-      .maybeSingle()
-    if (ventaVinculada) {
-      return {
-        envio_id: envio.id,
-        error: 'Este cliente ya tiene un pedido pendiente con una venta registrada. Si es una venta adicional, confirma para continuar.',
-      }
-    }
+    if (await matchEnvioCliente(envio, dni, telefono)) return envio.id
   }
 
   return null

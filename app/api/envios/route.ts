@@ -427,6 +427,17 @@ export async function POST(req: Request) {
       .update(ventaBackfill)
       .eq('persona_id', personaId)
 
+    // Adjudicar las ventas "libres" del cliente (sin envío asignado) a esta
+    // nueva solicitud de envío. Compró tras haber enviado su pedido anterior y
+    // no tenía pedido abierto: estas ventas esperaban por este envío.
+    await supabaseAdmin
+      .from('ventas')
+      .update({ envio_id: data.id, updated_at: new Date().toISOString() })
+      .eq('profile_id', user_id)
+      .eq('persona_id', personaId)
+      .is('envio_id', null)
+      .neq('estado', 'ANULADA')
+
     // Vincular con este negocio (si no existe ya)
     const { data: vinculoExistente } = await supabaseAdmin
       .from('cliente_de')
