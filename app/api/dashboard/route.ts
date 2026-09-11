@@ -94,6 +94,7 @@ export async function GET(request: Request) {
     sinEmpacar,
     empacados,
     stockBajoCount,
+    pedidosSinVenta,
     totalVentas,
     totalCompras,
     gastosMes,
@@ -112,6 +113,7 @@ export async function GET(request: Request) {
     countEnvios(new Date(0), undefined, ['NO_EMPACADO']),
     countEnvios(new Date(0), undefined, ['EMPACADO']),
     countProductosStockBajo(supabaseAdmin, userId),
+    countPedidosSinVenta(supabaseAdmin, userId),
     sumVentas(new Date(0), undefined, ['COMPLETADA']),
     sumCompras(new Date(0), undefined, ['COMPLETADA']),
     sumGastos(startOfMonth, startOfNextMonth),
@@ -279,6 +281,7 @@ export async function GET(request: Request) {
       cobrosPendientes,
       cobrosPendientesTotal,
       stockBajo: stockBajoCount,
+      pedidosSinVenta,
     },
     deltas: {
       ventasMes: delta(ventasMes, ventasMesAnterior),
@@ -312,4 +315,25 @@ async function countProductosStockBajo(client: typeof supabaseAdmin, userId: str
     .eq('archivado', false)
     .or('stock_actual.lte.stock_minimo')
   return data?.length ?? 0
+}
+
+// Envíos pendientes (sin empacar / en observación) que todavía no tienen una
+// venta vinculada. El usuario debe registrar la venta para poder validar el
+// contenido del pedido desde el dashboard.
+async function countPedidosSinVenta(client: typeof supabaseAdmin, userId: string) {
+  const { data: envios } = await client
+    .from('envios')
+    .select('id')
+    .eq('user_id', userId)
+    .in('estado', ['NO_EMPACADO', 'EN_OBSERVACION'])
+  const enviosIds = (envios ?? []).map((e: any) => e.id)
+  if (enviosIds.length === 0) return 0
+
+  const { data: ventas } = await client
+    .from('ventas')
+    .select('envio_id')
+    .eq('profile_id', userId)
+    .in('envio_id', enviosIds)
+  const vinculados = new Set((ventas ?? []).map((v: any) => v.envio_id))
+  return enviosIds.filter((id: string) => !vinculados.has(id)).length
 }

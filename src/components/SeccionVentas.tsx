@@ -213,6 +213,53 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
         })),
       }),
     })
+    if (res.status === 409) {
+      const data = await res.json().catch(() => ({}))
+      if (data.code === 'VENTA_DUPLICADA') {
+        const confirmarNueva = await confirmar({
+          message: data.error || 'El cliente ya tiene una venta para su pedido pendiente.',
+          confirmLabel: 'Sí, registrar igual',
+          danger: true,
+        })
+        if (confirmarNueva) {
+          const res2 = await fetch('/api/ventas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: userId,
+              persona_id: personaSel.id,
+              persona_nombre: personaSel.nombre,
+              persona_dni: personaSel.dni,
+              persona_telefono: personaSel.telefono || null,
+              metodo_pago: metodoPago,
+              ...(metodoPago !== 'TARJETA' ? { estado: pagoEstado } : {}),
+              no_avisar_duplicado: true,
+              items: itemsVenta.map((it) => ({
+                producto_id: it.producto_id,
+                producto_nombre: it.nombre,
+                cantidad: Math.max(1, Number(it.cantidad) || 1),
+                precio_unitario: it.precio,
+              })),
+            }),
+          })
+          if (res2.ok) {
+            toast.success('Venta creada')
+            cerrarNueva()
+            recargarDesdeInicio()
+          } else {
+            const data2 = await res2.json().catch(() => ({}))
+            toast.error(data2.error || 'Error al crear venta')
+          }
+          setCreando(false)
+          return
+        }
+        setCreando(false)
+        return
+      }
+      toast.error(data.error || 'Error al crear venta')
+      setCreando(false)
+      return
+    }
     if (res.ok) {
       toast.success('Venta creada')
       cerrarNueva()

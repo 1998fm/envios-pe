@@ -79,6 +79,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: reason }, { status: 403 })
   }
 
+  // Avisar si el cliente ya tiene un envío pendiente con una venta vinculada.
+  // Evita registrar dos veces la misma venta (causa de productos duplicados).
+  if (!body.no_avisar_duplicado) {
+    const aviso = await avisoVentaDuplicada(user_id, persona_dni, persona_telefono)
+    if (aviso) {
+      return NextResponse.json(
+        {
+          error: aviso.error,
+          code: 'VENTA_DUPLICADA',
+          envio_id: aviso.envio_id,
+        },
+        { status: 409 }
+      )
+    }
+  }
+
   const pago = metodo_pago === 'YAPE_PLIN' || metodo_pago === 'TARJETA' ? metodo_pago : 'EFECTIVO'
   // TARJETA siempre queda pendiente hasta confirmar; EFECTIVO y YAPE_PLIN respetan si el cliente ya pagó
   const estado = pago === 'TARJETA' ? 'PENDIENTE' : (estadoSolicitado === 'PENDIENTE' ? 'PENDIENTE' : 'COMPLETADA')
@@ -183,38 +199,75 @@ export async function POST(request: Request) {
   return NextResponse.json({ data: venta })
 }
 
+async function normalizar(valor: string | null | undefined) {
+  return String(valor || '').replace(/\s+/g, '')
+}
+
+async function matchEnvioCliente(envio: any, dni: string | null | undefined, telefono: string | null | undefined) {
+  const dniN = await normalizar(dni)
+  const telN = await normalizar(telefono)
+  if (!dniN && !telN) return false
+  const matchDni = dniN && (await normalizar(envio.dni)) === dniN
+  const matchTel = telN && (await normalizar(envio.telefono)) === telN
+  return matchDni || matchTel
+}
+
 async function buscarEnvioPendiente(userId: string, dni: string | null | undefined, telefono: string | null | undefined) {
-  const dniN = String(dni || '').replace(/\s+/g, '')
-  const telN = String(telefono || '').replace(/\s+/g, '')
+  const dniN = await normalizar(dni)
+  const telN = await normalizar(telefono)
   if (!dniN && !telN) return null
 
   // Envíos pendientes del cliente (mismo DNI o teléfono normalizado), sin venta vinculada
   const { data: envios } = await supabaseAdmin
     .from('envios')
-    .select('id')
+    .select('id, dni, telefono')
     .eq('user_id', userId)
     .in('estado', ['NO_EMPACADO', 'EN_OBSERVACION'])
     .order('fecha_registro', { ascending: false })
     .limit(50)
 
   for (const envio of envios || []) {
+    if (!(await matchEnvioCliente(envio, dni, telefono))) continue
     const { data: ventaVinculada } = await supabaseAdmin
       .from('ventas')
       .select('id')
       .eq('envio_id', envio.id)
+      .neq('estado', 'ANULADA')
       .maybeSingle()
     if (ventaVinculada) continue
+    return envio.id
+  }
 
-    const { data: detalle } = await supabaseAdmin
-      .from('envios')
-      .select('dni, telefono')
-      .eq('id', envio.id)
-      .single()
-    if (!detalle) continue
+  return null
+}
 
-    const matchDni = dniN && String(detalle.dni || '').replace(/\s+/g, '') === dniN
-    const matchTel = telN && String(detalle.telefono || '').replace(/\s+/g, '') === telN
-    if (matchDni || matchTel) return envio.id
+async function avisoVentaDuplicada(userId: string, dni: string | null | undefined, telefono: string | null | undefined) {
+  const dniN = await normalizar(dni)
+  const telN = await normalizar(telefono)
+  if (!dniN && !telN) return null
+
+  const { data: envios } = await supabaseAdmin
+    .from('envios')
+    .select('id, dni, telefono')
+    .eq('user_id', userId)
+    .in('estado', ['NO_EMPACADO', 'EN_OBSERVACION'])
+    .order('fecha_registro', { ascending: false })
+    .limit(50)
+
+  for (const envio of envios || []) {
+    if (!(await matchEnvioCliente(envio, dni, telefono))) continue
+    const { data: ventaVinculada } = await supabaseAdmin
+      .from('ventas')
+      .select('id')
+      .eq('envio_id', envio.id)
+      .neq('estado', 'ANULADA')
+      .maybeSingle()
+    if (ventaVinculada) {
+      return {
+        envio_id: envio.id,
+        error: 'Este cliente ya tiene un pedido pendiente con una venta registrada. Si es una venta adicional, confirma para continuar.',
+      }
+    }
   }
 
   return null

@@ -50,6 +50,7 @@ type DashboardData = {
     cobrosPendientes: number
     cobrosPendientesTotal: number
     stockBajo: number
+    pedidosSinVenta?: number
   }
   deltas: {
     ventasMes: number | null
@@ -487,6 +488,25 @@ export default function PanelResumen({ userId, onNavegar }: Props) {
                 <ChevronRight
                   size={15}
                   className="text-slate-300 group-hover:text-red-500 transition-colors"
+                />
+              </button>
+
+              <button
+                onClick={() => onNavegar('ventas')}
+                className="group flex items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-sky-50/60"
+              >
+                <div className="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center shrink-0">
+                  <Receipt size={16} className="text-sky-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-lg font-extrabold text-slate-900 leading-none">
+                    {pendientes?.pedidosSinVenta ?? 0}
+                  </p>
+                  <p className="text-[11px] text-slate-500 truncate">pedidos sin venta registrada</p>
+                </div>
+                <ChevronRight
+                  size={15}
+                  className="text-slate-300 group-hover:text-sky-500 transition-colors"
                 />
               </button>
 
