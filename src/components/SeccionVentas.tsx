@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus, Check, X, RotateCcw, Loader2, Eye, ScanBarcode, Lock, Copy, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
@@ -37,6 +37,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   const [cargandoMas, setCargandoMas] = useState(false)
 
   const PAGE_SIZE = 20
+  const ultimoFetchRef = useRef(0)
 
   const [ventaDetalle, setVentaDetalle] = useState<Venta | null>(null)
 
@@ -56,6 +57,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   const [creando, setCreando] = useState(false)
 
   async function cargarVentas(page = 0) {
+    ultimoFetchRef.current = Date.now()
     const params = new URLSearchParams({ user_id: userId })
     if (filtroEstado) params.set('estado', filtroEstado)
     if (busqueda.trim()) params.set('busqueda', busqueda.trim())
@@ -72,23 +74,29 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
 
   useEffect(() => { cargarVentas(0); setPagina(0) }, [userId, filtroEstado, busqueda])
 
-  // Realtime: si otra sesión o pestaña registra una venta, refresca la lista
+  // Realtime: si otra sesión o pestaña registra una venta, refresca la lista.
+  // Se omite si acabamos de hacer un fetch (evita dobles recargas por la
+  // propia acción del usuario, que ya recarga la lista al guardar).
   useEffect(() => {
     if (!userId) return
     const supabase = createClient()
+    const recargaLimitada = () => {
+      if (Date.now() - ultimoFetchRef.current < 1500) return
+      cargarVentas(0)
+    }
     const channel = supabase
       .channel('ventas-realtime')
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'ventas' },
-        () => cargarVentas(0),
+        recargaLimitada,
       )
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'ventas' },
-        () => cargarVentas(0),
+        recargaLimitada,
       )
       .on('postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'ventas' },
-        () => cargarVentas(0),
+        recargaLimitada,
       )
       .subscribe()
     return () => { supabase.removeChannel(channel) }

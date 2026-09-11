@@ -625,6 +625,7 @@ setLoading(false)
 
   async function fetchEnviosPage(offset: number): Promise<{ data: Envio[]; hasMore: boolean }> {
     if (!userId) return { data: [], hasMore: false }
+    ultimoFetchEnviosRef.current = Date.now()
     const params = new URLSearchParams({
       user_id: userId,
       offset: String(offset),
@@ -638,7 +639,7 @@ setLoading(false)
     const res = await fetch(`/api/envios?${params}`)
     const json = await res.json()
     if (!res.ok) return { data: [], hasMore: false }
-    return { data: json.data || [], hasMore: (json.offset + json.limit) < json.total }
+    return { data: json.data || [], hasMore: json.hasMore === true }
   }
 
   useEffect(() => {
@@ -651,6 +652,7 @@ setLoading(false)
 
   const fetchEnviosRef = useRef(fetchEnviosPage)
   useEffect(() => { fetchEnviosRef.current = fetchEnviosPage })
+  const ultimoFetchEnviosRef = useRef(0)
 
   useEffect(() => {
     const limpiar = () => setEnviosEtiquetas([])
@@ -660,16 +662,22 @@ setLoading(false)
 
   useEffect(() => {
     if (!userId) return
+    const recargaLimitada = () => {
+      // Evita dobles recargas cuando la acción la hizo el mismo usuario en esta
+      // pestaña (que ya ha actualizado el estado localmente al guardar).
+      if (Date.now() - ultimoFetchEnviosRef.current < 1500) return
+      fetchEnviosRef.current(0).then((result) => {
+        setEnvios(result.data)
+        setHasMore(result.hasMore)
+      })
+    }
     const channel = supabase
       .channel('envios-realtime')
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'envios' },
         (payload) => {
           if ((payload.new as any)?.user_id === userId) {
-            fetchEnviosRef.current(0).then((result) => {
-              setEnvios(result.data)
-              setHasMore(result.hasMore)
-            })
+            recargaLimitada()
           }
         },
       )
@@ -680,10 +688,7 @@ setLoading(false)
           if (nuevo?.user_id !== userId) return
           // Si el filtro actual está activo podría no corresponder, recargamos la
           // primera página completa para mantener consistencia.
-          fetchEnviosRef.current(0).then((result) => {
-            setEnvios(result.data)
-            setHasMore(result.hasMore)
-          })
+          recargaLimitada()
         },
       )
       .on('postgres_changes',

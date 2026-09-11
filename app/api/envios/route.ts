@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
   let query = supabaseAdmin
     .from('envios')
-    .select('*', { count: 'exact' })
+    .select('*')
     .eq('user_id', userId)
 
   if (busqueda) {
@@ -46,17 +46,23 @@ export async function GET(request: Request) {
     query = query.lte('fecha_registro', new Date(`${fechaHasta}T23:59:59.999`).toISOString())
   }
 
-  const { data, count, error } = await query
+  // Pedimos limit+1 filas: si viene una de más, hay más páginas. Evita el
+  // costoso COUNT(*) que scanneaba toda la tabla en cada recarga.
+  const { data, error } = await query
     .order('fecha_registro', { ascending: false })
-    .range(offset, offset + limit - 1)
+    .range(offset, offset + limit)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  const hasMore = (data?.length ?? 0) > limit
+  const filas = hasMore ? (data || []).slice(0, limit) : (data || [])
+
   return NextResponse.json({
-    data,
-    total: count ?? 0,
+    data: filas,
+    hasMore,
+    total: offset + filas.length,
     offset,
     limit,
   })
