@@ -361,11 +361,19 @@ const copiarDatosLocked =
         return
       }
 // ========================================
-// CREAR PERFIL AUTOMÁTICO
+// PERFIL + TARIFAS EN PARALELO
+// (upsert().select() dispara una sola llamada)
 // ========================================
 
-const { error: crearPerfilError } =
-  await supabase
+// IMPORTANTE: usar select('*') para que futuras columnas (pendientes de
+// migración SQL) no hagan fallar toda la consulta. Si una columna nueva
+// aún no existe, simplemente no aparece y se usa el default del código;
+// el plan (plan/trial_end/pro_until) siempre se lee bien.
+const [
+  { data: profile, error: crearPerfilError },
+  { data: tarifasData },
+] = await Promise.all([
+  supabase
     .from('profiles')
     .upsert(
       {
@@ -375,40 +383,24 @@ const { error: crearPerfilError } =
         onConflict: 'id',
       }
     )
+    .select('*')
+    .maybeSingle(),
+  supabase
+    .from('tarifas_moto')
+    .select('tarifas')
+    .eq(
+      'profile_id',
+      user.id
+    )
+    .maybeSingle(),
+])
 
 if (crearPerfilError) {
-
   console.error(
     'Error creando perfil:',
     crearPerfilError
   )
-
 }
-  // IMPORTANTE: usar select('*') para que futuras columnas (pendientes de
-  // migración SQL) no hagan fallar toda la consulta. Si una columna nueva
-  // aún no existe, simplemente no aparece y se usa el default del código;
-  // el plan (plan/trial_end/pro_until) siempre se lee bien.
-  const { data: profile } =
-  await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle()
-
-// ========================================
-// CARGAR TARIFAS
-// ========================================
-
-const {
-  data: tarifasData
-} = await supabase
-  .from('tarifas_moto')
-  .select('tarifas')
-  .eq(
-    'profile_id',
-    user.id
-  )
-  .maybeSingle()
 
 setOrigenShalom(
   profile?.origen_shalom || ''
