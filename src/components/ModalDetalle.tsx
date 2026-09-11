@@ -134,6 +134,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
   const [ventasCliente, setVentasCliente] = useState<VentaConItems[]>([])
   const [loadingVentas, setLoadingVentas] = useState(false)
   const [marcandoEnvio, setMarcandoEnvio] = useState(false)
+  const [cobrandoVentas, setCobrandoVentas] = useState(false)
 
   useEffect(() => {
     if (envio?.dni || envio?.telefono) {
@@ -235,6 +236,24 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     setLoadingVentas(false)
   }
 
+  async function cobrarVentasPendientes() {
+    const idsPendientes = ventasCliente.filter((v) => v.estado === 'PENDIENTE').map((v) => v.id)
+    if (idsPendientes.length === 0) return
+    if (!(await confirmar({ message: `¿Registrar el cobro de las ${idsPendientes.length} venta(s) pendiente(s) de este pedido?`, confirmLabel: 'Sí, cobrar' }))) return
+    setCobrandoVentas(true)
+    const { error } = await supabase
+      .from('ventas')
+      .update({ estado: 'COMPLETADA' })
+      .in('id', idsPendientes)
+    if (error) {
+      toast.error('Error al registrar el cobro')
+    } else {
+      toast.success('Ventas marcadas como cobradas')
+      cargarVentasCliente()
+    }
+    setCobrandoVentas(false)
+  }
+
   async function validarContenido() {
     if (!(await confirmar({ message: '¿Está seguro que todo lo listado ha sido empacado?', confirmLabel: 'Sí, validar' }))) return
     setMarcandoEnvio(true)
@@ -324,11 +343,34 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     return 'S/ ' + Number(n).toFixed(2)
   }
 
+  function formatFechaCorta(s?: string | null) {
+    if (!s) return '—'
+    const fecha = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T12:00:00') : new Date(s)
+    if (isNaN(fecha.getTime())) return '—'
+    return fecha.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })
+  }
+
   const ventasPendientes = ventasCliente.filter((v) => v.estado_envio !== 'EMPACADO' && v.estado_envio !== 'COMPLETADO')
   const totalProductosPendientes = ventasPendientes.reduce(
     (sum, v) => sum + v.items.length,
     0
   )
+
+  const ventasPorCobrar = ventasCliente.filter((v) => v.estado === 'PENDIENTE')
+  const totalPorCobrar = ventasPorCobrar.reduce((sum, v) => sum + Number(v.total || 0), 0)
+
+  // Timeline del pedido: paso según el estado del envío y sus ventas vinculadas
+  const ventasValidados = ventasCliente.some(
+    (v) => v.estado_envio === 'EMPACADO' || v.estado_envio === 'COMPLETADO' || v.estado_envio === 'ENVIADO'
+  )
+  const ordenEstados = ['NO_EMPACADO', 'EN_OBSERVACION', 'EMPACADO', 'ENVIADO']
+  const pasoActual = ordenEstados.indexOf(current.estado)
+  const pasosTimeline = [
+    { etiqueta: 'Recibido', descripcion: 'Pedido registrado', fecha: formatFechaCorta(current.fecha_registro) },
+    { etiqueta: 'Validado', descripcion: 'Contenido verificado', fecha: ventasValidados ? 'Validado' : undefined, completado: ventasValidados },
+    { etiqueta: 'Empacado', descripcion: 'Listo para envío', fecha: current.estado === 'EMPACADO' ? 'En proceso' : undefined, completado: current.estado === 'ENVIADO' },
+    { etiqueta: 'Enviado', descripcion: 'En camino al destino', fecha: current.estado === 'ENVIADO' ? formatFechaCorta(current.fecha_registro) : undefined, completado: current.estado === 'ENVIADO' },
+  ]
 
   const estadoEnvioStyle =
     ESTADO_ENVIO_STYLES[current.estado] || ESTADO_ENVIO_STYLES.NO_EMPACADO
@@ -448,6 +490,58 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                 {mensaje}
               </p>
             )}
+          </Card>
+
+          {/* TIMELINE DEL PEDIDO */}
+          <Card title="Estado del pedido" icon={Clock}>
+            <ol className="relative space-y-4 pl-1">
+              {pasosTimeline.map((paso, idx) => {
+                const activo = idx === pasoActual || (paso.completado && idx < pasoActual + 1)
+                const completo = paso.completado || (pasoActual >= 0 && idx < pasoActual)
+                const esActual = idx === pasoActual
+                return (
+                  <li key={paso.etiqueta} className="relative flex gap-3">
+                    {idx < pasosTimeline.length - 1 && (
+                      <span
+                        className={`absolute left-[13px] top-7 h-full w-0.5 ${
+                          completo ? 'bg-emerald-300' : 'bg-slate-200'
+                        }`}
+                      />
+                    )}
+                    <span
+                      className={`relative z-10 mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                        completo
+                          ? 'bg-emerald-500 text-white'
+                          : esActual
+                          ? 'bg-sky-500 text-white ring-4 ring-sky-100'
+                          : 'bg-slate-100 text-slate-400'
+                      }`}
+                    >
+                      {completo ? <Check size={13} /> : idx + 1}
+                    </span>
+                    <div className="min-w-0 flex-1 pb-1">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <p
+                          className={`text-sm font-semibold ${
+                            esActual ? 'text-slate-900' : completo ? 'text-slate-700' : 'text-slate-400'
+                          }`}
+                        >
+                          {paso.etiqueta}
+                        </p>
+                        {paso.fecha && (
+                          <span className="shrink-0 text-[11px] font-medium text-slate-400">
+                            {paso.fecha}
+                          </span>
+                        )}
+                      </div>
+                      {paso.descripcion && (
+                        <p className="text-[11px] text-slate-400">{paso.descripcion}</p>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
+            </ol>
           </Card>
 
           {/* DESTINO */}
@@ -582,6 +676,34 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
               </button>
             )}
           </Card>
+
+          {/* COBRO DEL PEDIDO */}
+          {ventasPorCobrar.length > 0 && (
+            <Card
+              title="Cobro del pedido"
+              icon={Check}
+              right={
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                  {ventasPorCobrar.length} pendiente(s)
+                </span>
+              }
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm text-slate-600">
+                  Total por cobrar:{' '}
+                  <span className="font-bold text-slate-900">{formatMoney(totalPorCobrar)}</span>
+                </div>
+                <button
+                  onClick={cobrarVentasPendientes}
+                  disabled={cobrandoVentas}
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-bold text-white transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50"
+                >
+                  {cobrandoVentas ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                  {cobrandoVentas ? 'Registrando...' : 'Registrar pago'}
+                </button>
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* FOOTER */}

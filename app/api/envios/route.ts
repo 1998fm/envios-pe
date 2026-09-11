@@ -196,6 +196,34 @@ export async function POST(req: Request) {
       })
     }
 
+    // Pedido abierto existente: si el cliente ya tiene una solicitud pendiente
+    // (no enviada), devolverla en vez de crear otra. Así no se acumulan pedidos
+    // duplicados y todas las ventas siguen acumulándose en ese mismo envío.
+    const { data: abiertoExistente } = await supabaseAdmin
+      .from('envios')
+      .select('*')
+      .eq('user_id', user_id)
+      .in('estado', ['NO_EMPACADO', 'EMPACADO', 'EN_OBSERVACION'])
+      .order('fecha_registro', { ascending: false })
+      .limit(50)
+    if (abiertoExistente && abiertoExistente.length > 0) {
+      for (const e of abiertoExistente) {
+        const mismoDni =
+          dni &&
+          String(e.dni || '').replace(/\s+/g, '') === String(dni).replace(/\s+/g, '')
+        const mismoTel =
+          telefono &&
+          String(e.telefono || '').replace(/\s+/g, '') === String(telefono).replace(/\s+/g, '')
+        if (mismoDni || mismoTel) {
+          return NextResponse.json({
+            success: true,
+            envio: e,
+            pendienteExistente: true,
+          })
+        }
+      }
+    }
+
     const esPro = computeEffectivePlan(perfil).plan !== 'basic'
 
     // Límite mensual de envíos según plan (50/mes en Básico, ilimitado en Pro+).

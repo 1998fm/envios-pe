@@ -120,6 +120,7 @@ export default function PublicForm({
   const distritosMotoList = distritosMotorizado ?? (distritosMoto as string[])
   const [loading, setLoading] = useState(false)
   const [enviado, setEnviado] = useState(false)
+  const [pedidoPendienteExistente, setPedidoPendienteExistente] = useState(false)
   const [fechaProgramada, setFechaProgramada] = useState('')
   const [error, setError] = useState('')
   const enviandoRef = useRef(false)
@@ -328,6 +329,7 @@ export default function PublicForm({
 
       const resultado = await res.json()
       setFechaProgramada(resultado.envio.fecha_programada)
+      setPedidoPendienteExistente(Boolean(resultado.pendienteExistente))
       setEnviado(true)
       // El cliente ya vio la confirmación: liberar el ticket para
       // que un próximo pedido en esta sesión sea uno nuevo.
@@ -370,13 +372,34 @@ export default function PublicForm({
   if (enviado) {
     return (
       <div className="max-w-xl mx-auto mt-6 sm:mt-10 px-3 sm:px-4">
-        <SuccessScreen
-          logoUrl={isPro ? logoUrl : undefined}
-          redirectMessage={isPro ? redirectMessage : undefined}
-          redirectMessageImage={isPro ? redirectMessageImage : undefined}
-          redirectUrl={isPro ? redirectUrl : undefined}
-          fechaProgramada={fechaProgramada}
-        />
+        {pedidoPendienteExistente ? (
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 text-center">
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-100 flex items-center justify-center">
+              <Package size={24} className="text-amber-600" />
+            </div>
+            <h2 className="mt-4 text-lg font-bold text-slate-900">
+              Ya tienes un pedido en proceso
+            </h2>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Ya registramos un pedido tuyo que aún no ha sido enviado. Los nuevos
+              productos que pidas se agregarán a ese mismo pedido. Cuando tu pedido
+              actual salga, podrás realizar una nueva solicitud.
+            </p>
+            {fechaProgramada && (
+              <p className="mt-3 text-xs text-slate-500">
+                Entrega programada: <span className="font-semibold text-slate-700">{formatearFecha(fechaProgramada)}</span>
+              </p>
+            )}
+          </div>
+        ) : (
+          <SuccessScreen
+            logoUrl={isPro ? logoUrl : undefined}
+            redirectMessage={isPro ? redirectMessage : undefined}
+            redirectMessageImage={isPro ? redirectMessageImage : undefined}
+            redirectUrl={isPro ? redirectUrl : undefined}
+            fechaProgramada={fechaProgramada}
+          />
+        )}
       </div>
     )
   }
