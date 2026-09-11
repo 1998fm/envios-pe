@@ -151,6 +151,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 })
   }
 
+  // Vincular la venta al envío pendiente del mismo cliente (si existe y aún no
+  // está asignado a otra venta). Así el pedido del dashboard muestra los
+  // productos correctos en vez de adivinar por DNI/teléfono.
+  const envioId = await buscarEnvioPendiente(user_id, persona_dni, persona_telefono)
+  if (envioId) {
+    await supabaseAdmin
+      .from('ventas')
+      .update({ envio_id: envioId })
+      .eq('id', venta.id)
+  }
+
   // Descontar stock de cada producto
   for (const item of itemsData) {
     if (!item.producto_id) continue
@@ -170,5 +181,42 @@ export async function POST(request: Request) {
   await sincronizarArchivoPorStock(itemsData.map((it: any) => it.producto_id).filter(Boolean))
 
   return NextResponse.json({ data: venta })
+}
+
+async function buscarEnvioPendiente(userId: string, dni: string | null | undefined, telefono: string | null | undefined) {
+  const dniN = String(dni || '').replace(/\s+/g, '')
+  const telN = String(telefono || '').replace(/\s+/g, '')
+  if (!dniN && !telN) return null
+
+  // Envíos pendientes del cliente (mismo DNI o teléfono normalizado), sin venta vinculada
+  const { data: envios } = await supabaseAdmin
+    .from('envios')
+    .select('id')
+    .eq('user_id', userId)
+    .in('estado', ['NO_EMPACADO', 'EN_OBSERVACION'])
+    .order('fecha_registro', { ascending: false })
+    .limit(50)
+
+  for (const envio of envios || []) {
+    const { data: ventaVinculada } = await supabaseAdmin
+      .from('ventas')
+      .select('id')
+      .eq('envio_id', envio.id)
+      .maybeSingle()
+    if (ventaVinculada) continue
+
+    const { data: detalle } = await supabaseAdmin
+      .from('envios')
+      .select('dni, telefono')
+      .eq('id', envio.id)
+      .single()
+    if (!detalle) continue
+
+    const matchDni = dniN && String(detalle.dni || '').replace(/\s+/g, '') === dniN
+    const matchTel = telN && String(detalle.telefono || '').replace(/\s+/g, '') === telN
+    if (matchDni || matchTel) return envio.id
+  }
+
+  return null
 }
 

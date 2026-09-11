@@ -153,52 +153,60 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
   async function cargarVentasCliente() {
     setLoadingVentas(true)
 
+    let idsVentas: string[] = []
     let ventas: any[] = []
 
-    // 1) Buscar por persona_dni (directo desde supabase — ventas tiene RLS)
-    if (current.dni) {
-      const { data, error } = await supabase
-        .from('ventas')
-        .select('*')
-        .eq('persona_dni', current.dni)
-        .eq('estado', 'COMPLETADA')
-        .neq('estado_envio', 'COMPLETADO')
-        .order('created_at', { ascending: false })
+    // 1) Ventas ya vinculadas directamente a este envío (relación confiable)
+    const { data: porEnvio, error: errEnvio } = await supabase
+      .from('ventas')
+      .select('*')
+      .eq('envio_id', current.id)
+      .in('estado', ['COMPLETADA', 'PENDIENTE'])
+      .not('estado_envio', 'eq', 'COMPLETADO')
+      .order('created_at', { ascending: false })
 
-      if (!error && data) {
-        ventas = data
-      }
-    }
-
-    // 2) Si no encontró por DNI y el envío tiene teléfono, buscar persona por API y luego ventas por persona_id
-    if (ventas.length === 0 && current.telefono) {
-      const res = await fetch(`/api/personas?user_id=${current.user_id}&busqueda=${current.telefono}`)
-      const json = await res.json()
-      if (json.data?.id) {
-        const { data, error } = await supabase
-          .from('ventas')
-          .select('*')
-          .eq('persona_id', json.data.id)
-          .eq('estado', 'COMPLETADA')
-          .neq('estado_envio', 'COMPLETADO')
-          .order('created_at', { ascending: false })
-
-        if (!error && data) {
-          ventas = data
+    if (!errEnvio && porEnvio && porEnvio.length > 0) {
+      ventas = porEnvio
+    } else {
+      // 2) Respaldo para datos sin vincular (ventas creadas antes de esta mejora):
+      //    localizar la persona por DNI o teléfono (ruta normalizada y exacta)
+      const busqueda = current.dni?.trim() || current.telefono?.trim()
+      if (busqueda) {
+        const res = await fetch(`/api/personas?user_id=${current.user_id}&busqueda=${encodeURIComponent(busqueda)}`)
+        const json = await res.json()
+        if (json.data?.id) {
+          const { data } = await supabase
+            .from('ventas')
+            .select('*')
+            .eq('persona_id', json.data.id)
+            .in('estado', ['COMPLETADA', 'PENDIENTE'])
+            .not('estado_envio', 'eq', 'COMPLETADO')
+            .order('created_at', { ascending: false })
+          // Solo ventas que NO estén ya asignadas a otro envío (evita mezclar
+          // productos de pedidos distintos del mismo cliente)
+          ventas = (data || []).filter(
+            (v: any) =>
+              v.envio_id === null ||
+              v.envio_id === undefined ||
+              v.envio_id === current.id
+          )
         }
       }
     }
 
-    if (ventas.length === 0) {
+    // Deduplicar si algún flujo devolvió la misma venta dos veces
+    idsVentas = [...new Set(ventas.map((v: any) => v.id))]
+
+    if (idsVentas.length === 0) {
+      setVentasCliente([])
       setLoadingVentas(false)
       return
     }
 
-    const ventaIds = ventas.map((v: any) => v.id)
     const { data: itemsData } = await supabase
       .from('venta_items')
       .select('*')
-      .in('venta_id', ventaIds)
+      .in('venta_id', idsVentas)
 
     const itemsPorVenta = new Map<string, VentaItemInfo[]>()
     for (const item of itemsData || []) {
