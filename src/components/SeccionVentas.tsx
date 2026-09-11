@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Check, X, RotateCcw, Loader2, Eye, ScanBarcode, Lock, Copy } from 'lucide-react'
+import { Plus, Check, X, RotateCcw, Loader2, Eye, ScanBarcode, Lock, Copy, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Venta, Producto } from '@/types/inventario'
 import ModalDetalleVenta from '@/components/ModalDetalleVenta'
@@ -28,10 +28,14 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   const { startTour } = useOnboarding()
   const [ventas, setVentas] = useState<Venta[]>([])
   const [filtroEstado, setFiltroEstado] = useState('')
+  const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading] = useState(true)
   const [showNueva, setShowNueva] = useState(false)
-  const [hasMore, setHasMore] = useState(false)
+  const [pagina, setPagina] = useState(0)
+  const [totalRegistros, setTotalRegistros] = useState(0)
   const [cargandoMas, setCargandoMas] = useState(false)
+
+  const PAGE_SIZE = 20
 
   const [ventaDetalle, setVentaDetalle] = useState<Venta | null>(null)
 
@@ -50,25 +54,33 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   const [pagoEstado, setPagoEstado] = useState<'COMPLETADA' | 'PENDIENTE'>('COMPLETADA')
   const [creando, setCreando] = useState(false)
 
-  async function cargarVentas(offset = 0, append = false) {
+  async function cargarVentas(page = 0) {
     const params = new URLSearchParams({ user_id: userId })
     if (filtroEstado) params.set('estado', filtroEstado)
-    params.set('offset', String(offset))
+    if (busqueda.trim()) params.set('busqueda', busqueda.trim())
+    params.set('offset', String(page * PAGE_SIZE))
+    params.set('limit', String(PAGE_SIZE))
     const res = await fetch(`/api/ventas?${params}`)
     const json = await res.json()
     if (res.ok) {
-      setVentas((prev) => (append ? [...prev, ...(json.data || [])] : json.data || []))
-      setHasMore((json.offset + json.data.length) < json.total)
+      setVentas(json.data || [])
+      setTotalRegistros(json.total ?? 0)
     }
     setLoading(false)
   }
 
-  useEffect(() => { cargarVentas() }, [userId, filtroEstado])
+  useEffect(() => { cargarVentas(0); setPagina(0) }, [userId, filtroEstado, busqueda])
 
-  async function cargarMas() {
+  async function cargarMas(paginaObjetivo: number) {
     setCargandoMas(true)
-    await cargarVentas(ventas.length, true)
+    await cargarVentas(paginaObjetivo)
+    setPagina(paginaObjetivo)
     setCargandoMas(false)
+  }
+
+  const recargarDesdeInicio = () => {
+    setPagina(0)
+    cargarVentas(0)
   }
 
   useEffect(() => {
@@ -204,7 +216,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     if (res.ok) {
       toast.success('Venta creada')
       cerrarNueva()
-      cargarVentas()
+      recargarDesdeInicio()
     } else {
       if (res.status === 403) {
         const data = await res.json().catch(() => ({}))
@@ -241,7 +253,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     })
     if (res.ok) {
       toast.success('Venta anulada')
-      cargarVentas()
+      recargarDesdeInicio()
     } else {
       toast.error('Error al anular venta')
     }
@@ -256,7 +268,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     })
     if (res.ok) {
       toast.success('Venta completada')
-      cargarVentas()
+      recargarDesdeInicio()
     } else {
       toast.error('Error al confirmar venta')
     }
@@ -267,7 +279,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     const res = await fetch(`/api/ventas/${id}`, { method: 'DELETE' })
     if (res.ok) {
       toast.success('Venta eliminada')
-      cargarVentas()
+      recargarDesdeInicio()
     } else {
       toast.error('Error al eliminar')
     }
@@ -305,12 +317,34 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
             </button>
           ))}
         </div>
+        <div className="relative flex-1 min-w-[220px]">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar por cliente, DNI, teléfono, producto, pago o estado..."
+            className="w-full pl-9 pr-9 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+          />
+          {busqueda && (
+            <button
+              onClick={() => setBusqueda('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded bg-slate-100 text-slate-500 hover:bg-slate-200"
+              title="Limpiar búsqueda"
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
       </div>
 
       {ventas.length === 0 && (
         <div data-tour="ventas-vacio" className="text-center py-16 text-slate-400">
-          <p className="text-lg font-semibold text-slate-500">No hay ventas</p>
-          <p className="text-sm mt-1">Registra tu primera venta</p>
+          <p className="text-lg font-semibold text-slate-500">
+            {busqueda.trim() ? 'Sin resultados' : 'No hay ventas'}
+          </p>
+          <p className="text-sm mt-1">
+            {busqueda.trim() ? 'Ninguna venta coincide con tu búsqueda' : 'Registra tu primera venta'}
+          </p>
         </div>
       )}
 
@@ -435,15 +469,30 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
         </div>
       )}
 
-      {hasMore && (
-        <div className="flex justify-center pt-2">
-          <button
-            onClick={cargarMas}
-            disabled={cargandoMas}
-            className="px-5 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-all"
-          >
-            {cargandoMas ? 'Cargando...' : 'Cargar más ventas'}
-          </button>
+      {totalRegistros > 0 && (
+        <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
+          <p className="text-xs text-slate-400">
+            Mostrando {ventas.length} de {totalRegistros} venta{totalRegistros !== 1 ? 's' : ''}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => cargarMas(pagina - 1)}
+              disabled={pagina === 0 || cargandoMas}
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-all"
+            >
+              <ChevronLeft size={14} /> Anterior
+            </button>
+            <span className="text-xs text-slate-500 font-medium">
+              Página {pagina + 1} de {Math.max(1, Math.ceil(totalRegistros / PAGE_SIZE))}
+            </span>
+            <button
+              onClick={() => cargarMas(pagina + 1)}
+              disabled={(pagina + 1) * PAGE_SIZE >= totalRegistros || cargandoMas}
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-all"
+            >
+              Siguiente <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
       )}
 
@@ -668,7 +717,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
       <ModalDetalleVenta
           venta={ventaDetalle}
           onCerrar={() => setVentaDetalle(null)}
-          onGuardar={(v) => { if (v) setVentaDetalle(v); cargarVentas() }}
+          onGuardar={(v) => { if (v) setVentaDetalle(v); recargarDesdeInicio() }}
           plan={plan}
           userId={userId}
         />

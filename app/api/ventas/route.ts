@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('user_id')
   const estado = searchParams.get('estado') || ''
+  const busqueda = (searchParams.get('busqueda') || '').trim()
   const offset = parseInt(searchParams.get('offset') || '0')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
 
@@ -21,6 +22,37 @@ export async function GET(request: Request) {
 
   if (estado) {
     query = query.eq('estado', estado)
+  }
+
+  if (busqueda) {
+    // Saneamos el término para que postgREST no falle con caracteres especiales
+    const term = busqueda
+      .replace(/[^a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ@.-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    if (term) {
+      // Ventas cuyos productos coinciden con el término
+      const { data: itemsMatch } = await supabaseAdmin
+        .from('venta_items')
+        .select('venta_id')
+        .ilike('producto_nombre', `%${term}%`)
+        .limit(3000)
+      const idsPorProducto = [...new Set((itemsMatch || []).map((r) => r.venta_id))]
+
+      const condiciones = [
+        `persona_nombre.ilike.%${term}%`,
+        `persona_dni.ilike.%${term}%`,
+        `persona_telefono.ilike.%${term}%`,
+        `metodo_pago.ilike.%${term}%`,
+        `estado.ilike.%${term}%`,
+        `estado_envio.ilike.%${term}%`,
+      ]
+      if (idsPorProducto.length > 0) {
+        condiciones.push(`id.in.(${idsPorProducto.join(',')})`)
+      }
+      query = query.or(condiciones.join(','))
+    }
   }
 
   const { data, count, error } = await query
