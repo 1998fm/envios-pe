@@ -5,6 +5,10 @@
       "schedule": "0 5 * * 1"
     },
     {
+      "path": "/api/olva/sync",
+      "schedule": "0 6 * * 1"
+    },
+    {
       "path": "/api/cron/downgrade-plans",
       "schedule": "0 6 * * *"
     }
