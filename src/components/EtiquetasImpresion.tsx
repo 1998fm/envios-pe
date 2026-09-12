@@ -77,7 +77,7 @@ export default function EtiquetasImpresion({
   bg-white
   flex
   flex-col
-  ${grupo.length === 2 ? 'min-h-[92vh]' : 'min-h-[46vh]'}
+  min-h-[46vh]
 "
 >
 
@@ -91,6 +91,7 @@ export default function EtiquetasImpresion({
       py-2
       font-bold
       tracking-wide
+      text-lg
     "
   >
     {envio.nombre_metodo || envio.metodo}
@@ -102,6 +103,7 @@ export default function EtiquetasImpresion({
       flex
       flex-col
       flex-1
+      justify-between
     "
   >
 
@@ -215,7 +217,6 @@ export default function EtiquetasImpresion({
         mt-4
         pt-3
         border-t
-        flex-1
       "
     >
 
