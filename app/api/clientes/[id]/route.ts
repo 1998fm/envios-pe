@@ -105,13 +105,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'No se encontró el cliente' }, { status: 404 })
   }
 
-  // Chequear que el nuevo DNI no le pertenezca a otra persona (dni único)
+  // Chequear que el nuevo DNI no le pertenezca a otra persona (dni único).
+  // Búsqueda server-side para no truncar en el límite de filas del cliente de Supabase.
   if (dniLimpio) {
-    const { data: personasTodas } = await supabaseAdmin
+    const { data: personasConDni } = await supabaseAdmin
       .from('personas')
       .select('id, dni')
-      .neq('dni', null)
-    const duplicado = (personasTodas || []).find(
+      .not('dni', 'is', null)
+      .ilike('dni', `%${dniLimpio}%`)
+      .limit(100)
+    const duplicado = (personasConDni || []).find(
       (p: any) => norm(p.dni) === norm(dniLimpio) && !idsPersona.includes(p.id)
     )
     if (duplicado) {
