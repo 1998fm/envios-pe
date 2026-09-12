@@ -84,6 +84,8 @@ export async function POST(req: Request) {
 
       tipo_entrega: tipoEntregaBody,
 
+      agencia_olva: agenciaOlvaBody,
+
       destino,
       direccion,
       referencia,
@@ -317,6 +319,9 @@ export async function POST(req: Request) {
     }
     if (tipoEntregaBody === 'AGENCIA' || tipoEntregaBody === 'DOMICILIO') {
       insertPayload.tipo_entrega = tipoEntregaBody
+    }
+    if (typeof agenciaOlvaBody === 'string' && agenciaOlvaBody.trim() && tipoEntregaBody === 'AGENCIA') {
+      insertPayload.agencia_olva = agenciaOlvaBody.trim()
     }
     if (cantidadProductos !== null) {
       insertPayload.cantidad_productos = cantidadProductos

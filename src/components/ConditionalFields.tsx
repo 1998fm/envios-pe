@@ -16,6 +16,9 @@ type Props = {
   setTipoEntrega: (v: 'AGENCIA' | 'DOMICILIO') => void
   provincia: string
   setProvincia: (v: string) => void
+  agenciaOlva: string
+  setAgenciaOlva: (v: string) => void
+  agenciasOlvaProvincia: string[]
   distrito: string
   setDistrito: (v: string) => void
   direccion: string
@@ -112,6 +115,23 @@ export default memo(function ConditionalFields(props: Props) {
             requireSelection
             errorMessage="Selecciona una provincia de la lista."
           />
+          {props.metodo === 'OLVA' && props.tipoEntrega === 'AGENCIA' && (
+            props.agenciasOlvaProvincia.length > 0 ? (
+              <AutocompleteInput
+                value={props.agenciaOlva}
+                onChange={props.setAgenciaOlva}
+                options={props.agenciasOlvaProvincia}
+                placeholder="Agencia Olva (recojo)"
+                requireSelection
+                errorMessage="Selecciona una agencia Olva de la lista."
+              />
+            ) : (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-700">
+                No encontramos agencias Olva de recojo en esta provincia. Elige{' '}
+                <strong>Domicilio</strong> o cambia de provincia.
+              </p>
+            )
+          )}
           <input
             placeholder="Dirección exacta"
             value={props.direccion}

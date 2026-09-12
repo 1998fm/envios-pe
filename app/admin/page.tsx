@@ -28,10 +28,11 @@ import {
   UserCheck,
   Star,
   Receipt,
+  Store,
 } from 'lucide-react'
 import CompanyDetailModal from '@/components/admin/CompanyDetailModal'
 
-type Tab = 'resumen' | 'empresas' | 'planes' | 'shalom' | 'auditoria' | 'actividad' | 'facturacion' | 'admins'
+type Tab = 'resumen' | 'empresas' | 'planes' | 'shalom' | 'olva' | 'auditoria' | 'actividad' | 'facturacion' | 'admins'
 
 const PLANES = ['basic', 'pro', 'business_plus']
 const PLAN_LABEL: Record<string, string> = {
@@ -221,6 +222,7 @@ const tabsList: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: 'actividad', label: 'Actividad (7 días)', icon: <Activity size={16} /> },
   { key: 'planes', label: 'Planes', icon: <CreditCard size={16} /> },
   { key: 'shalom', label: 'Agencias Shalom', icon: <Truck size={16} /> },
+  { key: 'olva', label: 'Agencias Olva', icon: <Store size={16} /> },
   { key: 'auditoria', label: 'Auditoría', icon: <History size={16} /> },
   { key: 'admins', label: 'Admins', icon: <ShieldCheck size={16} /> },
 ]
@@ -243,7 +245,9 @@ export default function AdminPage() {
   const [totalActivos, setTotalActivos] = useState(0)
   const [desdeActivos, setDesdeActivos] = useState('')
   const [shalomEstado, setShalomEstado] = useState<{ total: number; activas: number; inactivas: number; actualizada_en: string | null } | null>(null)
+  const [olvaEstado, setOlvaEstado] = useState<{ total: number; activas: number; inactivas: number; actualizada_en: string | null } | null>(null)
   const [sincronizando, setSincronizando] = useState(false)
+  const [sincronizandoOlva, setSincronizandoOlva] = useState(false)
   const [auditoria, setAuditoria] = useState<{ id: number; admin_email: string; accion: string; detalle: unknown; created_at: string }[]>([])
   const [totalAuditoria, setTotalAuditoria] = useState(0)
   const [totalPaginasA, setTotalPaginasA] = useState(1)
@@ -346,6 +350,15 @@ export default function AdminPage() {
     }
   }, [fetchJson])
 
+  const cargarOlva = useCallback(async () => {
+    try {
+      const d = await fetchJson('/api/admin/olva')
+      setOlvaEstado(d)
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }, [fetchJson])
+
   const cargarAuditoria = useCallback(async () => {
     try {
       const q = new URLSearchParams()
@@ -413,6 +426,7 @@ export default function AdminPage() {
     if (tab === 'planes') cargarPlanes()
     if (tab === 'actividad') cargarActividad()
     if (tab === 'shalom') cargarShalom()
+    if (tab === 'olva') cargarOlva()
     if (tab === 'auditoria') cargarAuditoria()
     if (tab === 'facturacion') cargarFacturacion()
     if (tab === 'admins') cargarAdmins()
@@ -426,6 +440,7 @@ export default function AdminPage() {
     if (tab === 'planes') cargarPlanes()
     if (tab === 'actividad') cargarActividad()
     if (tab === 'shalom') cargarShalom()
+    if (tab === 'olva') cargarOlva()
     if (tab === 'auditoria') cargarAuditoria()
     if (tab === 'facturacion') cargarFacturacion()
     if (tab === 'admins') cargarAdmins()
@@ -548,6 +563,21 @@ export default function AdminPage() {
       setError((e as Error).message)
     } finally {
       setSincronizando(false)
+    }
+  }
+
+  const sincronizarOlva = async () => {
+    setSincronizandoOlva(true)
+    setError('')
+    try {
+      const res = await fetch('/api/admin/olva', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Error al sincronizar agencias Olva')
+      await cargarOlva()
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setSincronizandoOlva(false)
     }
   }
 
@@ -969,6 +999,30 @@ export default function AdminPage() {
                 <span className="flex items-center gap-2">
                   <RefreshCw size={16} className={sincronizando ? 'animate-spin' : ''} />
                   {sincronizando ? 'Sincronizando...' : 'Sincronizar ahora'}
+                </span>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ============ AGENCIAS OLVA ============ */}
+        {tab === 'olva' && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Kpi label="Total agencias" value={olvaEstado ? fmtNum(olvaEstado.total) : '...'} />
+              <Kpi label="Activas" value={olvaEstado ? fmtNum(olvaEstado.activas) : '...'} />
+              <Kpi label="Inactivas" value={olvaEstado ? fmtNum(olvaEstado.inactivas) : '...'} />
+              <Kpi label="Última sync" value={olvaEstado?.actualizada_en ? new Date(olvaEstado.actualizada_en).toLocaleDateString('es-PE') : '—'} sub={olvaEstado?.actualizada_en ? new Date(olvaEstado.actualizada_en).toLocaleTimeString('es-PE') : ''} />
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+              <p className="text-sm text-slate-600">
+                Sincroniza la lista de agencias desde el endpoint oficial de Olva. El cron semanal lo hace solo, pero puedes forzarlo aquí.
+              </p>
+              <Button onClick={sincronizarOlva} disabled={sincronizandoOlva}>
+                <span className="flex items-center gap-2">
+                  <RefreshCw size={16} className={sincronizandoOlva ? 'animate-spin' : ''} />
+                  {sincronizandoOlva ? 'Sincronizando...' : 'Sincronizar ahora'}
                 </span>
               </Button>
             </div>

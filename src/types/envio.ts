@@ -8,6 +8,7 @@ export type Envio = {
   metodo: string
   nombre_metodo?: string | null
   tipo_entrega?: 'AGENCIA' | 'DOMICILIO' | null
+  agencia_olva?: string | null
   destino: string
   direccion: string
   referencia?: string

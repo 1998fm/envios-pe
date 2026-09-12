@@ -590,7 +590,22 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                 <InfoTile
                   icon={Home}
                   label="Entrega"
-                  value={envio.tipo_entrega === 'AGENCIA' ? 'Recojo en agencia' : 'Domicilio'}
+                  value={
+                    envio.tipo_entrega === 'AGENCIA' ? (
+                      envio.agencia_olva ? (
+                        <span className="flex flex-col">
+                          <span>Recojo en agencia</span>
+                          <span className="text-xs font-medium text-slate-500">
+                            {envio.agencia_olva}
+                          </span>
+                        </span>
+                      ) : (
+                        'Recojo en agencia'
+                      )
+                    ) : (
+                      'Domicilio'
+                    )
+                  }
                 />
               )}
               {envio.cantidad_productos != null ? (

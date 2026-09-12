@@ -13,6 +13,10 @@ import SocialLinks from '@/components/SocialLinks'
 import SuccessScreen from '@/components/SuccessScreen'
 import TrackingBox from '@/components/TrackingBox'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
+import {
+  useAgenciasOlva,
+  agenciaEsDeProvincia,
+} from '@/lib/hooks/useAgenciasOlva'
 import provinciasOlva from '@/data/provincias-olva.json'
 import distritosMoto from '@/data/distritos-moto.json'
 import { existeEnLista } from '@/lib/listaValida'
@@ -156,6 +160,7 @@ export default function PublicForm({
   const [agencia, setAgencia] = useState('')
   const [provincia, setProvincia] = useState('')
   const [tipoEntrega, setTipoEntrega] = useState<'AGENCIA' | 'DOMICILIO'>('AGENCIA')
+  const [agenciaOlva, setAgenciaOlva] = useState('')
   const [distrito, setDistrito] = useState('')
   const [tarifaMotorizado, setTarifaMotorizado] = useState<number | null>(null)
   const [cargandoTarifa, setCargandoTarifa] = useState(false)
@@ -163,6 +168,16 @@ export default function PublicForm({
   const [referencia, setReferencia] = useState('')
 
   const { agencias: agenciasShalom } = useAgenciasShalom()
+  const { agencias: agenciasOlva } = useAgenciasOlva()
+
+  // Agencias Olva que pertenecen a la provincia seleccionada (para el selector).
+  const agenciasOlvaProvincia = useMemo(() => {
+    if (!provincia) return []
+    const nombres = agenciasOlva
+      .filter((a) => agenciaEsDeProvincia(a, provincia))
+      .map((a) => a.nombres)
+    return [...new Set(nombres)].sort((a, b) => a.localeCompare(b, 'es'))
+  }, [provincia, agenciasOlva])
 
   const [escogerDia, setEscogerDia] = useState(false)
   const [fechasDisponibles, setFechasDisponibles] = useState<string[]>([])
@@ -193,6 +208,12 @@ export default function PublicForm({
       desactivarEscogerDia()
     }
   }, [metodo, desactivarEscogerDia])
+
+  // Al cambiar de provincia o método, limpiar la agencia Olva elegida
+  // para que nunca quede un valor de una provincia distinta.
+  useEffect(() => {
+    setAgenciaOlva('')
+  }, [provincia, metodo])
 
   const handleDistritoChange = useCallback(async (nuevoDistrito: string) => {
     setDistrito(nuevoDistrito)
@@ -277,6 +298,17 @@ export default function PublicForm({
       return
     }
 
+    if (
+      metodo === 'OLVA' &&
+      tipoEntrega === 'AGENCIA' &&
+      !existeEnLista(agenciasOlvaProvincia, agenciaOlva)
+    ) {
+      setError('Selecciona la agencia Olva donde recogerás tu pedido.')
+      setLoading(false)
+      enviandoRef.current = false
+      return
+    }
+
     if (metodo === 'MOTORIZADO' && (!existeEnLista(distritosMotoList, distrito) || !direccion)) {
       setError('Selecciona un distrito de la lista y completa la dirección.')
       setLoading(false)
@@ -291,6 +323,9 @@ export default function PublicForm({
       detalle = `Provincia: ${provincia}\nDirección: ${direccion}\nReferencia: ${referencia}`
       if (metodo === 'OLVA') {
         detalle = `Entrega: ${tipoEntrega === 'AGENCIA' ? 'Recojo en agencia' : 'Domicilio'}\n${detalle}`
+        if (tipoEntrega === 'AGENCIA' && agenciaOlva) {
+          detalle = `Agencia Olva: ${agenciaOlva}\n${detalle}`
+        }
       }
     }
     if (metodo === 'MOTORIZADO') {
@@ -311,7 +346,12 @@ export default function PublicForm({
             : {}),
           metodo,
           nombre_metodo: metodo === 'OTRO' ? nombreOtro : null,
-          ...(metodo === 'OLVA' ? { tipo_entrega: tipoEntrega } : {}),
+          ...(metodo === 'OLVA'
+            ? {
+                tipo_entrega: tipoEntrega,
+                ...(tipoEntrega === 'AGENCIA' ? { agencia_olva: agenciaOlva } : {}),
+              }
+            : {}),
           destino:
             metodo === 'SHALOM'
               ? agencia
@@ -347,7 +387,7 @@ export default function PublicForm({
       setLoading(false)
       enviandoRef.current = false
     }
-  }, [nombre, dni, telefono, cantidadProductos, metodo, agencia, provincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom, solicitarCantidadProductos, distritosMotoList])
+  }, [nombre, dni, telefono, cantidadProductos, metodo, agencia, provincia, tipoEntrega, agenciaOlva, agenciasOlvaProvincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom, solicitarCantidadProductos, distritosMotoList])
 
   if (formularioDeshabilitado) {
     return (
@@ -485,6 +525,9 @@ export default function PublicForm({
               setTipoEntrega={setTipoEntrega}
               provincia={provincia}
               setProvincia={setProvincia}
+              agenciaOlva={agenciaOlva}
+              setAgenciaOlva={setAgenciaOlva}
+              agenciasOlvaProvincia={agenciasOlvaProvincia}
               distrito={distrito}
               setDistrito={handleDistritoChange}
               direccion={direccion}

@@ -13,6 +13,7 @@ type Envio = {
   metodo: string
   nombre_metodo?: string | null
   tipo_entrega?: 'AGENCIA' | 'DOMICILIO' | null
+  agencia_olva?: string | null
   estado: string
   tamano?: string | null
   detalle?: string | null
@@ -113,8 +114,15 @@ export default function EnvioCard({
             {envio.nombre_metodo || envio.metodo}
           </span>
           {envio.tipo_entrega && (
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-sky-100  text-sky-700  whitespace-nowrap shrink-0">
-              {envio.tipo_entrega === 'AGENCIA' ? 'Recojo agencia' : 'Domicilio'}
+            <span
+              className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-sky-100  text-sky-700  whitespace-nowrap shrink-0 max-w-[160px] truncate"
+              title={envio.tipo_entrega === 'AGENCIA' && envio.agencia_olva ? envio.agencia_olva : undefined}
+            >
+              {envio.tipo_entrega === 'AGENCIA'
+                ? envio.agencia_olva
+                  ? `Recojo: ${envio.agencia_olva}`
+                  : 'Recojo agencia'
+                : 'Domicilio'}
             </span>
           )}
           <div onClick={(e) => e.stopPropagation()} className="shrink-0">
