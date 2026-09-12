@@ -466,25 +466,59 @@ export async function POST(req: Request) {
 
     // Actualizar datos del cliente en TODAS sus ventas, siempre, para que
     // las ventas ya creadas reflejen los datos más recientes del cliente.
-    const ventaBackfill: Record<string, any> = { updated_at: new Date().toISOString() }
-    if (dni) ventaBackfill.persona_dni = dni
-    if (nombre) ventaBackfill.persona_nombre = nombre
-    if (telefono) ventaBackfill.persona_telefono = telefono
-    await supabaseAdmin
-      .from('ventas')
-      .update(ventaBackfill)
-      .eq('persona_id', personaId)
+    // Se cruza por DNI o teléfono normalizado (no solo persona_id): una misma
+    // clienta puede tener personas duplicadas y la venta puede estar ligada a
+    // otra persona distinta de la que creó este envío.
+    const dniN = String(dni || '').replace(/\s+/g, '')
+    const telN = String(telefono || '').replace(/\s+/g, '')
 
-    // Adjudicar las ventas "libres" del cliente (sin envío asignado) a esta
-    // nueva solicitud de envío. Compró tras haber enviado su pedido anterior y
-    // no tenía pedido abierto: estas ventas esperaban por este envío.
-    await supabaseAdmin
-      .from('ventas')
-      .update({ envio_id: data.id, updated_at: new Date().toISOString() })
-      .eq('profile_id', user_id)
-      .eq('persona_id', personaId)
-      .is('envio_id', null)
-      .neq('estado', 'ANULADA')
+    if (dniN || telN) {
+      const { data: ventasCliente } = await supabaseAdmin
+        .from('ventas')
+        .select('id, persona_id, envio_id, persona_dni, persona_telefono')
+        .eq('profile_id', user_id)
+        .neq('estado', 'ANULADA')
+        .or(
+          [
+            dniN ? `persona_dni.ilike.%${dniN}%` : '',
+            telN ? `persona_telefono.ilike.%${telN}%` : '',
+          ]
+            .filter(Boolean)
+            .join(',')
+        )
+        .limit(100)
+
+      const ventasDelCliente = (ventasCliente || []).filter((v: any) => {
+        const vd = String(v.persona_dni || '').replace(/\s+/g, '')
+        const vt = String(v.persona_telefono || '').replace(/\s+/g, '')
+        return (dniN && vd === dniN) || (telN && vt === telN)
+      })
+
+      // Actualizar nombre/DNI/teléfono en esas ventas, para que reflejen los
+      // datos de la solicitud (el formulario del cliente es la fuente real).
+      if (ventasDelCliente.length > 0) {
+        const ventaBackfill: Record<string, any> = { updated_at: new Date().toISOString() }
+        if (dni) ventaBackfill.persona_dni = dni
+        if (nombre) ventaBackfill.persona_nombre = nombre
+        if (telefono) ventaBackfill.persona_telefono = telefono
+        await supabaseAdmin
+          .from('ventas')
+          .update(ventaBackfill)
+          .in('id', ventasDelCliente.map((v: any) => v.id))
+      }
+
+      // Adjudicar las ventas libres (sin envío) del cliente a esta solicitud.
+      // Se cruzan por DNI o teléfono (no solo persona_id) y se reasigna su
+      // persona_id a la persona de este envío para dejar la venta y el pedido
+      // consistentes en los datos del cliente.
+      const ventasLibres = ventasDelCliente.filter((v: any) => v.envio_id === null)
+      if (ventasLibres.length > 0) {
+        await supabaseAdmin
+          .from('ventas')
+          .update({ envio_id: data.id, persona_id: personaId, updated_at: new Date().toISOString() })
+          .in('id', ventasLibres.map((v: any) => v.id))
+      }
+    }
 
     // Vincular con este negocio (si no existe ya)
     const { data: vinculoExistente } = await supabaseAdmin

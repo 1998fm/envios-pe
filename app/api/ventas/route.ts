@@ -191,11 +191,17 @@ export async function POST(request: Request) {
   // en ese mismo envío (aunque ya tenga ventas vinculadas). Si el envío ya fue
   // enviado o el cliente aún no tiene pedido, la venta queda libre (envio_id null)
   // y se adjudicará a su próxima solicitud de envío.
-  const envioId = await buscarEnvioPendiente(user_id, persona_dni, persona_telefono)
-  if (envioId) {
+  const envioPendiente = await buscarEnvioPendiente(user_id, persona_dni, persona_telefono)
+  if (envioPendiente) {
+    // La venta hereda el nombre/DNI/teléfono reales del cliente de su solicitud
+    // de envío (el formulario que llenó la clienta es la fuente de la verdad).
+    const heredar: Record<string, any> = { envio_id: envioPendiente.id }
+    if (envioPendiente.nombre?.trim()) heredar.persona_nombre = envioPendiente.nombre.trim()
+    if (envioPendiente.dni) heredar.persona_dni = String(envioPendiente.dni).replace(/\s+/g, '')
+    if (envioPendiente.telefono) heredar.persona_telefono = String(envioPendiente.telefono).replace(/\s+/g, '')
     await supabaseAdmin
       .from('ventas')
-      .update({ envio_id: envioId })
+      .update(heredar)
       .eq('id', venta.id)
   }
 
@@ -243,14 +249,14 @@ async function buscarEnvioPendiente(userId: string, dni: string | null | undefin
   // se marque como enviado.
   const { data: envios } = await supabaseAdmin
     .from('envios')
-    .select('id, dni, telefono, estado')
+    .select('id, dni, telefono, nombre, estado')
     .eq('user_id', userId)
     .in('estado', ['NO_EMPACADO', 'EMPACADO', 'EN_OBSERVACION'])
     .order('fecha_registro', { ascending: false })
     .limit(50)
 
   for (const envio of envios || []) {
-    if (await matchEnvioCliente(envio, dni, telefono)) return envio.id
+    if (await matchEnvioCliente(envio, dni, telefono)) return envio
   }
 
   return null

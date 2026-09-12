@@ -217,29 +217,32 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     if (!errEnvio && porEnvio && porEnvio.length > 0) {
       ventas = porEnvio
     } else {
-      // 2) Respaldo para datos sin vincular (ventas creadas antes de esta mejora):
-      //    localizar la persona por DNI o teléfono (ruta normalizada y exacta)
-      const busqueda = current.dni?.trim() || current.telefono?.trim()
-      if (busqueda) {
-        const res = await fetch(`/api/personas?user_id=${current.user_id}&busqueda=${encodeURIComponent(busqueda)}`)
-        const json = await res.json()
-        if (json.data?.id) {
-          const { data } = await supabase
-            .from('ventas')
-            .select('*')
-            .eq('persona_id', json.data.id)
-            .in('estado', ['COMPLETADA', 'PENDIENTE'])
-            .not('estado_envio', 'eq', 'COMPLETADO')
-            .order('created_at', { ascending: false })
-          // Solo ventas que NO estén ya asignadas a otro envío (evita mezclar
-          // productos de pedidos distintos del mismo cliente)
-          ventas = (data || []).filter(
-            (v: any) =>
-              v.envio_id === null ||
-              v.envio_id === undefined ||
-              v.envio_id === current.id
-          )
-        }
+      // 2) Respaldo para datos sin vincular: localizar las ventas del cliente
+      //    por DNI o teléfono directamente en la tabla de ventas. Una misma
+      //    clienta puede tener personas duplicadas, así que el cruce por
+      //    persona_id solo no alcanza. Se buscan ventas aún libres o ya
+      //    asignadas a este envío para no mezclar pedidos de la misma clienta.
+      const condiciones = []
+      if (current.dni?.trim()) condiciones.push(`persona_dni.ilike.%${current.dni.trim()}%`)
+      if (current.telefono?.trim()) condiciones.push(`persona_telefono.ilike.%${current.telefono.trim()}%`)
+      if (condiciones.length > 0) {
+        const { data } = await supabase
+          .from('ventas')
+          .select('*')
+          .eq('profile_id', current.user_id)
+          .or(condiciones.join(','))
+          .in('estado', ['COMPLETADA', 'PENDIENTE'])
+          .not('estado_envio', 'eq', 'COMPLETADO')
+          .order('created_at', { ascending: false })
+          .limit(100)
+        // Solo ventas que NO estén ya asignadas a otro envío (evita mezclar
+        // productos de pedidos distintos del mismo cliente)
+        ventas = (data || []).filter(
+          (v: any) =>
+            v.envio_id === null ||
+            v.envio_id === undefined ||
+            v.envio_id === current.id
+        )
       }
     }
 
