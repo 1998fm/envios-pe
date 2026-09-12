@@ -392,12 +392,15 @@ export async function POST(req: Request) {
     // Buscar primero por DNI; si no hay DNI o no se encuentra, buscar por teléfono
     let personaId: string | null = null
 
-    // 1) Buscar por DNI (comparación normalizada: sin espacios)
+    // 1) Buscar por DNI (comparación normalizada: sin espacios). El filtro se
+    // hace en el servidor: traer todas las personas y filtrar en JS se trunca
+    // en 1000 filas y no encuentra clientes recién registrados.
     if (dni) {
       const { data: personasPorDni } = await supabaseAdmin
         .from('personas')
-        .select('id, nombre, telefono')
-        .neq('dni', null)
+        .select('id, dni, nombre, telefono')
+        .ilike('dni', `%${String(dni).replace(/\s+/g, '').replace(/[;,]/g, '')}%`)
+        .limit(50)
       const porDni = (personasPorDni || []).find(
         (p: any) => String(p.dni || '').replace(/\s+/g, '') === String(dni).replace(/\s+/g, '')
       )
@@ -409,7 +412,8 @@ export async function POST(req: Request) {
       const { data: personasTel } = await supabaseAdmin
         .from('personas')
         .select('id, nombre, dni, telefono')
-        .neq('telefono', null)
+        .ilike('telefono', `%${String(telefono).replace(/\s+/g, '').replace(/[;,]/g, '')}%`)
+        .limit(50)
 
       const coincidencias = (personasTel || []).filter(
         (p: any) => String(p.telefono || '').replace(/\s+/g, '') === String(telefono).replace(/\s+/g, '')

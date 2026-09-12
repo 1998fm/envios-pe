@@ -135,6 +135,25 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     }
   }, [showNueva, userId])
 
+  // Mientras el modal de venta está abierto, refresca el stock si un producto
+  // cambia (otra pestaña/dispositivo, compra, venta, edición de stock), para
+  // que lo mostrado no quede desactualizado respecto a la BD.
+  useEffect(() => {
+    if (!showNueva || !userId) return
+    const supabase = createClient()
+    const recargarProductos = () => {
+      fetch(`/api/productos?user_id=${userId}&limit=1000`)
+        .then((r) => r.json())
+        .then((j) => setProductos(j.data || []))
+        .catch(() => {})
+    }
+    const channel = supabase
+      .channel('productos-venta-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'productos' }, recargarProductos)
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [showNueva, userId])
+
   async function buscarPersona() {
     if (busquedaCli.length < 3) return
     setBuscandoPersona(true)
@@ -179,7 +198,16 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   }
 
   function agregarProducto(prod: Producto) {
-    setItemsVenta([...itemsVenta, { producto_id: prod.id, nombre: prod.nombre, cantidad: '1', precio: prod.precio_venta }])
+    const existe = itemsVenta.find((it) => it.producto_id === prod.id)
+    if (existe) {
+      setItemsVenta(
+        itemsVenta.map((it) =>
+          it.producto_id === prod.id ? { ...it, cantidad: String((Number(it.cantidad) || 0) + 1) } : it
+        )
+      )
+    } else {
+      setItemsVenta([...itemsVenta, { producto_id: prod.id, nombre: prod.nombre, cantidad: '1', precio: prod.precio_venta }])
+    }
   }
 
   function manejarCodigoEscaneado(codigo: string) {
@@ -260,6 +288,13 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
       const texto = await res.text()
       const data = (() => { try { return JSON.parse(texto) } catch { return {} } })()
       toast.error(data.error || texto || 'Error al crear venta')
+      // Si el stock mostrado quedó desactualizado, refresca la lista
+      if (res.status === 409) {
+        fetch(`/api/productos?user_id=${userId}&limit=1000`)
+          .then((r) => r.json())
+          .then((j) => setProductos(j.data || []))
+          .catch(() => {})
+      }
     }
     setCreando(false)
   }

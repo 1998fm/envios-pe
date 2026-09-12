@@ -49,25 +49,29 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         .in('id', idsViejos)
       for (const p of prods || []) stockActual.set(p.id, p.stock_actual ?? 0)
     }
-    const faltantes = itemsData
-      .filter((it: any) => {
-        if (!it.producto_id) return false
-        const disp =
-          (stockViejoPorProducto.get(it.producto_id) || 0) +
-          (stockActual.get(it.producto_id) ?? 0)
-        return disp < it.cantidad
-      })
-      .map((it: any) => {
-        const disp =
-          (stockViejoPorProducto.get(it.producto_id) || 0) +
-          (stockActual.get(it.producto_id) ?? 0)
-        return `"${it.producto_nombre}" (disponible: ${disp}, requerido: ${it.cantidad})`
-      })
-    if (faltantes.length > 0) {
+    const faltantesVerificados: string[] = []
+    const cantidadesPorProducto = new Map<string, number>()
+    for (const it of itemsData) {
+      if (!it.producto_id) continue
+      cantidadesPorProducto.set(
+        it.producto_id,
+        (cantidadesPorProducto.get(it.producto_id) || 0) + it.cantidad
+      )
+    }
+    for (const [pid, cant] of cantidadesPorProducto) {
+      const disp =
+        (stockViejoPorProducto.get(pid) || 0) +
+        (stockActual.get(pid) ?? 0)
+      if (disp < cant) {
+        const nombre = itemsData.find((it: any) => it.producto_id === pid)?.producto_nombre || pid
+        faltantesVerificados.push(`"${nombre}" (disponible: ${disp}, requerido: ${cant})`)
+      }
+    }
+    if (faltantesVerificados.length > 0) {
       return NextResponse.json(
         {
-          error: `Stock insuficiente para ${faltantes.join(', ')}. Actualiza el stock o reduce la cantidad.`,
-          faltantes,
+          error: `Stock insuficiente para ${faltantesVerificados.join(', ')}. Actualiza el stock o reduce la cantidad.`,
+          faltantes: faltantesVerificados,
         },
         { status: 409 }
       )

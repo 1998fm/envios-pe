@@ -114,14 +114,26 @@ export async function POST(request: Request) {
     }
   }
 
-  // Validar stock disponible antes de crear la venta (evita stock negativo)
-  const faltantes = itemsData
-    .filter((it: any) => {
-      if (!it.producto_id) return false
-      const disponible = stockPorId.get(it.producto_id) ?? 0
-      return disponible < it.cantidad
+  // Validar stock disponible antes de crear la venta (evita stock negativo).
+  // Se acumula la cantidad por producto: si un mismo producto aparece varias
+  // veces en la venta (filas duplicadas), se suma antes de comparar.
+  const cantidadesPorProducto = new Map<string, number>()
+  for (const it of itemsData) {
+    if (!it.producto_id) continue
+    cantidadesPorProducto.set(
+      it.producto_id,
+      (cantidadesPorProducto.get(it.producto_id) || 0) + it.cantidad
+    )
+  }
+  const faltantes = [...cantidadesPorProducto]
+    .filter(([pid, cant]) => {
+      const disponible = stockPorId.get(pid) ?? 0
+      return disponible < cant
     })
-    .map((it: any) => `"${it.producto_nombre}" (disponible: ${stockPorId.get(it.producto_id) ?? 0}, requerido: ${it.cantidad})`)
+    .map(([pid, cant]) => {
+      const nombre = itemsData.find((it: any) => it.producto_id === pid)?.producto_nombre || pid
+      return `"${nombre}" (disponible: ${stockPorId.get(pid) ?? 0}, requerido: ${cant})`
+    })
 
   if (faltantes.length > 0) {
     return NextResponse.json(
