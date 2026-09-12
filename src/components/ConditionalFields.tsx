@@ -16,6 +16,7 @@ type Props = {
   setTipoEntrega: (v: 'AGENCIA' | 'DOMICILIO') => void
   provincia: string
   setProvincia: (v: string) => void
+  provinciasOlvaFiltradas: string[]
   agenciaOlva: string
   setAgenciaOlva: (v: string) => void
   agenciasOlvaProvincia: string[]
@@ -110,7 +111,7 @@ export default memo(function ConditionalFields(props: Props) {
           <AutocompleteInput
             value={props.provincia}
             onChange={props.setProvincia}
-            options={provinciasOlva}
+            options={props.metodo === 'OLVA' ? props.provinciasOlvaFiltradas : provinciasOlva}
             placeholder="Provincia"
             requireSelection
             errorMessage="Selecciona una provincia de la lista."

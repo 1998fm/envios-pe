@@ -16,6 +16,7 @@ import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
 import {
   useAgenciasOlva,
   agenciaEsDeProvincia,
+  normalizarTexto,
 } from '@/lib/hooks/useAgenciasOlva'
 import provinciasOlva from '@/data/provincias-olva.json'
 import distritosMoto from '@/data/distritos-moto.json'
@@ -169,6 +170,15 @@ export default function PublicForm({
 
   const { agencias: agenciasShalom } = useAgenciasShalom()
   const { agencias: agenciasOlva } = useAgenciasOlva()
+
+  // Provincias que tienen al menos una agencia Olva, derivadas del propio
+  // listado de agencias (mismo formato "DEPARTAMENTO - PROVINCIA").
+  const provinciasConOlva = useMemo(() => {
+    const presentes = new Set(
+      agenciasOlva.map((a) => normalizarTexto(`${a.department} - ${a.province}`))
+    )
+    return provinciasOlva.filter((p) => presentes.has(normalizarTexto(p)))
+  }, [agenciasOlva])
 
   // Agencias Olva que pertenecen a la provincia seleccionada (para el selector).
   const agenciasOlvaProvincia = useMemo(() => {
@@ -528,6 +538,7 @@ export default function PublicForm({
               setTipoEntrega={setTipoEntrega}
               provincia={provincia}
               setProvincia={setProvincia}
+              provinciasOlvaFiltradas={provinciasConOlva}
               agenciaOlva={agenciaOlva}
               setAgenciaOlva={setAgenciaOlva}
               agenciasOlvaProvincia={agenciasOlvaProvincia}
