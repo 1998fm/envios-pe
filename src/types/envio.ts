@@ -7,6 +7,7 @@ export type Envio = {
   telefono: string
   metodo: string
   nombre_metodo?: string | null
+  tipo_entrega?: 'AGENCIA' | 'DOMICILIO' | null
   destino: string
   direccion: string
   referencia?: string

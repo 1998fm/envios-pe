@@ -12,6 +12,7 @@ type Envio = {
   telefono: string
   metodo: string
   nombre_metodo?: string | null
+  tipo_entrega?: 'AGENCIA' | 'DOMICILIO' | null
   estado: string
   tamano?: string | null
   detalle?: string | null
@@ -111,6 +112,11 @@ export default function EnvioCard({
           <span data-tour="metodo" className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100  text-slate-700  whitespace-nowrap truncate max-w-[100px] sm:max-w-none shrink-0">
             {envio.nombre_metodo || envio.metodo}
           </span>
+          {envio.tipo_entrega && (
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-sky-100  text-sky-700  whitespace-nowrap shrink-0">
+              {envio.tipo_entrega === 'AGENCIA' ? 'Recojo agencia' : 'Domicilio'}
+            </span>
+          )}
           <div onClick={(e) => e.stopPropagation()} className="shrink-0">
             <TamanoSelect envioId={envio.id} tamanoActual={envio.tamano ?? null} />
           </div>

@@ -155,6 +155,7 @@ export default function PublicForm({
   )
   const [agencia, setAgencia] = useState('')
   const [provincia, setProvincia] = useState('')
+  const [tipoEntrega, setTipoEntrega] = useState<'AGENCIA' | 'DOMICILIO'>('AGENCIA')
   const [distrito, setDistrito] = useState('')
   const [tarifaMotorizado, setTarifaMotorizado] = useState<number | null>(null)
   const [cargandoTarifa, setCargandoTarifa] = useState(false)
@@ -288,6 +289,9 @@ export default function PublicForm({
     if (metodo === 'SHALOM') detalle = agencia
     if (['OLVA', 'MARVISUR', 'FLORES', 'OTRO'].includes(metodo)) {
       detalle = `Provincia: ${provincia}\nDirección: ${direccion}\nReferencia: ${referencia}`
+      if (metodo === 'OLVA') {
+        detalle = `Entrega: ${tipoEntrega === 'AGENCIA' ? 'Recojo en agencia' : 'Domicilio'}\n${detalle}`
+      }
     }
     if (metodo === 'MOTORIZADO') {
       detalle = `Distrito: ${distrito}\nDirección: ${direccion}\nReferencia: ${referencia}`
@@ -307,6 +311,7 @@ export default function PublicForm({
             : {}),
           metodo,
           nombre_metodo: metodo === 'OTRO' ? nombreOtro : null,
+          ...(metodo === 'OLVA' ? { tipo_entrega: tipoEntrega } : {}),
           destino:
             metodo === 'SHALOM'
               ? agencia
@@ -476,6 +481,8 @@ export default function PublicForm({
               agenciasShalom={agenciasShalom}
               agencia={agencia}
               setAgencia={setAgencia}
+              tipoEntrega={tipoEntrega}
+              setTipoEntrega={setTipoEntrega}
               provincia={provincia}
               setProvincia={setProvincia}
               distrito={distrito}

@@ -15,6 +15,7 @@ import {
   MapPin,
   Clock,
   Ruler,
+  Home,
   Trash2,
   AlertCircle,
   Wallet,
@@ -585,6 +586,13 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
                 }
               />
               <InfoTile icon={Ruler} label="Tamaño" value={envio.tamano || '—'} />
+              {envio.tipo_entrega && (
+                <InfoTile
+                  icon={Home}
+                  label="Entrega"
+                  value={envio.tipo_entrega === 'AGENCIA' ? 'Recojo en agencia' : 'Domicilio'}
+                />
+              )}
               {envio.cantidad_productos != null ? (
                 <InfoTile
                   icon={Package}

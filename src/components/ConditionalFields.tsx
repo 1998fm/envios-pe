@@ -12,6 +12,8 @@ type Props = {
   agenciasShalom: string[]
   agencia: string
   setAgencia: (v: string) => void
+  tipoEntrega: 'AGENCIA' | 'DOMICILIO'
+  setTipoEntrega: (v: 'AGENCIA' | 'DOMICILIO') => void
   provincia: string
   setProvincia: (v: string) => void
   distrito: string
@@ -70,6 +72,38 @@ export default memo(function ConditionalFields(props: Props) {
 
       {['OLVA', 'MARVISUR', 'FLORES', 'OTRO'].includes(props.metodo) && (
         <FieldsWrapper key="provincia">
+          {props.metodo === 'OLVA' && (
+            <div>
+              <div className="mb-1.5 text-sm font-medium text-slate-600">
+                ¿Cómo deseas recibir tu pedido?
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { value: 'AGENCIA' as const, label: 'Recojo en agencia', icon: '🏢' },
+                  { value: 'DOMICILIO' as const, label: 'Domicilio', icon: '🏠' },
+                ]).map((opcion) => (
+                  <button
+                    key={opcion.value}
+                    type="button"
+                    onClick={() => props.setTipoEntrega(opcion.value)}
+                    className={`flex items-center gap-2 rounded-xl border-2 px-3 py-3 text-sm font-semibold transition-colors ${
+                      props.tipoEntrega === opcion.value
+                        ? 'border-sky-500 bg-sky-50 text-sky-700'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    <span>{opcion.icon}</span>
+                    {opcion.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-xs text-slate-500">
+                {props.tipoEntrega === 'AGENCIA'
+                  ? 'El pedido quedará en la agencia Olva de tu provincia para que lo recojas.'
+                  : 'El pedido se enviará a la dirección que completes abajo.'}
+              </p>
+            </div>
+          )}
           <AutocompleteInput
             value={props.provincia}
             onChange={props.setProvincia}

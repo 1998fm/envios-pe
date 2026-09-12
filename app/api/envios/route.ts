@@ -82,6 +82,8 @@ export async function POST(req: Request) {
       metodo,
       nombre_metodo,
 
+      tipo_entrega: tipoEntregaBody,
+
       destino,
       direccion,
       referencia,
@@ -312,6 +314,9 @@ export async function POST(req: Request) {
 
       fecha_programada:
         fechaProgramada.toISOString(),
+    }
+    if (tipoEntregaBody === 'AGENCIA' || tipoEntregaBody === 'DOMICILIO') {
+      insertPayload.tipo_entrega = tipoEntregaBody
     }
     if (cantidadProductos !== null) {
       insertPayload.cantidad_productos = cantidadProductos
