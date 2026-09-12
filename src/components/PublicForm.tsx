@@ -290,7 +290,8 @@ export default function PublicForm({
 
     if (
       ['OLVA', 'MARVISUR', 'FLORES', 'OTRO'].includes(metodo) &&
-      (!existeEnLista(provinciasOlva, provincia) || !direccion)
+      (!existeEnLista(provinciasOlva, provincia) ||
+        (metodo !== 'OLVA' ? !direccion : tipoEntrega === 'DOMICILIO' ? !direccion : false))
     ) {
       setError('Selecciona una provincia de la lista y completa la dirección.')
       setLoading(false)
@@ -322,9 +323,11 @@ export default function PublicForm({
     if (['OLVA', 'MARVISUR', 'FLORES', 'OTRO'].includes(metodo)) {
       detalle = `Provincia: ${provincia}\nDirección: ${direccion}\nReferencia: ${referencia}`
       if (metodo === 'OLVA') {
-        detalle = `Entrega: ${tipoEntrega === 'AGENCIA' ? 'Recojo en agencia' : 'Domicilio'}\n${detalle}`
-        if (tipoEntrega === 'AGENCIA' && agenciaOlva) {
-          detalle = `Agencia Olva: ${agenciaOlva}\n${detalle}`
+        const esRecojo = tipoEntrega === 'AGENCIA'
+        if (esRecojo) {
+          detalle = `Entrega: Recojo en agencia\nAgencia Olva: ${agenciaOlva}\nProvincia: ${provincia}`
+        } else {
+          detalle = `Entrega: Domicilio\nProvincia: ${provincia}\nDirección: ${direccion}\nReferencia: ${referencia}`
         }
       }
     }

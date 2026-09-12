@@ -132,18 +132,22 @@ export default memo(function ConditionalFields(props: Props) {
               </p>
             )
           )}
-          <input
-            placeholder="Dirección exacta"
-            value={props.direccion}
-            onChange={(e) => props.setDireccion(e.target.value)}
-            className={inputClass}
-          />
-          <input
-            placeholder="Referencia (opcional)"
-            value={props.referencia}
-            onChange={(e) => props.setReferencia(e.target.value)}
-            className={inputClass}
-          />
+          {!(props.metodo === 'OLVA' && props.tipoEntrega === 'AGENCIA') && (
+            <>
+              <input
+                placeholder="Dirección exacta"
+                value={props.direccion}
+                onChange={(e) => props.setDireccion(e.target.value)}
+                className={inputClass}
+              />
+              <input
+                placeholder="Referencia (opcional)"
+                value={props.referencia}
+                onChange={(e) => props.setReferencia(e.target.value)}
+                className={inputClass}
+              />
+            </>
+          )}
         </FieldsWrapper>
       )}
 
