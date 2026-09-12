@@ -57,9 +57,10 @@ export default function EtiquetasImpresion({
           key={pagina}
           className="
             grid
+            grid-rows-2
             grid-cols-1 sm:grid-cols-2
             gap-2
-            min-h-screen
+            h-screen
             break-after-page
             p-2
           "
@@ -77,7 +78,7 @@ export default function EtiquetasImpresion({
   bg-white
   flex
   flex-col
-  min-h-[46vh]
+  h-full
 "
 >
 
