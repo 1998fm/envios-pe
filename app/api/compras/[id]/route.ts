@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
+import { restarStock } from '@/lib/stock'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -28,16 +29,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   // Restaurar stock (devolver lo que se incrementó)
   for (const item of compra.items) {
     if (!item.producto_id) continue
-    const { data: prod } = await supabaseAdmin
-      .from('productos')
-      .select('stock_actual')
-      .eq('id', item.producto_id)
-      .single()
-    if (prod) {
-      await supabaseAdmin
-        .from('productos')
-        .update({ stock_actual: prod.stock_actual - item.cantidad, updated_at: new Date().toISOString() })
-        .eq('id', item.producto_id)
+    const resultado = await restarStock(item.producto_id, item.cantidad)
+    if (!resultado.ok) {
+      return NextResponse.json({ error: resultado.error }, { status: 500 })
     }
   }
 
@@ -69,17 +63,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (compra?.estado === 'COMPLETADA') {
     for (const item of compra.items) {
       if (!item.producto_id) continue
-      const { data: prod } = await supabaseAdmin
-        .from('productos')
-        .select('stock_actual')
-        .eq('id', item.producto_id)
-        .single()
-      if (prod) {
-        await supabaseAdmin
-          .from('productos')
-          .update({ stock_actual: prod.stock_actual - item.cantidad, updated_at: new Date().toISOString() })
-          .eq('id', item.producto_id)
-      }
+      const resultado = await restarStock(item.producto_id, item.cantidad)
+      if (!resultado.ok) return NextResponse.json({ error: resultado.error }, { status: 500 })
     }
     await sincronizarArchivoPorStock(compra.items.map((it: any) => it.producto_id).filter(Boolean))
   }

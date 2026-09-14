@@ -75,3 +75,37 @@ export async function sumarStock(
     error: `No se pudo sumar stock de ${productoId} tras ${MAX_INTENTOS} intentos`,
   }
 }
+
+// Resta stock de un producto de forma atómica. A diferencia de descontarStock
+// permite que el resultado quede negativo (se usa al anular compras que ya
+// pudieron haberse vendido), pero evita restas perdidas por concurrencia.
+export async function restarStock(
+  productoId: string,
+  cantidad: number
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  for (let i = 0; i < MAX_INTENTOS; i++) {
+    const { data } = await supabaseAdmin
+      .from('productos')
+      .select('id, stock_actual')
+      .eq('id', productoId)
+      .single()
+
+    if (!data) return { ok: false, error: `Producto ${productoId} no encontrado` }
+
+    const stock = Number(data.stock_actual ?? 0)
+
+    const { data: actualizado } = await supabaseAdmin
+      .from('productos')
+      .update({ stock_actual: stock - cantidad, updated_at: new Date().toISOString() })
+      .eq('id', productoId)
+      .eq('stock_actual', stock)
+      .select('id')
+
+    if (actualizado && actualizado.length > 0) return { ok: true }
+  }
+
+  return {
+    ok: false,
+    error: `No se pudo restar stock de ${productoId} tras ${MAX_INTENTOS} intentos`,
+  }
+}

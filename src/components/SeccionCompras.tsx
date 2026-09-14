@@ -70,7 +70,18 @@ export default function SeccionCompras({ userId }: Props) {
 
   useEffect(() => {
     if (showNueva) {
-      fetch(`/api/productos?user_id=${userId}&limit=1000`).then((r) => r.json()).then((j) => setProductos(j.data || []))
+      // Cargar activos y archivados: un producto con stock 0 (archivado) debe
+      // seguir apareciendo para poder recomprar stock y que se reactive.
+      Promise.all([
+        fetch(`/api/productos?user_id=${userId}&limit=1000`).then((r) => r.json()),
+        fetch(`/api/productos?user_id=${userId}&limit=1000&archivado=true`).then((r) => r.json()),
+      ])
+        .then(([activos, archivados]) => {
+          const vistos = new Set((activos.data || []).map((p: Producto) => p.id))
+          const extra = (archivados.data || []).filter((p: Producto) => !vistos.has(p.id))
+          setProductos([...(activos.data || []), ...extra])
+        })
+        .catch(() => {})
     }
   }, [showNueva, userId])
 
@@ -307,10 +318,17 @@ export default function SeccionCompras({ userId }: Props) {
                     <button
                       key={p.id}
                       onClick={() => agregarProducto(p)}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm hover:bg-slate-50 transition-colors"
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm hover:bg-slate-50 transition-colors"
                     >
-                      <span className="font-medium text-slate-700">{p.nombre}</span>
-                      <span className="text-xs text-slate-400">S/ {p.precio_compra.toFixed(2)}</span>
+                      <span className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium text-slate-700 truncate">{p.nombre}</span>
+                        {p.archivado && (
+                          <span className="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">
+                            Sin stock
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs text-slate-400 shrink-0">S/ {p.precio_compra.toFixed(2)}</span>
                     </button>
                   ))}
                 </div>

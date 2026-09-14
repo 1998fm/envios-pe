@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
+import { sumarStock, restarStock } from '@/lib/stock'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -77,20 +78,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 })
   }
 
-  // Incrementar stock de cada producto
+  // Incrementar stock de cada producto (atómico). Si algún producto falla,
+  // revertir el stock ya sumado para no dejar el inventario desincronizado.
+  const conStockAumentado: Array<{ id: string; cantidad: number }> = []
   for (const item of itemsData) {
     if (!item.producto_id) continue
-    const { data: prod } = await supabaseAdmin
-      .from('productos')
-      .select('stock_actual')
-      .eq('id', item.producto_id)
-      .single()
-    if (prod) {
-      await supabaseAdmin
-        .from('productos')
-        .update({ stock_actual: prod.stock_actual + item.cantidad, updated_at: new Date().toISOString() })
-        .eq('id', item.producto_id)
+    const resultado = await sumarStock(item.producto_id, item.cantidad)
+    if (!resultado.ok) {
+      for (const prev of conStockAumentado) {
+        await restarStock(prev.id, prev.cantidad)
+      }
+      await supabaseAdmin.from('compra_items').delete().eq('compra_id', compra.id)
+      await supabaseAdmin.from('compras').delete().eq('id', compra.id)
+      return NextResponse.json({ error: resultado.error }, { status: 500 })
     }
+    conStockAumentado.push({ id: item.producto_id, cantidad: item.cantidad })
   }
 
   await sincronizarArchivoPorStock(itemsData.map((it: any) => it.producto_id).filter(Boolean))
