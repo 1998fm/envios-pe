@@ -18,7 +18,6 @@ import {
   Home,
   Trash2,
   AlertCircle,
-  Wallet,
   CircleCheck,
   type LucideIcon,
 } from 'lucide-react'
@@ -161,14 +160,6 @@ function InfoTile({
   )
 }
 
-function AccionCobro() {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200">
-      <Wallet size={12} /> Cobrado
-    </span>
-  )
-}
-
 export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Props) {
   const supabase = createClient()
   const confirmar = useConfirm()
@@ -180,7 +171,6 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
   const [ventasCliente, setVentasCliente] = useState<VentaConItems[]>([])
   const [loadingVentas, setLoadingVentas] = useState(false)
   const [marcandoEnvio, setMarcandoEnvio] = useState(false)
-  const [cobrandoVentas, setCobrandoVentas] = useState(false)
 
   useEffect(() => {
     if (envio?.dni || envio?.telefono) {
@@ -286,24 +276,6 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
 
     setVentasCliente(ventasConItems)
     setLoadingVentas(false)
-  }
-
-  async function cobrarVentasPendientes() {
-    const idsPendientes = ventasCliente.filter((v) => v.estado === 'PENDIENTE').map((v) => v.id)
-    if (idsPendientes.length === 0) return
-    if (!(await confirmar({ message: `¿Registrar el cobro de las ${idsPendientes.length} venta(s) pendiente(s) de este pedido?`, confirmLabel: 'Sí, cobrar' }))) return
-    setCobrandoVentas(true)
-    const { error } = await supabase
-      .from('ventas')
-      .update({ estado: 'COMPLETADA' })
-      .in('id', idsPendientes)
-    if (error) {
-      toast.error('Error al registrar el cobro')
-    } else {
-      toast.success('Ventas marcadas como cobradas')
-      cargarVentasCliente()
-    }
-    setCobrandoVentas(false)
   }
 
   async function validarContenido() {
@@ -421,11 +393,6 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     (sum, v) => sum + v.items.reduce((s, i) => s + i.cantidad, 0),
     0
   )
-
-  const ventasPorCobrar = ventasCliente.filter((v) => v.estado === 'PENDIENTE')
-  const totalPorCobrar = ventasPorCobrar.reduce((sum, v) => sum + Number(v.total || 0), 0)
-  const ventasCobradas = ventasCliente.filter((v) => v.estado === 'COMPLETADA')
-  const totalCobrado = ventasCobradas.reduce((sum, v) => sum + Number(v.total || 0), 0)
 
   // Paso actual del envío + progreso visual
   const ventasValidados = ventasCliente.some(
@@ -771,41 +738,6 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
               </div>
             )}
           </Card>
-
-          {/* 4. COBRO */}
-          {ventasCliente.length > 0 && (
-            <Card
-              title="Cobro del pedido"
-              subtitle="Confirma que el pago del cliente fue recibido"
-              icon={Wallet}
-              accent={ventasPorCobrar.length > 0 ? 'amber' : 'emerald'}
-            >
-              {ventasPorCobrar.length > 0 ? (
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm text-slate-600">
-                    {ventasPorCobrar.length} venta{ventasPorCobrar.length === 1 ? '' : 's'} por cobrar ·{' '}
-                    <span className="font-bold text-slate-900">{formatMoney(totalPorCobrar)}</span>
-                  </div>
-                  <button
-                    onClick={cobrarVentasPendientes}
-                    disabled={cobrandoVentas}
-                    className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-bold text-white transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/20 disabled:opacity-50"
-                  >
-                    {cobrandoVentas ? <Loader2 size={14} className="animate-spin" /> : <Wallet size={14} />}
-                    {cobrandoVentas ? 'Registrando...' : 'Registrar pago'}
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm text-slate-600">
-                    Pago registrado por{' '}
-                    <span className="font-bold text-slate-900">{formatMoney(totalCobrado)}</span>
-                  </div>
-                  <AccionCobro />
-                </div>
-              )}
-            </Card>
-          )}
 
           {/* 5. OBSERVACIONES */}
           <div data-tour="detalle-envio-observacion">

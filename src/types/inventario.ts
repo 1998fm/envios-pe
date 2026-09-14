@@ -30,6 +30,7 @@ export type Venta = {
   total: number
   estado: 'COMPLETADA' | 'ANULADA' | 'PENDIENTE'
   metodo_pago: MetodoPago
+  monto_pagado?: number
   estado_envio: 'PENDIENTE' | 'EMPACADO' | 'ENVIADO' | 'ENTREGADO' | 'COMPLETADO'
   envio_id: string | null
   created_at: string

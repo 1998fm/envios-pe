@@ -55,6 +55,8 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   const [itemsVenta, setItemsVenta] = useState<{ producto_id: string; nombre: string; cantidad: string; precio: number }[]>([])
   const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'YAPE_PLIN' | 'TARJETA'>('EFECTIVO')
   const [pagoEstado, setPagoEstado] = useState<'COMPLETADA' | 'PENDIENTE'>('COMPLETADA')
+  const [pagoParcial, setPagoParcial] = useState(false)
+  const [montoPendiente, setMontoPendiente] = useState('')
   const [creando, setCreando] = useState(false)
 
   async function cargarVentas(page = 0) {
@@ -254,6 +256,38 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     if (!personaSel) { toast.error('Selecciona un cliente'); return }
     if (itemsVenta.length === 0) { toast.error('Agrega al menos un producto'); return }
     setCreando(true)
+
+    // Pago parcial: cuánto debe el cliente (ej. total 75, pagó 50 -> debe 25).
+    let estadoFinal: 'COMPLETADA' | 'PENDIENTE' = metodoPago === 'TARJETA' ? 'PENDIENTE' : pagoEstado
+    let montoPagadoFinal = estadoFinal === 'COMPLETADA' ? total : 0
+
+    const parcial =
+      pagoParcial &&
+      (metodoPago === 'TARJETA' || pagoEstado === 'PENDIENTE')
+    if (parcial) {
+      const debe = Math.min(Math.max(Number(montoPendiente) || 0, 0), total)
+      const pagado = total - debe
+      if (debe > 0) {
+        estadoFinal = 'COMPLETADA'
+        montoPagadoFinal = total
+        const yaPagoRestante = await confirmar({
+          message: `El total es S/ ${total.toFixed(2)}. ¿El cliente ya pagó el restante de S/ ${debe.toFixed(2)}?`,
+          confirmLabel: 'Sí, ya pagó todo',
+        })
+        if (yaPagoRestante) {
+          if (metodoPago === 'TARJETA') estadoFinal = 'PENDIENTE'
+          montoPagadoFinal = total
+        } else {
+          estadoFinal = 'PENDIENTE'
+          montoPagadoFinal = pagado
+        }
+      } else {
+        // Debe 0: el cliente ya pagó el total (parcial 100%).
+        if (metodoPago !== 'TARJETA') estadoFinal = 'COMPLETADA'
+        montoPagadoFinal = total
+      }
+    }
+
     const res = await fetch('/api/ventas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -264,7 +298,8 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
         persona_dni: personaSel.dni,
         persona_telefono: personaSel.telefono || null,
         metodo_pago: metodoPago,
-        ...(metodoPago !== 'TARJETA' ? { estado: pagoEstado } : {}),
+        ...(metodoPago !== 'TARJETA' ? { estado: estadoFinal } : {}),
+        monto_pagado: montoPagadoFinal,
         items: itemsVenta.map((it) => ({
           producto_id: it.producto_id,
           producto_nombre: it.nombre,
@@ -307,6 +342,8 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     setBusquedaProd('')
     setMetodoPago('EFECTIVO')
     setPagoEstado('COMPLETADA')
+    setPagoParcial(false)
+    setMontoPendiente('')
     setMostrarNuevoCliente(false)
     setNuevoCliForm({ dni: '', nombre: '', telefono: '' })
   }
@@ -503,7 +540,14 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                       </span>
                       <span className="md:hidden text-slate-600">{v.items?.length ?? 0} ítems</span>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">S/ {v.total.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                      S/ {v.total.toFixed(2)}
+                      {v.estado === 'PENDIENTE' && (v.monto_pagado ?? 0) > 0 && (v.monto_pagado ?? 0) < v.total && (
+                        <span className="mt-0.5 block text-right text-[10px] font-bold text-amber-600">
+                          Saldo S/ {(v.total - (v.monto_pagado ?? 0)).toFixed(2)}
+                        </span>
+                      )}
+                    </td>
                     {planNivel(plan) >= 1 && (
                       <td className="px-4 py-3 text-right">
                         <span className="font-semibold text-emerald-600">{gananciaText}</span>
@@ -786,7 +830,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                       <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">¿El pago ya se realizó?</label>
                       <div className="grid grid-cols-2 gap-2">
                         <button
-                          onClick={() => setPagoEstado('COMPLETADA')}
+                          onClick={() => { setPagoEstado('COMPLETADA'); setPagoParcial(false); setMontoPendiente('') }}
                           className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
                             pagoEstado === 'COMPLETADA'
                               ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/20'
@@ -817,6 +861,52 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                     <p className="mt-1.5 text-xs text-amber-600">
                       El pago con tarjeta se registrará como <strong>Pendiente</strong> hasta que se confirme el pago.
                     </p>
+                  )}
+                  {(metodoPago === 'TARJETA' || pagoEstado === 'PENDIENTE') && (
+                    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3" data-tour="nueva-venta-pago-parcial">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={pagoParcial}
+                          onChange={(e) => setPagoParcial(e.target.checked)}
+                          className="accent-sky-600 w-4 h-4"
+                        />
+                        <span className="text-sm font-medium text-slate-700">El cliente pagó solo una parte</span>
+                      </label>
+                      {pagoParcial && (
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">¿Cuánto debe?</label>
+                            <div className="flex items-center gap-1">
+                              <span className="text-slate-500 text-sm">S/</span>
+                              <input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={montoPendiente}
+                                onChange={(e) => setMontoPendiente(e.target.value)}
+                                placeholder={total.toFixed(2)}
+                                className="w-full px-2 py-1.5 rounded border border-slate-200 text-sm text-right"
+                              />
+                            </div>
+                            {(() => {
+                              const debe = Math.min(Math.max(Number(montoPendiente) || 0, 0), total)
+                              const pagado = total - debe
+                              return (
+                                <p className="mt-1 text-xs text-slate-500">
+                                  <span className="text-emerald-600 font-semibold">Pagado: S/ {pagado.toFixed(2)}</span>
+                                  {' · '}
+                                  <span className="text-amber-600 font-semibold">Pendiente: S/ {debe.toFixed(2)}</span>
+                                </p>
+                              )
+                            })()}
+                          </div>
+                          <p className="text-xs text-slate-500 self-end">
+                            La venta se registrará como <strong>Pendiente</strong> y te consultará si el restante ya fue pagado.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

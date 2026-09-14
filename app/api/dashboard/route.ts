@@ -81,6 +81,33 @@ export async function GET(request: Request) {
     return count ?? 0
   }
 
+  // Dinero realmente cobrado: suma de monto_pagado de todas las ventas no
+  // anuladas. Una venta PENDIENTE con abono parcial aporta lo ya pagado, no el
+  // total (así el saldo disponible refleja el dinero real en caja).
+  async function sumCobrado(desde: Date, hasta?: Date, estados?: string[]) {
+    let q = supabaseAdmin
+      .from('ventas')
+      .select('monto_pagado')
+      .eq('profile_id', userId)
+      .gte('created_at', desde.toISOString())
+    if (hasta) q = q.lt('created_at', hasta.toISOString())
+    if (estados && estados.length) q = q.in('estado', estados)
+    const { data } = await q
+    return (data ?? []).reduce((acc: number, v: any) => acc + Number(v.monto_pagado ?? 0), 0)
+  }
+
+  // Ventas pendientes con su saldo por cobrar (total - lo ya abonado)
+  async function pendientesPorCobrar() {
+    const { data } = await supabaseAdmin
+      .from('ventas')
+      .select('total, monto_pagado')
+      .eq('profile_id', userId)
+      .eq('estado', 'PENDIENTE')
+    const filas = (data ?? []).filter((v: any) => Number(v.total ?? 0) > Number(v.monto_pagado ?? 0))
+    const total = filas.reduce((acc: number, v: any) => acc + (Number(v.total ?? 0) - Number(v.monto_pagado ?? 0)), 0)
+    return { cantidad: filas.length, total: Math.round(total * 100) / 100 }
+  }
+
   const [
     ventasMes,
     ventasMesAnterior,
@@ -89,13 +116,11 @@ export async function GET(request: Request) {
     enviosMes,
     enviosMesAnterior,
     enviosHoy,
-    cobrosPendientes,
-    cobrosPendientesTotal,
     sinEmpacar,
     empacados,
     stockBajoCount,
     pedidosSinVenta,
-    totalVentas,
+    totalCobrado,
     totalCompras,
     gastosMes,
     gastosMesAnterior,
@@ -108,18 +133,18 @@ export async function GET(request: Request) {
     countEnvios(startOfMonth, startOfNextMonth),
     countEnvios(startOfPrevMonth, startOfMonth),
     countEnvios(startOfDay),
-    countVentas(new Date(0), undefined, ['PENDIENTE']),
-    sumVentas(new Date(0), undefined, ['PENDIENTE']),
     countEnvios(new Date(0), undefined, ['NO_EMPACADO']),
     countEnvios(new Date(0), undefined, ['EMPACADO']),
     countProductosStockBajo(supabaseAdmin, userId),
     countPedidosSinVenta(supabaseAdmin, userId),
-    sumVentas(new Date(0), undefined, ['COMPLETADA']),
+    sumCobrado(new Date(0), undefined, ['COMPLETADA', 'PENDIENTE']),
     sumCompras(new Date(0), undefined, ['COMPLETADA']),
     sumGastos(startOfMonth, startOfNextMonth),
     sumGastos(startOfPrevMonth, startOfMonth),
     sumGastos(new Date(0)),
   ])
+
+  const { cantidad: cobrosPendientes, total: cobrosPendientesTotal } = await pendientesPorCobrar()
 
   // ========================================
   // HISTÓRICO DIARIO (90 días) — se calcula
@@ -269,11 +294,11 @@ export async function GET(request: Request) {
       pedidosPorDespachar: sinEmpacar + empacados,
       enviosMes,
       stockBajo: stockBajoCount,
-      totalVentas,
+      totalVentas: totalCobrado,
       totalCompras,
       totalGastos,
       gastosMes,
-      saldoDisponible: totalVentas - totalCompras - totalGastos,
+      saldoDisponible: totalCobrado - totalCompras - totalGastos,
     },
     pendientes: {
       sinEmpacar,

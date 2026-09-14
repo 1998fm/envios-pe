@@ -2,6 +2,7 @@
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 import { checkRecordLimit } from '@/lib/planLimits'
+import { descontarStock, sumarStock } from '@/lib/stock'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -68,7 +69,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json()
-  const { user_id, persona_id, persona_nombre, persona_dni, persona_telefono, items, metodo_pago, estado: estadoSolicitado } = body
+  const { user_id, persona_id, persona_nombre, persona_dni, persona_telefono, items, metodo_pago, estado: estadoSolicitado, monto_pagado: montoPagadoSolicitado } = body
 
   if (!user_id || !persona_id || !items?.length) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
@@ -82,6 +83,24 @@ export async function POST(request: Request) {
   const pago = metodo_pago === 'YAPE_PLIN' || metodo_pago === 'TARJETA' ? metodo_pago : 'EFECTIVO'
   // TARJETA siempre queda pendiente hasta confirmar; EFECTIVO y YAPE_PLIN respetan si el cliente ya pagó
   const estado = pago === 'TARJETA' ? 'PENDIENTE' : (estadoSolicitado === 'PENDIENTE' ? 'PENDIENTE' : 'COMPLETADA')
+
+  // Bug 2: validar cantidades y precios antes de tocar stock/items
+  for (const it of items as any[]) {
+    const cantidad = Number(it.cantidad)
+    const precio = Number(it.precio_unitario)
+    if (!Number.isFinite(cantidad) || cantidad <= 0 || !Number.isInteger(cantidad)) {
+      return NextResponse.json(
+        { error: 'Cada ítem debe tener una cantidad entera mayor a 0.' },
+        { status: 400 }
+      )
+    }
+    if (!Number.isFinite(precio) || precio < 0) {
+      return NextResponse.json(
+        { error: 'Cada ítem debe tener un precio_unitario mayor o igual a 0.' },
+        { status: 400 }
+      )
+    }
+  }
 
   let total = 0
   const itemsData = items.map((it: any) => {
@@ -170,6 +189,9 @@ export async function POST(request: Request) {
       total,
       estado,
       metodo_pago: pago,
+      // Si nace completada, el monto ya fue cobrado. Si nace pendiente puede
+      // incluir un abono inicial (pago parcial) indicado al crear la venta.
+      monto_pagado: estado === 'COMPLETADA' ? total : Math.min(Math.max(Number(montoPagadoSolicitado) || 0, 0), total),
     })
     .select()
     .single()
@@ -183,6 +205,9 @@ export async function POST(request: Request) {
     .insert(itemsData.map((it: any) => ({ ...it, venta_id: venta.id })))
 
   if (itemsError) {
+    // Bug 3: si fallan los items, borrar la venta recién creada para no dejar
+    // una venta huérfana (el stock aún no se ha descontado).
+    await supabaseAdmin.from('ventas').delete().eq('id', venta.id)
     return NextResponse.json({ error: itemsError.message }, { status: 500 })
   }
 
@@ -205,23 +230,21 @@ export async function POST(request: Request) {
       .eq('id', venta.id)
   }
 
-  // Descontar stock de cada producto
-  for (const item of itemsData) {
-    if (!item.producto_id) continue
-    const { data: prod } = await supabaseAdmin
-      .from('productos')
-      .select('stock_actual')
-      .eq('id', item.producto_id)
-      .single()
-    if (prod) {
-      await supabaseAdmin
-        .from('productos')
-        .update({ stock_actual: prod.stock_actual - item.cantidad, updated_at: new Date().toISOString() })
-        .eq('id', item.producto_id)
+  // Bug 2: descontar stock de forma atómica, acumulando cantidades por
+  // producto y con rollback si algún producto falla.
+  const descontados: { producto_id: string; cantidad: number }[] = []
+  for (const [productoId, cantidad] of cantidadesPorProducto) {
+    const res = await descontarStock(productoId, cantidad)
+    if (!res.ok) {
+      for (const d of descontados) {
+        await sumarStock(d.producto_id, d.cantidad)
+      }
+      return NextResponse.json({ error: res.error }, { status: 409 })
     }
+    descontados.push({ producto_id: productoId, cantidad })
   }
 
-  await sincronizarArchivoPorStock(itemsData.map((it: any) => it.producto_id).filter(Boolean))
+  await sincronizarArchivoPorStock([...cantidadesPorProducto.keys()])
 
   return NextResponse.json({ data: venta })
 }
