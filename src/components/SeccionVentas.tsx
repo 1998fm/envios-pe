@@ -56,7 +56,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'YAPE_PLIN' | 'TARJETA'>('EFECTIVO')
   const [pagoEstado, setPagoEstado] = useState<'COMPLETADA' | 'PENDIENTE'>('COMPLETADA')
   const [pagoParcial, setPagoParcial] = useState(false)
-  const [montoPendiente, setMontoPendiente] = useState('')
+  const [montoPagado, setMontoPagado] = useState('')
   const [creando, setCreando] = useState(false)
 
   async function cargarVentas(page = 0) {
@@ -257,35 +257,27 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     if (itemsVenta.length === 0) { toast.error('Agrega al menos un producto'); return }
     setCreando(true)
 
-    // Pago parcial: cuánto debe el cliente (ej. total 75, pagó 50 -> debe 25).
-    let estadoFinal: 'COMPLETADA' | 'PENDIENTE' = metodoPago === 'TARJETA' ? 'PENDIENTE' : pagoEstado
-    let montoPagadoFinal = estadoFinal === 'COMPLETADA' ? total : 0
+    // Estado y monto pagado:
+    // - TARJETA: siempre Pendiente (sin pago parcial), monto 0.
+    // - EFECTIVO/YAPE "Sí, ya pagó": COMPLETADA con el total.
+    // - EFECTIVO/YAPE Pendiente: si el cliente abonó una parte, se guarda lo
+    //   pagado y la venta queda Pendiente (deuda = total - pagado).
+    let estadoFinal: 'COMPLETADA' | 'PENDIENTE' = 'PENDIENTE'
+    let montoPagadoFinal = 0
 
-    const parcial =
-      pagoParcial &&
-      (metodoPago === 'TARJETA' || pagoEstado === 'PENDIENTE')
-    if (parcial) {
-      const debe = Math.min(Math.max(Number(montoPendiente) || 0, 0), total)
-      const pagado = total - debe
-      if (debe > 0) {
-        estadoFinal = 'COMPLETADA'
-        montoPagadoFinal = total
-        const yaPagoRestante = await confirmar({
-          message: `El total es S/ ${total.toFixed(2)}. ¿El cliente ya pagó el restante de S/ ${debe.toFixed(2)}?`,
-          confirmLabel: 'Sí, ya pagó todo',
-        })
-        if (yaPagoRestante) {
-          if (metodoPago === 'TARJETA') estadoFinal = 'PENDIENTE'
-          montoPagadoFinal = total
-        } else {
-          estadoFinal = 'PENDIENTE'
-          montoPagadoFinal = pagado
-        }
-      } else {
-        // Debe 0: el cliente ya pagó el total (parcial 100%).
-        if (metodoPago !== 'TARJETA') estadoFinal = 'COMPLETADA'
-        montoPagadoFinal = total
-      }
+    if (metodoPago === 'TARJETA') {
+      estadoFinal = 'PENDIENTE'
+      montoPagadoFinal = 0
+    } else if (pagoEstado === 'COMPLETADA') {
+      estadoFinal = 'COMPLETADA'
+      montoPagadoFinal = total
+    } else if (pagoParcial) {
+      const pagado = Math.min(Math.max(Number(montoPagado) || 0, 0), total)
+      montoPagadoFinal = pagado
+      estadoFinal = pagado >= total ? 'COMPLETADA' : 'PENDIENTE'
+    } else {
+      estadoFinal = 'PENDIENTE'
+      montoPagadoFinal = 0
     }
 
     const res = await fetch('/api/ventas', {
@@ -343,7 +335,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     setMetodoPago('EFECTIVO')
     setPagoEstado('COMPLETADA')
     setPagoParcial(false)
-    setMontoPendiente('')
+    setMontoPagado('')
     setMostrarNuevoCliente(false)
     setNuevoCliForm({ dni: '', nombre: '', telefono: '' })
   }
@@ -364,7 +356,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   }
 
   async function confirmarVenta(venta: Venta) {
-    if (!(await confirmar({ message: '¿Confirmar que el pago con tarjeta fue recibido?', confirmLabel: 'Sí, confirmar' }))) return
+    if (!(await confirmar({ message: '¿Confirmas que el cliente ya completó su pago?', confirmLabel: 'Sí, completó su pago' }))) return
     const res = await fetch(`/api/ventas/${venta.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -542,9 +534,9 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-900">
                       S/ {v.total.toFixed(2)}
-                      {v.estado === 'PENDIENTE' && (v.monto_pagado ?? 0) > 0 && (v.monto_pagado ?? 0) < v.total && (
+                      {v.estado === 'PENDIENTE' && (v.monto_pagado ?? 0) < v.total && (
                         <span className="mt-0.5 block text-right text-[10px] font-bold text-amber-600">
-                          Saldo S/ {(v.total - (v.monto_pagado ?? 0)).toFixed(2)}
+                          Debe S/ {(v.total - (v.monto_pagado ?? 0)).toFixed(2)}
                         </span>
                       )}
                     </td>
@@ -830,7 +822,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                       <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">¿El pago ya se realizó?</label>
                       <div className="grid grid-cols-2 gap-2">
                         <button
-                          onClick={() => { setPagoEstado('COMPLETADA'); setPagoParcial(false); setMontoPendiente('') }}
+                          onClick={() => { setPagoEstado('COMPLETADA'); setPagoParcial(false); setMontoPagado('') }}
                           className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
                             pagoEstado === 'COMPLETADA'
                               ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/20'
@@ -862,7 +854,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                       El pago con tarjeta se registrará como <strong>Pendiente</strong> hasta que se confirme el pago.
                     </p>
                   )}
-                  {(metodoPago === 'TARJETA' || pagoEstado === 'PENDIENTE') && (
+                  {pagoEstado === 'PENDIENTE' && metodoPago !== 'TARJETA' && (
                     <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3" data-tour="nueva-venta-pago-parcial">
                       <label className="flex items-center gap-2 cursor-pointer select-none">
                         <input
@@ -876,33 +868,33 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                       {pagoParcial && (
                         <div className="mt-2 grid grid-cols-2 gap-2">
                           <div>
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">¿Cuánto debe?</label>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">¿Cuánto pagó?</label>
                             <div className="flex items-center gap-1">
                               <span className="text-slate-500 text-sm">S/</span>
                               <input
                                 type="number"
                                 min={0}
                                 step="0.01"
-                                value={montoPendiente}
-                                onChange={(e) => setMontoPendiente(e.target.value)}
+                                value={montoPagado}
+                                onChange={(e) => setMontoPagado(e.target.value)}
                                 placeholder={total.toFixed(2)}
                                 className="w-full px-2 py-1.5 rounded border border-slate-200 text-sm text-right"
                               />
                             </div>
                             {(() => {
-                              const debe = Math.min(Math.max(Number(montoPendiente) || 0, 0), total)
-                              const pagado = total - debe
+                              const pagado = Math.min(Math.max(Number(montoPagado) || 0, 0), total)
+                              const debe = total - pagado
                               return (
                                 <p className="mt-1 text-xs text-slate-500">
                                   <span className="text-emerald-600 font-semibold">Pagado: S/ {pagado.toFixed(2)}</span>
                                   {' · '}
-                                  <span className="text-amber-600 font-semibold">Pendiente: S/ {debe.toFixed(2)}</span>
+                                  <span className="text-amber-600 font-semibold">Debe: S/ {debe.toFixed(2)}</span>
                                 </p>
                               )
                             })()}
                           </div>
                           <p className="text-xs text-slate-500 self-end">
-                            La venta se registrará como <strong>Pendiente</strong> y te consultará si el restante ya fue pagado.
+                            La venta se registrará como <strong>Pendiente</strong> y quedará la deuda hasta que confirmes el pago.
                           </p>
                         </div>
                       )}
