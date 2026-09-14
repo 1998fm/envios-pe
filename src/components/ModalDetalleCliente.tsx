@@ -41,7 +41,7 @@ type DetalleCliente = {
   dni: string | null
   telefono: string | null
   ventas: VentaDetalle[]
-  envíos: EnvioDetalle[]
+  envios: EnvioDetalle[]
   totalVentas: number
   ultimoRegistro: string | null
 }
@@ -167,7 +167,7 @@ export default function ModalDetalleCliente({
             </span>
             <div className="min-w-0">
               <h3 className="text-lg font-bold text-slate-900 truncate">{detalle?.nombre || 'Cliente'}</h3>
-              <p className="text-xs text-slate-500">{loading ? 'Cargando...' : `${detalle?.ventas?.length ?? 0} ventas · ${detalle?.envíos?.length ?? 0} envíos`}</p>
+              <p className="text-xs text-slate-500">{loading ? 'Cargando...' : `${detalle?.ventas?.length ?? 0} ventas · ${detalle?.envios?.length ?? 0} envíos`}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors" title="Cerrar">
@@ -248,13 +248,13 @@ export default function ModalDetalleCliente({
               <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
                 <Truck size={15} className="text-sky-600" />
                 <h4 className="text-sm font-bold text-slate-900">Historial de envíos</h4>
-                <span className="ml-auto text-xs font-semibold text-slate-400">{detalle?.envíos?.length ?? 0}</span>
+<span className="ml-auto text-xs font-semibold text-slate-400">{detalle?.envios?.length ?? 0}</span>
               </div>
-              {!detalle?.envíos?.length ? (
+              {!detalle?.envios?.length ? (
                 <p className="px-4 py-6 text-sm text-slate-400 text-center">Este cliente aún no tiene envíos.</p>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  {detalle.envíos.map((e) => (
+                  {detalle.envios.map((e) => (
                     <div key={e.id} className="px-4 py-3 space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold text-slate-900">{e.destino}</span>
