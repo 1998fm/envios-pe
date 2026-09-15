@@ -1235,6 +1235,8 @@ mensaje_recojo:
 
   mostrarEscogerFecha: config.mostrarEscogerFecha,
 
+  mostrarTracking: config.mostrarTracking,
+
   cerrarFormulario: config.cerrarFormulario,
 
   cerradoFormularioMensaje: config.cerradoFormularioMensaje,
