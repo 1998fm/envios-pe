@@ -119,6 +119,7 @@ nombreMetodoOtro={profile.nombre_metodo_otro}
 
         solicitarCantidadProductos={profile.solicitar_cantidad_productos ?? false}
         mostrarEscogerFecha={profile.mostrar_escoger_fecha ?? true}
+        mostrarTracking={profile.mostrar_tracking ?? true}
         formularioDeshabilitado={formularioDeshabilitado}
         cerrarFormularioMensaje={profile.cerrar_formulario_mensaje ?? ''}
         distritosMotorizado={distritosMotorizado}

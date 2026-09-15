@@ -62,6 +62,7 @@ const initialConfig: ConfigState = {
   logisticaAgenciasCupo: 0,
   solicitarCantidadProductos: false,
   mostrarEscogerFecha: true,
+  mostrarTracking: true,
   cerrarFormulario: false,
   cerradoFormularioMensaje: '',
   cerrarFormularioDias: [],

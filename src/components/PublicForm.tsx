@@ -46,6 +46,7 @@ type Props = {
   mensajeRecojo?: string
   solicitarCantidadProductos?: boolean
   mostrarEscogerFecha?: boolean
+  mostrarTracking?: boolean
   formularioDeshabilitado?: boolean
   cerrarFormularioMensaje?: string
   distritosMotorizado?: string[]
@@ -119,6 +120,7 @@ export default function PublicForm({
   mensajeRecojo,
   solicitarCantidadProductos = false,
   mostrarEscogerFecha = true,
+  mostrarTracking = true,
   formularioDeshabilitado = false,
   cerrarFormularioMensaje = '',
   distritosMotorizado,
@@ -482,22 +484,24 @@ export default function PublicForm({
         <div className="space-y-6 mt-2">
           <FormHeader logoUrl={isPro ? logoUrl : undefined} />
 
-          <button
-            type="button"
-            onClick={() => setMostrandoTracking(true)}
-            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3 text-left transition-all duration-200 hover:border-sky-300 hover:bg-sky-50"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-sm">
-                <Truck size={18} />
+          {mostrarTracking && (
+            <button
+              type="button"
+              onClick={() => setMostrandoTracking(true)}
+              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3 text-left transition-all duration-200 hover:border-sky-300 hover:bg-sky-50"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-sm">
+                  <Truck size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">¿Ya hiciste un pedido?</p>
+                  <p className="text-xs text-slate-500">Rastrea el estado de tu pedido</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-bold text-slate-900">¿Ya hiciste un pedido?</p>
-                <p className="text-xs text-slate-500">Rastrea el estado de tu pedido</p>
-              </div>
-            </div>
-            <ChevronRight size={18} className="shrink-0 text-sky-500" />
-          </button>
+              <ChevronRight size={18} className="shrink-0 text-sky-500" />
+            </button>
+          )}
 
           <PersonalDataSection
             nombre={nombre}

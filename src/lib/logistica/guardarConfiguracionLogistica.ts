@@ -48,6 +48,9 @@ export function obtenerConfiguracionLogistica(
     mostrar_escoger_fecha:
       config.mostrarEscogerFecha ?? true,
 
+    mostrar_tracking:
+      config.mostrarTracking ?? true,
+
     cerrar_formulario:
       config.cerrarFormulario ?? false,
 

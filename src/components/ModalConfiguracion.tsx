@@ -498,6 +498,23 @@ export default function ModalConfiguracion({
                 </div>
 
                 <div className="mt-6 pt-5 border-t border-slate-200">
+                  <label className="flex items-center gap-3 cursor-pointer flex-1">
+                    <input
+                      type="checkbox"
+                      checked={config.mostrarTracking}
+                      onChange={(e) => upd('mostrarTracking', e.target.checked)}
+                      className="accent-sky-600 w-4 h-4"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Mostrar tracking de pedidos</p>
+                      <p className="text-xs text-slate-500">
+                        Muestra el botón “¿Ya hiciste un pedido?” para que tus clientes consulten el estado de su envío
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="mt-6 pt-5 border-t border-slate-200">
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-3 cursor-pointer flex-1">
                       <input

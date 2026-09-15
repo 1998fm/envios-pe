@@ -489,6 +489,7 @@ setConfig(prev => ({
   logisticaAgenciasCupo: profile?.logistica_agencias_cupo ?? 0,
   solicitarCantidadProductos: profile?.solicitar_cantidad_productos ?? false,
   mostrarEscogerFecha: profile?.mostrar_escoger_fecha ?? true,
+  mostrarTracking: profile?.mostrar_tracking ?? true,
   cerrarFormulario: profile?.cerrar_formulario ?? false,
   cerradoFormularioMensaje: profile?.cerrar_formulario_mensaje ?? '',
   cerrarFormularioDias: profile?.cerrar_formulario_dias ?? [],

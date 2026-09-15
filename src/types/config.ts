@@ -40,6 +40,7 @@ export type ConfigState = {
   logisticaAgenciasCupo: number
   solicitarCantidadProductos: boolean
   mostrarEscogerFecha: boolean
+  mostrarTracking: boolean
   cerrarFormulario: boolean
   cerradoFormularioMensaje: string
   cerrarFormularioDias: string[]
@@ -87,6 +88,7 @@ export const initialConfigState: ConfigState = {
   logisticaAgenciasCupo: 0,
   solicitarCantidadProductos: false,
   mostrarEscogerFecha: true,
+  mostrarTracking: true,
   cerrarFormulario: false,
   cerradoFormularioMensaje: '',
   cerrarFormularioDias: [],
