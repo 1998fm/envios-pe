@@ -758,7 +758,7 @@ export default function AdminPage() {
               <div className="mt-1 flex gap-[3px]">
                 {overview.serie.map((s) => (
                   <div key={s.dia} className="flex-1 text-center text-[9px] text-slate-400 truncate">
-                    {new Date(s.dia).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' })}
+                    {new Date(s.dia + 'T12:00:00').toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit' })}
                   </div>
                 ))}
               </div>
@@ -1420,8 +1420,8 @@ export default function AdminPage() {
               <label className="block text-xs font-semibold text-slate-500 mb-1">Pro hasta (fecha)</label>
               <input
                 type="datetime-local"
-                value={editando.pro_until ? new Date(editando.pro_until).toISOString().slice(0, 16) : ''}
-                onChange={(e) => setEditando({ ...editando, pro_until: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                value={editando.pro_until ? new Date(new Date(editando.pro_until).getTime() - 5 * 3600 * 1000).toISOString().slice(0, 16) : ''}
+                onChange={(e) => setEditando({ ...editando, pro_until: e.target.value ? new Date(`${e.target.value}:00-05:00`).toISOString() : null })}
                 className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>
@@ -1430,8 +1430,8 @@ export default function AdminPage() {
               <label className="block text-xs font-semibold text-slate-500 mb-1">Trial hasta (fecha)</label>
               <input
                 type="datetime-local"
-                value={editando.trial_end ? new Date(editando.trial_end).toISOString().slice(0, 16) : ''}
-                onChange={(e) => setEditando({ ...editando, trial_end: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                value={editando.trial_end ? new Date(new Date(editando.trial_end).getTime() - 5 * 3600 * 1000).toISOString().slice(0, 16) : ''}
+                onChange={(e) => setEditando({ ...editando, trial_end: e.target.value ? new Date(`${e.target.value}:00-05:00`).toISOString() : null })}
                 className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>

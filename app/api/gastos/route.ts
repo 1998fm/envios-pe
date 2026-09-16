@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       categoria: categoria || 'OTROS',
       concepto,
       monto: Math.max(0, Number(monto) || 0),
-      fecha: fecha || new Date().toISOString().split('T')[0],
+      fecha: fecha || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' }),
       notas: notas || null,
     })
     .select()

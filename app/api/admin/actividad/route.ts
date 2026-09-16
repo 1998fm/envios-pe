@@ -27,9 +27,10 @@ export async function GET() {
   }
 
   const now = new Date()
-  const desde = new Date(now)
-  desde.setDate(desde.getDate() - (DIAS - 1))
-  desde.setHours(0, 0, 0, 0)
+  // Ventana de DIAS días en hora Perú (UTC-5): medianoche peruana = 05:00 UTC.
+  const PE = '-05:00'
+  const hoyLima = now.toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+  const desde = new Date(new Date(`${hoyLima}T00:00:00${PE}`).getTime() - (DIAS - 1) * 24 * 60 * 60 * 1000)
   const desdeIso = desde.toISOString()
 
   // Mapa de perfiles.

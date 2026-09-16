@@ -94,9 +94,9 @@ export async function checkEnvioLimit(userId: string): Promise<{ allowed: boolea
     return { allowed: true }
   }
 
-  const inicioMes = new Date()
-  inicioMes.setDate(1)
-  inicioMes.setHours(0, 0, 0, 0)
+  // Inicio del mes en hora Perú (UTC-5): el día 1 arranca a las 05:00 UTC.
+  const hoyLima = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+  const inicioMes = new Date(`${hoyLima.slice(0, 8)}01T00:00:00-05:00`)
 
   const { count, error } = await supabaseAdmin
     .from('envios')
@@ -176,9 +176,8 @@ export async function checkShalomExportLimit(userId: string): Promise<LimitCheck
     return { allowed: true, used: 0, max: null }
   }
 
-  const inicioMes = new Date()
-  inicioMes.setDate(1)
-  inicioMes.setHours(0, 0, 0, 0)
+  const hoyLima = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+  const inicioMes = new Date(`${hoyLima.slice(0, 8)}01T00:00:00-05:00`)
 
   const { count, error } = await supabaseAdmin
     .from('shalom_exports')

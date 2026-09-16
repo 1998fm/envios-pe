@@ -91,27 +91,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     porMetodo[k] = (porMetodo[k] ?? 0) + 1
   })
 
-  // Serie de actividad (últimos DIAS_SERIE días).
+  // Serie de actividad (últimos DIAS_SERIE días), en hora Perú.
   const now = new Date()
-  const inicio = new Date(now)
-  inicio.setDate(inicio.getDate() - (DIAS_SERIE - 1))
-  inicio.setHours(0, 0, 0, 0)
+  const PE = '-05:00'
+  const hoyLima = now.toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+  const inicio = new Date(new Date(`${hoyLima}T00:00:00${PE}`).getTime() - (DIAS_SERIE - 1) * 24 * 60 * 60 * 1000)
+  const diaLima = (iso?: string | null) =>
+    iso ? new Date(new Date(iso).getTime() - 5 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined
 
   const serie: { dia: string; envios: number; ventas: number }[] = []
   for (let i = 0; i < DIAS_SERIE; i++) {
-    const d = new Date(inicio)
-    d.setDate(d.getDate() + i)
-    serie.push({ dia: d.toISOString().slice(0, 10), envios: 0, ventas: 0 })
+    serie.push({ dia: diaLima(new Date(inicio.getTime() + i * 24 * 60 * 60 * 1000).toISOString()) ?? '', envios: 0, ventas: 0 })
   }
-  const keyDia = (iso?: string | null) => iso?.slice(0, 10)
 
   ;(listaEnvios ?? []).forEach((e) => {
-    const k = keyDia(e.fecha_registro)
+    const k = diaLima(e.fecha_registro)
     const slot = serie.find((s) => s.dia === k)
     if (slot) slot.envios++
   })
   ;(listaVentas ?? []).forEach((v) => {
-    const k = keyDia(v.created_at)
+    const k = diaLima(v.created_at)
     const slot = serie.find((s) => s.dia === k)
     if (slot) slot.ventas++
   })

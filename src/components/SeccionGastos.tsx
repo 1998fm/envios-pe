@@ -16,7 +16,7 @@ const CATEGORIAS_FILTRO = ['TODAS', ...CATEGORIAS_GASTO]
 
 const fmtSoles = (n: number) => 'S/ ' + n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-const formVacio = { categoria: 'OTROS', concepto: '', monto: '', fecha: new Date().toISOString().split('T')[0], notas: '' }
+const formVacio = { categoria: 'OTROS', concepto: '', monto: '', fecha: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' }), notas: '' }
 
 export default function SeccionGastos({ userId }: Props) {
   const confirmar = useConfirm()

@@ -53,10 +53,12 @@ export async function GET() {
     }
   }
 
-  // Actividad global: envíos y ventas por día (últimos DIAS días).
-  const desde = new Date(now)
-  desde.setDate(desde.getDate() - (DIAS - 1))
-  desde.setHours(0, 0, 0, 0)
+  // Actividad global: envíos y ventas por día (últimos DIAS días), en hora Perú.
+  const PE = '-05:00'
+  const hoyLima = now.toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+  const desde = new Date(new Date(`${hoyLima}T00:00:00${PE}`).getTime() - (DIAS - 1) * 24 * 60 * 60 * 1000)
+  const diaLima = (iso?: string | null) =>
+    iso ? new Date(new Date(iso).getTime() - 5 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined
 
   const { data: envios } = await supabaseAdmin
     .from('envios')
@@ -71,22 +73,18 @@ export async function GET() {
   // Serie de los últimos DIAS días.
   const serie: { dia: string; envios: number; ventas: number }[] = []
   for (let i = 0; i < DIAS; i++) {
-    const d = new Date(desde)
-    d.setDate(d.getDate() + i)
-    const clave = d.toISOString().slice(0, 10)
-    serie.push({ dia: clave, envios: 0, ventas: 0 })
+    const clave = diaLima(new Date(desde.getTime() + i * 24 * 60 * 60 * 1000).toISOString())
+    serie.push({ dia: clave ?? '', envios: 0, ventas: 0 })
   }
 
-  const keyDia = (iso?: string | null) => iso?.slice(0, 10)
-
   ;(envios ?? []).forEach((e) => {
-    const k = keyDia(e.fecha_registro)
+    const k = diaLima(e.fecha_registro)
     const slot = serie.find((s) => s.dia === k)
     if (slot) slot.envios++
   })
 
   ;(ventas ?? []).forEach((v) => {
-    const k = keyDia(v.created_at)
+    const k = diaLima(v.created_at)
     const slot = serie.find((s) => s.dia === k)
     if (slot) slot.ventas++
   })

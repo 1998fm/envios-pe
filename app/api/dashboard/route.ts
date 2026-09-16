@@ -12,11 +12,20 @@ export async function GET(request: Request) {
   }
 
   const now = new Date()
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-  const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+  const PE = '-05:00'
+  // "Hoy" en hora Perú (UTC-5, sin DST): la medianoche peruana son las 05:00 UTC.
+  const hoyLima = now.toLocaleDateString('en-CA', { timeZone: 'America/Lima' }) // YYYY-MM-DD
+  const startOfDay = new Date(`${hoyLima}T00:00:00${PE}`)
+  const baseMes = new Date(`${hoyLima.slice(0, 8)}01T00:00:00${PE}`)
+  const startOfMonth = new Date(baseMes)
+  const startOfPrevMonth = new Date(baseMes)
+  startOfPrevMonth.setMonth(startOfPrevMonth.getMonth() - 1)
+  const startOfNextMonth = new Date(baseMes)
+  startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1)
+  const startOfYesterday = new Date(startOfDay.getTime() - 24 * 60 * 60 * 1000)
+  // Día calendario Perú de una fecha ISO (para buckets y cortes).
+  const diaLima = (iso: string) =>
+    new Date(new Date(iso).getTime() - 5 * 60 * 60 * 1000).toISOString().split('T')[0]
 
   async function sumVentas(desde: Date, hasta?: Date, estados?: string[]) {
     let q = supabaseAdmin
@@ -151,13 +160,11 @@ export async function GET(request: Request) {
   // agregando en memoria; no usa tablas extra.
   // ========================================
 
-  const hoyUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
-  const inicioHistorico = hoyUtc - (DIAS_HISTORICO - 1) * 24 * 60 * 60 * 1000
-  const inicioStr = new Date(inicioHistorico).toISOString().split('T')[0]
+  const inicioHistorico = startOfDay.getTime() - (DIAS_HISTORICO - 1) * 24 * 60 * 60 * 1000
 
   const dias: string[] = []
   for (let i = 0; i < DIAS_HISTORICO; i++) {
-    dias.push(new Date(inicioHistorico + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+    dias.push(new Date(inicioHistorico + i * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000).toISOString().split('T')[0])
   }
 
   const [{ data: enviosRango }, { data: ventasRango }] = await Promise.all([
@@ -165,13 +172,13 @@ export async function GET(request: Request) {
       .from('envios')
       .select('fecha_registro, metodo, estado')
       .eq('user_id', userId)
-      .gte('fecha_registro', `${inicioStr}T00:00:00.000Z`)
+      .gte('fecha_registro', new Date(inicioHistorico).toISOString())
       .order('fecha_registro', { ascending: true }),
     supabaseAdmin
       .from('ventas')
       .select('created_at, metodo_pago, total, estado')
       .eq('profile_id', userId)
-      .gte('created_at', `${inicioStr}T00:00:00.000Z`)
+      .gte('created_at', new Date(inicioHistorico).toISOString())
       .order('created_at', { ascending: true }),
   ])
 
@@ -182,7 +189,7 @@ export async function GET(request: Request) {
   })
   ventasRango?.forEach((v: any) => {
     if (v.estado !== 'COMPLETADA' && v.estado !== 'PENDIENTE') return
-    const bucket = ventasDia[(v.created_at || '').split('T')[0]]
+    const bucket = ventasDia[diaLima(v.created_at)]
     if (!bucket) return
     bucket.total += Number(v.total || 0)
     bucket.cantidad += 1
@@ -194,7 +201,7 @@ export async function GET(request: Request) {
     pedidosDia[d] = 0
   })
   enviosRango?.forEach((e: any) => {
-    const day = (e.fecha_registro || '').split('T')[0]
+    const day = diaLima(e.fecha_registro)
     if (pedidosDia[day] === undefined) return
     pedidosDia[day] += 1
   })
@@ -217,12 +224,8 @@ export async function GET(request: Request) {
 
   const corte30 = dias[dias.length - 30]
 
-  const envios30 = (enviosRango ?? []).filter(
-    (e: any) => (e.fecha_registro || '').split('T')[0] >= corte30
-  )
-  const ventas30 = (ventasRango ?? []).filter(
-    (v: any) => (v.created_at || '').split('T')[0] >= corte30
-  )
+  const envios30 = (enviosRango ?? []).filter((e: any) => diaLima(e.fecha_registro) >= corte30)
+  const ventas30 = (ventasRango ?? []).filter((v: any) => diaLima(v.created_at) >= corte30)
 
   const metodoMap: Record<string, number> = {}
   ventas30.forEach((v: any) => {

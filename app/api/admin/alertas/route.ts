@@ -62,9 +62,9 @@ export async function GET() {
   }
 
   // Empresas sin actividad en los últimos 14 días (no bloqueadas, creadas hace > 14 días).
-  const corte = new Date(now)
-  corte.setDate(corte.getDate() - 14)
-  corte.setHours(0, 0, 0, 0)
+  const PE = '-05:00'
+  const hoyLima = now.toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+  const corte = new Date(new Date(`${hoyLima}T00:00:00${PE}`).getTime() - 14 * 24 * 60 * 60 * 1000)
   const corteIso = corte.toISOString()
 
   const ids = perfiles.filter((p) => !p.disabled).map((p) => p.id)
