@@ -23,7 +23,12 @@ export async function GET(request: Request) {
     .eq('archivado', archivado === 'true')
 
   if (busqueda) {
-    query = query.ilike('nombre', `%${busqueda}%`)
+    // Búsqueda por palabras sueltas: el nombre debe contener TODAS las palabras
+    // del término, en cualquier orden (p.ej. "buzo negro" o "brenda l").
+    const palabras = busqueda.trim().split(/\s+/).filter(Boolean)
+    for (const palabra of palabras) {
+      query = query.ilike('nombre', `%${palabra}%`)
+    }
   }
 
   const { data, count, error } = await query

@@ -10,6 +10,7 @@ import EscannerVentas from '@/components/EscannerVentas'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, trayectoDone } from '@/lib/tours'
+import { coincidePorPalabras } from '@/lib/buscarPorPalabras'
 import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade, planNivel } from '@/lib/planGating'
 import { beepOk, beepError } from '@/lib/beep'
@@ -382,8 +383,8 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   }
 
   const productosFiltrados = productos.filter((p) =>
-    p.nombre.toLowerCase().includes(busquedaProd.toLowerCase()) ||
-    (p.sku && p.sku.toLowerCase().includes(busquedaProd.toLowerCase()))
+    coincidePorPalabras(p.nombre, busquedaProd) ||
+    (p.sku && coincidePorPalabras(p.sku, busquedaProd))
   )
 
   if (loading) return <div className="text-center py-12 text-slate-400">Cargando ventas...</div>

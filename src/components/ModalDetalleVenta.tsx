@@ -5,6 +5,7 @@ import { Pencil, X, Plus, Minus, Check, Loader2, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Venta, Producto } from '@/types/inventario'
 import { tourDone, trayectoDone } from '@/lib/tours'
+import { coincidePorPalabras } from '@/lib/buscarPorPalabras'
 import TourHelpButton from '@/components/TourHelpButton'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { openUpgrade, planNivel } from '@/lib/planGating'
@@ -128,8 +129,8 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
 
   const productosFiltrados = productos.filter(
     (p) =>
-      p.nombre.toLowerCase().includes(busquedaProd.toLowerCase()) ||
-      (p.sku && p.sku.toLowerCase().includes(busquedaProd.toLowerCase()))
+      coincidePorPalabras(p.nombre, busquedaProd) ||
+      (p.sku && coincidePorPalabras(p.sku, busquedaProd))
   )
 
   async function guardarCambios() {
