@@ -25,7 +25,9 @@ export async function GET(request: Request) {
     if (busqueda) {
     // Búsqueda por palabras: el nombre debe contener TODAS las palabras
     // del término, en cualquier orden (p.ej. "buzo negro" o "brenda l").
-    const palabras = busqueda.trim().split(/\s+/).filter(Boolean)
+    const norm = (s: string) =>
+      s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const palabras = norm(busqueda).split(/\s+/).filter(Boolean)
     if (palabras.length > 0) {
       // PostgREST no soporta AND de ilike en la misma columna,
       // así que filtramos en JS (pocos productos por usuario).
@@ -36,7 +38,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: err2.message }, { status: 500 })
       }
       const filtrados = (todos || []).filter((p: any) => {
-        const nombre = (p.nombre || '').toLowerCase()
+        const nombre = norm(p.nombre || '')
         return palabras.every((pal) => nombre.includes(pal))
       })
       return NextResponse.json({ data: filtrados, total: filtrados.length, offset: 0, limit: 9999 })
