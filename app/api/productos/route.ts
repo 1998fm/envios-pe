@@ -22,12 +22,24 @@ export async function GET(request: Request) {
     .eq('profile_id', userId)
     .eq('archivado', archivado === 'true')
 
-  if (busqueda) {
-    // Búsqueda por palabras sueltas: el nombre debe contener TODAS las palabras
+    if (busqueda) {
+    // Búsqueda por palabras: el nombre debe contener TODAS las palabras
     // del término, en cualquier orden (p.ej. "buzo negro" o "brenda l").
     const palabras = busqueda.trim().split(/\s+/).filter(Boolean)
-    for (const palabra of palabras) {
-      query = query.ilike('nombre', `%${palabra}%`)
+    if (palabras.length > 0) {
+      // PostgREST no soporta AND de ilike en la misma columna,
+      // así que filtramos en JS (pocos productos por usuario).
+      const { data: todos, error: err2 } = await query
+        .order('nombre', { ascending: true })
+        .range(0, 9999)
+      if (err2) {
+        return NextResponse.json({ error: err2.message }, { status: 500 })
+      }
+      const filtrados = (todos || []).filter((p: any) => {
+        const nombre = (p.nombre || '').toLowerCase()
+        return palabras.every((pal) => nombre.includes(pal))
+      })
+      return NextResponse.json({ data: filtrados, total: filtrados.length, offset: 0, limit: 9999 })
     }
   }
 
