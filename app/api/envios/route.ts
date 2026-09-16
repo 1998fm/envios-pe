@@ -38,12 +38,26 @@ export async function GET(request: Request) {
     query = query.in('metodo', metodos)
   }
 
-  if (fechaDesde) {
-    query = query.gte('fecha_registro', new Date(`${fechaDesde}T00:00:00`).toISOString())
-  }
+  // Filtro de fechas en hora de Perú (UTC-5, sin DST). Los envíos se guardan
+  // en UTC, así que el día del negocio comienza a las 05:00 UTC del día X y
+  // termina justo antes de las 05:00 UTC del día X+1. Usar la hora local del
+  // servidor (UTC) excluía los pedidos de la tarde/noche de cada día.
+  const PE = '-05:00'
+  const iniDia = (f: string) => new Date(`${f}T00:00:00${PE}`).toISOString()
+  const finDia = (f: string) => new Date(`${f}T23:59:59.999${PE}`).toISOString()
 
-  if (fechaHasta) {
-    query = query.lte('fecha_registro', new Date(`${fechaHasta}T23:59:59.999`).toISOString())
+  if (fechaDesde && !fechaHasta) {
+    // Solo "Desde": un solo día (del 00:00 a las 23:59 hora Perú).
+    query = query
+      .gte('fecha_registro', iniDia(fechaDesde))
+      .lte('fecha_registro', finDia(fechaDesde))
+  } else if (!fechaDesde && fechaHasta) {
+    // Solo "Hasta": todo hasta el fin de ese día (inclusive).
+    query = query.lte('fecha_registro', finDia(fechaHasta))
+  } else if (fechaDesde && fechaHasta) {
+    query = query
+      .gte('fecha_registro', iniDia(fechaDesde))
+      .lte('fecha_registro', finDia(fechaHasta))
   }
 
   // Pedimos limit+1 filas: si viene una de más, hay más páginas. Evita el
