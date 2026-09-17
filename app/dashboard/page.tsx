@@ -322,7 +322,7 @@ const metodosDisponibles = [
 
   config.metodoOtro &&
 config.nombreMetodoOtro.trim() && {
-  value: config.nombreMetodoOtro,
+  value: 'OTRO',
   label: config.nombreMetodoOtro,
 },
 
