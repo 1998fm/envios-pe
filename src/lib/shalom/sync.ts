@@ -18,6 +18,7 @@ export async function ejecutarSyncShalom(): Promise<SyncResult> {
       ok: false,
       error:
         'No se pudo obtener las agencias desde Shalom. Se conserva la lista actual.',
+      info: resultado?.error ?? 'Sincronización fallida - sin detalles adicionales'
     }
   }
 

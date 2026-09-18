@@ -5,6 +5,7 @@ export type SyncResult = {
   ok: boolean
   sincronizadas?: number
   error?: string
+  info?: string
 }
 
 // Lógica central de sincronización de agencias Olva courier.
@@ -16,6 +17,7 @@ export async function ejecutarSyncOlva(): Promise<SyncResult> {
       ok: false,
       error:
         'No se pudo obtener las agencias desde Olva. Se conserva la lista actual.',
+      info: resultado?.error ?? 'Sincronización fallida - sin detalles adicionales'
     }
   }
 

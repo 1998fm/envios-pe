@@ -19,6 +19,8 @@ const BASE_URL =
 
 const TIMEOUT_MS = 30000
 
+const INTENTOS = 3
+
 export type AgenciaOlva = {
   office_id: string
   nombres: string
@@ -46,50 +48,66 @@ type RawAgencia = {
 export async function obtenerAgenciasOlva(): Promise<{
   ok: boolean
   agencias?: AgenciaOlva[]
+  error?: string
 }> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
-  try {
-    const res = await fetch(BASE_URL, {
-      headers: {
-        Referer: 'https://www.olvacourier.com/ubicanos/',
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
-      },
-      signal: controller.signal,
-    })
-    if (!res.ok) {
-      console.error(`[olva] HTTP ${res.status} en endpoint de agencias`)
-      return { ok: false }
-    }
-    const json = (await res.json()) as {
-      success?: boolean
-      data?: { data?: RawAgencia[] }
-    }
+  let ultimoError: string | null = null
 
-    const filas = json?.data?.data
-    if (!json?.success || !Array.isArray(filas)) {
-      console.error('[olva] respuesta sin lista de agencias')
-      return { ok: false }
+  for (let intento = 1; intento <= INTENTOS; intento++) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+    try {
+      const res = await fetch(BASE_URL, {
+        headers: {
+          Referer: 'https://www.olvacourier.com/ubicanos/',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+        },
+        signal: controller.signal,
+      })
+      if (!res.ok) {
+        ultimoError = `HTTP ${res.status} (intento ${intento}/${INTENTOS})`
+        console.error(`[olva] ${ultimoError}`)
+        await esperar(intento)
+        continue
+      }
+      const json = (await res.json()) as {
+        success?: boolean
+        data?: { data?: RawAgencia[] }
+      }
+
+      const filas = json?.data?.data
+      if (!json?.success || !Array.isArray(filas)) {
+        ultimoError = 'respuesta sin lista de agencias'
+        console.error(`[olva] ${ultimoError}`)
+        await esperar(intento)
+        continue
+      }
+
+      const agencias: AgenciaOlva[] = filas.map((raw) => ({
+        office_id: String(raw.office_id ?? ''),
+        nombres: (raw.nombres || '').trim(),
+        direccion: (raw.direccion || '').trim(),
+        department: (raw.department || '').trim(),
+        province: (raw.province || '').trim(),
+        district: (raw.district || '').trim(),
+        office_type: (raw.office_type || '').trim(),
+        lat: (raw.lat || '').trim(),
+        lng: (raw.lng || '').trim(),
+      }))
+
+      return { ok: agencias.length > 0, agencias }
+    } catch (e) {
+      ultimoError = e instanceof Error ? e.message : 'error desconocido'
+      console.error(`[olva] error obteniendo agencias (intento ${intento}):`, e)
+      await esperar(intento)
+    } finally {
+      clearTimeout(timer)
     }
-
-    const agencias: AgenciaOlva[] = filas.map((raw) => ({
-      office_id: String(raw.office_id ?? ''),
-      nombres: (raw.nombres || '').trim(),
-      direccion: (raw.direccion || '').trim(),
-      department: (raw.department || '').trim(),
-      province: (raw.province || '').trim(),
-      district: (raw.district || '').trim(),
-      office_type: (raw.office_type || '').trim(),
-      lat: (raw.lat || '').trim(),
-      lng: (raw.lng || '').trim(),
-    }))
-
-    return { ok: agencias.length > 0, agencias }
-  } catch (e) {
-    console.error('[olva] error obteniendo agencias:', e)
-    return { ok: false }
-  } finally {
-    clearTimeout(timer)
   }
+
+  return { ok: false, error: ultimoError ?? 'error desconocido' }
+}
+
+function esperar(intento: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 500 * intento))
 }

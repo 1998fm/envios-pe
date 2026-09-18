@@ -1,36 +1,37 @@
-import {
-  createHmac,
-  createDecipheriv,
-  randomUUID,
-} from 'node:crypto'
+import { createDecipheriv, randomBytes } from 'node:crypto'
 
 // =============================================================
-// Adaptador a la fuente oficial de agencias de Shalom
-// (la misma que usa shalom.com.pe en su página de agencias).
+// Adaptador a la fuente oficial de agencias de Shalom.
 //
-// El endpoint está protegido con:
-//   - Token Bearer: HMAC-SHA256 firmado con un secreto que Shalom
-//     expone en su bundle público.
-//   - Respuesta cifrada AES-256-CBC con una clave también expuesta.
+// Shalom cambió su protocolo: ya no acepta el token Bearer directo a
+// `serviceswebapi.shalomcontrol.com`. Su web actual es un SPA en
+// `shalom.com.pe` que usa un proxy con sesión:
+//   1. Genera una clave AES aleatoria (P7) por sesión.
+//   2. Pide un CSRF a `/api/local/session` pasando P7 como `X-Session-Key`.
+//   3. Llama a `/api/v1/web/agencias/listar` con `X-Proxy-Token` (CSRF)
+//      y `X-Session-Key` (P7); la respuesta llega cifrada con P7.
 //
-// Estos valores están hardcodeados en el JS público de Shalom, así
-// que son reproducibles desde el servidor. Si algún día Shalom los
-// cambia, basta con actualizar las constantes de abajo.
+// Todo esto es reproducible desde el servidor (mismo bundle público).
+// Si Shalom cambia algo, basta con actualizar las constantes de abajo.
 //
 // IMPORTANTE: cualquier fallo (red, token, cifrado) NO lanza excepción:
 // devuelve { ok: false } para que el llamante conserve los datos previos
 // y el sistema nunca se caiga (fallback automático).
 // =============================================================
 
-const BASE_URL = 'https://serviceswebapi.shalomcontrol.com'
+const BASE_URL = 'https://shalom.com.pe'
+const SESSION_PATH = '/api/local/session'
 const LISTAR_PATH = '/api/v1/web/agencias/listar'
 const VERSION_PATH = '/api/v1/web/agencias/version'
 
-// Secretos/token (públicos en el bundle de Shalom, ver docs)
-const HMAC_SECRET = '.Ov3rsku112024l4r43l.'
-const AES_KEY_B64 = 'uQn/bQ94PXBEfId70zjN+VE1hSU7kh9VBXTOUd68Ssc='
-
 const TIMEOUT_MS = 30000
+
+const HEADERS_BASE = {
+  Origin: BASE_URL,
+  Referer: `${BASE_URL}/agencias`,
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+}
 
 export type AgenciaShalom = {
   ter_id: number
@@ -61,18 +62,40 @@ type RawAgencia = {
   ter_categoria_recibe?: string
 }
 
-function generarToken(): string {
-  const s = `web-${randomUUID()}`
-  const o = Math.floor(Date.now() / 1000) + 300
-  const t = `${s}@${o}`
-  const a = createHmac('sha256', HMAC_SECRET).update(t).digest('hex')
-  return `${t}@${a}`
+type Sesion = { csrf: string | null; p7: string }
+
+// Abre una sesión: genera la clave AES aleatoria y pide el CSRF.
+async function abrirSesion(): Promise<Sesion | null> {
+  const p7 = Buffer.from(randomBytes(32)).toString('base64')
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  try {
+    const res = await fetch(`${BASE_URL}${SESSION_PATH}`, {
+      headers: {
+        ...HEADERS_BASE,
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-Session-Key': p7,
+      },
+      signal: controller.signal,
+    })
+    if (!res.ok) {
+      console.error(`[shalom] session HTTP ${res.status}`)
+      return null
+    }
+    const json = (await res.json()) as { csrf?: string }
+    return { csrf: json?.csrf ?? null, p7 }
+  } catch (e) {
+    console.error('[shalom] error abriendo sesión:', e)
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
-// Descifra la respuesta AES-256-CBC (mismo algoritmo que el bundle de Shalom).
-function descifrar(dataB64: string): string | null {
+// Descifra la respuesta AES-256-CBC con la clave de sesión (P7).
+function descifrar(dataB64: string, p7B64: string): string | null {
   try {
-    const key = Buffer.from(AES_KEY_B64, 'base64')
+    const key = Buffer.from(p7B64, 'base64')
     const dataBytes = Buffer.from(dataB64, 'base64')
     const hex = dataBytes.toString('hex')
     const iv = Buffer.from(hex.substring(0, 32), 'hex')
@@ -85,19 +108,22 @@ function descifrar(dataB64: string): string | null {
   }
 }
 
-async function peticion(path: string): Promise<unknown | null> {
+// Petición al proxy con la sesión abierta. Devuelve el JSON descifrado o null.
+async function peticion(
+  path: string,
+  sesion: Sesion
+): Promise<unknown | null> {
+  if (!sesion.csrf) return null
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
   try {
     const res = await fetch(`${BASE_URL}${path}`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${generarToken()}`,
+        ...HEADERS_BASE,
         'Content-Type': 'application/json',
-        Origin: 'https://shalom.com.pe',
-        Referer: 'https://shalom.com.pe/agencias',
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+        'X-Proxy-Token': sesion.csrf,
+        'X-Session-Key': sesion.p7,
       },
       body: '{}',
       signal: controller.signal,
@@ -108,7 +134,7 @@ async function peticion(path: string): Promise<unknown | null> {
     }
     const json = (await res.json()) as { encrypted?: boolean; data?: string }
     if (json?.encrypted && json.data) {
-      const plain = descifrar(json.data)
+      const plain = descifrar(json.data, sesion.p7)
       if (plain === null) return null
       return JSON.parse(plain)
     }
@@ -126,14 +152,26 @@ export async function obtenerAgenciasShalom(): Promise<{
   ok: boolean
   agencias?: AgenciaShalom[]
   version?: number | null
+  error?: string
 }> {
   try {
-    const listado = (await peticion(LISTAR_PATH)) as
+    const sesion = await abrirSesion()
+    if (!sesion?.csrf) {
+      return {
+        ok: false,
+        error: 'No se pudo abrir sesión con el proxy de Shalom (sin CSRF)',
+      }
+    }
+
+    const listado = (await peticion(LISTAR_PATH, sesion)) as
       | { success?: boolean; data?: RawAgencia[] }
       | null
 
     if (!listado?.success || !Array.isArray(listado.data)) {
-      return { ok: false }
+      return {
+        ok: false,
+        error: 'El servicio de Shalom no devolvió un listado válido',
+      }
     }
 
     const agencias: AgenciaShalom[] = listado.data
@@ -153,7 +191,7 @@ export async function obtenerAgenciasShalom(): Promise<{
 
     // Version opcional (para detectar cambios), sin romper si falla.
     let version: number | null = null
-    const v = (await peticion(VERSION_PATH)) as
+    const v = (await peticion(VERSION_PATH, sesion)) as
       | { success?: boolean; data?: number }
       | null
     if (v?.success && typeof v.data === 'number') version = v.data
@@ -161,6 +199,6 @@ export async function obtenerAgenciasShalom(): Promise<{
     return { ok: agencias.length > 0, agencias, version }
   } catch (e) {
     console.error('[shalom] error obteniendo agencias:', e)
-    return { ok: false }
+    return { ok: false, error: e instanceof Error ? e.message : 'error desconocido' }
   }
 }
