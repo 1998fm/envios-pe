@@ -14,10 +14,12 @@ export type SyncResult = {
 export async function ejecutarSyncShalom(): Promise<SyncResult> {
   const resultado = await obtenerAgenciasShalom()
   if (!resultado.ok || !resultado.agencias) {
+    const detalle = resultado?.error
+      ? `Detalle: ${resultado.error}.`
+      : 'Sin detalles adicionales.'
     return {
       ok: false,
-      error:
-        'No se pudo obtener las agencias desde Shalom. Se conserva la lista actual.',
+      error: `No se pudo obtener las agencias desde Shalom. ${detalle} Se conserva la lista actual.`,
       info: resultado?.error ?? 'Sincronización fallida - sin detalles adicionales'
     }
   }

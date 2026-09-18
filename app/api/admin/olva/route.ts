@@ -51,6 +51,7 @@ export async function POST() {
     ok: r.ok,
     sincronizadas: r.sincronizadas ?? null,
     error: r.error ?? null,
+    info: r.info ?? null,
   })
 
   return NextResponse.json(r, { status: r.ok ? 200 : 502 })

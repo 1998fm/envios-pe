@@ -13,10 +13,12 @@ export type SyncResult = {
 export async function ejecutarSyncOlva(): Promise<SyncResult> {
   const resultado = await obtenerAgenciasOlva()
   if (!resultado.ok || !resultado.agencias) {
+    const detalle = resultado?.error
+      ? `Detalle: ${resultado.error}.`
+      : 'Sin detalles adicionales.'
     return {
       ok: false,
-      error:
-        'No se pudo obtener las agencias desde Olva. Se conserva la lista actual.',
+      error: `No se pudo obtener las agencias desde Olva. ${detalle} Se conserva la lista actual.`,
       info: resultado?.error ?? 'Sincronización fallida - sin detalles adicionales'
     }
   }
