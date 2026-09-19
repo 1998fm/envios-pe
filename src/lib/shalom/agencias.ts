@@ -60,6 +60,8 @@ type RawAgencia = {
   latitud?: string
   longitud?: string
   ter_categoria_recibe?: string
+  web?: number | string
+  destino?: number | string
 }
 
 type Sesion = { csrf: string | null; p7: string }
@@ -186,7 +188,11 @@ export async function obtenerAgenciasShalom(): Promise<{
         telefono: (raw.telefono || '').trim(),
         latitud: (raw.latitud || '').trim(),
         longitud: (raw.longitud || '').trim(),
-        recibe: ((raw.ter_categoria_recibe || '').trim() !== ''),
+        recibe:
+          ((raw.ter_categoria_recibe || '').trim() !== '') ||
+          // Fallback: agencias de reparto activas en la web (web=1 y destino=1)
+          // que Shalom aún no ha categorizado (nuevas, como PICHARI).
+          (Number(raw.web) === 1 && Number(raw.destino) === 1),
       }))
 
     // Version opcional (para detectar cambios), sin romper si falla.
