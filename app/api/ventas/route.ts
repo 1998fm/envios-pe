@@ -274,7 +274,7 @@ async function buscarEnvioPendiente(userId: string, dni: string | null | undefin
     .from('envios')
     .select('id, dni, telefono, nombre, estado')
     .eq('user_id', userId)
-    .in('estado', ['NO_EMPACADO', 'EMPACADO', 'EN_OBSERVACION'])
+    .in('estado', ['NO_EMPACADO', 'EN_OBSERVACION'])
     .order('fecha_registro', { ascending: false })
     .limit(50)
 

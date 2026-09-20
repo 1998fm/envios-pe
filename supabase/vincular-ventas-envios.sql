@@ -17,7 +17,7 @@ FROM (
   FROM ventas v
   JOIN envios e
     ON e.user_id = v.profile_id
-   AND e.estado IN ('NO_EMPACADO', 'EMPACADO', 'EN_OBSERVACION')
+    AND e.estado IN ('NO_EMPACADO', 'EN_OBSERVACION')
    AND (
      (v.persona_dni IS NOT NULL AND v.persona_dni <> ''
       AND e.dni IS NOT NULL AND e.dni <> ''

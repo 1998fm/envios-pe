@@ -227,7 +227,7 @@ export async function POST(req: Request) {
       .from('envios')
       .select('*')
       .eq('user_id', user_id)
-      .in('estado', ['NO_EMPACADO', 'EMPACADO', 'EN_OBSERVACION'])
+      .in('estado', ['NO_EMPACADO', 'EN_OBSERVACION'])
       .order('fecha_registro', { ascending: false })
       .limit(50)
     if (abiertoExistente && abiertoExistente.length > 0) {
