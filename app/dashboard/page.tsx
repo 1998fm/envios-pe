@@ -1145,105 +1145,66 @@ async function guardarConfiguracion() {
     return
   }
 
-  const { error } =
-    await supabase
-      .from('profiles')
-      .update({
+  const {
+    data: rpcData,
+    error,
+  } = await supabase.rpc(
+    'guardar_configuracion',
+    {
+      p_profile_id: user.id,
 
-         empresa: config.empresa,
+      p_empresa: config.empresa,
+      p_telefono: config.telefonoEmpresa,
+      p_direccion: config.direccionEmpresa,
+      p_slug: nuevoSlug,
+      p_origen_shalom: config.nuevoOrigen,
+      p_logo_url: nuevaLogoUrl,
 
-         telefono: config.telefonoEmpresa,
+      p_redirect_url: config.redirectUrl,
+      p_redirect_message: config.redirectMessage,
+      p_redirect_message_image: nuevaMsgImagen,
 
-         direccion: config.direccionEmpresa,
+      p_instagram_url: config.instagramUrl,
+      p_facebook_url: config.facebookUrl,
+      p_tiktok_url: config.tiktokUrl,
+      p_web_url: config.webUrl,
+      p_whatsapp_url: config.whatsappUrl,
 
-         slug: nuevoSlug,
+      p_metodo_motorizado: config.metodoMotorizado,
+      p_metodo_shalom: config.metodoShalom,
+      p_metodo_olva: config.metodoOlva,
+      p_metodo_marvisur: config.metodoMarvisur,
+      p_metodo_flores: config.metodoFlores,
+      p_metodo_otro: config.metodoOtro,
+      p_nombre_metodo_otro: config.nombreMetodoOtro,
+      p_metodo_recojo: config.metodoRecojo,
+      p_mensaje_recojo: config.mensajeRecojo,
 
-        origen_shalom:
-          config.nuevoOrigen,
+      p_logistica_moto_dias: config.logisticaMotoDias,
+      p_logistica_moto_usa_hora_corte: plan === 'basic' ? false : config.logisticaMotoUsaHoraCorte,
+      p_logistica_moto_hora_corte: plan === 'basic' ? '18:00' : config.logisticaMotoHoraCorte,
+      p_logistica_moto_anticipacion: plan === 'basic' ? 1 : config.logisticaMotoAnticipacion,
+      p_logistica_moto_limitar: plan === 'basic' ? false : config.logisticaMotoLimitar,
+      p_logistica_moto_cupo: plan === 'basic' ? 0 : config.logisticaMotoCupo,
 
-        logo_url:
-          nuevaLogoUrl,
+      p_logistica_agencias_dias: config.logisticaAgenciasDias,
+      p_logistica_agencias_usa_hora_corte: plan === 'basic' ? false : config.logisticaAgenciasUsaHoraCorte,
+      p_logistica_agencias_hora_corte: plan === 'basic' ? '18:00' : config.logisticaAgenciasHoraCorte,
+      p_logistica_agencias_anticipacion: plan === 'basic' ? 1 : config.logisticaAgenciasAnticipacion,
+      p_logistica_agencias_limitar: plan === 'basic' ? false : config.logisticaAgenciasLimitar,
+      p_logistica_agencias_cupo: plan === 'basic' ? 0 : config.logisticaAgenciasCupo,
 
-        redirect_url:
-          config.redirectUrl,
+      p_solicitar_cantidad_productos: config.solicitarCantidadProductos,
+      p_mostrar_escoger_fecha: config.mostrarEscogerFecha,
+      p_mostrar_tracking: config.mostrarTracking,
+      p_cerrar_formulario: config.cerrarFormulario,
+      p_cerrar_formulario_mensaje: config.cerradoFormularioMensaje,
 
-        redirect_message:
-          config.redirectMessage,
-
-        redirect_message_image:
-          nuevaMsgImagen,
-
-        instagram_url:
-          config.instagramUrl,
-
-        facebook_url:
-          config.facebookUrl,
-
-        tiktok_url:
-          config.tiktokUrl,
-
-        web_url:
-          config.webUrl,
-
-        whatsapp_url:
-          config.whatsappUrl,
-
-          metodo_motorizado:
-  config.metodoMotorizado,
-
-metodo_shalom:
-  config.metodoShalom,
-
-metodo_olva:
-  config.metodoOlva,
-
-metodo_marvisur:
-  config.metodoMarvisur,
-
-metodo_flores:
-  config.metodoFlores,
-
-metodo_otro:
-  config.metodoOtro,
-
-nombre_metodo_otro:
-  config.nombreMetodoOtro,
-
-metodo_recojo:
-  config.metodoRecojo,
-
-mensaje_recojo:
-  config.mensajeRecojo,
-
-  ...obtenerConfiguracionLogistica({
-
-  logisticaMotoDias: config.logisticaMotoDias,
-  logisticaMotoUsaHoraCorte: plan === 'basic' ? false : config.logisticaMotoUsaHoraCorte,
-  logisticaMotoHoraCorte: plan === 'basic' ? '18:00' : config.logisticaMotoHoraCorte,
-  logisticaMotoAnticipacion: plan === 'basic' ? 1 : config.logisticaMotoAnticipacion,
-  logisticaMotoLimitar: plan === 'basic' ? false : config.logisticaMotoLimitar,
-  logisticaMotoCupo: plan === 'basic' ? 0 : config.logisticaMotoCupo,
-
-  logisticaAgenciasDias: config.logisticaAgenciasDias,
-  logisticaAgenciasUsaHoraCorte: plan === 'basic' ? false : config.logisticaAgenciasUsaHoraCorte,
-  logisticaAgenciasHoraCorte: plan === 'basic' ? '18:00' : config.logisticaAgenciasHoraCorte,
-  logisticaAgenciasAnticipacion: plan === 'basic' ? 1 : config.logisticaAgenciasAnticipacion,
-  logisticaAgenciasLimitar: plan === 'basic' ? false : config.logisticaAgenciasLimitar,
-  logisticaAgenciasCupo: plan === 'basic' ? 0 : config.logisticaAgenciasCupo,
-
-  solicitarCantidadProductos: config.solicitarCantidadProductos,
-
-  mostrarEscogerFecha: config.mostrarEscogerFecha,
-
-  mostrarTracking: config.mostrarTracking,
-
-  cerrarFormulario: config.cerrarFormulario,
-
-  cerradoFormularioMensaje: config.cerradoFormularioMensaje,
-
-}),
-
-      })
+      p_moto_region: config.motoRegion,
+      p_cerrar_formulario_dias: config.cerrarFormularioDias ?? [],
+      p_tarifas: tarifasObj,
+    }
+  )
       .eq(
         'id',
         user.id
@@ -1257,69 +1218,6 @@ mensaje_recojo:
   setOrigenShalom(
     config.nuevoOrigen
   )
-
-  // Best-effort: guardar moto_region aparte. Si el SQL de la migración aún
-  // no se ejecutó, este update puede fallar sin afectar el resto del guardado.
-  await supabase
-    .from('profiles')
-    .update({ moto_region: config.motoRegion })
-    .eq('id', user.id)
-
-  // Best-effort: días específicos de cierre, igual que moto_region (migración
-  // propia), para que un SQL pendiente no rompa el guardado de configuración.
-  await supabase
-    .from('profiles')
-    .update({ cerrar_formulario_dias: config.cerrarFormularioDias ?? [] })
-    .eq('id', user.id)
-
-  
-// ========================================
-// GUARDAR TARIFAS
-// ========================================
-
-const tarifasObj = Object.fromEntries(
-  Object.entries(
-    config.tarifas
-  )
-    .filter(
-      ([_, precio]) =>
-        precio !== ''
-    )
-    .map(
-      ([distrito, precio]) => [
-        distrito,
-        Number(precio),
-      ]
-    )
-)
-
-const {
-  error: tarifasError,
-} = await supabase
-  .from(
-    'tarifas_moto'
-  )
-  .upsert({
-    profile_id:
-      user.id,
-
-    tarifas:
-      tarifasObj,
-  })
-
-if (tarifasError) {
-
-  console.error(
-    tarifasError
-  )
-
-  setMensajeToast(
-    'Error guardando tarifas'
-  )
-
-  return
-
-}
 
   setOrigenShalom(
     config.nuevoOrigen
