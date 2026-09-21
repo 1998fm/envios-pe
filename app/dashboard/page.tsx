@@ -1227,6 +1227,12 @@ async function guardarConfiguracion() {
     return
   }
 
+  const errorRpc = Array.isArray(rpcData) ? rpcData[0]?.error_text : null
+  if (errorRpc) {
+    toast.error(errorRpc)
+    return
+  }
+
   setOrigenShalom(
     config.nuevoOrigen
   )

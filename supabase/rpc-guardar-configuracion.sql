@@ -74,7 +74,7 @@ CREATE OR REPLACE FUNCTION guardar_configuracion(
   p_cerrar_formulario boolean,
   p_cerrar_formulario_mensaje text,
   p_moto_region text,
-  p_cerrar_formulario_dias jsonb,
+  p_cerrar_formulario_dias text[],
   -- Tarifas
   p_tarifas jsonb
 )
@@ -113,13 +113,13 @@ BEGIN
     mensaje_recojo         = p_mensaje_recojo,
     logistica_moto_dias           = p_logistica_moto_dias,
     logistica_moto_usa_hora_corte = p_logistica_moto_usa_hora_corte,
-    logistica_moto_hora_corte     = p_logistica_moto_hora_corte,
+    logistica_moto_hora_corte     = NULLIF(p_logistica_moto_hora_corte, '')::time,
     logistica_moto_anticipacion   = p_logistica_moto_anticipacion,
     logistica_moto_limitar        = p_logistica_moto_limitar,
     logistica_moto_cupo           = p_logistica_moto_cupo,
     logistica_agencias_dias           = p_logistica_agencias_dias,
     logistica_agencias_usa_hora_corte = p_logistica_agencias_usa_hora_corte,
-    logistica_agencias_hora_corte     = p_logistica_agencias_hora_corte,
+    logistica_agencias_hora_corte     = NULLIF(p_logistica_agencias_hora_corte, '')::time,
     logistica_agencias_anticipacion   = p_logistica_agencias_anticipacion,
     logistica_agencias_limitar        = p_logistica_agencias_limitar,
     logistica_agencias_cupo           = p_logistica_agencias_cupo,
