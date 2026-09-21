@@ -137,12 +137,10 @@ export default function ConfiguracionMetodo({
                 inputMode="numeric"
                 pattern="[0-9]*"
                 type="text"
-                min={1}
-                max={7}
                 value={anticipacion || ''}
                 onChange={(e) => {
                   const val = parseInt(e.target.value, 10)
-                  setAnticipacion(isNaN(val) ? 1 : Math.min(Math.max(val, 1), 7))
+                  setAnticipacion(isNaN(val) ? 1 : val)
                 }}
                 className="w-24 border border-slate-200 rounded-xl px-4 py-2 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
               />
