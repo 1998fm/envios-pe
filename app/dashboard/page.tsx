@@ -1221,10 +1221,6 @@ async function guardarConfiguracion() {
       p_tarifas: tarifasObj,
     }
   )
-      .eq(
-        'id',
-        user.id
-      )
 
   if (error) {
     toast.error(error.message)
