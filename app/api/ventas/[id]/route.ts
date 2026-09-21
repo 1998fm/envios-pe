@@ -144,6 +144,20 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     let total = 0
     for (const it of itemsData) total += it.subtotal
 
+    // Al editar los ítems hay que reconciliar el monto cobrado: si la venta ya
+    // estaba cobrada (COMPLETADA), el nuevo total queda pagado en su totalidad
+    // (si el usuario agrega un producto, ese importe entra a caja). Si está
+    // PENDIENTE se conserva el abono ya hecho, sin exceder el nuevo total.
+    let montoPagadoRecalculado: number | undefined
+    if (venta.estado === 'COMPLETADA') {
+      montoPagadoRecalculado = Math.round(total * 100) / 100
+    } else {
+      montoPagadoRecalculado = Math.min(
+        Math.round(Number(venta.monto_pagado ?? 0) * 100) / 100,
+        Math.round(total * 100) / 100
+      )
+    }
+
     const updates: Record<string, any> = {
       total,
       updated_at: new Date().toISOString(),
@@ -156,6 +170,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       if (Number.isFinite(monto) && monto >= 0) {
         updates.monto_pagado = Math.round(monto * 100) / 100
       }
+    } else if (montoPagadoRecalculado !== undefined) {
+      updates.monto_pagado = montoPagadoRecalculado
     }
 
     const { data, error: updError } = await supabaseAdmin
