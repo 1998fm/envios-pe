@@ -1145,6 +1145,22 @@ async function guardarConfiguracion() {
     return
   }
 
+  const tarifasObj = Object.fromEntries(
+    Object.entries(
+      config.tarifas
+    )
+      .filter(
+        ([_, precio]) =>
+          precio !== ''
+      )
+      .map(
+        ([distrito, precio]) => [
+          distrito,
+          Number(precio),
+        ]
+      )
+  )
+
   const {
     data: rpcData,
     error,
