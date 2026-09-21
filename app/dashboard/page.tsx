@@ -1415,7 +1415,14 @@ for (
       onConfig={() => setMostrarConfig(true)}
     />
 
-    {userId && pestañaActiva === 'resumen' && <PanelResumen userId={userId} onNavegar={cambiarPestaña} />}
+    {userId && pestañaActiva === 'resumen' && (
+      <PanelResumen
+        userId={userId}
+        onNavegar={cambiarPestaña}
+        onConfig={() => setMostrarConfig(true)}
+        config={config}
+      />
+    )}
 
     {pestañaActiva === 'envios' && (
       <div className="space-y-4 mb-8">

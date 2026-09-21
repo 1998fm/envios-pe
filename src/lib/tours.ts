@@ -127,15 +127,11 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="resumen-kpis"]',
-        text: 'Tus cifras del día y del mes: cuánto vendiste, cuánto te deben y pedidos por despachar. Solo mira, sin cuentas.',
+        text: 'Tus cifras de un vistazo: qué tienes listo (ventas, envíos, métodos activos y tu configuración completa). Si algo te falta para vender mejor, aparecerá como pendiente.',
       },
       {
         target: '[data-tour="resumen-pendientes"]',
-        text: 'Tori te recuerda lo urgente de hoy: pedidos sin empacar, cobros pendientes y stock bajo. Toca uno y te lleva directo.',
-      },
-      {
-        target: '[data-tour="resumen-recientes"]',
-        text: 'Los últimos movimientos: pedidos, ventas y gastos recientes. Ahora sí, te muestro el resto de secciones en orden.',
+        text: 'Lo que necesita tu atención hoy: pedidos por empacar, cobros pendientes y stock bajo. Toca uno y Tori te lleva directo a resolverlo. Ahora sí, te muestro el resto de secciones en orden.',
       },
     ],
   },
