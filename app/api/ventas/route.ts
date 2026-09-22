@@ -234,10 +234,10 @@ export async function POST(request: Request) {
   // producto y con rollback si algún producto falla.
   const descontados: { producto_id: string; cantidad: number }[] = []
   for (const [productoId, cantidad] of cantidadesPorProducto) {
-    const res = await descontarStock(productoId, cantidad)
+    const res = await descontarStock(productoId, cantidad, venta.id, 'VENTA', 'Venta')
     if (!res.ok) {
       for (const d of descontados) {
-        await sumarStock(d.producto_id, d.cantidad)
+        await sumarStock(d.producto_id, d.cantidad, venta.id, 'ANULACION_VENTA', 'Rollback venta fallida')
       }
       return NextResponse.json({ error: res.error }, { status: 409 })
     }

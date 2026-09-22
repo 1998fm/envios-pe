@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
+import { ajustarStock } from '@/lib/stock'
 
 // La URL de la imagen solo se acepta si apunta al bucket público de productos
 function validarImagenUrl(valor: unknown): string | null {
@@ -35,9 +36,35 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   const { data: actual } = await supabaseAdmin
     .from('productos')
-    .select('imagen_url')
+    .select('imagen_url, stock_actual')
     .eq('id', id)
     .maybeSingle()
+
+  // El stock NUNCA se escribe directo en el PUT: para cambiarlo se exige un
+  // motivo y se usa el RPC ajustar_stock (queda registrado en el kardex).
+  if (body.stock_actual !== undefined && body.stock_actual !== null) {
+    const stockNuevo = Number(body.stock_actual)
+    if (!Number.isInteger(stockNuevo) || stockNuevo < 0) {
+      return NextResponse.json(
+        { error: 'El stock debe ser un número entero mayor o igual a 0.' },
+        { status: 400 }
+      )
+    }
+    const motivo = typeof body.motivo === 'string' ? body.motivo.trim() : ''
+    if (!motivo) {
+      return NextResponse.json(
+        { error: 'Para ajustar el stock se requiere un motivo (ajuste de inventario).' },
+        { status: 400 }
+      )
+    }
+    const stockActualPrevio = Number(actual?.stock_actual ?? 0)
+    if (stockNuevo !== stockActualPrevio) {
+      const res = await ajustarStock(id, stockNuevo, motivo)
+      if (!res.ok) {
+        return NextResponse.json({ error: res.error }, { status: 409 })
+      }
+    }
+  }
 
   const { data, error } = await supabaseAdmin
     .from('productos')
@@ -47,7 +74,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       descripcion: body.descripcion ?? null,
       precio_venta: body.precio_venta ?? 0,
       precio_compra: body.precio_compra ?? 0,
-      stock_actual: body.stock_actual ?? 0,
       stock_minimo: body.stock_minimo ?? 0,
       unidad: body.unidad || 'unidad',
       ...(body.imagen_url !== undefined ? { imagen_url: nuevaImagenUrl } : {}),

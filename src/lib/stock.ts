@@ -39,11 +39,17 @@ function stockFinalDe(data: unknown): number | null {
 // toca la fila → 0 filas → acá se distingue con una lectura ligera.
 export async function descontarStock(
   productoId: string,
-  cantidad: number
+  cantidad: number,
+  referenciaId?: string | null,
+  tipo: 'VENTA' | 'EDICION_VENTA' = 'VENTA',
+  motivo?: string | null
 ): Promise<ResultadoStock> {
   const { data, error } = await supabaseAdmin.rpc('descontar_stock', {
     p_producto_id: productoId,
     p_cantidad: cantidad,
+    p_referencia_id: referenciaId ?? null,
+    p_tipo: tipo,
+    p_motivo: motivo ?? null,
   })
 
   if (error) return { ok: false, error: error.message }
@@ -69,11 +75,17 @@ export async function descontarStock(
 // Suma stock de forma atómica (compras, reversiones de venta). Sin bucle.
 export async function sumarStock(
   productoId: string,
-  cantidad: number
+  cantidad: number,
+  referenciaId?: string | null,
+  tipo: 'COMPRA' | 'ANULACION_VENTA' | 'EDICION_VENTA' = 'COMPRA',
+  motivo?: string | null
 ): Promise<ResultadoStock> {
   const { data, error } = await supabaseAdmin.rpc('sumar_stock', {
     p_producto_id: productoId,
     p_cantidad: cantidad,
+    p_referencia_id: referenciaId ?? null,
+    p_tipo: tipo,
+    p_motivo: motivo ?? null,
   })
 
   if (error) return { ok: false, error: error.message }
@@ -83,10 +95,10 @@ export async function sumarStock(
   return { ok: false, error: `Producto ${productoId} no encontrado` }
 }
 
-// Resta stock de forma atómica (anular compras). A diferencia de
-// descontarStock permite que el resultado quede NEGATIVO a propósito (al
-// anular una compra cuyos ítems ya pudieron venderse); solo se evita la
-// carrera concurrente, igual que el comportamiento anterior.
+// Resta stock de forma atómica (anular compras). El RPC ahora BLOQUEA la
+// operación si el stock no alcanza (no deja qué el inventario quede
+// negativo anulando una compra cuyos ítems ya se vendieron). Si ocurre,
+// devuelve un error claro para que la ruta informe al usuario.
 export async function restarStock(
   productoId: string,
   cantidad: number
@@ -94,11 +106,98 @@ export async function restarStock(
   const { data, error } = await supabaseAdmin.rpc('restar_stock', {
     p_producto_id: productoId,
     p_cantidad: cantidad,
+    p_referencia_id: null,
+    p_tipo: 'ANULACION_COMPRA',
+    p_motivo: null,
   })
 
   if (error) return { ok: false, error: error.message }
 
   if (stockFinalDe(data) !== null) return { ok: true }
 
+  // 0 filas → producto inexistente o stock insuficiente (el RPC ahora
+  // bloquea la operación para que el stock nunca quede negativo).
+  const { data: existente } = await supabaseAdmin
+    .from('productos')
+    .select('stock_actual')
+    .eq('id', productoId)
+    .single()
+
+  if (!existente) return { ok: false, error: `Producto ${productoId} no encontrado` }
+
+  return {
+    ok: false,
+    error: `No se puede anular la compra: el stock ya se vendió (disponible: ${Number(existente.stock_actual ?? 0)}, requerido: ${cantidad}).`,
+  }
+}
+
+// ============================================================
+// RPC ATOMICOS de operaciones completas (editar/anular/eliminar venta)
+// ============================================================
+// Estas operaciones se ejecutan en UNA sola transacción en Postgres:
+// si cualquier paso falla, la base revierte TODO (stock + items + venta).
+// También dejan registro en el kardex (movimientos_inventario).
+
+export type ItemVentaEditar = {
+  producto_id?: string | null
+  producto_nombre?: string
+  cantidad?: number
+  precio_unitario?: number
+  costo_unitario?: number
+}
+
+export async function editarVentaAtomico(
+  ventaId: string,
+  params: {
+    items: ItemVentaEditar[]
+    metodo_pago?: string | null
+    persona_nombre?: string | null
+    persona_dni?: string | null
+    monto_pagado?: number | null
+  }
+): Promise<{ data: unknown | null; error: string | null }> {
+  const { data, error } = await supabaseAdmin.rpc('editar_venta_atomico', {
+    p_venta_id: ventaId,
+    p_items: params.items,
+    p_metodo_pago: params.metodo_pago ?? null,
+    p_persona_nombre: params.persona_nombre ?? null,
+    p_persona_dni: params.persona_dni ?? null,
+    p_monto_pagado: params.monto_pagado ?? null,
+  })
+  return { data: data ?? null, error: error ? error.message : null }
+}
+
+export async function anularVentaAtomico(
+  ventaId: string
+): Promise<{ data: unknown | null; error: string | null }> {
+  const { data, error } = await supabaseAdmin.rpc('anular_venta_atomico', {
+    p_venta_id: ventaId,
+  })
+  return { data: data ?? null, error: error ? error.message : null }
+}
+
+export async function eliminarVentaAtomico(
+  ventaId: string
+): Promise<{ data: unknown | null; error: string | null }> {
+  const { data, error } = await supabaseAdmin.rpc('eliminar_venta_atomico', {
+    p_venta_id: ventaId,
+  })
+  return { data: data ?? null, error: error ? error.message : null }
+}
+
+// Ajuste de inventario con motivo OBLIGATORIO (registra AJUSTE en el kardex)
+export async function ajustarStock(
+  productoId: string,
+  stockNuevo: number,
+  motivo: string
+): Promise<ResultadoStock> {
+  const { data, error } = await supabaseAdmin.rpc('ajustar_stock', {
+    p_producto_id: productoId,
+    p_stock_nuevo: stockNuevo,
+    p_motivo: motivo,
+  })
+
+  if (error) return { ok: false, error: error.message }
+  if (stockFinalDe(data) !== null) return { ok: true }
   return { ok: false, error: `Producto ${productoId} no encontrado` }
 }

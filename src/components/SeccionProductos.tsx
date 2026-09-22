@@ -93,6 +93,8 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   const [insertandoEjemplos, setInsertandoEjemplos] = useState(false)
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Partial<Producto>>({})
+  const [stockOriginalEditando, setStockOriginalEditando] = useState<number | null>(null)
+  const [motivoStock, setMotivoStock] = useState('')
   const [showNuevo, setShowNuevo] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [cargandoMas, setCargandoMas] = useState(false)
@@ -216,11 +218,19 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   function iniciarEdicion(p: Producto) {
     setEditandoId(p.id)
     setEditForm({ ...p })
+    setStockOriginalEditando(Number(p.stock_actual ?? 0))
+    setMotivoStock('')
     setEditFoto(null)
   }
 
   async function guardarEdicion() {
     if (!editandoId) return
+    const stockNuevo = Number(editForm.stock_actual ?? 0)
+    const stockCambio = stockOriginalEditando !== null && stockNuevo !== stockOriginalEditando
+    if (stockCambio && !motivoStock.trim()) {
+      toast.error('Para ajustar el stock se requiere un motivo')
+      return
+    }
     let imagen_url = editForm.imagen_url ?? undefined
 
     if (editFoto) {
@@ -238,7 +248,11 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
     const res = await fetch(`/api/productos/${editandoId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...editForm, ...(imagen_url ? { imagen_url } : {}) }),
+      body: JSON.stringify({
+        ...editForm,
+        ...(imagen_url ? { imagen_url } : {}),
+        ...(stockCambio ? { motivo: motivoStock.trim() } : {}),
+      }),
     })
     if (res.ok) {
       if (editFoto?.preview) URL.revokeObjectURL(editFoto.preview)
@@ -720,14 +734,24 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                     </td>
                     <td className={`px-4 py-3 text-right font-mono ${bajoStock ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
                       {editando ? (
-                        <input
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          type="text"
-                          value={String(editForm.stock_actual ?? 0)}
-                          onChange={(e) => setEditForm({ ...editForm, stock_actual: parseInt(e.target.value, 10) || 0 })}
-                          className="w-20 px-2 py-1 rounded border border-sky-500 text-sm text-right focus:outline-none"
-                        />
+                        <div className="flex flex-col items-end gap-1">
+                          {stockOriginalEditando !== null && Number(editForm.stock_actual ?? 0) !== stockOriginalEditando && (
+                            <input
+                              value={motivoStock}
+                              onChange={(e) => setMotivoStock(e.target.value)}
+                              placeholder="Motivo del ajuste"
+                              className="w-44 px-2 py-1 rounded border border-amber-400 text-sm placeholder:text-slate-400 focus:outline-none"
+                            />
+                          )}
+                          <input
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            type="text"
+                            value={String(editForm.stock_actual ?? 0)}
+                            onChange={(e) => setEditForm({ ...editForm, stock_actual: parseInt(e.target.value, 10) || 0 })}
+                            className="w-20 px-2 py-1 rounded border border-sky-500 text-sm text-right focus:outline-none"
+                          />
+                        </div>
                       ) : (
                         <span>{p.stock_actual}</span>
                       )}

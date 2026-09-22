@@ -83,7 +83,7 @@ export async function POST(request: Request) {
   const conStockAumentado: Array<{ id: string; cantidad: number }> = []
   for (const item of itemsData) {
     if (!item.producto_id) continue
-    const resultado = await sumarStock(item.producto_id, item.cantidad)
+    const resultado = await sumarStock(item.producto_id, item.cantidad, compra.id, 'COMPRA', 'Compra')
     if (!resultado.ok) {
       for (const prev of conStockAumentado) {
         await restarStock(prev.id, prev.cantidad)

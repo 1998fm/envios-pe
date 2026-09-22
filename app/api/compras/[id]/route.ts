@@ -26,12 +26,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Solo se puede anular una compra completada' }, { status: 400 })
   }
 
-  // Restaurar stock (devolver lo que se incrementó)
+  // Restaurar stock (devolver lo que se incrementó). El RPC BLOQUEA la
+  // resta si el stock no alcanza → mensaje claro para el usuario.
   for (const item of compra.items) {
     if (!item.producto_id) continue
     const resultado = await restarStock(item.producto_id, item.cantidad)
     if (!resultado.ok) {
-      return NextResponse.json({ error: resultado.error }, { status: 500 })
+      return NextResponse.json({ error: resultado.error }, { status: 409 })
     }
   }
 
@@ -64,7 +65,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     for (const item of compra.items) {
       if (!item.producto_id) continue
       const resultado = await restarStock(item.producto_id, item.cantidad)
-      if (!resultado.ok) return NextResponse.json({ error: resultado.error }, { status: 500 })
+      if (!resultado.ok) {
+        return NextResponse.json({ error: resultado.error }, { status: 409 })
+      }
     }
     await sincronizarArchivoPorStock(compra.items.map((it: any) => it.producto_id).filter(Boolean))
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { checkRecordLimit } from '@/lib/planLimits'
+import { ajustarStock } from '@/lib/stock'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
       descripcion: descripcion || null,
       precio_venta: precio_venta ?? 0,
       precio_compra: precio_compra ?? 0,
-      stock_actual: stock_actual ?? 0,
+      stock_actual: 0, // el stock inicial se registra vía ajustarStock (kardex)
       stock_minimo: stock_minimo ?? 0,
       unidad: unidad || 'unidad',
       imagen_url: imagenUrl,
@@ -100,5 +101,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ data })
+  // Stock inicial se registra en el kardex como AJUSTE (0 → inicial).
+  const stockInicial = Number(stock_actual ?? 0)
+  if (Number.isInteger(stockInicial) && stockInicial > 0) {
+    const res = await ajustarStock(data.id, stockInicial, 'Stock inicial')
+    if (!res.ok) {
+      await supabaseAdmin.from('productos').delete().eq('id', data.id)
+      return NextResponse.json({ error: res.error }, { status: 500 })
+    }
+  }
+
+  return NextResponse.json({ data: { ...data, stock_actual: stockInicial } })
 }
