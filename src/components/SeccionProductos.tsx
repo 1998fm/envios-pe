@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState, type ChangeEvent } from 'react'
-import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera, Archive, ArchiveRestore, CheckSquare, Package } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera, Archive, ArchiveRestore, CheckSquare, Package, History } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Producto } from '@/types/inventario'
+import type { Producto, MovimientoInventario } from '@/types/inventario'
 import { UNIDADES_MEDIDA } from '@/types/inventario'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
@@ -112,6 +112,9 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
   const [nuevaFoto, setNuevaFoto] = useState<FotoPendiente | null>(null)
   const [editFoto, setEditFoto] = useState<FotoPendiente | null>(null)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
+  const [historialProducto, setHistorialProducto] = useState<Producto | null>(null)
+  const [movimientos, setMovimientos] = useState<MovimientoInventario[]>([])
+  const [cargandoHistorial, setCargandoHistorial] = useState(false)
   const [nuevoForm, setNuevoForm] = useState({
     nombre: '',
     sku: '',
@@ -221,6 +224,25 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
     setStockOriginalEditando(Number(p.stock_actual ?? 0))
     setMotivoStock('')
     setEditFoto(null)
+  }
+
+  async function abrirHistorial(p: Producto) {
+    setHistorialProducto(p)
+    setMovimientos([])
+    setCargandoHistorial(true)
+    try {
+      const res = await fetch(`/api/productos/${p.id}/movimientos?user_id=${encodeURIComponent(userId)}`)
+      if (res.ok) {
+        const json = await res.json()
+        setMovimientos(json.data || [])
+      } else {
+        toast.error('Error al cargar el historial')
+      }
+    } catch {
+      toast.error('Error al cargar el historial')
+    } finally {
+      setCargandoHistorial(false)
+    }
   }
 
   async function guardarEdicion() {
@@ -820,6 +842,9 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                           <button onClick={() => { if (planNivel(plan) < 1) { openUpgrade(); return } setImprimirProducto(p); setMostrarModalImprimir(true) }} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title={planNivel(plan) < 1 ? 'Disponible en Pro y Business Plus' : 'Imprimir etiqueta'}>
                             <Printer size={16} />
                           </button>
+                          <button onClick={() => abrirHistorial(p)} className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors" title="Historial de movimientos">
+                            <History size={16} />
+                          </button>
                           <button onClick={() => iniciarEdicion(p)} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Editar">
                             <Pencil size={16} />
                           </button>
@@ -846,6 +871,67 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
           >
             {cargandoMas ? 'Cargando...' : 'Cargar más productos'}
           </button>
+        </div>
+      )}
+
+      {historialProducto && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setHistorialProducto(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div className="min-w-0">
+                <h3 className="text-lg font-bold text-slate-900 truncate">{historialProducto.nombre}</h3>
+                <p className="text-xs text-slate-500">
+                  Historial de movimientos · Stock actual: <span className="font-semibold text-slate-700">{historialProducto.stock_actual}</span>
+                </p>
+              </div>
+              <button onClick={() => setHistorialProducto(null)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors" title="Cerrar">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {cargandoHistorial ? (
+                <div className="flex items-center justify-center py-10 text-sm text-slate-400">Cargando historial...</div>
+              ) : movimientos.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+                  <History size={32} strokeWidth={1.5} className="mb-2 opacity-60" />
+                  <p className="text-sm">Sin movimientos registrados.</p>
+                  <p className="text-xs mt-1">El kardex registra movimientos desde su implementación.</p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {movimientos.map((m) => (
+                    <div key={m.id} className="flex items-start justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 px-3.5 py-2.5">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            m.cantidad > 0
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : m.tipo === 'AJUSTE' && m.cantidad < 0
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-red-100 text-red-700'
+                          }`}>
+                            {m.cantidad > 0 ? `+${m.cantidad}` : m.cantidad}
+                          </span>
+                          <span className="text-sm font-semibold text-slate-800">{m.tipo.replace(/_/g, ' ')}</span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {new Date(m.created_at).toLocaleString('es-PE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        {m.motivo && <p className="text-xs text-slate-500 mt-0.5">Motivo: <span className="text-slate-600">{m.motivo}</span></p>}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs text-slate-400">saldo</p>
+                        <p className="text-sm font-mono text-slate-700">
+                          <span className="text-slate-400">{m.saldo_antes}</span> → <span className="font-semibold">{m.saldo_despues}</span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

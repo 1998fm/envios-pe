@@ -140,3 +140,33 @@ export type Producto = {
   created_at: string
   updated_at: string
 }
+
+export type MovimientoTipo =
+  | 'COMPRA'
+  | 'VENTA'
+  | 'ANULACION_COMPRA'
+  | 'ANULACION_VENTA'
+  | 'AJUSTE'
+  | 'EDICION_VENTA'
+
+export type MovimientoInventario = {
+  id: string
+  profile_id: string
+  producto_id: string
+  tipo: MovimientoTipo
+  cantidad: number
+  saldo_antes: number
+  saldo_despues: number
+  referencia_id: string | null
+  motivo: string | null
+  created_at: string
+}
+
+export const ETIQUETA_MOVIMIENTO: Record<MovimientoTipo, string> = {
+  COMPRA: 'Compra',
+  VENTA: 'Venta',
+  ANULACION_COMPRA: 'Anulación de compra',
+  ANULACION_VENTA: 'Anulación de venta',
+  AJUSTE: 'Ajuste',
+  EDICION_VENTA: 'Edición de venta',
+}
