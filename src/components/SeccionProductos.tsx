@@ -968,7 +968,14 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                                 {p.nombre.charAt(0).toUpperCase()}
                               </span>
                             )}
-                            <span className="block max-w-[200px] truncate text-sm font-bold text-slate-900">
+                            {/* El nombre se envuelve en vez de cortarse. Con max-w fijo + truncate,
+                "Buzo Brenda Azul S" se partia a la mitad sin dejar ver
+                el resto. El atributo title lleva el nombre completo para
+                los casos en que aun con dos lineas no alcanza. */}
+                            <span
+                              title={p.nombre}
+                              className="line-clamp-2 break-words text-sm font-bold leading-snug text-slate-900"
+                            >
                               {p.nombre}
                             </span>
                           </div>
@@ -1165,7 +1172,9 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <div className="min-w-0">
-                <h3 className="text-lg font-bold text-slate-900 truncate">{historialProducto.nombre}</h3>
+                <h3 className="text-lg font-bold leading-snug text-slate-900 break-words">
+                  {historialProducto.nombre}
+                </h3>
                 <p className="text-xs text-slate-500">
                   Historial de movimientos · Stock actual: <span className="font-semibold text-slate-700">{historialProducto.stock_actual}</span>
                 </p>
@@ -1614,7 +1623,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
             </div>
 
             <div>
-              <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-700 truncate">
+              <div className="break-words rounded-xl bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-700">
                 {imprimirProducto.nombre}
               </div>
               {imprimirProducto.sku && (

@@ -465,8 +465,8 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
 
                       <td className="px-3 py-3.5">
                         <span
-                          title={f.Relative}
-                          className={`text-xs tabular-nums ${f.esHoy ? 'font-bold text-tori-600' : 'text-slate-400'}`}
+                          title={f.completa}
+                          className={`text-xs tabular-nums ${f.esHoy ? 'font-bold text-tori-600' : 'font-semibold text-slate-600'}`}
                         >
                           {f.dia}
                         </span>
@@ -541,7 +541,10 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
                       <Chip tono={tonoEstado(v.estado)}>{etiquetaEstado(v.estado)}</Chip>
                       <Chip tono={tonoPago(v.metodo_pago)}>{etiquetaPago(v.metodo_pago)}</Chip>
                       <Chip tono={tonoEnvio(v.estado_envio)}>{etiquetaEnvio(v.estado_envio)}</Chip>
-                      <span className={`ml-auto text-[10px] font-bold tabular-nums ${f.esHoy ? 'text-tori-600' : 'text-slate-400'}`}>
+                      <span
+                        title={f.completa}
+                        className={`ml-auto text-[11px] font-bold tabular-nums ${f.esHoy ? 'text-tori-600' : 'text-slate-500'}`}
+                      >
                         {f.dia}
                       </span>
                     </div>

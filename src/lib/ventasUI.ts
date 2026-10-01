@@ -145,20 +145,48 @@ export function resumenVenta(venta: Pick<Venta, 'items' | 'total' | 'estado' | '
   }
 }
 
-/** Fecha corta para la tabla: "12 mar" y, si es de hoy, la hora. */
-export function fechaVenta(iso: string): { dia: string; Relative: string; esHoy: boolean } {
+/**
+ * Fecha de una venta, en tres niveles según lo que la persona ya sabe.
+ *
+ * - Hoy: la hora alcanza para ubicarse ("10:42").
+ * - Este año: "15 ene" alcanza, porque todas las ventas son de este año.
+ * - De años anteriores: el año es obligatorio. Sin él, una venta de enero
+ *   del año pasado y una de este año se ven idénticas, que es justo el dato
+ *   que se necesita para no equivocarse.
+ *
+ * `completa` lleva fecha y hora y es lo que se muestra al pasar el mouse.
+ */
+export function fechaVenta(iso: string): {
+  dia: string
+  completa: string
+  esHoy: boolean
+  esEsteAnio: boolean
+} {
   const d = new Date(iso)
-  const hoy = new Date()
+  const ahora = new Date()
   const mismoDia =
-    d.getDate() === hoy.getDate() &&
-    d.getMonth() === hoy.getMonth() &&
-    d.getFullYear() === hoy.getFullYear()
+    d.getDate() === ahora.getDate() &&
+    d.getMonth() === ahora.getMonth() &&
+    d.getFullYear() === ahora.getFullYear()
+  const mismoAnio = d.getFullYear() === ahora.getFullYear()
 
-  const dia = d.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })
+  const dia = mismoDia
+    ? d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
+    : mismoAnio
+      ? d.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })
+      : d.toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: '2-digit' })
+
   return {
-    dia: mismoDia ? d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }) : dia,
-    Relative: d.toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }),
+    dia,
+    completa: d.toLocaleString('es-PE', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
     esHoy: mismoDia,
+    esEsteAnio: mismoAnio,
   }
 }
 
