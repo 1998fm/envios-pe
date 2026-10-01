@@ -15,6 +15,14 @@ export default function SubmitButton({ loading, onClick }: Props) {
       disabled={loading}
       whileHover={loading ? {} : { scale: 1.02 }}
       whileTap={loading ? {} : { scale: 0.98 }}
+      style={
+        loading
+          ? { backgroundColor: 'var(--tori-c)' }
+          : {
+              backgroundImage: 'var(--tori-grad)',
+              boxShadow: '0 10px 15px -3px var(--tori-glow), 0 4px 6px -4px var(--tori-glow)',
+            }
+      }
       className={`
         w-full py-4 rounded-xl font-semibold text-base
         flex items-center justify-center gap-2.5
@@ -22,8 +30,8 @@ export default function SubmitButton({ loading, onClick }: Props) {
         cursor-pointer
         ${
           loading
-            ? 'bg-sky-400  text-white cursor-not-allowed'
-            : 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-lg shadow-sky-500/20 hover:shadow-xl hover:shadow-sky-500/30 active:shadow-md'
+            ? 'text-white cursor-not-allowed opacity-70'
+            : 'text-white hover:shadow-xl active:shadow-md'
         }
       `}
     >

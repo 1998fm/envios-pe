@@ -11,6 +11,8 @@ type Props = {
   redirectMessageImage?: string
   redirectUrl?: string
   fechaProgramada?: string
+  colorPrimario?: string
+  colorSecundario?: string
 }
 
 export default function SuccessScreen({
@@ -19,6 +21,8 @@ export default function SuccessScreen({
   redirectMessageImage,
   redirectUrl,
   fechaProgramada,
+  colorPrimario = '#0284c7',
+  colorSecundario = '#4f46e5',
 }: Props) {
   const fired = useRef(false)
 
@@ -26,6 +30,7 @@ export default function SuccessScreen({
     if (fired.current) return
     fired.current = true
 
+    const colorsFormulario = [colorPrimario, colorSecundario]
     const duration = 2000
     const end = Date.now() + duration
 
@@ -35,21 +40,21 @@ export default function SuccessScreen({
         angle: 60,
         spread: 55,
         origin: { x: 0, y: 0.7 },
-        colors: ['#0ea5e9', '#3b82f6', '#4f46e5'],
+        colors: colorsFormulario,
       })
       confetti({
         particleCount: 3,
         angle: 120,
         spread: 55,
         origin: { x: 1, y: 0.7 },
-        colors: ['#0ea5e9', '#3b82f6', '#4f46e5'],
+        colors: colorsFormulario,
       })
 
       if (Date.now() < end) requestAnimationFrame(frame)
     }
 
     frame()
-  }, [])
+  }, [colorPrimario, colorSecundario])
 
   useEffect(() => {
     if (redirectUrl) {
@@ -76,8 +81,7 @@ export default function SuccessScreen({
       ">
         <div className="
           absolute top-0 left-0 right-0 h-1.5
-          bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600
-        " />
+        " style={{ backgroundImage: 'var(--tori-grad)' }} />
 
         {logoUrl && (
           <div className="flex justify-center mb-6">
@@ -115,13 +119,13 @@ export default function SuccessScreen({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-6 rounded-xl bg-sky-50  border border-sky-200  p-4"
+            className="mt-6 rounded-xl bg-[var(--tori-c-soft)]  border border-[color:var(--tori-c-border)]  p-4"
           >
             <div className="flex items-center justify-center gap-2 text-sm text-slate-500  mb-1">
               <Calendar size={14} />
               <span>Fecha programada</span>
             </div>
-            <div className="text-lg font-bold text-sky-700 ">
+            <div className="text-lg font-bold text-[color:var(--tori-c)] ">
               {new Date(fechaProgramada + 'T12:00:00').toLocaleDateString('es-PE', {
                 weekday: 'long',
                 day: 'numeric',

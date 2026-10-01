@@ -75,6 +75,9 @@ CREATE OR REPLACE FUNCTION guardar_configuracion(
   p_cerrar_formulario_mensaje text,
   p_moto_region text,
   p_cerrar_formulario_dias text[],
+  -- Personalización del formulario
+  p_color_formulario_primario text,
+  p_color_formulario_secundario text,
   -- Tarifas
   p_tarifas jsonb
 )
@@ -129,7 +132,9 @@ BEGIN
     cerrar_formulario            = p_cerrar_formulario,
     cerrar_formulario_mensaje    = p_cerrar_formulario_mensaje,
     moto_region                  = p_moto_region,
-    cerrar_formulario_dias       = p_cerrar_formulario_dias
+    cerrar_formulario_dias       = p_cerrar_formulario_dias,
+    color_formulario_primario    = p_color_formulario_primario,
+    color_formulario_secundario  = p_color_formulario_secundario
   WHERE id = p_profile_id;
 
   -- =======================

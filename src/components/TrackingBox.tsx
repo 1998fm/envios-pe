@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Package, Truck, Search, X, Loader2, Check, MapPin, Info, ChevronDown, ChevronUp } from 'lucide-react'
+import { formCssVars } from '@/lib/formColor'
 
 type TrackingItem = {
   producto_nombre: string
@@ -109,7 +110,7 @@ function StepperEnvio({ estado }: { estado: string }) {
                 paso.completo
                   ? 'bg-emerald-500 text-white'
                   : esActual
-                  ? 'bg-sky-500 text-white ring-4 ring-sky-200'
+                  ? 'bg-[var(--tori-c)] text-white ring-4 ring-[color:var(--tori-c-soft)]'
                   : 'bg-white text-slate-400 ring-1 ring-slate-200'
               }`}
             >
@@ -117,7 +118,7 @@ function StepperEnvio({ estado }: { estado: string }) {
             </span>
             <p
               className={`mt-1 text-[10px] font-bold ${
-                esActual ? 'text-sky-700' : paso.completo ? 'text-slate-700' : 'text-slate-400'
+                esActual ? 'text-[color:var(--tori-c)]' : paso.completo ? 'text-slate-700' : 'text-slate-400'
               }`}
             >
               {paso.etiqueta}
@@ -132,10 +133,15 @@ function StepperEnvio({ estado }: { estado: string }) {
 export default function TrackingBox({
   userId,
   onCerrar,
+  colorPrimario,
+  colorSecundario,
 }: {
   userId: string
   onCerrar: () => void
+  colorPrimario?: string
+  colorSecundario?: string
 }) {
+  const cssVars = formCssVars(colorPrimario ?? '#0284c7', colorSecundario ?? '#4f46e5')
   const [dni, setDni] = useState('')
   const [buscando, setBuscando] = useState(false)
   const [envios, setEnvios] = useState<TrackingEnvio[] | null>(null)
@@ -170,13 +176,16 @@ export default function TrackingBox({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm" style={cssVars}>
       <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
         {/* Head :: buscador */}
         <div className="shrink-0 border-b border-slate-100 bg-white px-6 py-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-md">
+              <div
+                className="flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-md"
+                style={{ backgroundImage: 'var(--tori-grad-br)' }}
+              >
                 <Truck size={20} />
               </div>
               <div>
@@ -208,13 +217,14 @@ export default function TrackingBox({
               onChange={(e) => setDni(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && buscar()}
               placeholder="Tu DNI"
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-[color:var(--tori-c)] focus:outline-none focus:ring-2 focus:ring-[color:var(--tori-c-ring)]"
             />
             <button
               type="button"
               onClick={buscar}
               disabled={buscando}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white transition-all duration-200 hover:shadow-lg hover:shadow-sky-500/20 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition-all duration-200 disabled:opacity-50"
+              style={{ backgroundImage: 'var(--tori-grad)' }}
             >
               {buscando ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
               {buscando ? 'Buscando...' : 'Ver mi pedido'}
@@ -247,10 +257,10 @@ export default function TrackingBox({
             <>
               {/* PEDIDO ACTUAL */}
               {activoActual ? (
-                <div className="overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-sm">
-                  <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-sky-50/60 px-5 py-3">
+                <div className="overflow-hidden rounded-2xl border border-[color:var(--tori-c-border)] bg-white shadow-sm">
+                  <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-[var(--tori-c-soft)] px-5 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-sky-500" />
+                      <span className="h-2 w-2 rounded-full bg-[var(--tori-c)]" />
                       <p className="text-sm font-bold text-slate-900">Tu pedido en proceso</p>
                     </div>
                     <span
@@ -280,8 +290,8 @@ export default function TrackingBox({
                     <StepperEnvio estado={activoActual.estado} />
 
                     {activoActual.metodo && (
-                      <div className="flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2.5 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-sky-100">
-                        <Truck size={13} className="shrink-0 text-sky-600" />
+                      <div className="flex items-center gap-2 rounded-xl bg-[var(--tori-c-soft)] px-3 py-2.5 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-[color:var(--tori-c-border)]">
+                        <Truck size={13} className="shrink-0 text-[color:var(--tori-c)]" />
                         Método de envío:{' '}
                         <span className="font-bold text-slate-900">
                           {METODO_LABEL[activoActual.metodo] ||
@@ -295,7 +305,7 @@ export default function TrackingBox({
 
                     {activoActual.fecha_programada && (
                       <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-500 ring-1 ring-inset ring-slate-100">
-                        <Package size={13} className="shrink-0 text-sky-500" />
+                        <Package size={13} className="shrink-0 text-[color:var(--tori-c)]" />
                         Entrega programada:{' '}
                         <span className="font-bold text-slate-800">
                           {formatearFecha(activoActual.fecha_programada)}

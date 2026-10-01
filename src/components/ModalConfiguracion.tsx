@@ -2,18 +2,15 @@
 
 import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
-import SelectorDias from '@/components/SelectorDias'
 import AyudaLogistica from '@/components/AyudaLogistica'
-import AyudaCerrarFormulario from '@/components/AyudaCerrarFormulario'
 import AyudaEmpresa from '@/components/AyudaEmpresa'
 import AyudaMetodos from '@/components/AyudaMetodos'
 import AyudaTarifas from '@/components/AyudaTarifas'
-import AyudaLogisticaOpciones from '@/components/AyudaLogisticaOpciones'
 import TarifasEditor from '@/components/TarifasEditor'
 import AutocompleteInput from '@/components/AutocompleteInput'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
 import { ConfigModalProps } from '@/types/config'
-import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store, Building, Phone, MapPin, Image, MessageCircle, Link2, Globe, Clock, DollarSign, Camera, Music, ExternalLink, Lock } from 'lucide-react'
+import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store, Building, Phone, MapPin, Image, MessageCircle, Globe, Clock, DollarSign, Camera, Music, ExternalLink, Lock } from 'lucide-react'
 import TourHelpButton from '@/components/TourHelpButton'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
@@ -175,72 +172,6 @@ export default function ModalConfiguracion({
                       upd('logoFile', file ? await comprimirImagenWebP(file) : null)
                     }}
                     className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-sky-100 file:text-sky-700 file:font-semibold file:text-sm" />
-                </div>
-              )}
-
-              <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                    <MessageCircle size={18} className="text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900">Mensaje de éxito</h3>
-                </div>
-                <p className="text-xs text-slate-500 mb-3">Este mensaje (texto y/o imagen) verán tus clientes después de hacer un pedido.</p>
-                <textarea value={config.redirectMessage}
-                  onChange={(e) => upd('redirectMessage', e.target.value)} rows={4}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400"
-                  placeholder="Gracias por tu compra. En unos segundos te redirigiremos." />
-                {config.redirectMessageImage && (
-                  <div className="mt-3">
-                    <img src={config.redirectMessageImage} alt="Imagen del mensaje de éxito"
-                      className="max-h-40 object-contain border border-slate-200 rounded-xl p-2 bg-white" />
-                    <button
-                      onClick={() => { upd('redirectMessageImage', ''); upd('redirectMessageImageFile', null) }}
-                      className="mt-2 text-xs font-semibold text-rose-600 underline hover:no-underline"
-                    >
-                      Quitar imagen
-                    </button>
-                  </div>
-                )}
-                <input type="file" accept="image/png,image/jpeg,image/webp"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0] || null
-                    upd('redirectMessageImageFile', file ? await comprimirImagenWebP(file) : null)
-                  }}
-                  className="mt-3 w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-sky-100 file:text-sky-700 file:font-semibold file:text-sm" />
-              </div>
-
-              {isBasic ? (
-                <div className="p-5 border border-dashed border-slate-300 rounded-2xl bg-slate-50 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center">
-                      <Lock size={18} className="text-slate-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-700">URL de redirección</h3>
-                      <p className="text-xs text-slate-500">Disponible en Pro y Business Plus</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={onUpgrade}
-                    className="shrink-0 text-xs font-semibold text-sky-600 underline hover:no-underline"
-                  >
-                    Ver planes
-                  </button>
-                </div>
-              ) : (
-                <div className="p-5 border border-slate-200 rounded-2xl bg-slate-50">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center">
-                      <Link2 size={18} className="text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900">URL de redirección</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-3">Después del pedido, redirige a tus clientes a esta página.</p>
-                  <input type="text" value={config.redirectUrl}
-                    onChange={(e) => upd('redirectUrl', e.target.value)}
-                    placeholder="https://mipagina.com"
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400" />
                 </div>
               )}
 
@@ -479,90 +410,6 @@ export default function ModalConfiguracion({
                       </div>
                     )
                   })()}
-                </div>
-
-                <div className="mt-6 pt-5 border-t border-slate-200">
-                  <label className="flex items-center gap-3 cursor-pointer flex-1">
-                    <input
-                      type="checkbox"
-                      checked={config.solicitarCantidadProductos}
-                      onChange={(e) => upd('solicitarCantidadProductos', e.target.checked)}
-                      className="accent-sky-600 w-4 h-4"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-slate-700">Solicitar cantidad de productos</p>
-                      <p className="text-xs text-slate-500">Pide al cliente el número de prendas a recibir</p>
-                    </div>
-                  </label>
-                  <AyudaLogisticaOpciones />
-                </div>
-
-                <div className="mt-6 pt-5 border-t border-slate-200">
-                  <label className="flex items-center gap-3 cursor-pointer flex-1">
-                    <input
-                      type="checkbox"
-                      checked={config.mostrarTracking}
-                      onChange={(e) => upd('mostrarTracking', e.target.checked)}
-                      className="accent-sky-600 w-4 h-4"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-slate-700">Mostrar tracking de pedidos</p>
-                      <p className="text-xs text-slate-500">
-                        Muestra el botón “¿Ya hiciste un pedido?” para que tus clientes consulten el estado de su envío
-                      </p>
-                    </div>
-                  </label>
-                </div>
-
-                <div className="mt-6 pt-5 border-t border-slate-200">
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-3 cursor-pointer flex-1">
-                      <input
-                        type="checkbox"
-                        checked={config.cerrarFormulario}
-                        onChange={(e) => upd('cerrarFormulario', e.target.checked)}
-                        className="accent-rose-600 w-4 h-4"
-                      />
-                      <div>
-                        <p className="text-sm font-semibold text-slate-700">Deshabilitar el formulario</p>
-                        <p className="text-xs text-slate-500">
-                          Oculta el formulario de envíos y muestra solo un mensaje a tus clientes
-                        </p>
-                      </div>
-                    </label>
-                    <AyudaCerrarFormulario />
-                  </div>
-
-                  {config.cerrarFormulario && (
-                    <div className="mt-4 ml-7">
-                      <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                        Mensaje para tus clientes
-                      </label>
-                      <textarea
-                        value={config.cerradoFormularioMensaje}
-                        onChange={(e) => upd('cerradoFormularioMensaje', e.target.value)}
-                        rows={3}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400"
-                        placeholder="Ej: Estamos en mantenimiento, volvemos pronto. ¡Gracias!"
-                      />
-                    </div>
-                  )}
-
-                  {config.cerrarFormulario && (
-                    <div className="mt-4 ml-7">
-                      <label className="block text-xs font-semibold text-slate-600 mb-2">
-                        Cerrar también estos días de la semana
-                      </label>
-                      <SelectorDias
-                        value={config.cerrarFormularioDias}
-                        onChange={(dias) => upd('cerrarFormularioDias', dias)}
-                      />
-                      <p className="mt-2 text-xs text-slate-400">
-                        Estos días el formulario estará cerrado. Se suma al cierre por hora de corte si lo tienes
-                        activo; alcanza con que una de las dos condiciones se cumpla.
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

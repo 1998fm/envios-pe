@@ -67,6 +67,8 @@ const initialConfig: ConfigState = {
   cerradoFormularioMensaje: '',
   cerrarFormularioDias: [],
   motoRegion: 'lima',
+  colorPrimario: '#0284c7',
+  colorSecundario: '#4f46e5',
   tarifas: {},
 }
 

@@ -3,6 +3,7 @@
 import { memo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
+import type { CSSProperties } from 'react'
 import AutocompleteInput from '@/components/AutocompleteInput'
 import provinciasOlva from '@/data/provincias-olva.json'
 import distritosMoto from '@/data/distritos-moto.json'
@@ -29,6 +30,7 @@ type Props = {
   tarifaMotorizado: number | null
   cargandoTarifa: boolean
   distritosMotorizado?: string[]
+  cssVars?: CSSProperties
 }
 
 const inputClass = `
@@ -38,7 +40,7 @@ const inputClass = `
   rounded-xl
   text-slate-900 
   placeholder:text-slate-400 :text-slate-500
-  focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500
+  focus:outline-none focus:ring-2 focus:ring-[color:var(--tori-c-ring)] focus:border-[color:var(--tori-c)]
   transition-all duration-200
   text-sm
 `
@@ -70,6 +72,7 @@ export default memo(function ConditionalFields(props: Props) {
             placeholder="Buscar agencia Shalom"
             requireSelection
             errorMessage="Selecciona una agencia Shalom de la lista."
+            cssVars={props.cssVars}
           />
         </FieldsWrapper>
       )}
@@ -92,7 +95,7 @@ export default memo(function ConditionalFields(props: Props) {
                     onClick={() => props.setTipoEntrega(opcion.value)}
                     className={`flex items-center gap-2 rounded-xl border-2 px-3 py-3 text-sm font-semibold transition-colors ${
                       props.tipoEntrega === opcion.value
-                        ? 'border-sky-500 bg-sky-50 text-sky-700'
+                        ? 'border-[color:var(--tori-c)] bg-[var(--tori-c-soft)] text-[color:var(--tori-c)]'
                         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                     }`}
                   >
@@ -108,14 +111,15 @@ export default memo(function ConditionalFields(props: Props) {
               </p>
             </div>
           )}
-          <AutocompleteInput
-            value={props.provincia}
-            onChange={props.setProvincia}
-            options={props.metodo === 'OLVA' ? props.provinciasOlvaFiltradas : provinciasOlva}
-            placeholder="Provincia"
-            requireSelection
-            errorMessage="Selecciona una provincia de la lista."
-          />
+<AutocompleteInput
+                value={props.provincia}
+                onChange={props.setProvincia}
+                options={props.metodo === 'OLVA' ? props.provinciasOlvaFiltradas : provinciasOlva}
+                placeholder="Provincia"
+                requireSelection
+                errorMessage="Selecciona una provincia de la lista."
+                cssVars={props.cssVars}
+              />
           {props.metodo === 'OLVA' && props.tipoEntrega === 'AGENCIA' && (
             props.agenciasOlvaProvincia.length > 0 ? (
               <AutocompleteInput
@@ -125,6 +129,7 @@ export default memo(function ConditionalFields(props: Props) {
                 placeholder="Agencia Olva (recojo)"
                 requireSelection
                 errorMessage="Selecciona una agencia Olva de la lista."
+                cssVars={props.cssVars}
               />
             ) : (
               <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-700">
@@ -161,6 +166,7 @@ export default memo(function ConditionalFields(props: Props) {
             placeholder="Distrito"
             requireSelection
             errorMessage="Selecciona un distrito de la lista."
+            cssVars={props.cssVars}
           />
 
           {props.distrito && (
@@ -174,7 +180,7 @@ export default memo(function ConditionalFields(props: Props) {
                   Consultando...
                 </span>
               ) : props.tarifaMotorizado !== null ? (
-                <span className="text-lg font-bold text-sky-700 ">
+                <span className="text-lg font-bold text-[color:var(--tori-c)] ">
                   S/ {Number(props.tarifaMotorizado).toFixed(2)}
                 </span>
               ) : (

@@ -13,6 +13,7 @@ import SocialLinks from '@/components/SocialLinks'
 import SuccessScreen from '@/components/SuccessScreen'
 import TrackingBox from '@/components/TrackingBox'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
+import { formCssVars } from '@/lib/formColor'
 import {
   useAgenciasOlva,
   agenciaEsDeProvincia,
@@ -50,6 +51,8 @@ type Props = {
   formularioDeshabilitado?: boolean
   cerrarFormularioMensaje?: string
   distritosMotorizado?: string[]
+  colorPrimario?: string
+  colorSecundario?: string
 }
 
 type MetodoDisponible = { value: string; label: string }
@@ -124,7 +127,13 @@ export default function PublicForm({
   formularioDeshabilitado = false,
   cerrarFormularioMensaje = '',
   distritosMotorizado,
+  colorPrimario = '#0284c7',
+  colorSecundario = '#4f46e5',
 }: Props) {
+  const cssVars = useMemo(
+    () => formCssVars(colorPrimario, colorSecundario),
+    [colorPrimario, colorSecundario]
+  )
   const distritosMotoList = distritosMotorizado ?? (distritosMoto as string[])
   const [loading, setLoading] = useState(false)
   const [enviado, setEnviado] = useState(false)
@@ -433,7 +442,7 @@ export default function PublicForm({
 
   if (enviado) {
     return (
-      <div className="max-w-xl mx-auto mt-6 sm:mt-10 px-3 sm:px-4">
+      <div className="max-w-xl mx-auto mt-6 sm:mt-10 px-3 sm:px-4" style={cssVars}>
         {pedidoPendienteExistente ? (
           <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 text-center">
             <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-100 flex items-center justify-center">
@@ -460,6 +469,8 @@ export default function PublicForm({
             redirectMessageImage={isPro ? redirectMessageImage : undefined}
             redirectUrl={isPro ? redirectUrl : undefined}
             fechaProgramada={fechaProgramada}
+            colorPrimario={colorPrimario}
+            colorSecundario={colorSecundario}
           />
         )}
       </div>
@@ -467,7 +478,7 @@ export default function PublicForm({
   }
 
   return (
-    <div className="max-w-xl mx-auto mt-4 sm:mt-6 px-3 sm:px-4">
+    <div className="max-w-xl mx-auto mt-4 sm:mt-6 px-3 sm:px-4" style={cssVars}>
       <div className="
         bg-white 
         rounded-2xl shadow-xl 
@@ -476,10 +487,10 @@ export default function PublicForm({
         relative overflow-hidden
         animate-fade-in-up
       ">
-        <div className="
-          absolute top-0 left-0 right-0 h-1.5
-          bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600
-        " />
+        <div
+          className="absolute top-0 left-0 right-0 h-1.5"
+          style={{ backgroundImage: 'var(--tori-grad)' }}
+        />
 
         <div className="space-y-6 mt-2">
           <FormHeader logoUrl={isPro ? logoUrl : undefined} />
@@ -488,10 +499,13 @@ export default function PublicForm({
             <button
               type="button"
               onClick={() => setMostrandoTracking(true)}
-              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3 text-left transition-all duration-200 hover:border-sky-300 hover:bg-sky-50"
+              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[color:var(--tori-c-border)] bg-[var(--tori-c-soft)] px-4 py-3 text-left transition-all duration-200 hover:border-[color:var(--tori-c)]"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-sm">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-sm"
+                  style={{ backgroundImage: 'var(--tori-grad-br)' }}
+                >
                   <Truck size={18} />
                 </div>
                 <div>
@@ -499,7 +513,7 @@ export default function PublicForm({
                   <p className="text-xs text-slate-500">Rastrea el estado de tu pedido</p>
                 </div>
               </div>
-              <ChevronRight size={18} className="shrink-0 text-sky-500" />
+              <ChevronRight size={18} className="shrink-0 text-[color:var(--tori-c)]" />
             </button>
           )}
 
@@ -519,9 +533,12 @@ export default function PublicForm({
           />
 
           {metodo === 'RECOJO' ? (
-            <div className="bg-sky-50 border border-sky-200 rounded-2xl p-5">
+            <div className="bg-[var(--tori-c-soft)] border border-[color:var(--tori-c-border)] rounded-2xl p-5">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center shrink-0">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white"
+                  style={{ backgroundImage: 'var(--tori-grad-br)' }}
+                >
                   <Store size={18} className="text-white" />
                 </div>
                 <div>
@@ -555,6 +572,7 @@ export default function PublicForm({
               tarifaMotorizado={tarifaMotorizado}
               cargandoTarifa={cargandoTarifa}
               distritosMotorizado={distritosMotoList}
+              cssVars={cssVars}
             />
           )}
 
@@ -571,7 +589,8 @@ export default function PublicForm({
                       desactivarEscogerDia()
                     }
                   }}
-                  className="w-4 h-4 accent-sky-500 rounded"
+                  className="w-4 h-4 rounded"
+                  style={{ accentColor: 'var(--tori-c)' }}
                 />
                 Escoger día de entrega
               </label>
@@ -591,8 +610,8 @@ export default function PublicForm({
                             onClick={() => setFechaSeleccionada(fechaStr)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 ${
                               seleccionada
-                                ? 'bg-sky-600 text-white border-sky-600'
-                                : 'bg-white  border-slate-200  text-slate-600  hover:border-sky-400'
+                                ? 'bg-[var(--tori-c)] text-white border-[color:var(--tori-c)]'
+                                : 'bg-white  border-slate-200  text-slate-600  hover:border-[color:var(--tori-c)]'
                             }`}
                           >
                             {formatearFecha(fechaStr)}
@@ -644,7 +663,7 @@ export default function PublicForm({
           href="/"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-xs text-slate-400  hover:text-sky-600 :text-sky-400 transition-colors"
+          className="inline-flex items-center gap-2 text-xs text-slate-400  hover:text-[color:var(--tori-c)] :text-slate-400 transition-colors"
         >
           <img
             src="/images/tori/tori-logo.webp"

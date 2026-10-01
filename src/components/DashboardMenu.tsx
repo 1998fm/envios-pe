@@ -17,8 +17,10 @@ import {
   LayoutDashboard,
   Receipt,
   Users,
+  ClipboardList,
 } from 'lucide-react'
 import TourHelpButton from '@/components/TourHelpButton'
+import LogoTori from '@/components/LogoTori'
 import LockedFeature from '@/components/LockedFeature'
 import type { TourId } from '@/lib/tours'
 
@@ -28,8 +30,8 @@ type Props = {
   showCopiarDatos: boolean
   copiarDatosLocked?: boolean
   shalomUso?: { used: number; max: number | null }
-  pestañaActiva: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes'
-  onNavegar: (p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes') => void
+  pestañaActiva: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes' | 'formulario'
+  onNavegar: (p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes' | 'formulario') => void
   onExportShalom: () => void
   onCambioMasivo: () => void
   onGenerarEtiquetas: () => void
@@ -75,9 +77,10 @@ export default function DashboardMenu({
     { key: 'compras' as const, label: 'Compras', icon: Truck, tour: 'tab-compras' as TourId },
     { key: 'gastos' as const, label: 'Gastos', icon: Receipt, tour: 'tab-gastos' as TourId },
     { key: 'clientes' as const, label: 'Clientes', icon: Users, tour: 'tab-clientes' as TourId },
+    { key: 'formulario' as const, label: 'Formulario', icon: ClipboardList, tour: 'tab-formulario' as TourId },
   ]
 
-  function navegar(p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes') {
+  function navegar(p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes' | 'formulario') {
     onNavegar(p)
     setHover(false)
     setFijado(false)
@@ -90,8 +93,8 @@ export default function DashboardMenu({
   }
 
   const itemClass = `
-    w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium
-    text-slate-700 hover:bg-slate-50 hover:text-slate-900
+    w-full flex items-center gap-2.5 pl-2.5 pr-3 py-2 rounded-xl text-sm font-medium
+    text-slate-600 hover:bg-slate-100/80 hover:text-slate-900
     transition-colors duration-150 text-left whitespace-nowrap
   `
 
@@ -116,12 +119,17 @@ export default function DashboardMenu({
         data-tour="actions"
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
-        className="fixed left-0 top-0 z-50 flex h-screen flex-col overflow-hidden border-r border-slate-200 bg-white shadow-2xl transition-all duration-300 ease-in-out"
+        className="fixed left-0 top-0 z-50 flex h-screen flex-col overflow-hidden border-r border-slate-200 bg-white shadow-2xl shadow-slate-900/10 transition-all duration-300 ease-in-out"
         style={{ width: abierto ? '16rem' : '0rem' }}
       >
         {/* Header */}
         <div className="flex h-14 shrink-0 items-center justify-between border-b border-slate-100 px-3">
-          {abierto && <span className="text-sm font-bold text-slate-900">Menú</span>}
+          {abierto && (
+            <span className="flex items-center gap-2 text-sm font-black tracking-tight text-slate-900">
+              <LogoTori size={28} />
+              Menú
+            </span>
+          )}
           <div className="flex items-center gap-1">
             {abierto && (
               <button
@@ -150,25 +158,36 @@ export default function DashboardMenu({
         </div>
 
         {/* Contenido */}
-        <div className="flex-1 overflow-y-auto px-2 py-3">
+        <div className="flex-1 overflow-y-auto px-2.5 py-3">
           {abierto && (
             <div className="space-y-4">
               <div>
-                <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <p className="px-3 pb-1.5 pt-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500" />
                   Secciones
                 </p>
                 {secciones.map((s) => (
-                  <div key={s.key} className="flex items-center gap-1">
+                  <div key={s.key} className="group flex items-center gap-1">
                     <button
                       onClick={() => navegar(s.key)}
                       className={`${itemClass} flex-1 ${
-                        pestañaActiva === s.key ? 'bg-sky-50 text-sky-700 font-semibold' : ''
+                        pestañaActiva === s.key
+                          ? 'bg-gradient-to-r from-sky-500/95 to-indigo-500/95 text-white font-semibold shadow-md shadow-indigo-500/25'
+                          : ''
                       }`}
                     >
-                      <s.icon size={16} className={pestañaActiva === s.key ? 'text-sky-600' : 'text-slate-400'} />
+                      <span
+                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-colors ${
+                          pestañaActiva === s.key
+                            ? 'bg-white/15 text-white'
+                            : 'bg-slate-100 text-slate-400 group-hover:bg-white group-hover:text-slate-600'
+                        }`}
+                      >
+                        <s.icon size={15} />
+                      </span>
                       {s.label}
                       {pestañaActiva === s.key && (
-                        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-500" />
+                        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" />
                       )}
                     </button>
                     <TourHelpButton tourId={s.tour} className="w-6 h-6 mr-1" />
@@ -179,7 +198,8 @@ export default function DashboardMenu({
               <div className="my-1.5 h-px bg-slate-100" />
 
               <div>
-                <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <p className="px-3 pb-1.5 pt-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-indigo-400 to-sky-500" />
                   Acciones
                 </p>
                 {tieneShalom && (
@@ -223,17 +243,21 @@ export default function DashboardMenu({
                 ))}
               </div>
 
-              <div className="my-1.5 h-px bg-slate-100" />
-
-              <div>
-                <button data-tour="configuracion" onClick={() => ejecutar(onConfig)} className={itemClass}>
-                  <Settings size={16} className="text-slate-400" />
-                  Configuración
-                </button>
-              </div>
             </div>
           )}
         </div>
+
+        {/* Pie del menú: Configuración siempre visible abajo */}
+        {abierto && (
+          <div className="shrink-0 border-t border-slate-100 bg-white px-2 py-2.5">
+            <button data-tour="configuracion" onClick={() => ejecutar(onConfig)} className={itemClass}>
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-400">
+                <Settings size={15} />
+              </span>
+              Configuración
+            </button>
+          </div>
+        )}
       </div>
     </>
   )

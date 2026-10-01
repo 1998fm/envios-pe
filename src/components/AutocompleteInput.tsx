@@ -2,7 +2,9 @@
 
 import { useDeferredValue, useMemo, useState, useRef, useLayoutEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import type { CSSProperties } from 'react'
 import { Check } from 'lucide-react'
+import { TEMA_AZUL_VARS } from '@/lib/formColor'
 
 // Maximo de opciones visibles en el dropdown (las demas quedan en scroll).
 const MAX_VISIBLES = 16
@@ -14,6 +16,7 @@ type Props = {
   placeholder: string
   requireSelection?: boolean
   errorMessage?: string
+  cssVars?: CSSProperties
 }
 
 const inputClass = `
@@ -23,7 +26,7 @@ const inputClass = `
   rounded-xl
   text-slate-900 
   placeholder:text-slate-400
-  focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500
+  focus:outline-none focus:ring-2 focus:ring-[color:var(--tori-c-ring)] focus:border-[color:var(--tori-c)]
   transition-all duration-200
   text-sm
 `
@@ -40,7 +43,7 @@ const dropdownClass = `
 const optionClass = `
   w-full text-left px-3 py-2
   text-sm text-slate-700 leading-snug
-  hover:bg-sky-50
+  hover:bg-[var(--tori-c-soft)]
   cursor-pointer
 `
 
@@ -51,7 +54,9 @@ export default function AutocompleteInput({
   placeholder,
   requireSelection = false,
   errorMessage,
+  cssVars,
 }: Props) {
+  const vars = cssVars ?? TEMA_AZUL_VARS
   const [abierto, setAbierto] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null)
@@ -109,7 +114,7 @@ export default function AutocompleteInput({
       ? createPortal(
           <div
             className={dropdownClass}
-            style={{ top: pos.top, left: pos.left, width: pos.width }}
+            style={{ ...vars, top: pos.top, left: pos.left, width: pos.width }}
           >
             {filtrados.map((item) => {
               const seleccionado =
@@ -124,13 +129,13 @@ export default function AutocompleteInput({
                     cerrar()
                   }}
                   className={`${optionClass} ${
-                    seleccionado ? 'bg-sky-50 font-semibold' : ''
+                    seleccionado ? 'bg-[var(--tori-c-soft)] font-semibold' : ''
                   }`}
                 >
                   <span className="flex items-start justify-between gap-2 min-w-0">
                     <span className="break-words whitespace-normal">{item}</span>
                     {seleccionado && (
-                      <Check size={14} className="text-sky-600 shrink-0 mt-0.5" />
+                      <Check size={14} className="text-[color:var(--tori-c)] shrink-0 mt-0.5" />
                     )}
                   </span>
                 </button>
@@ -142,7 +147,7 @@ export default function AutocompleteInput({
       : null
 
   return (
-    <div>
+    <div style={vars}>
       <input
         ref={inputRef}
         value={value}

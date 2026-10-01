@@ -59,7 +59,7 @@ export default memo(function ShippingMethodCards({ metodos, selected, onSelect }
                 cursor-pointer
                 ${
                   isActive
-                    ? 'border-sky-500 bg-sky-50  text-sky-700  shadow-sm'
+                    ? 'border-[color:var(--tori-c)] bg-[var(--tori-c-soft)]  text-[color:var(--tori-c)]  shadow-sm'
                     : 'border-slate-200  bg-white  text-slate-600  hover:border-slate-300 :border-slate-600'
                 }
               `}
@@ -67,7 +67,7 @@ export default memo(function ShippingMethodCards({ metodos, selected, onSelect }
               {isActive && (
                 <motion.div
                   layoutId="method-check"
-                  className="absolute top-1.5 right-1.5 w-4 h-4 bg-sky-500 rounded-full flex items-center justify-center"
+                  className="absolute top-1.5 right-1.5 w-4 h-4 bg-[var(--tori-c)] rounded-full flex items-center justify-center"
                   initial={false}
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 >

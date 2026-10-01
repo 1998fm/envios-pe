@@ -45,6 +45,8 @@ export type ConfigState = {
   cerradoFormularioMensaje: string
   cerrarFormularioDias: string[]
   motoRegion: 'lima' | 'provincia'
+  colorPrimario: string
+  colorSecundario: string
   tarifas: Record<string, string>
 }
 
@@ -93,6 +95,8 @@ export const initialConfigState: ConfigState = {
   cerradoFormularioMensaje: '',
   cerrarFormularioDias: [],
   motoRegion: 'lima',
+  colorPrimario: '#0284c7',
+  colorSecundario: '#4f46e5',
   tarifas: {},
 }
 

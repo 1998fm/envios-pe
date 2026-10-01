@@ -123,6 +123,8 @@ nombreMetodoOtro={profile.nombre_metodo_otro}
         formularioDeshabilitado={formularioDeshabilitado}
         cerrarFormularioMensaje={profile.cerrar_formulario_mensaje ?? ''}
         distritosMotorizado={distritosMotorizado}
+        colorPrimario={profile.color_formulario_primario ?? '#0284c7'}
+        colorSecundario={profile.color_formulario_secundario ?? '#4f46e5'}
       />
 
     </div>

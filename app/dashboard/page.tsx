@@ -42,6 +42,7 @@ import { ConfigState, initialConfigState } from '@/types/config'
 import type { Envio } from '@/types/envio'
 import SeccionProductos from '@/components/SeccionProductos'
 import SeccionVentas from '@/components/SeccionVentas'
+import SeccionFormulario from '@/components/SeccionFormulario'
 import SeccionCompras from '@/components/SeccionCompras'
 import SeccionGastos from '@/components/SeccionGastos'
 import SeccionClientes from '@/components/SeccionClientes'
@@ -95,7 +96,7 @@ const [shalomUso, setShalomUso] = useState<{ used: number; max: number | null }>
 const [planFeatures, setPlanFeatures] = useState<{ max_metodos?: number | null; max_pedidos_copiar?: number | null; max_envios?: number | null } | null>(null)
 const [mostrarUpgrade, setMostrarUpgrade] = useState(false)
 const [agruparPor, setAgruparPor] = useState<'programada' | 'registro'>('programada')
-const PESTANAS = ['resumen', 'envios', 'productos', 'ventas', 'compras', 'gastos', 'clientes'] as const
+const PESTANAS = ['resumen', 'envios', 'productos', 'ventas', 'compras', 'gastos', 'clientes', 'formulario'] as const
 type PESTANA = typeof PESTANAS[number]
 
 const [pestañaActiva, setPestañaActiva] = useState<PESTANA>('resumen')
@@ -494,6 +495,8 @@ setConfig(prev => ({
   cerradoFormularioMensaje: profile?.cerrar_formulario_mensaje ?? '',
   cerrarFormularioDias: profile?.cerrar_formulario_dias ?? [],
   motoRegion: (profile?.moto_region ?? 'lima') as 'lima' | 'provincia',
+  colorPrimario: profile?.color_formulario_primario ?? '#0284c7',
+  colorSecundario: profile?.color_formulario_secundario ?? '#4f46e5',
   tarifas: tarifasObj,
 }))
 
@@ -1030,13 +1033,15 @@ async function aplicarCambioMasivo() {
 
 }
 
-async function guardarConfiguracion() {
+async function guardarConfiguracion(overrides: Partial<ConfigState> = {}) {
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) return
+
+  const cfg = { ...config, ...overrides }
 
   let nuevaLogoUrl = config.logoUrl
 
@@ -1082,12 +1087,12 @@ async function guardarConfiguracion() {
     setConfig(prev => ({...prev, logoUrl: nuevaLogoUrl}))
   }
 
-  let nuevaMsgImagen = config.redirectMessageImage
+  let nuevaMsgImagen = cfg.redirectMessageImage
 
-  if (config.redirectMessageImageFile) {
+  if (cfg.redirectMessageImageFile) {
 
     const extension =
-      config.redirectMessageImageFile.name
+      cfg.redirectMessageImageFile.name
         .split('.')
         .pop()
 
@@ -1100,7 +1105,7 @@ async function guardarConfiguracion() {
       .from('logos')
       .upload(
         filePath,
-        config.redirectMessageImageFile,
+        cfg.redirectMessageImageFile,
         {
           upsert: true,
         }
@@ -1176,8 +1181,8 @@ async function guardarConfiguracion() {
       p_origen_shalom: config.nuevoOrigen,
       p_logo_url: nuevaLogoUrl,
 
-      p_redirect_url: config.redirectUrl,
-      p_redirect_message: config.redirectMessage,
+      p_redirect_url: cfg.redirectUrl,
+      p_redirect_message: cfg.redirectMessage,
       p_redirect_message_image: nuevaMsgImagen,
 
       p_instagram_url: config.instagramUrl,
@@ -1210,14 +1215,16 @@ async function guardarConfiguracion() {
       p_logistica_agencias_limitar: plan === 'basic' ? false : config.logisticaAgenciasLimitar,
       p_logistica_agencias_cupo: plan === 'basic' ? 0 : config.logisticaAgenciasCupo,
 
-      p_solicitar_cantidad_productos: config.solicitarCantidadProductos,
+      p_solicitar_cantidad_productos: cfg.solicitarCantidadProductos,
       p_mostrar_escoger_fecha: config.mostrarEscogerFecha,
-      p_mostrar_tracking: config.mostrarTracking,
-      p_cerrar_formulario: config.cerrarFormulario,
-      p_cerrar_formulario_mensaje: config.cerradoFormularioMensaje,
+      p_mostrar_tracking: cfg.mostrarTracking,
+      p_cerrar_formulario: cfg.cerrarFormulario,
+      p_cerrar_formulario_mensaje: cfg.cerradoFormularioMensaje,
 
       p_moto_region: config.motoRegion,
-      p_cerrar_formulario_dias: config.cerrarFormularioDias ?? [],
+      p_cerrar_formulario_dias: cfg.cerrarFormularioDias ?? [],
+      p_color_formulario_primario: cfg.colorPrimario ?? '#0284c7',
+      p_color_formulario_secundario: cfg.colorSecundario ?? '#4f46e5',
       p_tarifas: tarifasObj,
     }
   )
@@ -1421,6 +1428,7 @@ for (
         onNavegar={cambiarPestaña}
         onConfig={() => setMostrarConfig(true)}
         config={config}
+        plan={plan}
       />
     )}
 
@@ -1509,6 +1517,17 @@ for (
        {pestañaActiva === 'compras' && <SeccionCompras userId={userId || ''} />}
        {pestañaActiva === 'gastos' && <SeccionGastos userId={userId || ''} />}
        {pestañaActiva === 'clientes' && <SeccionClientes userId={userId || ''} />}
+       {pestañaActiva === 'formulario' && (
+         <SeccionFormulario
+           userId={userId || ''}
+           config={config}
+           setConfig={setConfig}
+           guardarConfiguracion={guardarConfiguracion}
+           plan={plan}
+           onUpgrade={() => setMostrarUpgrade(true)}
+           distritosMotorizado={distritosMoto}
+         />
+       )}
 
 <ModalConfiguracion
   abierto={mostrarConfig}
