@@ -900,7 +900,10 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                     />
                   </th>
                 )}
-                <th className="px-5 py-3.5 text-left">Producto</th>
+                {/* La columna del nombre necesita ancho propio. Sin esto el navegador la
+                    reparte entre las otras 8 y "CONJUNTO VISCOSA L - ARENA"
+                    se partia justo donde ya no se leia. */}
+                <th className="w-[30%] px-5 py-3.5 text-left">Producto</th>
                 <th className="px-3 py-3.5 text-left">SKU</th>
                 <th className="px-3 py-3.5 text-right">Stock</th>
                 <th className="px-3 py-3.5 text-right">P. venta</th>
@@ -931,7 +934,7 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                         />
                       </td>
                     )}
-                    <td className="px-5 py-3.5">
+                    <td className="px-5 py-3.5 align-top">
                       {editando ? (
                         <div className="flex items-center gap-2">
                           <label
@@ -968,13 +971,14 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                                 {p.nombre.charAt(0).toUpperCase()}
                               </span>
                             )}
-                            {/* El nombre se envuelve en vez de cortarse. Con max-w fijo + truncate,
-                "Buzo Brenda Azul S" se partia a la mitad sin dejar ver
-                el resto. El atributo title lleva el nombre completo para
-                los casos en que aun con dos lineas no alcanza. */}
+                            {/* El nombre se envuelve SIN recortar. Un line-clamp o un truncate
+                    dejaban fuera el final ("... VISCOSA L - AR...") y el
+                    nombre completo es justo lo que hace falta para
+                    distinguir dos productos parecidos. break-words evita que
+                    una cadena sin espacios desborde la celda. */}
                             <span
                               title={p.nombre}
-                              className="line-clamp-2 break-words text-sm font-bold leading-snug text-slate-900"
+                              className="block break-words text-sm font-bold leading-snug text-slate-900"
                             >
                               {p.nombre}
                             </span>
