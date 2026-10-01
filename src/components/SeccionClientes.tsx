@@ -8,6 +8,7 @@ import { useOnboarding } from '@/context/OnboardingContext'
 import TourHelpButton from '@/components/TourHelpButton'
 import { useConfirm } from '@/components/ConfirmDialog'
 import ModalDetalleCliente from '@/components/ModalDetalleCliente'
+import { buscar } from '@/lib/buscar'
 
 type Cliente = {
   id: string
@@ -126,16 +127,10 @@ export default function SeccionClientes({ userId }: Props) {
     }
   }
 
-  const filtrados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase()
-    if (!q) return clientes
-    return clientes.filter(
-      (c) =>
-        c.nombre.toLowerCase().includes(q) ||
-        (c.dni || '').toLowerCase().includes(q) ||
-        (c.telefono || '').toLowerCase().includes(q)
-    )
-  }, [busqueda, clientes])
+  const filtrados = useMemo(
+    () => buscar(clientes, busqueda, (c) => [c.nombre, c.dni, c.telefono], (c) => c.nombre),
+    [busqueda, clientes]
+  )
 
   function formatFecha(fecha: string | null) {
     if (!fecha) return '—'

@@ -3,6 +3,7 @@ import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { calcularFechaEntrega } from '@/lib/logistica/calcularFechaEntrega'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { checkEnvioLimit } from '@/lib/planLimits'
+import { buscar } from '@/lib/buscar'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -23,12 +24,6 @@ export async function GET(request: Request) {
     .from('envios')
     .select('*')
     .eq('user_id', userId)
-
-  if (busqueda) {
-    query = query.or(
-      `nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%,telefono.ilike.%${busqueda}%`
-    )
-  }
 
   if (estados.length > 0) {
     query = query.in('estado', estados)
@@ -58,6 +53,41 @@ export async function GET(request: Request) {
     query = query
       .gte('fecha_registro', iniDia(fechaDesde))
       .lte('fecha_registro', finDia(fechaHasta))
+  }
+
+  // La búsqueda por palabras va DESPUÉS de estados, método y fechas a
+  // propósito: si se hiciera antes, el early-return se saltaría esos filtros
+  // y buscar "juan" con el filtro "Enviado" devolvería también los pendientes.
+  //
+  // Antes se comparaba la frase completa ("%maria lopez%"), así que "maria
+  // lopez" solo encontraba a quien se llamara exactamente así y "maria lopez
+  // 123" no encontraba nada. Con el motor, cada palabra se busca por separado
+  // y todas tienen que aparecer en algún campo, sin importar el orden.
+  if (busqueda.trim()) {
+    const { data: todos, error: errBusqueda } = await query
+      .order('fecha_registro', { ascending: false })
+      .range(0, 9999)
+
+    if (errBusqueda) {
+      return NextResponse.json({ error: errBusqueda.message }, { status: 500 })
+    }
+
+    const ordenados = buscar(
+      (todos || []) as unknown as Record<string, unknown>[],
+      busqueda,
+      (e) => [e.nombre as string, e.dni as string, e.telefono as string],
+      (e) => String(e.nombre || '')
+    )
+    const total = ordenados.length
+    return NextResponse.json({
+      data: ordenados.slice(offset, offset + limit),
+      // Con búsqueda ya sabemos el total exacto, así que no hace falta el
+      // truco de pedir limit+1 filas para saber si hay más.
+      hasMore: offset + limit < total,
+      total,
+      offset,
+      limit,
+    })
   }
 
   // Pedimos limit+1 filas: si viene una de más, hay más páginas. Evita el

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { coincide } from '@/lib/buscar'
 
 // Normaliza dni/teléfono para comparaciones: quita espacios y caracteres invisibles
 function norm(v: string | null | undefined): string {
@@ -113,12 +114,16 @@ export async function GET(request: Request) {
     // Validar que no haya personas sin dni ni teléfono (no se pueden detectar duplicados)
     if (!principal) continue
 
+    // El motor de búsqueda trata el espacio como un Y: "juan perez" trae solo
+    // los clientes que tienen las dos palabras, en cualquier campo y en
+    // cualquier orden. Antes se comparaba la frase completa, así que ese
+    // cliente no aparecía nunca.
     if (
       busqueda &&
-      !(
-        (principal.nombre || '').toLowerCase().includes(busqueda) ||
-        norm(dniPreferido).toLowerCase().includes(busqueda) ||
-        norm(telPreferido).toLowerCase().includes(busqueda)
+      !coincide(
+        { dni: dniPreferido, tel: telPreferido },
+        [principal.nombre, dniPreferido, telPreferido],
+        busqueda
       )
     ) {
       continue
