@@ -5,7 +5,7 @@ import { Pencil, X, Plus, Minus, Check, Loader2, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Venta, Producto } from '@/types/inventario'
 import { tourDone, trayectoDone } from '@/lib/tours'
-import { coincidePorPalabras } from '@/lib/buscarPorPalabras'
+import { buscar } from '@/lib/buscar'
 import TourHelpButton from '@/components/TourHelpButton'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { openUpgrade, planNivel } from '@/lib/planGating'
@@ -50,14 +50,6 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
       .then((r) => r.json())
       .then((j) => setProductos(j.data || []))
   }, [venta?.id, userId, editando])
-
-  useEffect(() => {
-    if (!venta) return
-    if (trayectoDone() && !tourDone('modal-detalle-venta')) {
-      const t = setTimeout(() => startTour('modal-detalle-venta'), 400)
-      return () => clearTimeout(t)
-    }
-  }, [venta, startTour])
 
   useEffect(() => {
     if (!venta) return
@@ -127,11 +119,7 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
 
   const totalEdit = itemsEdit.reduce((sum, it) => sum + it.cantidad * it.precio_unitario, 0)
 
-  const productosFiltrados = productos.filter(
-    (p) =>
-      coincidePorPalabras(p.nombre, busquedaProd) ||
-      (p.sku && coincidePorPalabras(p.sku, busquedaProd))
-  )
+  const productosFiltrados = buscar(productos, busquedaProd, (p) => [p.nombre, p.sku, p.descripcion], (p) => p.nombre)
 
   async function guardarCambios() {
     if (itemsEdit.length === 0) { toast.error('Agrega al menos un producto'); return }
@@ -208,18 +196,20 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
 
         <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-4">
           <div>
-            <div className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Cliente</div>
-            {editando ? (
-              <input
-                value={nombreEdit}
-                onChange={(e) => setNombreEdit(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-              />
-            ) : (
-              <div className="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900">
-                {venta.persona_nombre}
-              </div>
-            )}
+            <div data-tour="detalle-entidad">
+              <div className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Cliente</div>
+              {editando ? (
+                <input
+                  value={nombreEdit}
+                  onChange={(e) => setNombreEdit(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                />
+              ) : (
+                <div className="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900">
+                  {venta.persona_nombre}
+                </div>
+              )}
+            </div>
           </div>
 
           {editando ? (
@@ -309,7 +299,7 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
             </>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div data-tour="detalle-tiles" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-slate-50 rounded-2xl p-3">
                   <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">DNI</p>
                   <p className="font-semibold text-slate-900 text-sm">{venta.persona_dni || '—'}</p>
@@ -370,7 +360,7 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
                 </div>
               </div>
 
-              <div>
+              <div data-tour="detalle-items">
                 <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-2">
                   Productos ({venta.items?.length ?? 0})
                 </p>

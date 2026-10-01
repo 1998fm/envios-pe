@@ -1,8 +1,17 @@
-﻿import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 import { checkRecordLimit } from '@/lib/planLimits'
 import { descontarStock, sumarStock } from '@/lib/stock'
+import { calcularResumenVentas, type ResumenVentas } from '@/lib/ventasUI'
+import { buscar, palabrasClave } from '@/lib/buscar'
+
+const r2 = (n: number) => Math.round(n * 100) / 100
+
+/** Tope de filas para agregar el resumen. Si se supera, la UI lo avisa. */
+const TOPE_RESUMEN = 5000
+/** Tope de ventas candidatas que se revisan en memoria al buscar. */
+const TOPE_BUSQUEDA = 2000
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -11,50 +20,132 @@ export async function GET(request: Request) {
   const busqueda = (searchParams.get('busqueda') || '').trim()
   const offset = parseInt(searchParams.get('offset') || '0')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
+  const conResumen = searchParams.get('resumen') === '1'
 
   if (!userId) {
     return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
+  }
+
+  // Con palabras multiples el filtrado se hace en memoria (mas abajo), asi que
+  // aqui solo se acota el universo con una coincidencia literal de cualquier
+  // palabra, que es barato y reduce cuantas filas hay que traer.
+  const palabrasDeBusqueda = palabrasClave(busqueda)
+  let condiciones: string[] = []
+  if (palabrasDeBusqueda.length > 0) {
+    // Un .or() con una condicion por palabra, cada una acotada por el usuario.
+    // Asi la base reduce el conjunto sin decidir el resultado: el "Y" real lo
+    // aplica el motor, no este filtro.
+    condiciones = []
+    for (const palabra of palabrasDeBusqueda.slice(0, 6)) {
+      // Se escapan los caracteres que rompen la sintaxis de postgREST (, . : *)
+      const segura = palabra.replace(/[,.:*()]/g, ' ')
+      if (!segura) continue
+      const p = `%${segura}%`
+      condiciones.push(
+        `persona_nombre.ilike.${p}`,
+        `persona_dni.ilike.${p}`,
+        `persona_telefono.ilike.${p}`,
+        `metodo_pago.ilike.${p}`,
+        `estado.ilike.${p}`,
+        `estado_envio.ilike.${p}`
+      )
+    }
+
+    // Los items viven en otra tabla, asi que se buscan aparte por nombre de
+    // producto y luego se cruzan por venta.
+    if (condiciones.length > 0) {
+      const porPalabra = await Promise.all(
+        palabrasDeBusqueda.slice(0, 6).map(async (palabra) => {
+          const segura = palabra.replace(/[,.:*()]/g, ' ')
+          if (!segura) return [] as string[]
+          const { data } = await supabaseAdmin
+            .from('venta_items')
+            .select('venta_id')
+            .ilike('producto_nombre', `%${segura}%`)
+            .limit(3000)
+          return [...new Set((data || []).map((r) => r.venta_id as string))]
+        })
+      )
+      const idsPorProducto = [...new Set(porPalabra.flat())]
+      if (idsPorProducto.length > 0) {
+        condiciones.push(`id.in.(${idsPorProducto.slice(0, 2000).join(',')})`)
+      }
+    }
+  }
+
+  const orBusqueda = condiciones.length > 0 ? condiciones.join(',') : null
+
+  // La busqueda con varias palabras se resuelve en memoria, no con un .or() de
+  // ilike. La razon: "polo verde" en un .or() devuelve todo lo que dice "polo"
+  // MAS todo lo que dice "verde", porque cada condicion se evalua por separado.
+  // Con el motor, todas las palabras tienen que estar presentes (un Y), aunque
+  // cada una pueda estar en un campo distinto.
+  if (palabrasDeBusqueda.length > 0) {
+    // El .or() de arriba no decide el resultado: solo acota el universo a las
+    // ventas que contienen AL MENOS una de las palabras, que es lo que hace
+    // barata la segunda pasada en memoria.
+    let qBase = supabaseAdmin
+      .from('ventas')
+      .select('*, items:venta_items(*)')
+      .eq('profile_id', userId)
+    if (orBusqueda) qBase = qBase.or(orBusqueda)
+    if (estado) qBase = qBase.eq('estado', estado)
+
+    const { data: candidatas, error: errBusqueda } = await qBase
+      .order('created_at', { ascending: false })
+      .range(0, TOPE_BUSQUEDA - 1)
+
+    if (errBusqueda) {
+      return NextResponse.json({ error: errBusqueda.message }, { status: 500 })
+    }
+
+    const ordenadas = buscar(
+      (candidatas || []) as unknown as Record<string, unknown>[],
+      busqueda,
+      (v) => {
+        const f = v as unknown as {
+          persona_nombre?: string
+          persona_dni?: string
+          persona_telefono?: string | null
+          metodo_pago?: string
+          estado?: string
+          estado_envio?: string
+          items?: { producto_nombre?: string }[]
+        }
+        return [
+          f.persona_nombre,
+          f.persona_dni,
+          f.persona_telefono,
+          f.metodo_pago,
+          f.estado,
+          f.estado_envio,
+          // El nombre de lo vendido: buscar "polo verde" debe encontrar la
+          // venta aunque el producto se llame "Polo verde athletic" y el
+          // cliente se llame de otra cosa.
+          ...(f.items || []).map((it) => it.producto_nombre),
+        ]
+      },
+      (v) => String((v as Record<string, unknown>).persona_nombre || '')
+    )
+
+    const total = ordenadas.length
+    return NextResponse.json({
+      data: ordenadas.slice(offset, offset + limit),
+      total,
+      offset,
+      limit,
+      // El resumen sale de lo que DE VERDAD coincide, no de lo que sobrevivo al
+      // pre-filtro: si no, al buscar "polo verde" aparecerian en la franja de
+      // arriba cifras de ventas que no se ven en la lista.
+      resumen: conResumen ? calcularResumenVentas(ordenadas as never[], total) : undefined,
+    })
   }
 
   let query = supabaseAdmin
     .from('ventas')
     .select('*, items:venta_items(*)', { count: 'exact' })
     .eq('profile_id', userId)
-
-  if (estado) {
-    query = query.eq('estado', estado)
-  }
-
-  if (busqueda) {
-    // Saneamos el término para que postgREST no falle con caracteres especiales
-    const term = busqueda
-      .replace(/[^a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ@.-]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-
-    if (term) {
-      // Ventas cuyos productos coinciden con el término
-      const { data: itemsMatch } = await supabaseAdmin
-        .from('venta_items')
-        .select('venta_id')
-        .ilike('producto_nombre', `%${term}%`)
-        .limit(3000)
-      const idsPorProducto = [...new Set((itemsMatch || []).map((r) => r.venta_id))]
-
-      const condiciones = [
-        `persona_nombre.ilike.%${term}%`,
-        `persona_dni.ilike.%${term}%`,
-        `persona_telefono.ilike.%${term}%`,
-        `metodo_pago.ilike.%${term}%`,
-        `estado.ilike.%${term}%`,
-        `estado_envio.ilike.%${term}%`,
-      ]
-      if (idsPorProducto.length > 0) {
-        condiciones.push(`id.in.(${idsPorProducto.join(',')})`)
-      }
-      query = query.or(condiciones.join(','))
-    }
-  }
+  if (estado) query = query.eq('estado', estado)
 
   const { data, count, error } = await query
     .order('created_at', { ascending: false })
@@ -64,7 +155,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ data, total: count ?? 0, offset, limit })
+  // El resumen alimenta la franja de números y los contadores de los filtros.
+  // Sale SIN el filtro de estado a propósito: así los contadores siempre
+  // muestran el panorama completo y el usuario ve de golpe, por ejemplo,
+  // cuántas ventas tiene pendientes sin tener que ir probando filtros.
+  let resumen: ResumenVentas | undefined
+  if (conResumen) {
+    let qResumen = supabaseAdmin
+      .from('ventas')
+      .select('total, monto_pagado, estado, items:venta_items(cantidad, costo_unitario)')
+      .eq('profile_id', userId)
+      .limit(TOPE_RESUMEN)
+    if (orBusqueda) qResumen = qResumen.or(orBusqueda)
+
+    const { data: todas } = await qResumen
+    resumen = calcularResumenVentas(todas ?? [], TOPE_RESUMEN)
+  }
+
+  return NextResponse.json({ data, total: count ?? 0, offset, limit, resumen })
 }
 
 export async function POST(request: Request) {

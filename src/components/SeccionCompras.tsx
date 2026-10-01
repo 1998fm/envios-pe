@@ -8,7 +8,7 @@ import ModalDetalleCompra from '@/components/ModalDetalleCompra'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, trayectoDone } from '@/lib/tours'
-import { coincidePorPalabras } from '@/lib/buscarPorPalabras'
+import { buscar } from '@/lib/buscar'
 import TourHelpButton from '@/components/TourHelpButton'
 
 type Props = { userId: string }
@@ -177,10 +177,7 @@ export default function SeccionCompras({ userId }: Props) {
     }
   }
 
-  const productosFiltrados = productos.filter((p) =>
-    coincidePorPalabras(p.nombre, busquedaProd) ||
-    (p.sku && coincidePorPalabras(p.sku, busquedaProd))
-  )
+  const productosFiltrados = buscar(productos, busquedaProd, (p) => [p.nombre, p.sku, p.descripcion], (p) => p.nombre)
 
   if (loading) return <div className="text-center py-12 text-slate-400">Cargando compras...</div>
 

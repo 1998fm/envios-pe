@@ -1,348 +1,157 @@
 'use client'
 
-import { useEffect, useRef, useState, Fragment } from 'react'
-import { Plus, Check, X, RotateCcw, Loader2, Eye, ScanBarcode, Lock, Copy, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import {
+  Plus,
+  Search,
+  X,
+  Eye,
+  Check,
+  RotateCcw,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
+  Copy,
+  Inbox,
+  Wallet,
+  Receipt,
+  Package,
+  TrendingUp,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from 'app/f/[slug]/lib/supabase/client'
-import type { Venta, Producto } from '@/types/inventario'
+import type { Venta } from '@/types/inventario'
 import ModalDetalleVenta from '@/components/ModalDetalleVenta'
-import EscannerVentas from '@/components/EscannerVentas'
+import ModalNuevaVenta from '@/components/ModalNuevaVenta'
+import ItemsVentaConBurbuja from '@/components/ItemsVentaConBurbuja'
 import { useConfirm } from '@/components/ConfirmDialog'
-import { useOnboarding } from '@/context/OnboardingContext'
-import { tourDone, trayectoDone } from '@/lib/tours'
-import { coincidePorPalabras } from '@/lib/buscarPorPalabras'
-import TourHelpButton from '@/components/TourHelpButton'
-import { openUpgrade, planNivel } from '@/lib/planGating'
-import { beepOk, beepError } from '@/lib/beep'
+import { fmtSoles, fmtMontoCorto } from '@/lib/format'
+import { planNivel } from '@/lib/planGating'
+import {
+  FILTROS,
+  TONO_BADGE,
+  TONO_PUNTO,
+  etiquetaEstado,
+  tonoEstado,
+  etiquetaEnvio,
+  tonoEnvio,
+  etiquetaPago,
+  tonoPago,
+  resumenVenta,
+  fechaVenta,
+  subtotalItem,
+  type Tono,
+  type ResumenVentas,
+} from '@/lib/ventasUI'
 
 type Props = { userId: string; plan?: string }
 
-const ESTADOS = ['COMPLETADA', 'ANULADA', 'PENDIENTE'] as const
+// La forma del resumen la define el motor, no esta copia: si se duplica
+// aquí, se desincroniza en silencio la próxima vez que se agregue una cifra.
+type Resumen = ResumenVentas
 
-const METODOS_PAGO = [
-  { key: 'EFECTIVO', label: 'Efectivo' },
-  { key: 'YAPE_PLIN', label: 'Yape / Plin' },
-  { key: 'TARJETA', label: 'Tarjeta' },
-] as const
+const PAGE_SIZE = 20
 
 export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
   const confirmar = useConfirm()
-  const { startTour } = useOnboarding()
+  const muestraGanancia = planNivel(plan) >= 1
+
   const [ventas, setVentas] = useState<Venta[]>([])
+  const [resumen, setResumen] = useState<Resumen | null>(null)
   const [filtroEstado, setFiltroEstado] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading] = useState(true)
-  const [showNueva, setShowNueva] = useState(false)
   const [pagina, setPagina] = useState(0)
   const [totalRegistros, setTotalRegistros] = useState(0)
-  const [cargandoMas, setCargandoMas] = useState(false)
-
-  const PAGE_SIZE = 20
-  const ultimoFetchRef = useRef(0)
+  const [navegando, setNavegando] = useState(false)
 
   const [ventaDetalle, setVentaDetalle] = useState<Venta | null>(null)
-  const [ventaExpandida, setVentaExpandida] = useState<string | null>(null)
+  const [itemsAbiertos, setItemsAbiertos] = useState<string | null>(null)
+  const [showNueva, setShowNueva] = useState(false)
 
-  const [busquedaCli, setBusquedaCli] = useState('')
-  const [personaSel, setPersonaSel] = useState<{ id: string; nombre: string; dni: string; telefono?: string } | null>(null)
-  const [buscandoPersona, setBuscandoPersona] = useState(false)
-  const [mostrarNuevoCliente, setMostrarNuevoCliente] = useState(false)
-  const [nuevoCliForm, setNuevoCliForm] = useState({ dni: '', nombre: '', telefono: '' })
-  const [creandoCliente, setCreandoCliente] = useState(false)
+  const ultimoFetchRef = useRef(0)
 
-  const [productos, setProductos] = useState<Producto[]>([])
-  const [busquedaProd, setBusquedaProd] = useState('')
-  const [showEscanner, setShowEscanner] = useState(false)
-  const [itemsVenta, setItemsVenta] = useState<{ producto_id: string; nombre: string; cantidad: string; precio: number }[]>([])
-  const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'YAPE_PLIN' | 'TARJETA'>('EFECTIVO')
-  const [pagoEstado, setPagoEstado] = useState<'COMPLETADA' | 'PENDIENTE'>('COMPLETADA')
-  const [pagoParcial, setPagoParcial] = useState(false)
-  const [montoPagado, setMontoPagado] = useState('')
-  const [creando, setCreando] = useState(false)
+  /* ------------------------------------------------------------------ */
+  /* Datos                                                               */
+  /* ------------------------------------------------------------------ */
 
-  async function cargarVentas(page = 0) {
-    ultimoFetchRef.current = Date.now()
-    const params = new URLSearchParams({ user_id: userId })
-    if (filtroEstado) params.set('estado', filtroEstado)
-    if (busqueda.trim()) params.set('busqueda', busqueda.trim())
-    params.set('offset', String(page * PAGE_SIZE))
-    params.set('limit', String(PAGE_SIZE))
-    const res = await fetch(`/api/ventas?${params}`)
-    const json = await res.json()
-    if (res.ok) {
+  const cargarVentas = useCallback(
+    async (page = 0) => {
+      ultimoFetchRef.current = Date.now()
+      const params = new URLSearchParams({ user_id: userId, resumen: '1' })
+      if (filtroEstado) params.set('estado', filtroEstado)
+      if (busqueda.trim()) params.set('busqueda', busqueda.trim())
+      params.set('offset', String(page * PAGE_SIZE))
+      params.set('limit', String(PAGE_SIZE))
+
+      const res = await fetch(`/api/ventas?${params}`)
+      if (!res.ok) {
+        setLoading(false)
+        return
+      }
+      const json = await res.json()
       setVentas(json.data || [])
       setTotalRegistros(json.total ?? 0)
-    }
-    setLoading(false)
-  }
+      setResumen(json.resumen ?? null)
+      setLoading(false)
+    },
+    [userId, filtroEstado, busqueda]
+  )
 
-  useEffect(() => { cargarVentas(0); setPagina(0) }, [userId, filtroEstado, busqueda])
+  // La búsqueda espera a que dejes de escribir. Sin esto, cada tecla dispara un
+  // fetch con un ilike%termino% que la base no puede cachear.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPagina(0)
+      setLoading(true)
+      cargarVentas(0)
+    }, busqueda ? 300 : 0)
+    return () => clearTimeout(t)
+  }, [cargarVentas, busqueda])
 
-  // Realtime: si otra sesión o pestaña registra una venta, refresca la lista.
-  // Se omite si acabamos de hacer un fetch (evita dobles recargas por la
-  // propia acción del usuario, que ya recarga la lista al guardar).
+  // Realtime: si otra sesión registra o edita una venta, la lista se actualiza.
+  // Se omite si acabamos de hacer un fetch, para no recargar dos veces por la
+  // propia acción del usuario.
   useEffect(() => {
     if (!userId) return
     const supabase = createClient()
-    const recargaLimitada = () => {
+    const recarga = () => {
       if (Date.now() - ultimoFetchRef.current < 1500) return
       cargarVentas(0)
     }
-    const channel = supabase
+    const canal = supabase
       .channel('ventas-realtime')
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'ventas' },
-        recargaLimitada,
-      )
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'ventas' },
-        recargaLimitada,
-      )
-      .on('postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'ventas' },
-        recargaLimitada,
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ventas' }, recarga)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ventas' }, recarga)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'ventas' }, recarga)
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [userId, filtroEstado, busqueda])
+    return () => {
+      supabase.removeChannel(canal)
+    }
+  }, [userId, cargarVentas])
 
-  async function cargarMas(paginaObjetivo: number) {
-    setCargandoMas(true)
-    await cargarVentas(paginaObjetivo)
-    setPagina(paginaObjetivo)
-    setCargandoMas(false)
+  const irAPagina = async (page: number) => {
+    setNavegando(true)
+    setLoading(true)
+    await cargarVentas(page)
+    setPagina(page)
+    setNavegando(false)
   }
 
-  const recargarDesdeInicio = () => {
-    setPagina(0)
-    cargarVentas(0)
-  }
-
-  useEffect(() => {
-    if (showNueva && trayectoDone() && !tourDone('modal-nueva-venta')) {
-      const t = setTimeout(() => startTour('modal-nueva-venta'), 400)
-      return () => clearTimeout(t)
-    }
-  }, [showNueva, startTour])
-
-  useEffect(() => {
-    if (ventaDetalle && trayectoDone() && !tourDone('modal-detalle-venta')) {
-      const t = setTimeout(() => startTour('modal-detalle-venta'), 400)
-      return () => clearTimeout(t)
-    }
-  }, [ventaDetalle, startTour])
-
-  useEffect(() => {
-    if (showNueva) {
-      fetch(`/api/productos?user_id=${userId}&limit=1000`).then((r) => r.json()).then((j) => setProductos(j.data || []))
-    }
-  }, [showNueva, userId])
-
-  // Mientras el modal de venta está abierto, refresca el stock si un producto
-  // cambia (otra pestaña/dispositivo, compra, venta, edición de stock), para
-  // que lo mostrado no quede desactualizado respecto a la BD.
-  useEffect(() => {
-    if (!showNueva || !userId) return
-    const supabase = createClient()
-    const recargarProductos = () => {
-      fetch(`/api/productos?user_id=${userId}&limit=1000`)
-        .then((r) => r.json())
-        .then((j) => setProductos(j.data || []))
-        .catch(() => {})
-    }
-    const channel = supabase
-      .channel('productos-venta-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'productos' }, recargarProductos)
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [showNueva, userId])
-
-  async function buscarPersona() {
-    if (busquedaCli.length < 3) return
-    setBuscandoPersona(true)
-    setMostrarNuevoCliente(false)
-
-    const res = await fetch(`/api/personas?user_id=${userId}&busqueda=${busquedaCli}`)
-    const json = await res.json()
-    if (json.data) {
-      setPersonaSel({ id: json.data.id, nombre: json.data.nombre, dni: json.data.dni, telefono: json.data.telefono })
-    } else {
-      setPersonaSel(null)
-      setMostrarNuevoCliente(true)
-      setNuevoCliForm({
-        dni: busquedaCli.length === 8 ? busquedaCli : '',
-        nombre: '',
-        telefono: busquedaCli.length > 8 ? busquedaCli : '',
-      })
-    }
-    setBuscandoPersona(false)
-  }
-
-  async function crearNuevoCliente() {
-    if (!nuevoCliForm.nombre.trim()) {
-      toast.error('Nombre es requerido')
-      return
-    }
-    setCreandoCliente(true)
-    const res = await fetch('/api/personas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, dni: nuevoCliForm.dni || null, nombre: nuevoCliForm.nombre, telefono: nuevoCliForm.telefono || null }),
-    })
-    const json = await res.json()
-    if (res.ok) {
-      setPersonaSel({ id: json.data.id, nombre: nuevoCliForm.nombre, dni: nuevoCliForm.dni, telefono: nuevoCliForm.telefono })
-      setMostrarNuevoCliente(false)
-      toast.success('Cliente registrado')
-    } else {
-      toast.error(json.error || 'Error al crear cliente')
-    }
-    setCreandoCliente(false)
-  }
-
-  function agregarProducto(prod: Producto) {
-    const existe = itemsVenta.find((it) => it.producto_id === prod.id)
-    if (existe) {
-      setItemsVenta(
-        itemsVenta.map((it) =>
-          it.producto_id === prod.id ? { ...it, cantidad: String((Number(it.cantidad) || 0) + 1) } : it
-        )
-      )
-    } else {
-      setItemsVenta([...itemsVenta, { producto_id: prod.id, nombre: prod.nombre, cantidad: '1', precio: prod.precio_venta }])
-    }
-  }
-
-  function manejarCodigoEscaneado(codigo: string) {
-    const codigoLimpio = codigo.trim()
-    if (!codigoLimpio) return
-    const prod = productos.find((p) => p.id === codigoLimpio || (p.sku && p.sku === codigoLimpio))
-    if (!prod) {
-      beepError()
-      toast.error('Producto no encontrado con ese código')
-      return
-    }
-    const existe = itemsVenta.find((it) => it.producto_id === prod.id)
-    if (existe) {
-      const nuevos = itemsVenta.map((it) =>
-        it.producto_id === prod.id ? { ...it, cantidad: String((Number(it.cantidad) || 0) + 1) } : it,
-      )
-      setItemsVenta(nuevos)
-    } else {
-      agregarProducto(prod)
-    }
-    beepOk()
-    toast.success(`${prod.nombre} agregado a la venta`)
-  }
-
-  function quitarProducto(idx: number) {
-    setItemsVenta(itemsVenta.filter((_, i) => i !== idx))
-  }
-
-  function cambiarCantidad(idx: number, cant: string) {
-    const nuevos = [...itemsVenta]
-    nuevos[idx].cantidad = cant
-    setItemsVenta(nuevos)
-  }
-
-  function cambiarPrecio(idx: number, precio: number) {
-    const nuevos = [...itemsVenta]
-    nuevos[idx].precio = Math.max(0, precio)
-    setItemsVenta(nuevos)
-  }
-
-  const total = itemsVenta.reduce((sum, it) => sum + (Number(it.cantidad) || 0) * it.precio, 0)
-
-  async function crearVenta() {
-    if (!personaSel) { toast.error('Selecciona un cliente'); return }
-    if (itemsVenta.length === 0) { toast.error('Agrega al menos un producto'); return }
-    setCreando(true)
-
-    // Estado y monto pagado:
-    // - TARJETA: siempre Pendiente (sin pago parcial), monto 0.
-    // - EFECTIVO/YAPE "Sí, ya pagó": COMPLETADA con el total.
-    // - EFECTIVO/YAPE Pendiente: si el cliente abonó una parte, se guarda lo
-    //   pagado y la venta queda Pendiente (deuda = total - pagado).
-    let estadoFinal: 'COMPLETADA' | 'PENDIENTE' = 'PENDIENTE'
-    let montoPagadoFinal = 0
-
-    if (metodoPago === 'TARJETA') {
-      estadoFinal = 'PENDIENTE'
-      montoPagadoFinal = 0
-    } else if (pagoEstado === 'COMPLETADA') {
-      estadoFinal = 'COMPLETADA'
-      montoPagadoFinal = total
-    } else if (pagoParcial) {
-      const pagado = Math.min(Math.max(Number(montoPagado) || 0, 0), total)
-      montoPagadoFinal = pagado
-      estadoFinal = pagado >= total ? 'COMPLETADA' : 'PENDIENTE'
-    } else {
-      estadoFinal = 'PENDIENTE'
-      montoPagadoFinal = 0
-    }
-
-    const res = await fetch('/api/ventas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: userId,
-        persona_id: personaSel.id,
-        persona_nombre: personaSel.nombre,
-        persona_dni: personaSel.dni,
-        persona_telefono: personaSel.telefono || null,
-        metodo_pago: metodoPago,
-        ...(metodoPago !== 'TARJETA' ? { estado: estadoFinal } : {}),
-        monto_pagado: montoPagadoFinal,
-        items: itemsVenta.map((it) => ({
-          producto_id: it.producto_id,
-          producto_nombre: it.nombre,
-          cantidad: Math.max(1, Number(it.cantidad) || 1),
-          precio_unitario: it.precio,
-        })),
-      }),
-    })
-    if (res.ok) {
-      toast.success('Venta creada')
-      cerrarNueva()
-      recargarDesdeInicio()
-    } else {
-      if (res.status === 403) {
-        const data = await res.json().catch(() => ({}))
-        toast.error(data.error || 'Límite alcanzado')
-        openUpgrade()
-        setCreando(false)
-        return
-      }
-      const texto = await res.text()
-      const data = (() => { try { return JSON.parse(texto) } catch { return {} } })()
-      toast.error(data.error || texto || 'Error al crear venta')
-      // Si el stock mostrado quedó desactualizado, refresca la lista
-      if (res.status === 409) {
-        fetch(`/api/productos?user_id=${userId}&limit=1000`)
-          .then((r) => r.json())
-          .then((j) => setProductos(j.data || []))
-          .catch(() => {})
-      }
-    }
-    setCreando(false)
-  }
-
-  function cerrarNueva() {
-    setShowNueva(false)
-    setPersonaSel(null)
-    setBusquedaCli('')
-    setItemsVenta([])
-    setBusquedaProd('')
-    setMetodoPago('EFECTIVO')
-    setPagoEstado('COMPLETADA')
-    setPagoParcial(false)
-    setMontoPagado('')
-    setMostrarNuevoCliente(false)
-    setNuevoCliForm({ dni: '', nombre: '', telefono: '' })
-  }
+  /* ------------------------------------------------------------------ */
+  /* Acciones                                                            */
+  /* ------------------------------------------------------------------ */
 
   async function anularVenta(venta: Venta) {
-    if (!(await confirmar({ message: '¿Estás seguro de anular esta venta? Se restaurará el stock.', danger: true, confirmLabel: 'Sí, anular' }))) return
+    const ok = await confirmar({
+      title: 'Anular la venta',
+      message: `Se anulará la venta de ${venta.persona_nombre} y se restaurará el stock.`,
+      confirmLabel: 'Sí, anular',
+      danger: true,
+    })
+    if (!ok) return
     const res = await fetch(`/api/ventas/${venta.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -350,14 +159,19 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     })
     if (res.ok) {
       toast.success('Venta anulada')
-      recargarDesdeInicio()
+      cargarVentas(0)
     } else {
-      toast.error('Error al anular venta')
+      toast.error('No se pudo anular la venta')
     }
   }
 
   async function confirmarVenta(venta: Venta) {
-    if (!(await confirmar({ message: '¿Confirmas que el cliente ya completó su pago?', confirmLabel: 'Sí, completó su pago' }))) return
+    const ok = await confirmar({
+      title: 'Confirmar el pago',
+      message: `Se marcará como completada la venta de ${venta.persona_nombre} por ${fmtSoles(venta.total)}.`,
+      confirmLabel: 'Sí, ya cobré',
+    })
+    if (!ok) return
     const res = await fetch(`/api/ventas/${venta.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -365,566 +179,668 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
     })
     if (res.ok) {
       toast.success('Venta completada')
-      recargarDesdeInicio()
+      cargarVentas(0)
     } else {
-      toast.error('Error al confirmar venta')
+      toast.error('No se pudo completar la venta')
     }
   }
 
-  async function eliminarVenta(id: string) {
-    if (!(await confirmar({ message: '¿Eliminar esta venta definitivamente?', danger: true, confirmLabel: 'Sí, eliminar' }))) return
-    const res = await fetch(`/api/ventas/${id}`, { method: 'DELETE' })
+  async function eliminarVenta(venta: Venta) {
+    const ok = await confirmar({
+      title: 'Eliminar la venta',
+      message: `Se eliminará para siempre la venta de ${venta.persona_nombre} por ${fmtSoles(venta.total)}. No se puede deshacer.`,
+      confirmLabel: 'Sí, eliminar',
+      danger: true,
+    })
+    if (!ok) return
+    const res = await fetch(`/api/ventas/${venta.id}`, { method: 'DELETE' })
     if (res.ok) {
       toast.success('Venta eliminada')
-      recargarDesdeInicio()
+      cargarVentas(0)
     } else {
-      toast.error('Error al eliminar')
+      toast.error('No se pudo eliminar')
     }
   }
 
-  const productosFiltrados = productos.filter((p) =>
-    coincidePorPalabras(p.nombre, busquedaProd) ||
-    (p.sku && coincidePorPalabras(p.sku, busquedaProd))
-  )
+  /* ------------------------------------------------------------------ */
 
-  if (loading) return <div className="text-center py-12 text-slate-400">Cargando ventas...</div>
+  const totalPaginas = Math.max(1, Math.ceil(totalRegistros / PAGE_SIZE))
+  const hayFiltro = Boolean(filtroEstado) || Boolean(busqueda.trim())
+
+  // Cifras que se usan en más de un punto de la vista.
+  const porCobrar = resumen?.porCobrar ?? 0
+
+  const conteo = (valor: string) => {
+    if (!resumen) return null
+    if (valor === '') return (resumen.porEstado.COMPLETADA ?? 0) + (resumen.porEstado.PENDIENTE ?? 0) + (resumen.porEstado.ANULADA ?? 0)
+    return resumen.porEstado[valor] ?? 0
+  }
+
+  if (loading && ventas.length === 0) return <Esqueleto />
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 flex-wrap">
-        <button
-          data-tour="ventas-nueva"
-          onClick={() => setShowNueva(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200"
-        >
-          <Plus size={16} /> Nueva venta
-        </button>
-        <div data-tour="ventas-filtros" className="flex gap-1">
-          {ESTADOS.map((e) => (
+      {/* =================================================================
+          FRANJA SUPERIOR: la primera versión, sin tocar
+          ================================================================= */}
+      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-tori-700 via-tori-600 to-tori-700 shadow-lg shadow-tori-700/20">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" aria-hidden />
+        <div className="pointer-events-none absolute -bottom-28 left-1/3 h-56 w-56 rounded-full bg-tori-300/20 blur-3xl" aria-hidden />
+
+        <div className="relative px-5 py-5 sm:px-7 sm:py-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[1.5px] text-tori-200">
+                Tus ventas
+              </p>
+              <h2 className="mt-1 text-3xl font-black leading-none tracking-tight text-white sm:text-4xl">
+                Vendido
+                {resumen ? ` ${fmtMontoCorto(resumen.monto, true)}` : ''}
+              </h2>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-tori-100">
+                {hayFiltro
+                  ? 'Cifras de lo que estás viendo ahora, no del total.'
+                  : 'Todo lo que has facturado, sin contar ventas anuladas.'}
+              </p>
+            </div>
+
             <button
-              key={e}
-              onClick={() => setFiltroEstado(filtroEstado === e ? '' : e)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                filtroEstado === e
-                  ? 'bg-slate-800 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+              data-tour="ventas-nueva"
+              onClick={() => setShowNueva(true)}
+              className="btn-shine flex shrink-0 items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-extrabold text-tori-700 shadow-lg shadow-black/10 transition-all hover:shadow-xl hover:shadow-black/15 active:scale-[0.98]"
             >
-              {e === 'COMPLETADA' ? 'Completadas' : e === 'PENDIENTE' ? 'Pendientes' : 'Anuladas'}
+              <Plus size={17} /> Nueva venta
             </button>
-          ))}
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+            <Kpi
+              icono={Wallet}
+              etiqueta="Facturado"
+              valor={fmtSoles(resumen?.monto ?? 0)}
+              ayuda={resumen ? `${resumen.ventas} ventas` : 'Cargando'}
+            />
+            <Kpi
+              icono={Receipt}
+              etiqueta="Por cobrar"
+              valor={fmtSoles(resumen?.porCobrar ?? 0)}
+              ayuda={porCobrar > 0 ? 'Te falta cobrar esto' : 'Todo cobrado'}
+              destacado={porCobrar > 0}
+            />
+            <Kpi
+              icono={Package}
+              etiqueta="Ventas"
+              valor={fmtMontoCorto(resumen?.ventas ?? 0, true)}
+              ayuda={resumen ? `${resumen.porEstado.PENDIENTE ?? 0} pendientes` : 'Cargando'}
+            />
+            <Kpi
+              icono={TrendingUp}
+              etiqueta="Ticket promedio"
+              valor={fmtSoles(resumen?.ticketPromedio ?? 0)}
+              ayuda="Por venta"
+            />
+          </div>
+
+          {resumen?.truncado && (
+            <p className="mt-3 flex items-start gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-[10.5px] leading-relaxed text-tori-50">
+              <AlertTriangle size={13} className="mt-px shrink-0" />
+              Tienes más de 5.000 ventas, así que estas cifras consideran las más
+              recientes.
+            </p>
+          )}
         </div>
-        <div className="relative flex-1 min-w-[220px]">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      </section>
+
+      {/* =================================================================
+          BUSCADOR Y FILTROS
+          ================================================================= */}
+      <section className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por cliente, DNI, teléfono, producto, pago o estado..."
-            className="w-full pl-9 pr-9 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+            placeholder="Buscar por cliente, DNI, teléfono, producto, pago o estado…"
+            className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-11 text-sm font-medium text-slate-900 shadow-sm outline-none transition-all placeholder:font-normal placeholder:text-slate-400 focus:border-tori-400 focus:ring-[3px] focus:ring-tori-400/15"
           />
           {busqueda && (
             <button
               onClick={() => setBusqueda('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded bg-slate-100 text-slate-500 hover:bg-slate-200"
-              title="Limpiar búsqueda"
+              aria-label="Limpiar búsqueda"
+              className="absolute right-3 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-lg bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
             >
-              <X size={13} />
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <div data-tour="ventas-filtros" className="flex gap-1.5 overflow-x-auto pb-0.5">
+          {FILTROS.map((f) => {
+            const activo = filtroEstado === f.valor
+            const n = conteo(f.valor)
+            return (
+              <button
+                key={f.valor || 'todas'}
+                onClick={() => {
+                  setFiltroEstado(f.valor)
+                  setPagina(0)
+                }}
+                className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[13px] font-bold transition-all ${
+                  activo
+                    ? 'bg-tori-600 text-white shadow-md shadow-tori-600/25'
+                    : 'border border-slate-200 bg-white text-slate-600 hover:border-tori-300 hover:text-tori-700'
+                }`}
+              >
+                {f.etiqueta}
+                {n != null && (
+                  <span
+                    className={`rounded-md px-1.5 py-0.5 text-[10px] font-black tabular-nums ${
+                      activo ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {n}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* =================================================================
+          LISTA
+          ================================================================= */}
+      {ventas.length === 0 ? (
+        <Vacio hayFiltro={hayFiltro} onLimpiar={() => { setFiltroEstado(''); setBusqueda('') }} onNueva={() => setShowNueva(true)} />
+      ) : (
+        <>
+          {/* --- Escritorio: tabla --- */}
+          <div
+            data-tour="ventas-tabla"
+            className="hidden overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm lg:block"
+          >
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/80 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  <th className="px-5 py-3.5 text-left">Cliente</th>
+                  <th className="px-3 py-3.5 text-left">Contacto</th>
+                  <th className="px-3 py-3.5 text-right">Productos</th>
+                  <th className="px-3 py-3.5 text-right">Total</th>
+                  {muestraGanancia && <th className="px-3 py-3.5 text-right">Ganancia</th>}
+                  <th className="px-3 py-3.5 text-left">Pago</th>
+                  <th className="px-3 py-3.5 text-left">Estado</th>
+                  <th className="px-3 py-3.5 text-left">Envío</th>
+                  <th className="px-3 py-3.5 text-left">Fecha</th>
+                  <th className="px-5 py-3.5 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {ventas.map((v, i) => {
+                  const r = resumenVenta(v)
+                  const f = fechaVenta(v.created_at)
+
+                  // Sin animación de layout en la fila: Framer aplica un
+                  // transform, y eso la mueve físicamente bajo el cursor
+                  // cuando la tabla se reordena. Con el mouse encima la fila
+                  // se escapaba y la burbuja de productos se cerraba sola.
+                  return (
+                    <tr
+                      key={v.id}
+                      className="cursor-pointer transition-colors hover:bg-tori-50/40"
+                      onClick={() => setVentaDetalle(v)}
+                    >
+                      <td className="px-5 py-3.5">
+                        <span className="block max-w-[190px] truncate text-sm font-bold text-slate-900">
+                          {v.persona_nombre}
+                        </span>
+                        {v.persona_dni && (
+                          <span className="block font-mono text-[10px] text-slate-400">{v.persona_dni}</span>
+                        )}
+                      </td>
+
+                      <td className="px-3 py-3.5">
+                        {v.persona_telefono ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigator.clipboard.writeText(String(v.persona_telefono))
+                              toast.success('Número copiado')
+                            }}
+                            title="Copiar número"
+                            className="group/copy flex items-center gap-1 rounded-md px-1 py-0.5 text-left font-mono text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-tori-700"
+                          >
+                            {v.persona_telefono}
+                            <Copy size={12} className="opacity-0 transition-opacity group-hover/copy:opacity-100" />
+                          </button>
+                        ) : (
+                          <span className="text-xs text-slate-300">—</span>
+                        )}
+                      </td>
+
+                      <td className="px-3 py-3.5 text-right">
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <ItemsVentaConBurbuja venta={v} />
+                        </span>
+                      </td>
+
+                      <td className="px-3 py-3.5 text-right">
+                        <span className="block text-sm font-extrabold tabular-nums text-slate-900">
+                          {fmtSoles(v.total)}
+                        </span>
+                        {r.debe > 0 && (
+                          <span className="block text-[10px] font-bold tabular-nums text-warning-600">
+                            debe {fmtSoles(r.debe)}
+                          </span>
+                        )}
+                      </td>
+
+                      {muestraGanancia && (
+                        <td className="px-3 py-3.5 text-right">
+                          <span
+                            className={`block text-sm font-bold tabular-nums ${
+                              r.ganancia >= 0 ? 'text-success-600' : 'text-error-600'
+                            }`}
+                          >
+                            {r.ganancia >= 0 ? '' : '−'}
+                            {fmtSoles(Math.abs(r.ganancia))}
+                          </span>
+                          <span className="block text-[10px] tabular-nums text-slate-400">
+                            {r.ganancia >= 0 ? '' : '−'}
+                            {Math.abs(Math.round(r.pctGanancia))}%
+                          </span>
+                        </td>
+                      )}
+
+                      <td className="px-3 py-3.5">
+                        <Chip tono={tonoPago(v.metodo_pago)}>{etiquetaPago(v.metodo_pago)}</Chip>
+                      </td>
+
+                      <td className="px-3 py-3.5">
+                        <Chip tono={tonoEstado(v.estado)}>{etiquetaEstado(v.estado)}</Chip>
+                      </td>
+
+                      <td className="px-3 py-3.5">
+                        <Chip tono={tonoEnvio(v.estado_envio)}>{etiquetaEnvio(v.estado_envio)}</Chip>
+                      </td>
+
+                      <td className="px-3 py-3.5">
+                        <span
+                          title={f.Relative}
+                          className={`text-xs tabular-nums ${f.esHoy ? 'font-bold text-tori-600' : 'text-slate-400'}`}
+                        >
+                          {f.dia}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                          {/* Solo la primera fila lleva el ancla del tour: si se
+                              repitiera en todas, querySelector siempre
+                              resaltaría la misma y el paso parecería roto. */}
+                          <BotonFila
+                            icono={Eye}
+                            titulo="Ver detalle"
+                            onClick={() => setVentaDetalle(v)}
+                            dataTour={i === 0 ? 'ventas-detalle' : undefined}
+                          />
+                          {v.estado === 'PENDIENTE' && (
+                            <BotonFila icono={Check} titulo="Marcar como cobrada" tono="ok" onClick={() => confirmarVenta(v)} />
+                          )}
+                          {v.estado === 'COMPLETADA' && (
+                            <BotonFila icono={RotateCcw} titulo="Anular" tono="malo" onClick={() => anularVenta(v)} />
+                          )}
+                          {v.estado !== 'COMPLETADA' && (
+                            <BotonFila icono={Trash2} titulo="Eliminar" tono="malo" onClick={() => eliminarVenta(v)} />
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* --- Móvil: tarjetas --- */}
+          <div data-tour="ventas-tabla-movil" className="space-y-2.5 lg:hidden">
+            {ventas.map((v) => {
+              const r = resumenVenta(v)
+              const f = fechaVenta(v.created_at)
+              const abierta = itemsAbiertos === v.id
+              return (
+                <motion.article
+                  key={v.id}
+                  layout="position"
+                  transition={{ duration: 0.18 }}
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                >
+                  <button
+                    onClick={() => setVentaDetalle(v)}
+                    className="w-full px-4 py-3.5 text-left"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-slate-900">{v.persona_nombre}</p>
+                        <p className="mt-0.5 truncate text-[11px] text-slate-400">
+                          {[v.persona_dni, v.persona_telefono].filter(Boolean).join(' · ') || 'Sin contacto'}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-base font-black leading-none tabular-nums text-slate-900">
+                          {fmtSoles(v.total)}
+                        </p>
+                        {r.debe > 0 && (
+                          <p className="mt-1 text-[10px] font-bold tabular-nums text-warning-600">
+                            debe {fmtSoles(r.debe)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                      <Chip tono={tonoEstado(v.estado)}>{etiquetaEstado(v.estado)}</Chip>
+                      <Chip tono={tonoPago(v.metodo_pago)}>{etiquetaPago(v.metodo_pago)}</Chip>
+                      <Chip tono={tonoEnvio(v.estado_envio)}>{etiquetaEnvio(v.estado_envio)}</Chip>
+                      <span className={`ml-auto text-[10px] font-bold tabular-nums ${f.esHoy ? 'text-tori-600' : 'text-slate-400'}`}>
+                        {f.dia}
+                      </span>
+                    </div>
+
+                    {muestraGanancia && (
+                      <p className="mt-2 text-[11px] text-slate-400">
+                        Ganancia{' '}
+                        <b
+                          className={`tabular-nums ${r.ganancia >= 0 ? 'text-success-600' : 'text-error-600'}`}
+                        >
+                          {fmtSoles(r.ganancia)}
+                        </b>{' '}
+                        · {r.items} {r.items === 1 ? 'ítem' : 'ítems'} · {r.unidades} unidades
+                      </p>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setItemsAbiertos(abierta ? null : v.id)}
+                    className="flex w-full items-center justify-center gap-1.5 border-t border-slate-100 py-2 text-[11px] font-bold text-tori-600"
+                  >
+                    {abierta ? 'Ocultar' : 'Ver'} los {r.items} {r.items === 1 ? 'ítem' : 'ítems'}
+                    <ChevronRight size={13} className={`transition-transform ${abierta ? 'rotate-90' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {abierta && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden border-t border-slate-100 bg-slate-50"
+                      >
+                        <div className="divide-y divide-slate-100 px-4">
+                          {(v.items ?? []).length === 0 ? (
+                            <p className="py-3 text-xs text-slate-400">Sin productos registrados.</p>
+                          ) : (
+                            (v.items ?? []).map((it, i) => (
+                              <div key={it.id || i} className="flex items-center justify-between gap-3 py-2.5">
+                                <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-700">
+                                  {it.producto_nombre}
+                                </span>
+                                <span className="shrink-0 text-[11px] tabular-nums text-slate-400">×{it.cantidad}</span>
+                                <span className="shrink-0 text-xs font-bold tabular-nums text-slate-900">
+                                  {fmtSoles(subtotalItem(it))}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="flex items-center gap-1.5 border-t border-slate-100 px-3 py-2">
+                    <BotonGrande icono={Eye} etiqueta="Ver" onClick={() => setVentaDetalle(v)} />
+                    {v.estado === 'PENDIENTE' && (
+                      <BotonGrande icono={Check} etiqueta="Cobrada" tono="ok" onClick={() => confirmarVenta(v)} />
+                    )}
+                    {v.estado === 'COMPLETADA' && (
+                      <BotonGrande icono={RotateCcw} etiqueta="Anular" tono="malo" onClick={() => anularVenta(v)} />
+                    )}
+                    {v.estado !== 'COMPLETADA' && (
+                      <BotonGrande icono={Trash2} etiqueta="Eliminar" tono="malo" onClick={() => eliminarVenta(v)} />
+                    )}
+                  </div>
+                </motion.article>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      {/* =================================================================
+          PAGINACIÓN
+          ================================================================= */}
+      {totalRegistros > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <p className="text-[11px] font-medium text-slate-400">
+            Mostrando <b className="text-slate-600">{ventas.length}</b> de{' '}
+            <b className="text-slate-600">{totalRegistros}</b>{' '}
+            {totalRegistros === 1 ? 'venta' : 'ventas'}
+          </p>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => irAPagina(pagina - 1)}
+              disabled={pagina === 0 || navegando}
+              className="flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft size={14} />
+              <span className="hidden sm:inline">Anterior</span>
+            </button>
+            <span className="px-2 text-xs font-bold tabular-nums text-slate-500">
+              {pagina + 1} / {totalPaginas}
+            </span>
+            <button
+              onClick={() => irAPagina(pagina + 1)}
+              disabled={(pagina + 1) * PAGE_SIZE >= totalRegistros || navegando}
+              className="flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <span className="hidden sm:inline">Siguiente</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* =================================================================
+          MODALES
+          ================================================================= */}
+      <ModalNuevaVenta
+        abierto={showNueva}
+        onCerrar={() => setShowNueva(false)}
+        onCreada={() => cargarVentas(0)}
+        userId={userId}
+        plan={plan}
+      />
+
+      <ModalDetalleVenta
+        venta={ventaDetalle}
+        onCerrar={() => setVentaDetalle(null)}
+        onGuardar={(v) => {
+          if (v) setVentaDetalle(v)
+          cargarVentas(0)
+        }}
+        plan={plan}
+        userId={userId}
+      />
+    </div>
+  )
+}
+
+/* ===================================================================== */
+/* Piezas                                                               */
+/* ===================================================================== */
+
+function Kpi({
+  icono: Icono,
+  etiqueta,
+  valor,
+  ayuda,
+  destacado,
+}: {
+  icono: typeof Wallet
+  etiqueta: string
+  valor: string
+  ayuda: string
+  destacado?: boolean
+}) {
+  return (
+    <div
+      className={`rounded-2xl border p-3.5 backdrop-blur-sm transition-colors ${
+        destacado ? 'border-warning-300/40 bg-warning-400/15' : 'border-white/15 bg-white/10'
+      }`}
+    >
+      <span className="flex items-center gap-1.5 text-[9.5px] font-black uppercase tracking-wider text-tori-200">
+        <Icono size={11} /> {etiqueta}
+      </span>
+      <p
+        className={`mt-1.5 text-xl font-black leading-none tabular-nums tracking-tight ${
+          destacado ? 'text-warning-100' : 'text-white'
+        }`}
+      >
+        {valor}
+      </p>
+      <p className="mt-1 text-[10px] leading-tight text-tori-100/80">{ayuda}</p>
+    </div>
+  )
+}
+
+function Chip({ tono, children }: { tono: Tono; children: React.ReactNode }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-1 text-[10.5px] font-bold ${TONO_BADGE[tono]}`}
+    >
+      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${TONO_PUNTO[tono]}`} />
+      {children}
+    </span>
+  )
+}
+
+function BotonFila({
+  icono: Icono,
+  titulo,
+  onClick,
+  tono = 'neutro',
+  dataTour,
+}: {
+  icono: typeof Eye
+  titulo: string
+  onClick: () => void
+  tono?: Tono
+  dataTour?: string
+}) {
+  const hover =
+    tono === 'ok'
+      ? 'hover:bg-success-50 hover:text-success-600'
+      : tono === 'malo'
+        ? 'hover:bg-error-50 hover:text-error-600'
+        : 'hover:bg-tori-50 hover:text-tori-600'
+  return (
+    <button
+      onClick={onClick}
+      title={titulo}
+      aria-label={titulo}
+      data-tour={dataTour}
+      className={`grid h-8 w-8 place-items-center rounded-lg text-slate-300 transition-colors ${hover}`}
+    >
+      <Icono size={15} />
+    </button>
+  )
+}
+
+function BotonGrande({
+  icono: Icono,
+  etiqueta,
+  onClick,
+  tono = 'neutro',
+}: {
+  icono: typeof Eye
+  etiqueta: string
+  onClick: () => void
+  tono?: Tono
+}) {
+  const estilo =
+    tono === 'ok'
+      ? 'bg-success-50 text-success-700'
+      : tono === 'malo'
+        ? 'bg-error-50 text-error-600'
+        : 'bg-tori-50 text-tori-700'
+  return (
+    <button
+      onClick={onClick}
+      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[11px] font-bold transition-opacity active:opacity-70 ${estilo}`}
+    >
+      <Icono size={14} />
+      {etiqueta}
+    </button>
+  )
+}
+
+function Vacio({
+  hayFiltro,
+  onLimpiar,
+  onNueva,
+}: {
+  hayFiltro: boolean
+  onLimpiar: () => void
+  onNueva: () => void
+}) {
+  return (
+    <div
+      data-tour="ventas-vacio"
+      className="grid place-items-center rounded-[28px] border border-dashed border-slate-300 bg-white/60 px-6 py-16 text-center"
+    >
+      <div className="max-w-sm">
+        <span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-tori-50 text-tori-500">
+          <Inbox size={28} />
+        </span>
+        <h3 className="mt-5 text-xl font-extrabold tracking-tight text-slate-900">
+          {hayFiltro ? 'Nada coincide' : 'Todavía no hay ventas'}
+        </h3>
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+          {hayFiltro
+            ? 'Prueba con otro término o quita los filtros para ver todas tus ventas.'
+            : 'Registra tu primera venta en segundos. Después vas a ver aquí cuánto vendes y cuánto te falta cobrar.'}
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-2.5">
+          {hayFiltro ? (
+            <button
+              onClick={onLimpiar}
+              className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50"
+            >
+              Quitar filtros
+            </button>
+          ) : (
+            <button
+              onClick={onNueva}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-tori-600 to-tori-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-tori-600/25 transition-all hover:shadow-xl"
+            >
+              <Plus size={16} /> Nueva venta
             </button>
           )}
         </div>
       </div>
+    </div>
+  )
+}
 
-      {ventas.length === 0 && (
-        <div data-tour="ventas-vacio" className="text-center py-16 text-slate-400">
-          <p className="text-lg font-semibold text-slate-500">
-            {busqueda.trim() ? 'Sin resultados' : 'No hay ventas'}
-          </p>
-          <p className="text-sm mt-1">
-            {busqueda.trim() ? 'Ninguna venta coincide con tu búsqueda' : 'Registra tu primera venta'}
-          </p>
-        </div>
-      )}
-
-      {ventas.length > 0 && (
-        <div data-tour="ventas-tabla" className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="w-10 px-3 py-3 md:hidden"></th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Número</th>
-                <th className="px-4 py-3 text-right">Productos</th>
-                <th className="px-4 py-3 text-right">Total</th>
-                {planNivel(plan) >= 1 && <th className="px-4 py-3 text-right">Ganancia</th>}
-                <th className="px-4 py-3 text-center">Pago</th>
-                <th className="px-4 py-3 text-center">Estado Venta</th>
-                <th className="px-4 py-3 text-center">Envío</th>
-                <th className="px-4 py-3 text-right">Fecha</th>
-                <th className="px-4 py-3 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {ventas.map((v) => {
-                const badge = {
-                  COMPLETADA: 'bg-emerald-100 text-emerald-700',
-                  ANULADA: 'bg-red-100 text-red-700',
-                  PENDIENTE: 'bg-amber-100 text-amber-700',
-                }[v.estado]
-
-                const costo = (v.items || []).reduce(
-                  (sum, it) => sum + (it.costo_unitario ?? 0) * it.cantidad,
-                  0
-                )
-                const ganancia = v.total - costo
-                const pctGanancia = v.total > 0 ? (ganancia / v.total) * 100 : 0
-                const pctText = `${pctGanancia >= 0 ? '' : ''}${pctGanancia.toFixed(0)}%`
-                const gananciaText = `S/ ${ganancia.toFixed(2)}`
-
-                return (
-                  <Fragment key={v.id}>
-                    <tr className="hover:bg-slate-50 transition-colors">
-                      <td className="px-3 py-3 md:hidden">
-                        <button
-                          onClick={() => setVentaExpandida(ventaExpandida === v.id ? null : v.id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
-                          title={ventaExpandida === v.id ? 'Ocultar productos' : 'Ver productos'}
-                        >
-                          {ventaExpandida === v.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 font-medium text-slate-900">{v.persona_nombre}</td>
-                    <td className="px-4 py-3">
-                      {v.persona_telefono ? (
-                        <span className="flex items-center gap-1.5">
-                          <span className="text-slate-600 font-mono text-xs">{v.persona_telefono}</span>
-                          <button
-                            onClick={() => { navigator.clipboard.writeText(String(v.persona_telefono)); toast.success('Número copiado') }}
-                            className="p-1 rounded text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
-                            title="Copiar número"
-                          >
-                            <Copy size={13} />
-                          </button>
-                        </span>
-                      ) : (
-                        <span className="text-slate-300">—</span>
-                      )}
-                    </td>
-                    <td className="relative px-4 py-3 text-right">
-                      <span className="hidden md:inline cursor-help text-sky-600 font-semibold border-b border-dashed border-sky-300 group relative">
-                        {v.items?.length ?? 0} ítems
-                        {(v.items || []).length > 0 && (
-                          <span className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden group-hover:block min-w-96 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xl">
-                            <div className="divide-y divide-slate-100">
-                              {(v.items || []).map((it, ii) => (
-                                <div key={it.id || ii} className="flex items-baseline justify-between gap-4 py-1.5">
-                                  <span className="text-sm font-medium text-slate-800">{it.producto_nombre}</span>
-                                  <span className="shrink-0 text-xs text-slate-500">
-                                    x{it.cantidad} · S/ {(it.subtotal ?? 0).toFixed(2)}
-                                  </span>
-                                </div>
-                              ))}
-                              <div className="flex items-baseline justify-between gap-4 border-t border-slate-100 pt-1.5">
-                                <span className="text-xs font-bold text-slate-500">Total</span>
-                                <span className="text-sm font-bold text-slate-900">S/ {v.total.toFixed(2)}</span>
-                              </div>
-                            </div>
-                          </span>
-                        )}
-                      </span>
-                      <span className="md:hidden text-slate-600">{v.items?.length ?? 0} ítems</span>
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">
-                      S/ {v.total.toFixed(2)}
-                      {v.estado === 'PENDIENTE' && (v.monto_pagado ?? 0) < v.total && (
-                        <span className="mt-0.5 block text-right text-[10px] font-bold text-amber-600">
-                          Debe S/ {(v.total - (v.monto_pagado ?? 0)).toFixed(2)}
-                        </span>
-                      )}
-                    </td>
-                    {planNivel(plan) >= 1 && (
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-semibold text-emerald-600">{gananciaText}</span>
-                        <span className="block text-[11px] text-slate-400">{pctText}</span>
-                      </td>
-                    )}
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                        v.metodo_pago === 'TARJETA' ? 'bg-indigo-100 text-indigo-700' :
-                        v.metodo_pago === 'YAPE_PLIN' ? 'bg-purple-100 text-purple-700' :
-                        'bg-slate-100 text-slate-600'
-                      }`}>
-                        {v.metodo_pago === 'EFECTIVO' ? 'Efectivo' : v.metodo_pago === 'YAPE_PLIN' ? 'Yape / Plin' : 'Tarjeta'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${badge}`}>
-                        {v.estado}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                        v.estado_envio === 'ENVIADO' ? 'bg-emerald-100 text-emerald-700' :
-                        v.estado_envio === 'EMPACADO' ? 'bg-amber-100 text-amber-700' :
-                        v.estado_envio === 'ENTREGADO' ? 'bg-green-100 text-green-700' :
-                        v.estado_envio === 'COMPLETADO' ? 'bg-emerald-100 text-emerald-700' :
-                        'bg-slate-100 text-slate-500'
-                      }`}>
-                        {v.estado_envio || 'PENDIENTE'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-xs text-slate-400">
-                      {new Date(v.created_at).toLocaleDateString('es-PE')}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button data-tour="ventas-detalle" onClick={() => setVentaDetalle(v)} className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors" title="Ver detalle">
-                          <Eye size={15} />
-                        </button>
-                        {v.estado === 'PENDIENTE' && (
-                          <button onClick={() => confirmarVenta(v)} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors" title="Marcar como completada">
-                            <Check size={15} />
-                          </button>
-                        )}
-                        {v.estado === 'COMPLETADA' && (
-                          <button onClick={() => anularVenta(v)} className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors" title="Anular">
-                            <RotateCcw size={15} />
-                          </button>
-                        )}
-                        {v.estado !== 'COMPLETADA' && (
-                          <button onClick={() => eliminarVenta(v.id)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Eliminar">
-                            <X size={15} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                    {ventaExpandida === v.id && (
-                      <tr className="bg-sky-50/40">
-                        <td colSpan={planNivel(plan) >= 1 ? 12 : 11} className="px-4 py-3">
-                          {(v.items || []).length === 0 ? (
-                            <p className="text-sm text-slate-400">Esta venta no tiene productos registrados.</p>
-                          ) : (
-                            <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-                              {(v.items || []).map((it, ii) => {
-                                const subtotal = (it.costo_unitario ?? 0) * it.cantidad
-                                return (
-                                  <div key={it.id || ii} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                                    <div className="flex min-w-0 flex-col">
-                                      <span className="text-sm font-medium text-slate-800 truncate">{it.producto_nombre}</span>
-                                      <span className="text-[11px] text-slate-400">Costo · S/ {(it.costo_unitario ?? 0).toFixed(2)}</span>
-                                    </div>
-                                    <div className="shrink-0 text-right">
-                                      <span className="text-xs text-slate-500">x{it.cantidad} · S/ {(it.precio_unitario ?? 0).toFixed(2)}</span>
-                                      <span className="block text-sm font-semibold text-slate-900">S/ {(it.subtotal ?? 0).toFixed(2)}</span>
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {totalRegistros > 0 && (
-        <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
-          <p className="text-xs text-slate-400">
-            Mostrando {ventas.length} de {totalRegistros} venta{totalRegistros !== 1 ? 's' : ''}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => cargarMas(pagina - 1)}
-              disabled={pagina === 0 || cargandoMas}
-              className="px-3 py-1.5 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-all"
-            >
-              <ChevronLeft size={14} /> Anterior
-            </button>
-            <span className="text-xs text-slate-500 font-medium">
-              Página {pagina + 1} de {Math.max(1, Math.ceil(totalRegistros / PAGE_SIZE))}
-            </span>
-            <button
-              onClick={() => cargarMas(pagina + 1)}
-              disabled={(pagina + 1) * PAGE_SIZE >= totalRegistros || cargandoMas}
-              className="px-3 py-1.5 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-all"
-            >
-              Siguiente <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showNueva && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={cerrarNueva}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="shrink-0 p-6 pb-4 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900">Nueva venta</h3>
-              <TourHelpButton tourId="modal-nueva-venta" />
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 space-y-5">
-              <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Buscar cliente por DNI o teléfono</label>
-                <div className="flex gap-2 mt-1">
-                  <input
-                    value={busquedaCli}
-                    onChange={(e) => setBusquedaCli(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && buscarPersona()}
-                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                    placeholder="Ingresa DNI o teléfono del cliente"
-                  />
-                  <button onClick={buscarPersona} disabled={buscandoPersona} className="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-50 flex items-center gap-2">
-                    {buscandoPersona && <Loader2 size={14} className="animate-spin" />}
-                    Buscar
-                  </button>
-                </div>
-                {personaSel && (
-                  <div className="mt-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 flex items-center gap-2">
-                    <Check size={14} />
-                    {personaSel.nombre} — {personaSel.dni}
-                    {personaSel.telefono && <span className="text-emerald-600">· {personaSel.telefono}</span>}
-                  </div>
-                )}
-                {mostrarNuevoCliente && (
-                  <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente no encontrado — Regístralo</p>
-                    <input
-                      value={nuevoCliForm.nombre}
-                      onChange={(e) => setNuevoCliForm({ ...nuevoCliForm, nombre: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                      placeholder="Nombre completo"
-                    />
-                    <div className="flex gap-2">
-                      <input
-                        value={nuevoCliForm.dni}
-                        onChange={(e) => setNuevoCliForm({ ...nuevoCliForm, dni: e.target.value })}
-                        className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                        placeholder="DNI"
-                      />
-                      <input
-                        value={nuevoCliForm.telefono}
-                        onChange={(e) => setNuevoCliForm({ ...nuevoCliForm, telefono: e.target.value })}
-                        className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                        placeholder="Teléfono"
-                      />
-                    </div>
-                    <button onClick={crearNuevoCliente} disabled={creandoCliente} className="w-full px-3 py-2 rounded-xl text-sm font-semibold bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50">
-                      {creandoCliente ? 'Registrando...' : 'Registrar cliente'}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Agregar productos</label>
-                <div className="flex gap-2 mt-1">
-                  <input
-                    value={busquedaProd}
-                    onChange={(e) => setBusquedaProd(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                    placeholder="Buscar producto..."
-                  />
-                  {planNivel(plan) >= 2 ? (
-                    <button
-                      onClick={() => setShowEscanner(true)}
-                      title="Escanear código QR de producto"
-                      className="shrink-0 px-3 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-2"
-                    >
-                      <ScanBarcode size={16} /> Escanear
-                    </button>
-                  ) : (
-                    <button
-                      onClick={openUpgrade}
-                      title="Lector de QR — disponible en Business Plus"
-                      className="shrink-0 px-3 py-2 rounded-xl text-sm font-semibold text-slate-400 bg-slate-50 border border-dashed border-slate-200 hover:border-sky-400 hover:text-sky-600 flex items-center gap-2 transition-all duration-150 cursor-pointer"
-                    >
-                      <Lock size={14} /> Escanear
-                    </button>
-                  )}
-                </div>
-                <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
-                  {productosFiltrados.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => agregarProducto(p)}
-                      disabled={p.stock_actual <= 0}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <span className="font-medium text-slate-700">{p.nombre}</span>
-                      <span className="text-xs text-slate-400">S/ {p.precio_venta.toFixed(2)} · Stock: {p.stock_actual}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {itemsVenta.length > 0 && (
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Items de la venta</label>
-                  <div className="mt-1 divide-y divide-slate-100 border border-slate-200 rounded-xl">
-                    {itemsVenta.map((it, i) => (
-                      <div key={i} className="flex items-center gap-2 px-3 py-2 text-sm">
-                        <span className="flex-1 font-medium text-slate-700 truncate">{it.nombre}</span>
-<input
-                           inputMode="numeric"
-                           pattern="[0-9]*"
-                           type="text"
-                           value={it.cantidad}
-                           onChange={(e) => cambiarCantidad(i, e.target.value)}
-                           className="w-16 px-2 py-1 rounded border border-slate-200 text-sm text-center"
-                         />
-                         <span className="text-slate-400">×</span>
-<input
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            type="text"
-                            value={it.precio}
-                            onChange={(e) => cambiarPrecio(i, parseFloat(e.target.value) || 0)}
-                            className="w-24 px-2 py-1 rounded border border-slate-200 text-sm text-right"
-                          />
-                          <span className="text-slate-600 font-mono w-20 text-right">S/ {((Number(it.cantidad) || 0) * it.precio).toFixed(2)}</span>
-                        <button onClick={() => quitarProducto(i)} className="p-1 rounded text-slate-400 hover:text-red-500">
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="text-right mt-2 text-lg font-bold text-slate-900">
-                    Total: S/ {total.toFixed(2)}
-                  </div>
-                </div>
-              )}
-
-              {itemsVenta.length > 0 && (
-                <div data-tour="nueva-venta-pago">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Método de pago</label>
-                  <div className="mt-1 grid grid-cols-3 gap-2">
-                    {METODOS_PAGO.map((m) => (
-                      <button
-                        key={m.key}
-                        onClick={() => setMetodoPago(m.key)}
-                        className={`px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-                          metodoPago === m.key
-                            ? 'bg-sky-600 text-white border-sky-600 shadow-md shadow-sky-500/20'
-                            : 'bg-white text-slate-600 border-slate-200 hover:border-sky-400 hover:text-sky-700'
-                        }`}
-                      >
-                        {m.label}
-                      </button>
-                    ))}
-                  </div>
-                  {metodoPago !== 'TARJETA' && (
-                    <div className="mt-2" data-tour="nueva-venta-pago-estado">
-                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">¿El pago ya se realizó?</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => { setPagoEstado('COMPLETADA'); setPagoParcial(false); setMontoPagado('') }}
-                          className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-                            pagoEstado === 'COMPLETADA'
-                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/20'
-                              : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-400 hover:text-emerald-700'
-                          }`}
-                        >
-                          <Check size={15} /> Sí, ya pagó
-                        </button>
-                        <button
-                          onClick={() => setPagoEstado('PENDIENTE')}
-                          className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-                            pagoEstado === 'PENDIENTE'
-                              ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20'
-                              : 'bg-white text-slate-600 border-slate-200 hover:border-amber-400 hover:text-amber-700'
-                          }`}
-                        >
-                          Pendiente
-                        </button>
-                      </div>
-                      {pagoEstado === 'PENDIENTE' && (
-                        <p className="mt-1.5 text-xs text-amber-600">
-                          La venta se registrará como <strong>Pendiente</strong> hasta que confirmes el pago.
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  {metodoPago === 'TARJETA' && (
-                    <p className="mt-1.5 text-xs text-amber-600">
-                      El pago con tarjeta se registrará como <strong>Pendiente</strong> hasta que se confirme el pago.
-                    </p>
-                  )}
-                  {pagoEstado === 'PENDIENTE' && metodoPago !== 'TARJETA' && (
-                    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3" data-tour="nueva-venta-pago-parcial">
-                      <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={pagoParcial}
-                          onChange={(e) => setPagoParcial(e.target.checked)}
-                          className="accent-sky-600 w-4 h-4"
-                        />
-                        <span className="text-sm font-medium text-slate-700">El cliente pagó solo una parte</span>
-                      </label>
-                      {pagoParcial && (
-                        <div className="mt-2 grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">¿Cuánto pagó?</label>
-                            <div className="flex items-center gap-1">
-                              <span className="text-slate-500 text-sm">S/</span>
-                              <input
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                value={montoPagado}
-                                onChange={(e) => setMontoPagado(e.target.value)}
-                                placeholder={total.toFixed(2)}
-                                className="w-full px-2 py-1.5 rounded border border-slate-200 text-sm text-right"
-                              />
-                            </div>
-                            {(() => {
-                              const pagado = Math.min(Math.max(Number(montoPagado) || 0, 0), total)
-                              const debe = total - pagado
-                              return (
-                                <p className="mt-1 text-xs text-slate-500">
-                                  <span className="text-emerald-600 font-semibold">Pagado: S/ {pagado.toFixed(2)}</span>
-                                  {' · '}
-                                  <span className="text-amber-600 font-semibold">Debe: S/ {debe.toFixed(2)}</span>
-                                </p>
-                              )
-                            })()}
-                          </div>
-                          <p className="text-xs text-slate-500 self-end">
-                            La venta se registrará como <strong>Pendiente</strong> y quedará la deuda hasta que confirmes el pago.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="shrink-0 border-t border-slate-200 p-4 flex gap-3">
-              <button onClick={cerrarNueva} className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">
-                Cancelar
-              </button>
-              <button onClick={crearVenta} disabled={creando || !personaSel || itemsVenta.length === 0} className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg disabled:opacity-50 transition-all">
-                {creando ? 'Creando...' : 'Crear venta'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <EscannerVentas abierto={showEscanner && planNivel(plan) >= 2} onCerrar={() => setShowEscanner(false)} onDetectar={manejarCodigoEscaneado} />
-      <ModalDetalleVenta
-          venta={ventaDetalle}
-          onCerrar={() => setVentaDetalle(null)}
-          onGuardar={(v) => { if (v) setVentaDetalle(v); recargarDesdeInicio() }}
-          plan={plan}
-          userId={userId}
-        />
+function Esqueleto() {
+  return (
+    <div className="space-y-4">
+      <div className="h-44 animate-pulse rounded-[28px] bg-gradient-to-br from-slate-200 to-slate-100" />
+      <div className="h-12 animate-pulse rounded-2xl bg-slate-100" />
+      <div className="space-y-2.5">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-[74px] animate-pulse rounded-2xl bg-slate-100" />
+        ))}
+      </div>
     </div>
   )
 }
