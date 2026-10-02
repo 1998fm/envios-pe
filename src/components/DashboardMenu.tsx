@@ -270,14 +270,11 @@ export default function DashboardMenu({
                     size={16}
                     className={pestañaActiva === 'formulario' ? 'text-white' : 'text-sky-500'}
                   />
-                  {pestañaActiva === 'formulario' ? 'Abriendo tu formulario' : 'Abrir formulario'}
+                  Formulario
                   {pestañaActiva === 'formulario' && (
                     <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" />
                   )}
                 </button>
-                <p className="px-3 pt-1.5 text-[10px] leading-relaxed text-slate-400">
-                  Comparte tu link y los pedidos te llegan solos.
-                </p>
               </div>
 
             </div>
