@@ -84,6 +84,10 @@ type Props = {
   onNavegar: (p: 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos') => void
   onConfig: () => void
   config: ConfigState
+  // Lo pasa dashboard/page.tsx. Aqui todavia no se usa para nada: el
+  // commit que lo consume (el panel financiero) todavia no esta en esta
+  // rama. Se declara para que el tipo de la llamada no rompa.
+  plan?: string
 }
 
 const METODO_COLORS = ['#0ea5e9', '#6366f1', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#94a3b8']
