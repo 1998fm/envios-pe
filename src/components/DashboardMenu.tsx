@@ -77,7 +77,6 @@ export default function DashboardMenu({
     { key: 'compras' as const, label: 'Compras', icon: Truck, tour: 'tab-compras' as TourId },
     { key: 'gastos' as const, label: 'Gastos', icon: Receipt, tour: 'tab-gastos' as TourId },
     { key: 'clientes' as const, label: 'Clientes', icon: Users, tour: 'tab-clientes' as TourId },
-    { key: 'formulario' as const, label: 'Formulario', icon: ClipboardList, tour: 'tab-formulario' as TourId },
   ]
 
   function navegar(p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes' | 'formulario') {
@@ -241,6 +240,44 @@ export default function DashboardMenu({
                     Copiar datos
                   </button>
                 ))}
+              </div>
+
+              <div className="my-1.5 h-px bg-slate-100" />
+
+              {/* El formulario va aparte, al final, y no como una seccion mas. Es lo
+                  unico del menu que genera algo compartible fuera de Tori —el
+                  link publico para recibir pedidos— y esconderlo entre
+                  Productos y Clientes lo dejaba vuelto casi invisible.
+
+                  Aqui no va el TourHelpButton: el tour 'tab-formulario' todavia
+                  no existe en lib/tours.ts (viene con el trabajo de tours, que
+                  no esta en produccion). Cuando ese tour se suba, aqui si
+                  tiene sentido agregarlo. */}
+              <div>
+                <p className="px-3 pb-1.5 pt-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-sky-400 to-emerald-500" />
+                  Formulario
+                </p>
+                <button
+                  onClick={() => navegar('formulario')}
+                  className={`${itemClass} rounded-xl border ${
+                    pestañaActiva === 'formulario'
+                      ? 'border-transparent bg-gradient-to-r from-sky-500/95 to-indigo-500/95 text-white font-semibold shadow-md shadow-indigo-500/25'
+                      : 'border-sky-100 bg-sky-50/60 hover:border-sky-200 hover:bg-sky-50'
+                  }`}
+                >
+                  <ClipboardList
+                    size={16}
+                    className={pestañaActiva === 'formulario' ? 'text-white' : 'text-sky-500'}
+                  />
+                  {pestañaActiva === 'formulario' ? 'Abriendo tu formulario' : 'Abrir formulario'}
+                  {pestañaActiva === 'formulario' && (
+                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" />
+                  )}
+                </button>
+                <p className="px-3 pt-1.5 text-[10px] leading-relaxed text-slate-400">
+                  Comparte tu link y los pedidos te llegan solos.
+                </p>
               </div>
 
             </div>
