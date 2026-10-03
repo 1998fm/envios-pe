@@ -520,19 +520,31 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
                         key={p.id}
                         onClick={() => agregarProducto(p)}
                         disabled={p.stock_actual <= 0}
-                        className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-tori-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-tori-50 disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{p.nombre}</span>
-                        {p.sku && <span className="shrink-0 font-mono text-[10px] text-slate-400">{p.sku}</span>}
-                        <span className="shrink-0 text-xs font-semibold text-slate-500">
-                          {fmtSoles(p.precio_venta)}
-                        </span>
+                        {/* El nombre envuelve en vez de recortarse. Con truncate
+                            los numeros lo aplastaban a "Buzo Brenda Ama...." y
+                            no habia forma de confirmar si el producto era el
+                            que pidio el cliente — que es justo lo que hay que
+                            verificar antes de cobrar. */}
                         <span
-                          className={`shrink-0 rounded-lg px-1.5 py-0.5 text-[10px] font-bold ${
-                            p.stock_actual <= 0 ? 'bg-error-50 text-error-600' : 'bg-slate-100 text-slate-500'
-                          }`}
+                          title={p.nombre}
+                          className="min-w-0 flex-1 break-words text-sm font-semibold leading-snug text-slate-800"
                         >
-                          {p.stock_actual}
+                          {p.nombre}
+                        </span>
+                        <span className="ml-auto flex shrink-0 items-center gap-3 pt-0.5">
+                          {p.sku && <span className="font-mono text-[10px] text-slate-400">{p.sku}</span>}
+                          <span className="text-xs font-semibold text-slate-500">
+                            {fmtSoles(p.precio_venta)}
+                          </span>
+                          <span
+                            className={`rounded-lg px-1.5 py-0.5 text-[10px] font-bold ${
+                              p.stock_actual <= 0 ? 'bg-error-50 text-error-600' : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            {p.stock_actual}
+                          </span>
                         </span>
                       </button>
                     ))}
@@ -549,36 +561,49 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
                   <EtiquetaPaso icono={Package} n={3} titulo={`${itemsVenta.length} ${itemsVenta.length === 1 ? 'producto' : 'productos'}`} />
                   <div className="mt-2.5 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200">
                     {itemsVenta.map((it, i) => (
-                      <div key={it.producto_id} className="flex items-center gap-2.5 px-3.5 py-3">
-                        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{it.nombre}</span>
-                        <input
-                          inputMode="numeric"
-                          value={it.cantidad}
-                          onChange={(e) => cambiarCantidad(i, e.target.value)}
-                          aria-label={`Cantidad de ${it.nombre}`}
-                          className="h-9 w-14 shrink-0 rounded-lg border border-slate-200 text-center text-sm font-bold outline-none focus:border-tori-400"
-                        />
-                        <span className="shrink-0 text-xs text-slate-300">×</span>
-                        <div className="relative shrink-0">
-                          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-400">S/</span>
-                          <input
-                            inputMode="decimal"
-                            value={String(it.precio)}
-                            onChange={(e) => cambiarPrecio(i, e.target.value)}
-                            aria-label={`Precio de ${it.nombre}`}
-                            className="h-9 w-24 rounded-lg border border-slate-200 pl-6 pr-2 text-right text-sm font-bold outline-none focus:border-tori-400"
-                          />
+                      <div key={it.producto_id} className="px-3.5 py-3">
+                        {/* Nombre a todo el ancho, en su propia linea. Con los
+                            cinco controles al lado (cantidad, precio y
+                            subtotal) el nombre quedaba en dos palabras y no se
+                            podia revisar contra lo que pidio el cliente. */}
+                        <div className="flex items-start gap-2">
+                          <span
+                            title={it.nombre}
+                            className="min-w-0 flex-1 break-words text-sm font-semibold leading-snug text-slate-800"
+                          >
+                            {it.nombre}
+                          </span>
+                          <button
+                            onClick={() => setItemsVenta(itemsVenta.filter((_, x) => x !== i))}
+                            aria-label={`Quitar ${it.nombre}`}
+                            className="-mr-1 -mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-300 transition-colors hover:bg-error-50 hover:text-error-500"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
-                        <span className="w-20 shrink-0 text-right text-sm font-extrabold tabular-nums text-slate-900">
-                          {fmtSoles((Number(it.cantidad) || 0) * it.precio)}
-                        </span>
-                        <button
-                          onClick={() => setItemsVenta(itemsVenta.filter((_, x) => x !== i))}
-                          aria-label={`Quitar ${it.nombre}`}
-                          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-300 transition-colors hover:bg-error-50 hover:text-error-500"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <div className="mt-2 flex items-center gap-2">
+                          <input
+                            inputMode="numeric"
+                            value={it.cantidad}
+                            onChange={(e) => cambiarCantidad(i, e.target.value)}
+                            aria-label={`Cantidad de ${it.nombre}`}
+                            className="h-9 w-14 shrink-0 rounded-lg border border-slate-200 text-center text-sm font-bold outline-none focus:border-tori-400"
+                          />
+                          <span className="shrink-0 text-xs text-slate-300">×</span>
+                          <div className="relative shrink-0">
+                            <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-400">S/</span>
+                            <input
+                              inputMode="decimal"
+                              value={String(it.precio)}
+                              onChange={(e) => cambiarPrecio(i, e.target.value)}
+                              aria-label={`Precio de ${it.nombre}`}
+                              className="h-9 w-24 rounded-lg border border-slate-200 pl-6 pr-2 text-right text-sm font-bold outline-none focus:border-tori-400"
+                            />
+                          </div>
+                          <span className="ml-auto shrink-0 text-sm font-extrabold tabular-nums text-slate-900">
+                            {fmtSoles((Number(it.cantidad) || 0) * it.precio)}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
