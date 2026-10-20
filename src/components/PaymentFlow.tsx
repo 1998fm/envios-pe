@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@supabase/supabase-js'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { track } from '@/components/GoogleAnalytics'
 import LogoTori from '@/components/LogoTori'
@@ -10,7 +10,10 @@ type PaymentPlan = 'pro' | 'basic'
 
 export default function PaymentFlow({ initialPlan }: { initialPlan: PaymentPlan }) {
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
   const [step, setStep] = useState(1) // 1: selección, 2: pagando, 3: completado
   const [error, setError] = useState<string>('')
   const [redirect, setRedirect] = useState<string | null>(null)
@@ -30,7 +33,7 @@ export default function PaymentFlow({ initialPlan }: { initialPlan: PaymentPlan 
           .single()
 
         // Si ya tiene plan activo, redirigir al dashboard
-        if (profile.plan && profile.pro_until) {
+        if (profile && profile.plan && profile.pro_until) {
           const planDate = new Date(profile.pro_until)
           const now = new Date()
           if (
@@ -88,21 +91,26 @@ export default function PaymentFlow({ initialPlan }: { initialPlan: PaymentPlan 
 
   // Manejar éxito desde la URL
   useEffect(() => {
-    // Verificar si venimos de la página de éxito
-    const urlParams = new URLSearchParams(window.location.search)
-    const plan = urlParams.get('plan')
-    const success = urlParams.get('success') === 'true'
+    async function handleSuccess() {
+      // Verificar si venimos de la página de éxito
+      const urlParams = new URLSearchParams(window.location.search)
+      const plan = urlParams.get('plan')
+      const success = urlParams.get('success') === 'true'
 
-    if (success && plan) {
-      // Llamar al endpoint de éxito para actualizar la BD
-      fetch('/api/payment/success', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planType: plan,
-          userId: (await supabase.auth.getUser())?.user?.id || '',
-        }),
-      })
+      if (success && plan) {
+        // Obtener usuario actual para el userId
+        const { data: { user} } = await supabase.auth.getUser()
+        if (!user) throw new Error('Usuario no autenticado')
+
+        // Llamar al endpoint de éxito para actualizar la BD
+        fetch('/api/payment/success', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            planType: plan,
+            userId: user.id,
+          }),
+        })
         .then((res) => res.json())
         .then((data) => {
           if (data.ok) {
@@ -118,7 +126,10 @@ export default function PaymentFlow({ initialPlan }: { initialPlan: PaymentPlan 
         .catch((e) => {
           setError('Error communicating with server')
         })
+      }
     }
+
+    handleSuccess()
   }, [router])
 
   if (step === 3) {

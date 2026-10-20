@@ -47,11 +47,10 @@ export async function POST(request: Request) {
 
     return Response.json({
       ok: true,
-      message: 'Pago procesado exitosamente',
+      message: 'Tu plan ha sido actualizado correctamente. Ya puedes comenzar a usar todas las funciones.',
       plan: planType,
       // proUntil se incluye en la respuesta para el frontend
-      proUntil: proUntilISO,
-      message: 'Tu plan ha sido actualizado correctamente. Ya puedes comenzar a usar todas las funciones.'
+      proUntil: proUntilISO
     })
   } catch (error: any) {
     console.error('Error en webhook de pago:', error)
