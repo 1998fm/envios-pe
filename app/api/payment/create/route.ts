@@ -56,9 +56,9 @@ export async function POST(request: Request) {
         }
       ],
       payer: {
-        email: userData.user.email || '',
-        first_name: userData.user.user_metadata?.first_name || '',
-        last_name: userData.user.user_metadata?.last_name || ''
+        email: userData.email || '',
+        first_name: '',
+        last_name: ''
       },
       back_urls: {
         success: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/success?plan=${planType}`,
