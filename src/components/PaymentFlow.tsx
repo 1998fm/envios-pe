@@ -201,7 +201,7 @@ export default function PaymentFlow({ initialPlan }: { initialPlan: PaymentPlan 
                   <span className="text-xs text-gray-500">Envíos: 50/mes</span>
                 </div>
                 <svg
-                  class="group-hover:text-tori-600 transition-colors w-5 h-5"
+                  className="group-hover:text-tori-600 transition-colors w-5 h-5"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -221,7 +221,7 @@ export default function PaymentFlow({ initialPlan }: { initialPlan: PaymentPlan 
                 <span className="font-medium text-white">Plan Pro</span>
                 <span className="text-sm text-white-800">Envíos: 500/mes</span>
                 <svg
-                  class="w-5 h-5"
+                  className="w-5 h-5"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"

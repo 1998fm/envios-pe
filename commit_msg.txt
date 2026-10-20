@@ -1,1 +1,1 @@
-fix: payment build errors
+fix: SVG class->className for build
