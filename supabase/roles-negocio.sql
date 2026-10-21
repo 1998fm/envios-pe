@@ -101,6 +101,7 @@ BEGIN
       AND c.table_name NOT IN ('business_members')
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_select_owner', t);
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_select_member', t);
     EXECUTE format(
       'CREATE POLICY %I ON public.%I FOR SELECT USING (auth.uid() = %I OR %I IN (SELECT owner_id FROM public.business_members WHERE user_id = auth.uid()))',
       t || '_select_member', t, col, col
