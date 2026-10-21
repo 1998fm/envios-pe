@@ -71,12 +71,6 @@ type DashboardData = {
     enviosPorEstado: { estado: string; count: number }[]
     enviosPorMetodo: { metodo: string; count: number }[]
   }
-  stockBajo: { nombre: string; stock_actual: number; stock_minimo: number; unidad: string }[]
-  recientes: {
-    envios: { id: string; nombre: string; estado: string; metodo: string; fecha_registro: string }[]
-    ventas: { id: string; persona_nombre: string; total: number; estado: string; metodo_pago: string; created_at: string }[]
-    gastos: { id: string; categoria: string; concepto: string; monto: number; fecha: string }[]
-  }
 }
 
 type Props = {
@@ -84,10 +78,6 @@ type Props = {
   onNavegar: (p: 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos') => void
   onConfig: () => void
   config: ConfigState
-  // Lo pasa dashboard/page.tsx. Aqui todavia no se usa para nada: el
-  // commit que lo consume (el panel financiero) todavia no esta en esta
-  // rama. Se declara para que el tipo de la llamada no rompa.
-  plan?: string
 }
 
 const METODO_COLORS = ['#0ea5e9', '#6366f1', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#94a3b8']

@@ -12,7 +12,13 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS trial_end TIMESTAMPTZ;
 -- 2b. Agregar columna pro_until (NULL = sin Pro pagado, fecha hasta la que tiene Pro activo)
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS pro_until TIMESTAMPTZ;
 
--- 3. Tabla de configuración de planes
+-- 3. La columna role de profiles NO se usa para los roles de negocio.
+--    Ahí vive 'user' | 'super_admin' (control interno de la plataforma),
+--    definido en supabase/super-admin.sql. Los roles del negocio (con sus
+--    permisos) viven en business_roles / business_members:
+--    ver supabase/roles-negocio.sql
+
+-- 4. Tabla de configuración de planes
 CREATE TABLE IF NOT EXISTS plan_features (
   plan TEXT PRIMARY KEY,
   max_envios INT,

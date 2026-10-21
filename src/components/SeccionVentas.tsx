@@ -46,7 +46,14 @@ import {
   type ResumenVentas,
 } from '@/lib/ventasUI'
 
-type Props = { userId: string; plan?: string }
+type Props = {
+  userId: string
+  plan?: string
+  /** Permiso del rol: si es false, no se muestran cifras de ganancia. */
+  puedeVerGanancias?: boolean
+  /** Permiso del rol: si es false, no se muestran los KPIs del negocio. */
+  puedeVerKpis?: boolean
+}
 
 // La forma del resumen la define el motor, no esta copia: si se duplica
 // aquí, se desincroniza en silencio la próxima vez que se agregue una cifra.
@@ -54,9 +61,18 @@ type Resumen = ResumenVentas
 
 const PAGE_SIZE = 20
 
-export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
+export default function SeccionVentas({
+  userId,
+  plan = 'basic',
+  puedeVerGanancias = true,
+  puedeVerKpis = true,
+}: Props) {
   const confirmar = useConfirm()
-  const muestraGanancia = planNivel(plan) >= 1
+  const muestraGanancia = planNivel(plan) >= 1 && puedeVerGanancias
+  // Los KPIs son los totales del negocio (vendido, por cobrar, ticket
+  // promedio). Si el rol no los puede ver, tampoco se muestra la cifra
+  // grande de arriba: solo la lista de ventas.
+  const muestraKpis = puedeVerKpis
 
   const [ventas, setVentas] = useState<Venta[]>([])
   const [resumen, setResumen] = useState<Resumen | null>(null)
@@ -233,15 +249,30 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
               <p className="text-[10px] font-black uppercase tracking-[1.5px] text-tori-200">
                 Tus ventas
               </p>
-              <h2 className="mt-1 text-3xl font-black leading-none tracking-tight text-white sm:text-4xl">
-                Vendido
-                {resumen ? ` ${fmtMontoCorto(resumen.monto, true)}` : ''}
-              </h2>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-tori-100">
-                {hayFiltro
-                  ? 'Cifras de lo que estás viendo ahora, no del total.'
-                  : 'Todo lo que has facturado, sin contar ventas anuladas.'}
-              </p>
+              {muestraKpis ? (
+                <>
+                  <h2 className="mt-1 text-3xl font-black leading-none tracking-tight text-white sm:text-4xl">
+                    Vendido
+                    {resumen ? ` ${fmtMontoCorto(resumen.monto, true)}` : ''}
+                  </h2>
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-tori-100">
+                    {hayFiltro
+                      ? 'Cifras de lo que estás viendo ahora, no del total.'
+                      : 'Todo lo que has facturado, sin contar ventas anuladas.'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="mt-1 text-3xl font-black leading-none tracking-tight text-white sm:text-4xl">
+                    Ventas
+                  </h2>
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-tori-100">
+                    {hayFiltro
+                      ? 'Estás viendo las ventas que coinciden con el filtro.'
+                      : 'Todas las ventas del negocio, de la más reciente a la más antigua.'}
+                  </p>
+                </>
+              )}
             </div>
 
             <button
@@ -253,35 +284,37 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
             </button>
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-            <Kpi
-              icono={Wallet}
-              etiqueta="Facturado"
-              valor={fmtSoles(resumen?.monto ?? 0)}
-              ayuda={resumen ? `${resumen.ventas} ventas` : 'Cargando'}
-            />
-            <Kpi
-              icono={Receipt}
-              etiqueta="Por cobrar"
-              valor={fmtSoles(resumen?.porCobrar ?? 0)}
-              ayuda={porCobrar > 0 ? 'Te falta cobrar esto' : 'Todo cobrado'}
-              destacado={porCobrar > 0}
-            />
-            <Kpi
-              icono={Package}
-              etiqueta="Ventas"
-              valor={fmtMontoCorto(resumen?.ventas ?? 0, true)}
-              ayuda={resumen ? `${resumen.porEstado.PENDIENTE ?? 0} pendientes` : 'Cargando'}
-            />
-            <Kpi
-              icono={TrendingUp}
-              etiqueta="Ticket promedio"
-              valor={fmtSoles(resumen?.ticketPromedio ?? 0)}
-              ayuda="Por venta"
-            />
-          </div>
+          {muestraKpis && (
+            <div className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+              <Kpi
+                icono={Wallet}
+                etiqueta="Facturado"
+                valor={fmtSoles(resumen?.monto ?? 0)}
+                ayuda={resumen ? `${resumen.ventas} ventas` : 'Cargando'}
+              />
+              <Kpi
+                icono={Receipt}
+                etiqueta="Por cobrar"
+                valor={fmtSoles(resumen?.porCobrar ?? 0)}
+                ayuda={porCobrar > 0 ? 'Te falta cobrar esto' : 'Todo cobrado'}
+                destacado={porCobrar > 0}
+              />
+              <Kpi
+                icono={Package}
+                etiqueta="Ventas"
+                valor={fmtMontoCorto(resumen?.ventas ?? 0, true)}
+                ayuda={resumen ? `${resumen.porEstado.PENDIENTE ?? 0} pendientes` : 'Cargando'}
+              />
+              <Kpi
+                icono={TrendingUp}
+                etiqueta="Ticket promedio"
+                valor={fmtSoles(resumen?.ticketPromedio ?? 0)}
+                ayuda="Por venta"
+              />
+            </div>
+          )}
 
-          {resumen?.truncado && (
+          {muestraKpis && resumen?.truncado && (
             <p className="mt-3 flex items-start gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-[10.5px] leading-relaxed text-tori-50">
               <AlertTriangle size={13} className="mt-px shrink-0" />
               Tienes más de 5.000 ventas, así que estas cifras consideran las más
@@ -672,6 +705,7 @@ export default function SeccionVentas({ userId, plan = 'basic' }: Props) {
         }}
         plan={plan}
         userId={userId}
+        puedeVerGanancias={puedeVerGanancias}
       />
     </div>
   )

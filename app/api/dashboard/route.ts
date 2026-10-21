@@ -3,6 +3,19 @@ import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 
 const DIAS_HISTORICO = 90
 
+// ============================================================
+// PANEL DE RESUMEN
+//
+// Todo se resuelve con CINCO consultas (una por tabla) en vez de una por
+// métrica. Antes se hacían ~24 viajes a la base (una por cada suma y
+// conteo), y a ~150 ms por viaje eso son 3-4 segundos solo en esperas.
+//
+// La clave: cada tabla se trae una vez con las columnas justas y todos los
+// indicadores se calculan en memoria. Los datos por negocio son cientos de
+// filas, no millones, así que traer la tabla del negocio es más rápido que
+// encadenar 20 conteos.
+// ============================================================
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('user_id')
@@ -27,137 +40,156 @@ export async function GET(request: Request) {
   const diaLima = (iso: string) =>
     new Date(new Date(iso).getTime() - 5 * 60 * 60 * 1000).toISOString().split('T')[0]
 
-  async function sumVentas(desde: Date, hasta?: Date, estados?: string[]) {
-    let q = supabaseAdmin
+  // ========================================
+  // LAS CINCO CONSULTAS
+  // ========================================
+
+  const [ventasRes, enviosRes, comprasRes, gastosRes, stockBajoCount] = await Promise.all([
+    // Todas las ventas del negocio: de aquí salen los KPIs de dinero, la
+    // serie histórica, los gráficos y los saldos por cobrar.
+    supabaseAdmin
       .from('ventas')
-      .select('total')
-      .eq('profile_id', userId)
-      .gte('created_at', desde.toISOString())
-    if (hasta) q = q.lt('created_at', hasta.toISOString())
-    if (estados && estados.length) {
-      q = q.in('estado', estados)
-    }
-    const { data } = await q
-    return (data ?? []).reduce((acc: number, v: any) => acc + Number(v.total || 0), 0)
-  }
-
-  async function sumCompras(desde: Date, hasta?: Date, estados?: string[]) {
-    let q = supabaseAdmin
-      .from('compras')
-      .select('total')
-      .eq('profile_id', userId)
-      .gte('created_at', desde.toISOString())
-    if (hasta) q = q.lt('created_at', hasta.toISOString())
-    if (estados && estados.length) {
-      q = q.in('estado', estados)
-    }
-    const { data } = await q
-    return (data ?? []).reduce((acc: number, v: any) => acc + Number(v.total || 0), 0)
-  }
-
-  async function sumGastos(desde: Date, hasta?: Date) {
-    let q = supabaseAdmin
-      .from('gastos')
-      .select('monto')
-      .eq('profile_id', userId)
-      .gte('fecha', desde.toISOString().split('T')[0])
-    if (hasta) q = q.lt('fecha', hasta.toISOString().split('T')[0])
-    const { data } = await q
-    return (data ?? []).reduce((acc: number, v: any) => acc + Number(v.monto || 0), 0)
-  }
-
-  async function countEnvios(desde: Date, hasta?: Date, estados?: string[]) {
-    let q = supabaseAdmin
+      .select('created_at, total, monto_pagado, estado, metodo_pago, envio_id')
+      .eq('profile_id', userId),
+    // Todos los envíos: de aquí salen el histórico de pedidos, los gráficos
+    // por estado/método y los contadores de despachar.
+    supabaseAdmin
       .from('envios')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .gte('fecha_registro', desde.toISOString())
-    if (hasta) q = q.lt('fecha_registro', hasta.toISOString())
-    if (estados && estados.length) q = q.in('estado', estados)
-    const { count } = await q
-    return count ?? 0
-  }
-
-  async function countVentas(desde: Date, hasta?: Date, estados?: string[]) {
-    let q = supabaseAdmin
-      .from('ventas')
-      .select('*', { count: 'exact', head: true })
-      .eq('profile_id', userId)
-      .gte('created_at', desde.toISOString())
-    if (hasta) q = q.lt('created_at', hasta.toISOString())
-    if (estados && estados.length) q = q.in('estado', estados)
-    const { count } = await q
-    return count ?? 0
-  }
-
-  // Dinero realmente cobrado: suma de monto_pagado de todas las ventas no
-  // anuladas. Una venta PENDIENTE con abono parcial aporta lo ya pagado, no el
-  // total (así el saldo disponible refleja el dinero real en caja).
-  async function sumCobrado(desde: Date, hasta?: Date, estados?: string[]) {
-    let q = supabaseAdmin
-      .from('ventas')
-      .select('monto_pagado')
-      .eq('profile_id', userId)
-      .gte('created_at', desde.toISOString())
-    if (hasta) q = q.lt('created_at', hasta.toISOString())
-    if (estados && estados.length) q = q.in('estado', estados)
-    const { data } = await q
-    return (data ?? []).reduce((acc: number, v: any) => acc + Number(v.monto_pagado ?? 0), 0)
-  }
-
-  // Ventas pendientes con su saldo por cobrar (total - lo ya abonado)
-  async function pendientesPorCobrar() {
-    const { data } = await supabaseAdmin
-      .from('ventas')
-      .select('total, monto_pagado')
-      .eq('profile_id', userId)
-      .eq('estado', 'PENDIENTE')
-    const filas = (data ?? []).filter((v: any) => Number(v.total ?? 0) > Number(v.monto_pagado ?? 0))
-    const total = filas.reduce((acc: number, v: any) => acc + (Number(v.total ?? 0) - Number(v.monto_pagado ?? 0)), 0)
-    return { cantidad: filas.length, total: Math.round(total * 100) / 100 }
-  }
-
-  const [
-    ventasMes,
-    ventasMesAnterior,
-    ventasHoy,
-    ventasAyer,
-    enviosMes,
-    enviosMesAnterior,
-    enviosHoy,
-    sinEmpacar,
-    empacados,
-    stockBajoCount,
-    pedidosSinVenta,
-    totalCobrado,
-    totalCompras,
-    gastosMes,
-    gastosMesAnterior,
-    totalGastos,
-  ] = await Promise.all([
-    sumVentas(startOfMonth, startOfNextMonth, ['COMPLETADA', 'PENDIENTE']),
-    sumVentas(startOfPrevMonth, startOfMonth, ['COMPLETADA', 'PENDIENTE']),
-    sumVentas(startOfDay, new Date(), ['COMPLETADA', 'PENDIENTE']),
-    sumVentas(startOfYesterday, startOfDay, ['COMPLETADA', 'PENDIENTE']),
-    countEnvios(startOfMonth, startOfNextMonth),
-    countEnvios(startOfPrevMonth, startOfMonth),
-    countEnvios(startOfDay),
-    countEnvios(new Date(0), undefined, ['NO_EMPACADO']),
-    countEnvios(new Date(0), undefined, ['EMPACADO']),
+      .select('id, estado, fecha_registro, metodo')
+      .eq('user_id', userId),
+    // Compras: total histórico y comparación con el mes anterior.
+    supabaseAdmin
+      .from('compras')
+      .select('created_at, total, estado')
+      .eq('profile_id', userId),
+    // Gastos: idem, pero por fecha contable (columna date).
+    supabaseAdmin
+      .from('gastos')
+      .select('fecha, monto')
+      .eq('profile_id', userId),
+    // Productos con stock en o por debajo del mínimo (solo el conteo).
     countProductosStockBajo(supabaseAdmin, userId),
-    countPedidosSinVenta(supabaseAdmin, userId),
-    sumCobrado(new Date(0), undefined, ['COMPLETADA', 'PENDIENTE']),
-    sumCompras(new Date(0), undefined, ['COMPLETADA']),
-    sumGastos(startOfMonth, startOfNextMonth),
-    sumGastos(startOfPrevMonth, startOfMonth),
-    sumGastos(new Date(0)),
   ])
 
-  const { cantidad: cobrosPendientes, total: cobrosPendientesTotal } = await pendientesPorCobrar()
+  const ventas = ventasRes.data ?? []
+  const envios = enviosRes.data ?? []
+  const compras = comprasRes.data ?? []
+  const gastos = gastosRes.data ?? []
 
   // ========================================
-  // HISTÓRICO DIARIO (90 días) — se calcula
-  // agregando en memoria; no usa tablas extra.
+  // DINERO DE VENTAS
+  // ========================================
+
+  const esVentaVigente = (e: string) => e === 'COMPLETADA' || e === 'PENDIENTE'
+
+  function sumaVentas(desde: Date, hasta?: Date) {
+    let acc = 0
+    for (const v of ventas as any[]) {
+      if (!esVentaVigente(v.estado)) continue
+      const t = new Date(v.created_at).getTime()
+      if (t < desde.getTime()) continue
+      if (hasta && t >= hasta.getTime()) continue
+      acc += Number(v.total || 0)
+    }
+    return acc
+  }
+
+  const ventasMes = sumaVentas(startOfMonth, startOfNextMonth)
+  const ventasMesAnterior = sumaVentas(startOfPrevMonth, startOfMonth)
+  const ventasHoy = sumaVentas(startOfDay, now)
+  const ventasAyer = sumaVentas(startOfYesterday, startOfDay)
+
+  // Dinero realmente cobrado: una venta PENDIENTE con abono parcial aporta
+  // lo ya pagado, no el total (así el saldo disponible refleja la caja real).
+  let totalCobrado = 0
+  let cobrosPendientes = 0
+  let cobrosPendientesTotal = 0
+  for (const v of ventas as any[]) {
+    if (!esVentaVigente(v.estado)) continue
+    totalCobrado += Number(v.monto_pagado ?? 0)
+    if (v.estado === 'PENDIENTE') {
+      const saldo = Number(v.total ?? 0) - Number(v.monto_pagado ?? 0)
+      if (saldo > 0) {
+        cobrosPendientes += 1
+        cobrosPendientesTotal += saldo
+      }
+    }
+  }
+  cobrosPendientesTotal = Math.round(cobrosPendientesTotal * 100) / 100
+
+  // ========================================
+  // ENVÍOS
+  // ========================================
+
+  let sinEmpacar = 0
+  let empacados = 0
+  let enviosMes = 0
+  let enviosMesAnterior = 0
+  const enviosPendientesIds = new Set<string>()
+  for (const e of envios as any[]) {
+    if (e.estado === 'NO_EMPACADO') sinEmpacar += 1
+    if (e.estado === 'EMPACADO') empacados += 1
+    if (e.estado === 'NO_EMPACADO' || e.estado === 'EN_OBSERVACION') {
+      enviosPendientesIds.add(e.id)
+    }
+    const t = new Date(e.fecha_registro).getTime()
+    if (t >= startOfMonth.getTime() && t < startOfNextMonth.getTime()) enviosMes += 1
+    if (t >= startOfPrevMonth.getTime() && t < startOfMonth.getTime()) enviosMesAnterior += 1
+  }
+
+  // Envíos pendientes (sin empacar / en observación) que todavía no tienen una
+  // venta vinculada. El usuario debe registrar la venta para poder validar el
+  // contenido del pedido desde el dashboard.
+  let pedidosSinVenta = 0
+  if (enviosPendientesIds.size > 0) {
+    const vinculados = new Set<string>()
+    for (const v of ventas as any[]) {
+      if (v.envio_id && enviosPendientesIds.has(v.envio_id)) vinculados.add(v.envio_id)
+    }
+    pedidosSinVenta = enviosPendientesIds.size - vinculados.size
+  }
+
+  // ========================================
+  // COMPRAS Y GASTOS
+  // ========================================
+
+  const sumaCompras = (desde: Date, hasta?: Date) => {
+    let acc = 0
+    for (const c of compras as any[]) {
+      if (c.estado !== 'COMPLETADA') continue
+      const t = new Date(c.created_at).getTime()
+      if (t < desde.getTime()) continue
+      if (hasta && t >= hasta.getTime()) continue
+      acc += Number(c.total || 0)
+    }
+    return acc
+  }
+
+  const totalCompras = sumaCompras(new Date(0))
+
+  // Los gastos se filtran por `fecha` (columna date, no timestamp): se
+  // compara con el día, no con la hora.
+  const diaGasto = (g: any) => String(g.fecha || '').slice(0, 10)
+  const hoyStr = hoyLima
+  const mesStr = hoyLima.slice(0, 8)
+  const mesAntStr = (() => {
+    const d = new Date(startOfPrevMonth)
+    return d.toLocaleDateString('en-CA', { timeZone: 'America/Lima' }).slice(0, 7)
+  })()
+
+  let totalGastos = 0
+  let gastosMes = 0
+  let gastosMesAnterior = 0
+  for (const g of gastos as any[]) {
+    const monto = Number(g.monto || 0)
+    totalGastos += monto
+    const dia = diaGasto(g)
+    if (dia.slice(0, 7) === mesStr) gastosMes += monto
+    if (dia.slice(0, 7) === mesAntStr) gastosMesAnterior += monto
+  }
+
+  // ========================================
+  // HISTÓRICO DIARIO (90 días) Y GRÁFICOS (30 días)
   // ========================================
 
   const inicioHistorico = startOfDay.getTime() - (DIAS_HISTORICO - 1) * 24 * 60 * 60 * 1000
@@ -167,44 +199,46 @@ export async function GET(request: Request) {
     dias.push(new Date(inicioHistorico + i * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000).toISOString().split('T')[0])
   }
 
-  const [{ data: enviosRango }, { data: ventasRango }] = await Promise.all([
-    supabaseAdmin
-      .from('envios')
-      .select('fecha_registro, metodo, estado')
-      .eq('user_id', userId)
-      .gte('fecha_registro', new Date(inicioHistorico).toISOString())
-      .order('fecha_registro', { ascending: true }),
-    supabaseAdmin
-      .from('ventas')
-      .select('created_at, metodo_pago, total, estado')
-      .eq('profile_id', userId)
-      .gte('created_at', new Date(inicioHistorico).toISOString())
-      .order('created_at', { ascending: true }),
-  ])
-
-  // Ventas por día (solo COMPLETADA y PENDIENTE, igual que los KPIs de ventas)
   const ventasDia: Record<string, { total: number; cantidad: number }> = {}
-  dias.forEach((d) => {
-    ventasDia[d] = { total: 0, cantidad: 0 }
-  })
-  ventasRango?.forEach((v: any) => {
-    if (v.estado !== 'COMPLETADA' && v.estado !== 'PENDIENTE') return
-    const bucket = ventasDia[diaLima(v.created_at)]
-    if (!bucket) return
-    bucket.total += Number(v.total || 0)
-    bucket.cantidad += 1
-  })
-
-  // Pedidos por día (todos los estados, igual que la tendencia anterior)
   const pedidosDia: Record<string, number> = {}
   dias.forEach((d) => {
+    ventasDia[d] = { total: 0, cantidad: 0 }
     pedidosDia[d] = 0
   })
-  enviosRango?.forEach((e: any) => {
+
+  const corte30 = dias[dias.length - 30]
+
+  const ventasPorMetodo: Record<string, number> = {}
+  const enviosPorEstado: Record<string, number> = {}
+  const enviosPorMetodo: Record<string, number> = {}
+
+  for (const v of ventas as any[]) {
+    const t = new Date(v.created_at).getTime()
+    if (t < inicioHistorico) continue
+    const bucket = ventasDia[diaLima(v.created_at)]
+    if (!bucket) continue
+    if (esVentaVigente(v.estado)) {
+      bucket.total += Number(v.total || 0)
+      bucket.cantidad += 1
+    }
+    if (diaLima(v.created_at) >= corte30) {
+      const m = v.metodo_pago || 'SIN_METODO'
+      ventasPorMetodo[m] = (ventasPorMetodo[m] || 0) + Number(v.total || 0)
+    }
+  }
+
+  for (const e of envios as any[]) {
+    const t = new Date(e.fecha_registro).getTime()
+    if (t < inicioHistorico) continue
     const day = diaLima(e.fecha_registro)
-    if (pedidosDia[day] === undefined) return
-    pedidosDia[day] += 1
-  })
+    if (pedidosDia[day] !== undefined) pedidosDia[day] += 1
+    if (day >= corte30) {
+      const s = e.estado || 'SIN_ESTADO'
+      enviosPorEstado[s] = (enviosPorEstado[s] || 0) + 1
+      const m = e.metodo || 'SIN_METODO'
+      enviosPorMetodo[m] = (enviosPorMetodo[m] || 0) + 1
+    }
+  }
 
   const historicoVentas = dias.map((fecha) => ({
     fecha,
@@ -216,74 +250,6 @@ export async function GET(request: Request) {
     fecha,
     count: pedidosDia[fecha],
   }))
-
-  // ========================================
-  // GRÁFICOS DE LOS ÚLTIMOS 30 DÍAS
-  // (se filtran del rango de 90 días ya descargado)
-  // ========================================
-
-  const corte30 = dias[dias.length - 30]
-
-  const envios30 = (enviosRango ?? []).filter((e: any) => diaLima(e.fecha_registro) >= corte30)
-  const ventas30 = (ventasRango ?? []).filter((v: any) => diaLima(v.created_at) >= corte30)
-
-  const metodoMap: Record<string, number> = {}
-  ventas30.forEach((v: any) => {
-    const m = v.metodo_pago || 'SIN_METODO'
-    metodoMap[m] = (metodoMap[m] || 0) + Number(v.total || 0)
-  })
-  const ventasPorMetodo = Object.entries(metodoMap)
-    .map(([metodo, total]) => ({ metodo, total }))
-    .sort((a, b) => b.total - a.total)
-
-  const estadoEnvioMap: Record<string, number> = {}
-  envios30.forEach((e: any) => {
-    const s = e.estado || 'SIN_ESTADO'
-    estadoEnvioMap[s] = (estadoEnvioMap[s] || 0) + 1
-  })
-  const enviosPorEstado = Object.entries(estadoEnvioMap)
-    .map(([estado, count]) => ({ estado, count }))
-    .sort((a, b) => b.count - a.count)
-
-  const metodoEnvioMap: Record<string, number> = {}
-  envios30.forEach((e: any) => {
-    const m = e.metodo || 'SIN_METODO'
-    metodoEnvioMap[m] = (metodoEnvioMap[m] || 0) + 1
-  })
-  const enviosPorMetodo = Object.entries(metodoEnvioMap)
-    .map(([metodo, count]) => ({ metodo, count }))
-    .sort((a, b) => b.count - a.count)
-
-  const [{ data: stockBajo }, { data: recientesEnvios }, { data: recientesVentas }, { data: recientesGastos }] =
-    await Promise.all([
-      supabaseAdmin
-        .from('productos')
-        .select('nombre, stock_actual, stock_minimo, unidad')
-        .eq('profile_id', userId)
-        .eq('archivado', false)
-        .or('stock_actual.lte.stock_minimo')
-        .order('stock_actual', { ascending: true })
-        .limit(5),
-      supabaseAdmin
-        .from('envios')
-        .select('id, nombre, estado, metodo, fecha_registro')
-        .eq('user_id', userId)
-        .order('fecha_registro', { ascending: false })
-        .limit(5),
-      supabaseAdmin
-        .from('ventas')
-        .select('id, persona_nombre, total, estado, metodo_pago, created_at')
-        .eq('profile_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(5),
-      supabaseAdmin
-        .from('gastos')
-        .select('id, categoria, concepto, monto, fecha')
-        .eq('profile_id', userId)
-        .order('fecha', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(5),
-    ])
 
   const delta = (actual: number, anterior: number) =>
     anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : null
@@ -322,46 +288,25 @@ export async function GET(request: Request) {
       pedidos: historicoPedidos,
     },
     graficos: {
-      ventasPorMetodo,
-      enviosPorEstado,
-      enviosPorMetodo,
-    },
-    stockBajo: stockBajo ?? [],
-    recientes: {
-      envios: recientesEnvios ?? [],
-      ventas: recientesVentas ?? [],
-      gastos: recientesGastos ?? [],
+      ventasPorMetodo: Object.entries(ventasPorMetodo)
+        .map(([metodo, total]) => ({ metodo, total }))
+        .sort((a, b) => b.total - a.total),
+      enviosPorEstado: Object.entries(enviosPorEstado)
+        .map(([estado, count]) => ({ estado, count }))
+        .sort((a, b) => b.count - a.count),
+      enviosPorMetodo: Object.entries(enviosPorMetodo)
+        .map(([metodo, count]) => ({ metodo, count }))
+        .sort((a, b) => b.count - a.count),
     },
   })
 }
 
 async function countProductosStockBajo(client: typeof supabaseAdmin, userId: string) {
-  const { data } = await client
+  const { count } = await client
     .from('productos')
-    .select('id')
+    .select('id', { count: 'exact', head: true })
     .eq('profile_id', userId)
     .eq('archivado', false)
     .or('stock_actual.lte.stock_minimo')
-  return data?.length ?? 0
-}
-
-// Envíos pendientes (sin empacar / en observación) que todavía no tienen una
-// venta vinculada. El usuario debe registrar la venta para poder validar el
-// contenido del pedido desde el dashboard.
-async function countPedidosSinVenta(client: typeof supabaseAdmin, userId: string) {
-  const { data: envios } = await client
-    .from('envios')
-    .select('id')
-    .eq('user_id', userId)
-    .in('estado', ['NO_EMPACADO', 'EN_OBSERVACION'])
-  const enviosIds = (envios ?? []).map((e: any) => e.id)
-  if (enviosIds.length === 0) return 0
-
-  const { data: ventas } = await client
-    .from('ventas')
-    .select('envio_id')
-    .eq('profile_id', userId)
-    .in('envio_id', enviosIds)
-  const vinculados = new Set((ventas ?? []).map((v: any) => v.envio_id))
-  return enviosIds.filter((id: string) => !vinculados.has(id)).length
+  return count ?? 0
 }

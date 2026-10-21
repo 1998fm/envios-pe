@@ -18,6 +18,7 @@ import {
   Receipt,
   Users,
   ClipboardList,
+  ShieldCheck,
 } from 'lucide-react'
 import TourHelpButton from '@/components/TourHelpButton'
 import LogoTori from '@/components/LogoTori'
@@ -37,6 +38,18 @@ type Props = {
   onGenerarEtiquetas: () => void
   onCopiarDatos: () => void
   onConfig: () => void
+  /** Secciones que el usuario actual tiene permitidas. Si se omite, se muestran todas. */
+  visibles?: string[]
+  /** Si el usuario puede entrar a la configuración del negocio. */
+  puedeConfigurar?: boolean
+  /** Abrir modal de roles (solo dueño). */
+  onVerRoles?: () => void
+  /** Si el usuario es dueño del negocio. */
+  esOwner?: boolean
+  /** Si el plan permite usar roles (Business Plus activo). */
+  puedeUsarRoles?: boolean
+  /** Máximo de miembros permitidos (4 en Business Plus). */
+  maxMiembros?: number
 }
 
 export default function DashboardMenu({
@@ -52,6 +65,11 @@ export default function DashboardMenu({
   onGenerarEtiquetas,
   onCopiarDatos,
   onConfig,
+  visibles,
+  puedeConfigurar = true,
+  onVerRoles,
+  esOwner = false,
+  puedeUsarRoles = false,
 }: Props) {
   const [hover, setHover] = useState(false)
   const [fijado, setFijado] = useState(false)
@@ -77,7 +95,9 @@ export default function DashboardMenu({
     { key: 'compras' as const, label: 'Compras', icon: Truck, tour: 'tab-compras' as TourId },
     { key: 'gastos' as const, label: 'Gastos', icon: Receipt, tour: 'tab-gastos' as TourId },
     { key: 'clientes' as const, label: 'Clientes', icon: Users, tour: 'tab-clientes' as TourId },
-  ]
+  ].filter((s) => !visibles || visibles.includes(s.key))
+
+  const puedeVerFormulario = !visibles || visibles.includes('formulario')
 
   function navegar(p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes' | 'formulario') {
     onNavegar(p)
@@ -200,8 +220,7 @@ export default function DashboardMenu({
                 <p className="px-3 pb-1.5 pt-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-indigo-400 to-sky-500" />
                   Acciones
-                </p>
-                {tieneShalom && (
+                </p>                {tieneShalom && (
                   <button data-tour="exportar-shalom" onClick={() => ejecutar(onExportShalom)} className={itemClass}>
                     <Download size={16} className="text-sky-500" />
                     Shalom Pro
@@ -254,27 +273,47 @@ export default function DashboardMenu({
                   no esta en produccion). Cuando ese tour se suba, aqui si
                   tiene sentido agregarlo. */}
               <div>
-                <p className="px-3 pb-1.5 pt-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-sky-400 to-emerald-500" />
-                  Formulario
-                </p>
-                <button
-                  onClick={() => navegar('formulario')}
-                  className={`${itemClass} rounded-xl border ${
-                    pestañaActiva === 'formulario'
-                      ? 'border-transparent bg-gradient-to-r from-sky-500/95 to-indigo-500/95 text-white font-semibold shadow-md shadow-indigo-500/25'
-                      : 'border-sky-100 bg-sky-50/60 hover:border-sky-200 hover:bg-sky-50'
-                  }`}
-                >
-                  <ClipboardList
-                    size={16}
-                    className={pestañaActiva === 'formulario' ? 'text-white' : 'text-sky-500'}
-                  />
-                  Formulario
-                  {pestañaActiva === 'formulario' && (
-                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" />
-                  )}
-                </button>
+                {puedeVerFormulario && (
+                  <>
+                    <p className="px-3 pb-1.5 pt-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-sky-400 to-emerald-500" />
+                      Formulario
+                    </p>
+                    <button
+                      onClick={() => navegar('formulario')}
+                      className={`${itemClass} rounded-xl border ${
+                        pestañaActiva === 'formulario'
+                          ? 'border-transparent bg-gradient-to-r from-sky-500/95 to-indigo-500/95 text-white font-semibold shadow-md shadow-indigo-500/25'
+                          : 'border-sky-100 bg-sky-50/60 hover:border-sky-200 hover:bg-sky-50'
+                      }`}
+                    >
+                      <ClipboardList
+                        size={16}
+                        className={pestañaActiva === 'formulario' ? 'text-white' : 'text-sky-500'}
+                      />
+                      Formulario
+                      {pestañaActiva === 'formulario' && (
+                        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white" />
+                      )}
+                    </button>
+                  </>
+                )}
+                {esOwner && onVerRoles && puedeUsarRoles && (
+                  <>
+                    <p className="px-3 pb-1.5 pt-3 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-violet-400 to-sky-500" />
+                      Roles
+                    </p>
+                    <button
+                      data-tour="roles"
+                      onClick={() => ejecutar(onVerRoles)}
+                      className={`${itemClass} rounded-xl border border-slate-100 bg-slate-50/60 hover:border-violet-200 hover:bg-violet-50/60`}
+                    >
+                      <ShieldCheck size={16} className="text-violet-500" />
+                      Roles y permisos
+                    </button>
+                  </>
+                )}
               </div>
 
             </div>
@@ -282,7 +321,7 @@ export default function DashboardMenu({
         </div>
 
         {/* Pie del menú: Configuración siempre visible abajo */}
-        {abierto && (
+        {abierto && puedeConfigurar && (
           <div className="shrink-0 border-t border-slate-100 bg-white px-2 py-2.5">
             <button data-tour="configuracion" onClick={() => ejecutar(onConfig)} className={itemClass}>
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-400">

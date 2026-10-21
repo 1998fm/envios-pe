@@ -40,12 +40,22 @@ import ModalUpgrade from '@/components/ModalUpgrade'
 import PanelResumen from '@/components/PanelResumen'
 import { ConfigState, initialConfigState } from '@/types/config'
 import type { Envio } from '@/types/envio'
+import { useRolActual } from '@/hooks/useRolActual'
+import { resolverNegocioActual } from '@/lib/rolesClient'
+import {
+  PERMISOS_NINGUNO,
+  PERMISOS_TODOS,
+  puedeVerVista,
+  type PermisosRol,
+  type VistaDashboard,
+} from '@/lib/roles'
 import SeccionProductos from '@/components/SeccionProductos'
 import SeccionVentas from '@/components/SeccionVentas'
 import SeccionFormulario from '@/components/SeccionFormulario'
 import SeccionCompras from '@/components/SeccionCompras'
 import SeccionGastos from '@/components/SeccionGastos'
 import SeccionClientes from '@/components/SeccionClientes'
+import ModalRoles from '@/components/ModalRoles'
 import { UPGRADE_EVENT, computeEffectivePlan } from '@/lib/planGating'
 import { useOnboarding } from '@/context/OnboardingContext'
 import {
@@ -93,27 +103,79 @@ const [plan, setPlan] = useState('basic')
 const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
 const [enviosMesCount, setEnviosMesCount] = useState(0)
 const [shalomUso, setShalomUso] = useState<{ used: number; max: number | null }>({ used: 0, max: null })
-const [planFeatures, setPlanFeatures] = useState<{ max_metodos?: number | null; max_pedidos_copiar?: number | null; max_envios?: number | null } | null>(null)
+const [planFeatures, setPlanFeatures] = useState<{ max_metodos?: number | null; max_pedidos_copiar?: number | null; max_envios?: number | null; max_miembros?: number | null } | null>(null)
+const [maxMiembros, setMaxMiembros] = useState(0)
+const [puedeUsarRoles, setPuedeUsarRoles] = useState(false)
+const [mostrarBannerTrial, setMostrarBannerTrial] = useState(false)
+const [mostrarModalRoles, setMostrarModalRoles] =
+  useState(false)
 const [mostrarUpgrade, setMostrarUpgrade] = useState(false)
 const [agruparPor, setAgruparPor] = useState<'programada' | 'registro'>('programada')
 const PESTANAS = ['resumen', 'envios', 'productos', 'ventas', 'compras', 'gastos', 'clientes', 'formulario'] as const
 type PESTANA = typeof PESTANAS[number]
 
+// La pestaña activa se restaura desde el URL (?v=...) al recargar o
+// compartir un enlace. Va en un efecto (y no en el inicializador) para que
+// el HTML del servidor y el del cliente coincidan.
 const [pestañaActiva, setPestañaActiva] = useState<PESTANA>('resumen')
+
+// ========================================
+// ROL Y PERMISOS
+// El dueño administra los roles de su negocio; un miembro entra con
+// los permisos de su rol y ve la data del negocio de su dueño.
+// ========================================
+const {
+  esOwner,
+  rol,
+  loading: cargandoRol,
+  refrescar: refrescarRol,
+} = useRolActual()
+
+const permisos: PermisosRol = esOwner ? PERMISOS_TODOS : (rol?.permisos ?? PERMISOS_NINGUNO)
+
+const pestanasPermitidas = PESTANAS.filter((p) =>
+  puedeVerVista(permisos, p as VistaDashboard)
+)
+
+const puedeVerGananciasVenta = esOwner || permisos.ver_ganancia_venta
+const puedeVerGananciasProducto = esOwner || permisos.ver_ganancia_producto
+const puedeVerKpisVenta = esOwner || permisos.ver_kpis_venta
 
 // Restaura la pestaña activa desde el URL (?v=...) al recargar o compartir enlace.
 useEffect(() => {
   const v = new URLSearchParams(window.location.search).get('v')
   if (v && (PESTANAS as readonly string[]).includes(v)) {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPestañaActiva(v as PESTANA)
   }
 }, [])
 
 const cambiarPestaña = (tab: PESTANA) => {
+  if (!puedeVerVista(permisos, tab as VistaDashboard)) return
   setPestañaActiva(tab)
   const url = tab === 'resumen' ? '/dashboard' : `/dashboard?v=${tab}`
   window.history.replaceState({}, '', url)
 }
+
+// Si la pestaña activa no está permitida para el rol del usuario, se cae a la
+// vista inicial del rol (o a la primera sección permitida).
+const pestanasPermitidasKey = pestanasPermitidas.join(',')
+useEffect(() => {
+  if (cargandoRol) return
+  if (pestanasPermitidas.length === 0) return
+  if (pestanasPermitidas.includes(pestañaActiva)) return
+
+  const vistaRol = rol?.vista_default
+  const destino =
+    vistaRol && pestanasPermitidas.includes(vistaRol)
+      ? vistaRol
+      : pestanasPermitidas[0]
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setPestañaActiva(destino as PESTANA)
+  const url = destino === 'resumen' ? '/dashboard' : `/dashboard?v=${destino}`
+  window.history.replaceState({}, '', url)
+}, [cargandoRol, pestanasPermitidasKey, pestañaActiva, rol?.vista_default])
 // ========================================
 // ETIQUETAS
 // ========================================
@@ -378,6 +440,15 @@ const copiarDatosLocked =
         router.push('/login')
         return
       }
+
+// ========================================
+// NEGOCIO AL QUE PERTENECE EL USUARIO
+// Si es miembro de otro negocio, los datos que ve son los de su dueño.
+// ========================================
+const negocio = await resolverNegocioActual(supabase, user.id)
+const ownerId = negocio.ownerId
+const esDueño = negocio.esOwner
+
 // ========================================
 // PERFIL + TARIFAS EN PARALELO
 // (upsert().select() dispara una sola llamada)
@@ -391,24 +462,30 @@ const [
   { data: profile, error: crearPerfilError },
   { data: tarifasData },
 ] = await Promise.all([
-  supabase
-    .from('profiles')
-    .upsert(
-      {
-        id: user.id,
-      },
-      {
-        onConflict: 'id',
-      }
-    )
-    .select('*')
-    .maybeSingle(),
+  esDueño
+    ? supabase
+        .from('profiles')
+        .upsert(
+          {
+            id: user.id,
+          },
+          {
+            onConflict: 'id',
+          }
+        )
+        .select('*')
+        .maybeSingle()
+    : supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', ownerId)
+        .maybeSingle(),
   supabase
     .from('tarifas_moto')
     .select('tarifas')
     .eq(
       'profile_id',
-      user.id
+      ownerId
     )
     .maybeSingle(),
 ])
@@ -507,7 +584,7 @@ setSlugEmpresa(
 const planEfectivo = computeEffectivePlan(profile ?? {})
 setPlan(planEfectivo.plan)
 setDiasRestantes(planEfectivo.diasRestantes)
-setUserId(user.id)
+setUserId(ownerId)
 setLoading(false)
     }
 
@@ -586,16 +663,30 @@ setLoading(false)
       .catch(() => {})
   }, [userId, plan])
 
-  // Límites por plan (métodos, copiar datos) desde la base de datos
+  // Límites por plan (métodos, copiar datos, miembros) desde la base de datos
   useEffect(() => {
     if (!userId) return
     fetch(`/api/plan/features?user_id=${userId}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d && d.plan) setPlanFeatures(d)
+        if (d && d.plan) {
+          setPlanFeatures(d)
+          setMaxMiembros(d.max_miembros ?? 0)
+          // puedeUsarRoles: solo Business Plus PAGADO (no trial vencido)
+          setPuedeUsarRoles(d.plan === 'business_plus' && d.isPaid)
+        }
       })
       .catch(() => {})
   }, [userId])
+
+  // Banner de trial vencido (Business Plus expirado)
+  useEffect(() => {
+    if (plan === 'business_plus' && diasRestantes !== null && diasRestantes <= 0) {
+      setMostrarBannerTrial(true)
+    } else {
+      setMostrarBannerTrial(false)
+    }
+  }, [plan, diasRestantes])
 
   // Contador de envíos del mes actual (solo relevante en plan Básico)
   useEffect(() => {
@@ -738,11 +829,7 @@ setLoading(false)
 
 async function exportarSeleccionados() {
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) return
+  if (!userId) return
 
   let lista: Envio[] = []
 
@@ -752,7 +839,7 @@ async function exportarSeleccionados() {
       await supabase
         .from('envios')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('metodo', 'SHALOM')
         .eq('estado', 'EMPACADO')
         .in('id', seleccionados)
@@ -781,7 +868,7 @@ async function exportarSeleccionados() {
       await supabase
         .from('envios')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('metodo', 'SHALOM')
         .eq('estado', 'EMPACADO')
 
@@ -1327,7 +1414,7 @@ const fechasAgrupadas = Object.keys(
   }
 )
 
-if (loading) {
+if (loading || cargandoRol) {
   return (
     <LoadingSpinner />
   )
@@ -1370,6 +1457,25 @@ for (
       }}
     />
 
+    {mostrarBannerTrial && (
+      <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-red-800">Tu trial de Business Plus ha terminado</p>
+            <p className="text-sm text-red-700 mt-1">
+              Los miembros de tu equipo han perdido acceso al dashboard.
+              <span className="font-medium"> Renueva tu plan</span> para restaurar su acceso.
+            </p>
+          </div>
+          <button
+            onClick={() => setMostrarUpgrade(true)}
+            className="rounded-xl bg-red-600 px-4 py-2 text-white font-semibold hover:bg-red-700"
+          >
+            Renovar Business Plus
+          </button>
+        </div>
+      </div>
+    )}
     <DashboardMenu
       plan={plan}
       tieneShalom={config.metodoShalom}
@@ -1377,6 +1483,8 @@ for (
       copiarDatosLocked={copiarDatosLocked}
       shalomUso={shalomUso}
       pestañaActiva={pestañaActiva}
+      visibles={pestanasPermitidas}
+      puedeConfigurar={esOwner}
       onNavegar={cambiarPestaña}
       onExportShalom={exportarSeleccionados}
       onCambioMasivo={() => setMostrarModalEstado(true)}
@@ -1418,8 +1526,12 @@ for (
         )
         setMostrarEtiquetas(true)
       }}
+      puedeUsarRoles={puedeUsarRoles}
+      maxMiembros={maxMiembros}
       onCopiarDatos={abrirModalCopiar}
       onConfig={() => setMostrarConfig(true)}
+      onVerRoles={() => setMostrarModalRoles(true)}
+      esOwner={esOwner}
     />
 
     {userId && pestañaActiva === 'resumen' && (
@@ -1428,7 +1540,6 @@ for (
         onNavegar={cambiarPestaña}
         onConfig={() => setMostrarConfig(true)}
         config={config}
-        plan={plan}
       />
     )}
 
@@ -1512,11 +1623,24 @@ for (
          </>
        )}
 
-       {pestañaActiva === 'productos' && <SeccionProductos userId={userId || ''} plan={plan} />}
-       {pestañaActiva === 'ventas' && <SeccionVentas userId={userId || ''} plan={plan} />}
-       {pestañaActiva === 'compras' && <SeccionCompras userId={userId || ''} />}
-       {pestañaActiva === 'gastos' && <SeccionGastos userId={userId || ''} />}
-       {pestañaActiva === 'clientes' && <SeccionClientes userId={userId || ''} />}
+        {pestañaActiva === 'productos' && (
+          <SeccionProductos
+            userId={userId || ''}
+            plan={plan}
+            puedeVerGanancias={puedeVerGananciasProducto}
+          />
+        )}
+        {pestañaActiva === 'ventas' && (
+          <SeccionVentas
+            userId={userId || ''}
+            plan={plan}
+            puedeVerGanancias={puedeVerGananciasVenta}
+            puedeVerKpis={puedeVerKpisVenta}
+          />
+        )}
+        {pestañaActiva === 'compras' && <SeccionCompras userId={userId || ''} />}
+        {pestañaActiva === 'gastos' && <SeccionGastos userId={userId || ''} />}
+        {pestañaActiva === 'clientes' && <SeccionClientes userId={userId || ''} />}
        {pestañaActiva === 'formulario' && (
          <SeccionFormulario
            userId={userId || ''}
@@ -1660,6 +1784,15 @@ for (
   planActual={plan}
   nombreEmpresa={config.empresa}
   userId={userId}
+/>
+
+<ModalRoles
+  abierto={mostrarModalRoles}
+  onCerrar={() => setMostrarModalRoles(false)}
+  onCambio={refrescarRol}
+  plan={plan}
+  maxMiembros={maxMiembros}
+  puedeUsarRoles={puedeUsarRoles}
 />
 
 <FloatingChat />

@@ -17,6 +17,8 @@ type Props = {
   onGuardar?: (ventaActualizada?: Venta) => void
   plan?: string
   userId?: string
+  /** Permiso del rol: si es false, la ganancia no se muestra. */
+  puedeVerGanancias?: boolean
 }
 
 const METODOS_PAGO = [
@@ -34,7 +36,7 @@ type EditItem = {
   costo_unitario?: number
 }
 
-export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = 'basic', userId }: Props) {
+export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = 'basic', userId, puedeVerGanancias = true }: Props) {
   const { startTour } = useOnboarding()
   const [editando, setEditando] = useState(false)
   const [guardando, setGuardando] = useState(false)
@@ -335,7 +337,7 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
                   <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Total</p>
                   <p className="font-bold text-slate-900 text-lg">S/ {venta.total.toFixed(2)}</p>
                 </div>
-                {planNivel(plan) >= 1 ? (
+                {!puedeVerGanancias ? null : planNivel(plan) >= 1 ? (
                   <div className="bg-slate-50 rounded-2xl p-3">
                     <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Ganancia</p>
                     <p className="font-bold text-emerald-600 text-lg">S/ {ganancia.toFixed(2)}</p>

@@ -18,6 +18,7 @@ export type PlanFeature = {
   max_ventas: number | null
   max_exportaciones_shalom: number | null
   max_pedidos_copiar: number | null
+  max_miembros: number | null
 }
 
 export type LimitCheck = {
@@ -207,4 +208,40 @@ export async function registrarExportacionShalom(userId: string, cantidad: numbe
   await supabaseAdmin
     .from('shalom_exports')
     .insert({ user_id: userId, cantidad })
+}
+
+export async function checkRolesLimit(ownerId: string): Promise<LimitCheck> {
+  const { plan, isTrial, isPaid } = await checkTrialStatus(ownerId)
+
+  if (plan !== 'business_plus' || (isTrial && !isPaid)) {
+    return {
+      allowed: false,
+      used: 0,
+      max: 0,
+      reason: 'Requiere plan Business Plus activo',
+    }
+  }
+
+  const { count, error } = await supabaseAdmin
+    .from('business_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('owner_id', ownerId)
+
+  if (error) {
+    return { allowed: false, used: 0, max: 4, reason: 'Error al verificar límite de miembros' }
+  }
+
+  const used = count ?? 0
+  const max = 4
+
+  if (used >= max) {
+    return {
+      allowed: false,
+      used,
+      max,
+      reason: `Límite de ${max} miembros alcanzado en Business Plus`,
+    }
+  }
+
+  return { allowed: true, used, max }
 }

@@ -31,6 +31,8 @@ export const FEATURES: FeatureDef[] = [
   { key: 'cambio_masivo', label: 'Cambio masivo de estados', basic: false, pro: true, business_plus: true, min: 'pro' },
   { key: 'marca_blanca', label: 'Marca blanca en formulario', basic: false, pro: true, business_plus: true, min: 'pro' },
   { key: 'lector_qr', label: 'Lector de QR en ventas', basic: false, pro: false, business_plus: true, min: 'business_plus' },
+  { key: 'roles', label: 'Roles y permisos', basic: false, pro: false, business_plus: true, min: 'business_plus' },
+  { key: 'max_miembros', label: 'Miembros del equipo', basic: '0', pro: '0', business_plus: '4', min: 'business_plus' },
 ]
 
 export const UPGRADE_EVENT = 'open-upgrade'
@@ -98,4 +100,8 @@ export function openUpgrade() {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(UPGRADE_EVENT))
   }
+}
+
+export function canUseRoles(plan?: string | null): boolean {
+  return plan === 'business_plus'
 }

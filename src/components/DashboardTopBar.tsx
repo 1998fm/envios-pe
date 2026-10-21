@@ -82,38 +82,6 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
 
         </div>
       </div>
-      {isTrial && diasRestantes !== null && diasRestantes <= 5 && (
-        <div className="px-4 sm:px-6 pb-4">
-          <div className="rounded-xl bg-amber-50  border border-amber-200  px-4 py-3 flex items-center justify-between gap-3">
-            <p className="text-xs sm:text-sm text-amber-800 ">
-              {diasRestantes === 0
-                ? 'Tu prueba gratuita termina hoy. Actualiza a Pro o Business Plus para no perder tus funciones.'
-                : `Tu prueba gratuita termina en ${diasRestantes} día${diasRestantes !== 1 ? 's' : ''}.`}
-            </p>
-            <button
-              onClick={onUpgrade}
-              className="shrink-0 text-xs font-semibold text-amber-800  underline hover:no-underline"
-            >
-              Ver planes
-            </button>
-          </div>
-        </div>
-      )}
-      {!isTrial && plan === 'basic' && !diasRestantes && (
-        <div className="px-4 sm:px-6 pb-4">
-          <div className="rounded-xl bg-slate-100  border border-slate-200  px-4 py-3 flex items-center justify-between gap-3">
-            <p className="text-xs sm:text-sm text-slate-600 ">
-              Estás en el plan Básico. Actualiza a Pro o Business Plus para más funciones.
-            </p>
-          <button
-            onClick={onUpgrade}
-            className="shrink-0 text-xs font-semibold text-sky-600  underline hover:no-underline"
-          >
-            Ver planes
-          </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

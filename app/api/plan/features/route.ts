@@ -23,5 +23,6 @@ export async function GET(request: Request) {
     max_ventas: features?.max_ventas ?? null,
     max_exportaciones_shalom: features?.max_exportaciones_shalom ?? null,
     max_pedidos_copiar: features?.max_pedidos_copiar ?? null,
+    max_miembros: features?.max_miembros ?? null,
   })
 }

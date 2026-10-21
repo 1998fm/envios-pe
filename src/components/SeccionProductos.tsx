@@ -18,6 +18,8 @@ import { comprimirImagen, rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 type Props = {
   userId: string
   plan?: string
+  /** Permiso del rol: si es false, se ocultan costos y ganancias de producto. */
+  puedeVerGanancias?: boolean
 }
 
 type FotoPendiente = { blob: Blob; preview: string; kb: number }
@@ -164,7 +166,7 @@ const EJEMPLOS = [
   { nombre: 'Leche 1L', precio_venta: 5.50, precio_compra: 4.00, stock_actual: 60, stock_minimo: 12, unidad: 'L' },
 ]
 
-export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
+export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanancias = true }: Props) {
   const confirmar = useConfirm()
   const supabase = createClient()
   const { startTour } = useOnboarding()
@@ -688,23 +690,27 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
               valor={fmtSoles(valorVentaCatalogo)}
               ayuda="Si vendieras todo el stock"
             />
-            <KpiCatalogo
-              etiqueta="Valor de compra"
-              valor={fmtSoles(valorCompraCatalogo)}
-              ayuda="Lo que te costó ese stock"
-            />
-            <KpiCatalogo
-              etiqueta="Ganancia potencial"
-              valor={fmtSoles(valorVentaCatalogo - valorCompraCatalogo)}
-              ayuda={
-                valorVentaCatalogo > 0
-                  ? `${Math.round(((valorVentaCatalogo - valorCompraCatalogo) / valorVentaCatalogo) * 100)}% de margen`
-                  : 'Carga precios para calcularla'
-              }
-              tono={
-                valorVentaCatalogo - valorCompraCatalogo < 0 ? 'malo' : 'ok'
-              }
-            />
+            {puedeVerGanancias && (
+              <>
+                <KpiCatalogo
+                  etiqueta="Valor de compra"
+                  valor={fmtSoles(valorCompraCatalogo)}
+                  ayuda="Lo que te costó ese stock"
+                />
+                <KpiCatalogo
+                  etiqueta="Ganancia potencial"
+                  valor={fmtSoles(valorVentaCatalogo - valorCompraCatalogo)}
+                  ayuda={
+                    valorVentaCatalogo > 0
+                      ? `${Math.round(((valorVentaCatalogo - valorCompraCatalogo) / valorVentaCatalogo) * 100)}% de margen`
+                      : 'Carga precios para calcularla'
+                  }
+                  tono={
+                    valorVentaCatalogo - valorCompraCatalogo < 0 ? 'malo' : 'ok'
+                  }
+                />
+              </>
+            )}
           </div>
 
           <p className="mt-3 flex items-start gap-1.5 text-[10.5px] leading-relaxed text-tori-100">
@@ -907,8 +913,12 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                 <th className="px-3 py-3.5 text-left">SKU</th>
                 <th className="px-3 py-3.5 text-right">Stock</th>
                 <th className="px-3 py-3.5 text-right">P. venta</th>
-                <th className="px-3 py-3.5 text-right">P. compra</th>
-                <th className="px-3 py-3.5 text-right">Ganancia</th>
+                {puedeVerGanancias && (
+                  <>
+                    <th className="px-3 py-3.5 text-right">P. compra</th>
+                    <th className="px-3 py-3.5 text-right">Ganancia</th>
+                  </>
+                )}
                 <th className="px-3 py-3.5 text-left">Und</th>
                 <th className="px-5 py-3.5 text-right">Acciones</th>
               </tr>
@@ -1051,37 +1061,41 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-3.5 text-right">
-                      {editando ? (
-                        <input
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          type="text"
-                          value={String(editForm.precio_compra ?? 0)}
-                          onChange={(e) => setEditForm({ ...editForm, precio_compra: parseFloat(e.target.value) || 0 })}
-                          className="w-24 rounded-lg border border-tori-400 px-2 py-1 text-right text-sm font-bold tabular-nums outline-none"
-                        />
-                      ) : (
-                        <span className="text-sm font-bold tabular-nums text-slate-500">
-                          {fmtSoles(p.precio_compra)}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3.5 text-right">
-                      {editando ? (
-                        <span className="text-[11px] text-slate-400">—</span>
-                      ) : (
-                        <span
-                          className={`text-sm font-bold tabular-nums ${
-                            p.precio_venta - p.precio_compra >= 0
-                              ? 'text-emerald-600'
-                              : 'text-red-600'
-                          }`}
-                        >
-                          {fmtSoles(p.precio_venta - p.precio_compra)}
-                        </span>
-                      )}
-                    </td>
+                    {puedeVerGanancias && (
+                      <>
+                        <td className="px-3 py-3.5 text-right">
+                          {editando ? (
+                            <input
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              type="text"
+                              value={String(editForm.precio_compra ?? 0)}
+                              onChange={(e) => setEditForm({ ...editForm, precio_compra: parseFloat(e.target.value) || 0 })}
+                              className="w-24 rounded-lg border border-tori-400 px-2 py-1 text-right text-sm font-bold tabular-nums outline-none"
+                            />
+                          ) : (
+                            <span className="text-sm font-bold tabular-nums text-slate-500">
+                              {fmtSoles(p.precio_compra)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3.5 text-right">
+                          {editando ? (
+                            <span className="text-[11px] text-slate-400">—</span>
+                          ) : (
+                            <span
+                              className={`text-sm font-bold tabular-nums ${
+                                p.precio_venta - p.precio_compra >= 0
+                                  ? 'text-emerald-600'
+                                  : 'text-red-600'
+                              }`}
+                            >
+                              {fmtSoles(p.precio_venta - p.precio_compra)}
+                            </span>
+                          )}
+                        </td>
+                      </>
+                    )}
                     <td className="px-3 py-3.5 text-left">
                       {editando ? (
                         <SelectUnidad value={editForm.unidad || 'unidad'} onChange={(v) => setEditForm({ ...editForm, unidad: v })} />
@@ -1543,44 +1557,46 @@ export default function SeccionProductos({ userId, plan = 'basic' }: Props) {
                  </div>
 </div>
 
-                <div className="mt-2.5">
-                  {planNivel(plan) < 1 ? (
-                    <button
-                      onClick={openUpgrade}
-                      className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold flex items-center justify-between bg-slate-50 text-slate-500 border border-dashed border-slate-300 hover:border-sky-300 transition-colors"
-                     title="Disponible en Pro y Business Plus"
-                   >
-                     <span className="flex items-center gap-2">
-                       <Lock size={14} className="text-slate-400" />
-                       Ganancia por venta
-                     </span>
-                     <span className="text-xs font-semibold text-sky-600">Ver planes</span>
-                   </button>
-                 ) : (
-                  (() => {
-                   const ganancia = nuevoForm.precio_venta - nuevoForm.precio_compra
-                   const pct = nuevoForm.precio_venta > 0 ? (ganancia / nuevoForm.precio_venta) * 100 : 0
-                   const positivo = nuevoForm.precio_venta > 0 && ganancia >= 0
-                   const sinDatos = nuevoForm.precio_venta <= 0 && nuevoForm.precio_compra <= 0
-                   return (
-                     <div className={`rounded-xl px-3 py-2.5 text-sm font-semibold flex items-center justify-between ${
-                       sinDatos
-                         ? 'bg-slate-50 text-slate-400'
-                         : positivo
-                         ? 'bg-emerald-50 text-emerald-700'
-                         : 'bg-red-50 text-red-600'
-                     }`}>
-                       <span>Ganancia</span>
-                       <span>
-                         {sinDatos
-                           ? '—'
-                           : `S/ ${ganancia.toFixed(2)} · ${pct.toFixed(0)}%`}
-                       </span>
-                     </div>
-                   )
-                  })()
-                 )}
-               </div>
+                {puedeVerGanancias && (
+                  <div className="mt-2.5">
+                    {planNivel(plan) < 1 ? (
+                      <button
+                        onClick={openUpgrade}
+                        className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold flex items-center justify-between bg-slate-50 text-slate-500 border border-dashed border-slate-300 hover:border-sky-300 transition-colors"
+                         title="Disponible en Pro y Business Plus"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Lock size={14} className="text-slate-400" />
+                          Ganancia por venta
+                        </span>
+                        <span className="text-xs font-semibold text-sky-600">Ver planes</span>
+                      </button>
+                    ) : (
+                     (() => {
+                      const ganancia = nuevoForm.precio_venta - nuevoForm.precio_compra
+                      const pct = nuevoForm.precio_venta > 0 ? (ganancia / nuevoForm.precio_venta) * 100 : 0
+                      const positivo = nuevoForm.precio_venta > 0 && ganancia >= 0
+                      const sinDatos = nuevoForm.precio_venta <= 0 && nuevoForm.precio_compra <= 0
+                      return (
+                        <div className={`rounded-xl px-3 py-2.5 text-sm font-semibold flex items-center justify-between ${
+                          sinDatos
+                            ? 'bg-slate-50 text-slate-400'
+                            : positivo
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-red-50 text-red-600'
+                        }`}>
+                          <span>Ganancia</span>
+                          <span>
+                            {sinDatos
+                              ? '—'
+                              : `S/ ${ganancia.toFixed(2)} · ${pct.toFixed(0)}%`}
+                          </span>
+                        </div>
+                      )
+                     })()
+                    )}
+                  </div>
+                )}
               <EtiquetaModal icono={Tag} titulo="Unidad de medida" />
               <select
                 value={nuevoForm.unidad}

@@ -5,6 +5,8 @@ import { checkRecordLimit } from '@/lib/planLimits'
 import { descontarStock, sumarStock } from '@/lib/stock'
 import { calcularResumenVentas, type ResumenVentas } from '@/lib/ventasUI'
 import { buscar, palabrasClave } from '@/lib/buscar'
+import { getSessionUser } from '@/lib/ownerAuth'
+import { resolverNegocioActual } from '@/lib/rolesClient'
 
 const r2 = (n: number) => Math.round(n * 100) / 100
 
@@ -12,6 +14,64 @@ const r2 = (n: number) => Math.round(n * 100) / 100
 const TOPE_RESUMEN = 5000
 /** Tope de ventas candidatas que se revisan en memoria al buscar. */
 const TOPE_BUSQUEDA = 2000
+
+/**
+ * Un miembro cuyo rol no puede ver los KPIs no debe recibirlos ni aunque
+ * abra la respuesta en el devtools. Se deja el conteo de ventas (sirve para
+ * los filtros) y se borran las cifras de dinero.
+ */
+function sinCifrasDeDinero(resumen: ResumenVentas): ResumenVentas {
+  return {
+    ...resumen,
+    monto: 0,
+    cobrado: 0,
+    porCobrar: 0,
+    ticketPromedio: 0,
+    costo: 0,
+    ganancia: 0,
+    pctGanancia: 0,
+    gananciaPorCobrar: 0,
+  }
+}
+
+/**
+ * Lo mismo para las ganancias: un rol que no puede verlas tampoco las
+ * recibe en la respuesta, aunque la interfaz las oculte.
+ */
+function sinGanancias(resumen: ResumenVentas): ResumenVentas {
+  return {
+    ...resumen,
+    costo: 0,
+    ganancia: 0,
+    pctGanancia: 0,
+    gananciaPorCobrar: 0,
+    ventasSinCosto: 0,
+  }
+}
+
+type PermisosDeVentas = {
+  verKpis: boolean
+  verGanancia: boolean
+}
+
+/**
+ * ¿El que llama puede ver los KPIs de ventas y las ganancias? El dueño y el
+ * super admin siempre. Un miembro, solo si su rol lo permite. Sin sesión no
+ * hay rol que aplicar, así que se deja pasar (comportamiento actual de la API).
+ */
+async function permisosDeVentas(): Promise<PermisosDeVentas> {
+  const sesion = await getSessionUser()
+  if (!sesion) return { verKpis: true, verGanancia: true }
+
+  const res = await resolverNegocioActual(supabaseAdmin, sesion.id)
+  if (res.esOwner || res.esSuperAdmin) return { verKpis: true, verGanancia: true }
+
+  const permisos = res.rol?.permisos
+  return {
+    verKpis: permisos?.ver_kpis_venta === true,
+    verGanancia: permisos?.ver_ganancia_venta === true,
+  }
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -25,6 +85,10 @@ export async function GET(request: Request) {
   if (!userId) {
     return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
   }
+
+  // Solo hace falta averiguar el rol si la respuesta lleva el resumen.
+  const perm = conResumen ? await permisosDeVentas() : { verKpis: true, verGanancia: true }
+  const verKpis = perm.verKpis
 
   // Con palabras multiples el filtrado se hace en memoria (mas abajo), asi que
   // aqui solo se acota el universo con una coincidencia literal de cualquier
@@ -129,6 +193,7 @@ export async function GET(request: Request) {
     )
 
     const total = ordenadas.length
+    const resumen = conResumen ? calcularResumenVentas(ordenadas as never[], total) : undefined
     return NextResponse.json({
       data: ordenadas.slice(offset, offset + limit),
       total,
@@ -137,7 +202,7 @@ export async function GET(request: Request) {
       // El resumen sale de lo que DE VERDAD coincide, no de lo que sobrevivo al
       // pre-filtro: si no, al buscar "polo verde" aparecerian en la franja de
       // arriba cifras de ventas que no se ven en la lista.
-      resumen: conResumen ? calcularResumenVentas(ordenadas as never[], total) : undefined,
+      resumen: resumen ? (verKpis ? resumen : sinCifrasDeDinero(resumen)) : undefined,
     })
   }
 
@@ -172,7 +237,13 @@ export async function GET(request: Request) {
     resumen = calcularResumenVentas(todas ?? [], TOPE_RESUMEN)
   }
 
-  return NextResponse.json({ data, total: count ?? 0, offset, limit, resumen })
+  return NextResponse.json({
+    data,
+    total: count ?? 0,
+    offset,
+    limit,
+    resumen: resumen ? (verKpis ? resumen : sinCifrasDeDinero(resumen)) : undefined,
+  })
 }
 
 export async function POST(request: Request) {
