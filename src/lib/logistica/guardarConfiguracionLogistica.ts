@@ -18,6 +18,9 @@ export function obtenerConfiguracionLogistica(
     logistica_moto_anticipacion:
       config.logisticaMotoAnticipacion,
 
+    logistica_moto_anticipacion_solo_habiles:
+      config.logisticaMotoAnticipacionSoloHabiles ?? false,
+
     logistica_moto_limitar:
       config.logisticaMotoLimitar,
 
@@ -35,6 +38,9 @@ export function obtenerConfiguracionLogistica(
 
     logistica_agencias_anticipacion:
       config.logisticaAgenciasAnticipacion,
+
+    logistica_agencias_anticipacion_solo_habiles:
+      config.logisticaAgenciasAnticipacionSoloHabiles ?? false,
 
     logistica_agencias_limitar:
       config.logisticaAgenciasLimitar,

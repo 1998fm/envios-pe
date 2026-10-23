@@ -355,12 +355,12 @@ export default function ModalConfiguracion({
                         setHora={setter('logisticaMotoHoraCorte')}
                         anticipacion={config.logisticaMotoAnticipacion}
                         setAnticipacion={setter('logisticaMotoAnticipacion')}
+                        soloHabiles={config.logisticaMotoAnticipacionSoloHabiles}
+                        setSoloHabiles={setter('logisticaMotoAnticipacionSoloHabiles')}
                         limitar={config.logisticaMotoLimitar}
                         setLimitar={setter('logisticaMotoLimitar')}
                         cupo={config.logisticaMotoCupo}
                         setCupo={setter('logisticaMotoCupo')}
-                        bloqueado={isBasic}
-                        onUpgrade={onUpgrade}
                       />
 
                       <label className="flex items-center gap-3 cursor-pointer mt-5 pt-4 border-t border-slate-100">
@@ -397,6 +397,8 @@ export default function ModalConfiguracion({
                           setHora={setter('logisticaAgenciasHoraCorte')}
                           anticipacion={config.logisticaAgenciasAnticipacion}
                           setAnticipacion={setter('logisticaAgenciasAnticipacion')}
+                          soloHabiles={config.logisticaAgenciasAnticipacionSoloHabiles}
+                          setSoloHabiles={setter('logisticaAgenciasAnticipacionSoloHabiles')}
                           limitar={config.logisticaAgenciasLimitar}
                           setLimitar={setter('logisticaAgenciasLimitar')}
                           cupo={config.logisticaAgenciasCupo}
@@ -404,8 +406,6 @@ export default function ModalConfiguracion({
                           nombreMetodoOtro={config.nombreMetodoOtro}
                           setNombreMetodoOtro={setter('nombreMetodoOtro')}
                           mostrarNombreMetodo={config.metodoOtro}
-                          bloqueado={isBasic}
-                          onUpgrade={onUpgrade}
                         />
                       </div>
                     )

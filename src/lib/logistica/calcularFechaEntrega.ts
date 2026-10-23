@@ -2,6 +2,7 @@ import { validarHoraCorte } from './validarHoraCorte'
 import { siguienteDiaDisponible } from './siguienteDiaDisponible'
 import { validarCupo } from './validarCupo'
 import { contarEnviosDelDia } from './contarEnviosDelDia'
+import { sumarDiasHabiles } from './sumarDiasHabiles'
 
 import type { ConfiguracionLogistica } from './types'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -20,8 +21,8 @@ export async function calcularFechaEntrega(
       : configuracion.logisticaAgenciasDias
 
   // Respaldo de seguridad: el formulario público ya oculta motorizado cuando el
-// negocio no marcó ningún día, así que esto solo debería ocurrir ante una
-// llamada directa a la API. El lunes evita un loop infinito.
+  // negocio no marcó ningún día, así que esto solo debería ocurrir ante una
+  // llamada directa a la API. El lunes evita un loop infinito.
   const dias =
     Array.isArray(diasConfig) && diasConfig.length > 0
       ? diasConfig
@@ -42,6 +43,11 @@ export async function calcularFechaEntrega(
       ? configuracion.logisticaMotoAnticipacion
       : configuracion.logisticaAgenciasAnticipacion
 
+  const soloHabiles =
+    metodo === 'MOTO'
+      ? Boolean(configuracion.logisticaMotoAnticipacionSoloHabiles)
+      : Boolean(configuracion.logisticaAgenciasAnticipacionSoloHabiles)
+
   const limitar =
     metodo === 'MOTO'
       ? configuracion.logisticaMotoLimitar
@@ -52,19 +58,23 @@ export async function calcularFechaEntrega(
       ? configuracion.logisticaMotoCupo
       : configuracion.logisticaAgenciasCupo
 
-// Normalizar fechaActual a Perú (evita que UTC adelante el día)
-const peruStr = fechaActual.toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
-const [y, m, d] = peruStr.split('-').map(Number)
-const hoyPeru = new Date(y, m - 1, d, 12, 0, 0, 0)
+  // Normalizar fechaActual a Perú (evita que UTC adelante el día)
+  const peruStr = fechaActual.toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+  const [y, m, d] = peruStr.split('-').map(Number)
+  const hoyPeru = new Date(y, m - 1, d, 12, 0, 0, 0)
 
-let fechaEntrega = new Date(hoyPeru)
+  const diasAgregar =
+    usaHora && validarHoraCorte(horaCorte)
+      ? Number(anticipacion || 0) + 1
+      : Number(anticipacion || 0)
 
-const diasAgregar =
-  usaHora && validarHoraCorte(horaCorte)
-    ? anticipacion + 1
-    : anticipacion
-
-fechaEntrega.setDate(fechaEntrega.getDate() + diasAgregar)
+  let fechaEntrega: Date
+  if (soloHabiles && Number(anticipacion || 0) >= 2) {
+    fechaEntrega = sumarDiasHabiles(dias, diasAgregar, hoyPeru)
+  } else {
+    fechaEntrega = new Date(hoyPeru)
+    fechaEntrega.setDate(fechaEntrega.getDate() + diasAgregar)
+  }
 
 while (true) {
 

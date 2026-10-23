@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { validarHoraCorte } from '@/lib/logistica/validarHoraCorte'
 import { computeEffectivePlan } from '@/lib/planGating'
+import { sumarDiasHabiles } from '@/lib/logistica/sumarDiasHabiles'
 
 async function contarEnviosDelDia(userId: string, fecha: string): Promise<number> {
   const inicio = new Date(fecha + 'T00:00:00.000Z').toISOString()
@@ -39,9 +40,10 @@ export async function GET(request: NextRequest) {
   const diasDisponibles = diasConfig.length > 0 ? diasConfig : ['MONDAY']
   const usaHora = esPro ? (perfil?.logistica_moto_usa_hora_corte ?? false) : false
   const horaCorte = esPro ? (perfil?.logistica_moto_hora_corte ?? '18:00') : '18:00'
-  const anticipacion = esPro ? (perfil?.logistica_moto_anticipacion ?? 1) : 1
+  const anticipacion = esPro ? Number(perfil?.logistica_moto_anticipacion ?? 1) : 1
+  const soloHabiles = esPro && anticipacion >= 2 ? Boolean(perfil?.logistica_moto_anticipacion_solo_habiles) : false
   const limitar = esPro ? (perfil?.logistica_moto_limitar ?? false) : false
-  const cupo = esPro ? (perfil?.logistica_moto_cupo ?? 0) : 0
+  const cupo = esPro ? Number(perfil?.logistica_moto_cupo ?? 0) : 0
 
   // Normalizar a Perú y determinar offset según hora de corte
   const peruStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
@@ -51,8 +53,10 @@ export async function GET(request: NextRequest) {
   const offset = usaHora && validarHoraCorte(horaCorte) ? anticipacion + 1 : anticipacion
 
   const fechasDisponibles: string[] = []
-  const candidata = new Date(hoyPeru)
-  candidata.setDate(candidata.getDate() + offset)
+  const candidata = soloHabiles ? sumarDiasHabiles(diasDisponibles, offset, hoyPeru) : new Date(hoyPeru)
+  if (!soloHabiles) {
+    candidata.setDate(candidata.getDate() + offset)
+  }
 
   while (fechasDisponibles.length < 3) {
     const nombreDia = candidata

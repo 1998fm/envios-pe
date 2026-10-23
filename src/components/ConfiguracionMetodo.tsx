@@ -14,6 +14,9 @@ type Props = {
   anticipacion: number
   setAnticipacion: React.Dispatch<React.SetStateAction<number>>
 
+  soloHabiles?: boolean
+  setSoloHabiles?: React.Dispatch<React.SetStateAction<boolean>>
+
   limitar: boolean
   setLimitar: React.Dispatch<React.SetStateAction<boolean>>
 
@@ -43,6 +46,9 @@ export default function ConfiguracionMetodo({
 
   anticipacion,
   setAnticipacion,
+
+  soloHabiles = false,
+  setSoloHabiles,
 
   limitar,
   setLimitar,
@@ -140,13 +146,31 @@ export default function ConfiguracionMetodo({
                 value={anticipacion || ''}
                 onChange={(e) => {
                   const val = parseInt(e.target.value, 10)
-                  setAnticipacion(isNaN(val) ? 1 : val)
+                  const next = isNaN(val) ? 1 : val
+                  setAnticipacion(next)
                 }}
                 className="w-24 border border-slate-200 rounded-xl px-4 py-2 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
               />
               <span className="text-xs text-slate-400">días antes (mínimo 1)</span>
             </div>
           </div>
+
+          {anticipacion >= 2 && setSoloHabiles && (
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!soloHabiles}
+                  onChange={(e) => setSoloHabiles(e.target.checked)}
+                  className="accent-sky-600 w-4 h-4"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-slate-700">Aplicar solo a días hábiles</p>
+                  <p className="text-xs text-slate-500">Cuenta la anticipación solo en tus días de atención. Ej: un pedido del viernes con 2 días se entrega el martes, no el lunes.</p>
+                </div>
+              </label>
+            </div>
+          )}
 
           <label className="flex items-center gap-3 cursor-pointer">
             <input

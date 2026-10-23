@@ -52,6 +52,8 @@ export default function OnboardingStep3Logistica({ config, upd }: Props) {
               setHora={setter(upd, 'logisticaMotoHoraCorte', config)}
               anticipacion={config.logisticaMotoAnticipacion}
               setAnticipacion={setter(upd, 'logisticaMotoAnticipacion', config)}
+              soloHabiles={config.logisticaMotoAnticipacionSoloHabiles}
+              setSoloHabiles={setter(upd, 'logisticaMotoAnticipacionSoloHabiles', config)}
               limitar={config.logisticaMotoLimitar}
               setLimitar={setter(upd, 'logisticaMotoLimitar', config)}
               cupo={config.logisticaMotoCupo}
@@ -78,6 +80,8 @@ export default function OnboardingStep3Logistica({ config, upd }: Props) {
               setHora={setter(upd, 'logisticaAgenciasHoraCorte', config)}
               anticipacion={config.logisticaAgenciasAnticipacion}
               setAnticipacion={setter(upd, 'logisticaAgenciasAnticipacion', config)}
+              soloHabiles={config.logisticaAgenciasAnticipacionSoloHabiles}
+              setSoloHabiles={setter(upd, 'logisticaAgenciasAnticipacionSoloHabiles', config)}
               limitar={config.logisticaAgenciasLimitar}
               setLimitar={setter(upd, 'logisticaAgenciasLimitar', config)}
               cupo={config.logisticaAgenciasCupo}
