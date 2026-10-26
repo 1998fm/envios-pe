@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
 
 const DIAS_HISTORICO = 90
 
@@ -16,13 +17,10 @@ const DIAS_HISTORICO = 90
 // encadenar 20 conteos.
 // ============================================================
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
-
-  if (!userId) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
+export async function GET() {
+  const auth = await requireNegocio('ver_resumen')
+  if (!auth.ok) return auth.response
+  const userId = auth.ownerId
 
   const now = new Date()
   const PE = '-05:00'

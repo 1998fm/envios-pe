@@ -1,5 +1,18 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
+import { mensajeDb } from '@/lib/erroresEs'
+
+/** ¿La venta pertenece al negocio del que llama? */
+async function ventaEsDelNegocio(ventaId: string, ownerId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from('ventas')
+    .select('id')
+    .eq('id', ventaId)
+    .eq('profile_id', ownerId)
+    .maybeSingle()
+  return !!data
+}
 
 export type Abono = {
   id: string
@@ -11,7 +24,13 @@ export type Abono = {
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_ventas')
+  if (!auth.ok) return auth.response
   const { id } = await params
+
+  if (!(await ventaEsDelNegocio(id, auth.ownerId))) {
+    return NextResponse.json({ error: 'Venta no encontrada' }, { status: 404 })
+  }
 
   const { data: abonos, error } = await supabaseAdmin
     .from('venta_abonos')
@@ -20,13 +39,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     .order('created_at', { ascending: true })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   return NextResponse.json({ data: abonos })
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_ventas')
+  if (!auth.ok) return auth.response
   const { id } = await params
   const body = await request.json()
   const { monto, metodo_pago, notas } = body
@@ -40,6 +61,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .from('ventas')
     .select('id, total, estado, monto_pagado')
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
     .single()
 
   if (fetchError || !venta) {
@@ -77,7 +99,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .single()
 
   if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(insertError) }, { status: 500 })
   }
 
   const nuevoPagado = Math.round((yaPagado + montoNum) * 100) / 100
@@ -93,6 +115,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .from('ventas')
     .update(updates)
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
     .select('id, estado, total, monto_pagado')
     .single()
 
@@ -104,7 +127,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_ventas')
+  if (!auth.ok) return auth.response
   const { id } = await params
+
+  if (!(await ventaEsDelNegocio(id, auth.ownerId))) {
+    return NextResponse.json({ error: 'Venta no encontrada' }, { status: 404 })
+  }
   const abonoId = new URL(request.url).searchParams.get('abono_id')
 
   if (!abonoId) {
@@ -129,6 +158,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     .from('ventas')
     .select('total, estado, monto_pagado')
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
     .single()
 
   const nuevoPagado = Math.max(0, Number(venta?.monto_pagado ?? 0) - Number(abono.monto))
@@ -140,7 +170,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     .eq('id', abonoId)
 
   if (deleteError) {
-    return NextResponse.json({ error: deleteError.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(deleteError) }, { status: 500 })
   }
 
   const updates: Record<string, any> = {
@@ -153,6 +183,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     .from('ventas')
     .update(updates)
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
     .select('id, estado, total, monto_pagado')
     .single()
 

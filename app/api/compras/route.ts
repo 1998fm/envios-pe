@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 import { sumarStock, restarStock } from '@/lib/stock'
+import { mensajeDb } from '@/lib/erroresEs'
 
 export async function GET(request: Request) {
+  const auth = await requireNegocio('ver_compras')
+  if (!auth.ok) return auth.response
+  const userId = auth.ownerId
+
   const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
   const estado = searchParams.get('estado') || ''
   const offset = parseInt(searchParams.get('offset') || '0')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
-
-  if (!userId) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
 
   let query = supabaseAdmin
     .from('compras')
@@ -28,18 +29,35 @@ export async function GET(request: Request) {
     .range(offset, offset + limit - 1)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   return NextResponse.json({ data, total: count ?? 0, offset, limit })
 }
 
 export async function POST(request: Request) {
-  const body = await request.json()
-  const { user_id, proveedor, items } = body
+  const auth = await requireNegocio('ver_compras')
+  if (!auth.ok) return auth.response
 
-  if (!user_id || !proveedor || !items?.length) {
+  const body = await request.json()
+  const { proveedor, items } = body
+
+  if (!proveedor || !Array.isArray(items) || !items.length) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
+  }
+
+  // Los productos deben ser del propio negocio: si no, se podría sumar stock
+  // (y leer nombres) de productos de otro.
+  const idsProductos = [...new Set(items.map((it: any) => it.producto_id).filter(Boolean))] as string[]
+  if (idsProductos.length > 0) {
+    const { data: propios } = await supabaseAdmin
+      .from('productos')
+      .select('id')
+      .eq('profile_id', auth.ownerId)
+      .in('id', idsProductos)
+    if ((propios?.length ?? 0) !== idsProductos.length) {
+      return NextResponse.json({ error: 'Producto no válido' }, { status: 403 })
+    }
   }
 
   let total = 0
@@ -58,7 +76,7 @@ export async function POST(request: Request) {
   const { data: compra, error } = await supabaseAdmin
     .from('compras')
     .insert({
-      profile_id: user_id,
+      profile_id: auth.ownerId,
       proveedor,
       total,
       estado: 'COMPLETADA',
@@ -67,7 +85,7 @@ export async function POST(request: Request) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   const { error: itemsError } = await supabaseAdmin
@@ -75,7 +93,7 @@ export async function POST(request: Request) {
     .insert(itemsData.map((it: any) => ({ ...it, compra_id: compra.id })))
 
   if (itemsError) {
-    return NextResponse.json({ error: itemsError.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(itemsError) }, { status: 500 })
   }
 
   // Incrementar stock de cada producto (atómico). Si algún producto falla,

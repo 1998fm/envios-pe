@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 import { restarStock } from '@/lib/stock'
+import { mensajeDb } from '@/lib/erroresEs'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_compras')
+  if (!auth.ok) return auth.response
   const { id } = await params
   const body = await request.json()
   const { estado } = body
@@ -16,10 +20,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .from('compras')
     .select('*, items:compra_items(*)')
     .eq('id', id)
-    .single()
+    .eq('profile_id', auth.ownerId)
+    .maybeSingle()
 
   if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(fetchError) }, { status: 500 })
+  }
+  if (!compra) {
+    return NextResponse.json({ error: 'Compra no encontrada' }, { status: 404 })
   }
 
   if (compra.estado !== 'COMPLETADA') {
@@ -42,24 +50,32 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .from('compras')
     .update({ estado, updated_at: new Date().toISOString() })
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
     .select('*, items:compra_items(*)')
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   return NextResponse.json({ data })
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_compras')
+  if (!auth.ok) return auth.response
   const { id } = await params
 
   const { data: compra } = await supabaseAdmin
     .from('compras')
     .select('estado, items:compra_items(producto_id, cantidad)')
     .eq('id', id)
-    .single()
+    .eq('profile_id', auth.ownerId)
+    .maybeSingle()
+
+  if (!compra) {
+    return NextResponse.json({ error: 'Compra no encontrada' }, { status: 404 })
+  }
 
   if (compra?.estado === 'COMPLETADA') {
     for (const item of compra.items) {
@@ -76,9 +92,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     .from('compras')
     .delete()
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })

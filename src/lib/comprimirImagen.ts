@@ -108,9 +108,12 @@ export async function comprimirImagen(
 // Ej: https://xyz.supabase.co/storage/v1/object/public/productos/{uid}/f.jpg
 //  -> '{uid}/f.jpg'
 export function rutaDesdeUrlProducto(url: string): string | null {
-  const marcador = '/object/public/productos/'
-  const i = url.indexOf(marcador)
-  if (i === -1) return null
-  const ruta = url.substring(i + marcador.length)
-  return ruta.length > 0 ? ruta : null
+  for (const marcador of ['/object/public/productos/', '/media/productos/']) {
+    const i = url.indexOf(marcador)
+    if (i !== -1) {
+      const ruta = url.substring(i + marcador.length)
+      return ruta.length > 0 ? ruta : null
+    }
+  }
+  return null
 }

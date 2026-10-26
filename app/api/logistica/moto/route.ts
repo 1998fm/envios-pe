@@ -3,6 +3,7 @@ import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { validarHoraCorte } from '@/lib/logistica/validarHoraCorte'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { sumarDiasHabiles } from '@/lib/logistica/sumarDiasHabiles'
+import { mensajeDb } from '@/lib/erroresEs'
 
 async function contarEnviosDelDia(userId: string, fecha: string): Promise<number> {
   const inicio = new Date(fecha + 'T00:00:00.000Z').toISOString()
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   const esPro = computeEffectivePlan(perfil).plan !== 'basic'

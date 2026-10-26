@@ -1,22 +1,39 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
+import { mensajeDb } from '@/lib/erroresEs'
+
+// `personas` es global a la plataforma; cada negocio solo ve las que tiene
+// vinculadas en `cliente_de`. Cualquier id fuera de ese vínculo se descarta.
+async function personasDelNegocio(ids: unknown[], ownerId: string): Promise<string[]> {
+  const candidatos = ids.filter((x): x is string => typeof x === 'string' && x.length > 0)
+  if (candidatos.length === 0) return []
+  const { data } = await supabaseAdmin
+    .from('cliente_de')
+    .select('persona_id')
+    .eq('profile_id', ownerId)
+    .in('persona_id', candidatos)
+  return (data ?? []).map((r: any) => r.persona_id as string)
+}
 
 function norm(v: string | null | undefined): string {
   return (v || '').replace(/\s+/g, '').toUpperCase()
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_clientes')
+  if (!auth.ok) return auth.response
+  const user_id = auth.ownerId
+
   const { id } = await params
   const { searchParams } = new URL(request.url)
-  const user_id = searchParams.get('user_id')
   const ids = (searchParams.get('ids') || '').split(',').filter(Boolean)
 
-  if (!user_id) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
-
   // Un cliente puede ser un grupo de personas duplicadas (mismo dni o teléfono)
-  const idsPersona = ids.length > 0 ? ids : [id]
+  const idsPersona = await personasDelNegocio(ids.length > 0 ? ids : [id], user_id)
+  if (idsPersona.length === 0) {
+    return NextResponse.json({ error: 'No se encontró el cliente' }, { status: 404 })
+  }
 
   const [{ data: personas, error: perr }, { data: ventas }, { data: envios }] = await Promise.all([
     supabaseAdmin.from('personas').select('*').in('id', idsPersona),
@@ -34,7 +51,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   ])
 
   if (perr) {
-    return NextResponse.json({ error: perr.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(perr) }, { status: 500 })
   }
   if (!personas || personas.length === 0) {
     return NextResponse.json({ error: 'No se encontró el cliente' }, { status: 404 })
@@ -78,20 +95,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_clientes')
+  if (!auth.ok) return auth.response
+  const user_id = auth.ownerId
+
   const { id } = await params
   const body = await request.json()
-  const { user_id, nombre, dni, telefono } = body
-
-  if (!user_id) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
+  const { nombre, dni, telefono } = body
 
   // Limpiar datos: sin espacios ni caracteres invisibles
   const dniLimpio = dni !== undefined && dni !== null ? String(dni).replace(/\s+/g, '') : undefined
   const telLimpio = telefono !== undefined && telefono !== null ? String(telefono).replace(/\s+/g, '') : undefined
 
   // Un cliente puede ser un grupo de personas duplicadas (mismo dni o teléfono)
-  const idsPersona = Array.isArray(body.ids) && body.ids.length ? body.ids : [id]
+  const idsPersona = await personasDelNegocio(
+    Array.isArray(body.ids) && body.ids.length ? body.ids : [id],
+    user_id
+  )
+  if (idsPersona.length === 0) {
+    return NextResponse.json({ error: 'No se encontró el cliente' }, { status: 404 })
+  }
 
   const { data: personas, error: fetchError } = await supabaseAdmin
     .from('personas')
@@ -99,7 +122,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .in('id', idsPersona)
 
   if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(fetchError) }, { status: 500 })
   }
   if (!personas || personas.length === 0) {
     return NextResponse.json({ error: 'No se encontró el cliente' }, { status: 404 })
@@ -133,7 +156,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .in('id', idsPersona)
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(updateError) }, { status: 500 })
   }
 
   // Backfill a ventas (datos snapshot del momento de la venta)
@@ -186,15 +209,20 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_clientes')
+  if (!auth.ok) return auth.response
+  const user_id = auth.ownerId
+
   const { id } = await params
-  const body = await request.json()
-  const { user_id } = body
+  const body = await request.json().catch(() => ({}))
 
-  if (!user_id) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
+  const idsPersona = await personasDelNegocio(
+    Array.isArray(body.ids) && body.ids.length ? body.ids : [id],
+    user_id
+  )
+  if (idsPersona.length === 0) {
+    return NextResponse.json({ error: 'No se encontró el cliente' }, { status: 404 })
   }
-
-  const idsPersona = Array.isArray(body.ids) && body.ids.length ? body.ids : [id]
 
   // Quitar el cliente de la lista de este negocio
   await supabaseAdmin
@@ -209,7 +237,12 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       .from('ventas')
       .select('id', { count: 'exact', head: true })
       .eq('persona_id', pid)
-    if (count === 0) {
+    // `personas` es global: solo se borra si ningún otro negocio la usa.
+    const { count: vinculos } = await supabaseAdmin
+      .from('cliente_de')
+      .select('persona_id', { count: 'exact', head: true })
+      .eq('persona_id', pid)
+    if (count === 0 && vinculos === 0) {
       await supabaseAdmin.from('personas').delete().eq('id', pid)
     }
   }

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import Modal from '@/components/ui/Modal'
 import { toast } from 'sonner'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import TourHelpButton from '@/components/TourHelpButton'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
@@ -33,7 +32,6 @@ export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpr
   const [periodo, setPeriodo] = useState<'mensual' | 'trimestral'>('mensual')
   const [loading, setLoading] = useState<string | null>(null)
   const isTrial = planActual === 'pro' || planActual === 'business_plus'
-  const supabase = createClient()
   const { startTour } = useOnboarding()
 
   useEffect(() => {
@@ -53,7 +51,7 @@ export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpr
       const res = await fetch('/api/mercadopago/create-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, periodo, plan }),
+        body: JSON.stringify({ periodo, plan }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al crear suscripción')

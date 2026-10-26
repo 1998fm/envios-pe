@@ -1,5 +1,6 @@
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { obtenerAgenciasOlva } from '@/lib/olva/agencias'
+import { mensajeDb } from '@/lib/erroresEs'
 
 export type SyncResult = {
   ok: boolean
@@ -45,7 +46,7 @@ export async function ejecutarSyncOlva(): Promise<SyncResult> {
     )
 
   if (upsert.error) {
-    return { ok: false, error: upsert.error.message }
+    return { ok: false, error: mensajeDb(upsert.error) }
   }
 
   // Marcar como inactivas las agencias que Olva ya no reporta.
@@ -58,7 +59,7 @@ export async function ejecutarSyncOlva(): Promise<SyncResult> {
     .eq('activa', true)
 
   if (errActivas) {
-    return { ok: false, error: errActivas.message }
+    return { ok: false, error: mensajeDb(errActivas) }
   }
 
   const porDesactivar = (activas || [])
@@ -72,7 +73,7 @@ export async function ejecutarSyncOlva(): Promise<SyncResult> {
       .in('office_id', porDesactivar)
 
     if (desactivar.error) {
-      return { ok: false, error: desactivar.error.message }
+      return { ok: false, error: mensajeDb(desactivar.error) }
     }
   }
 

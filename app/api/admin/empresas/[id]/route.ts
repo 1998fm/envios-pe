@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
+import { mensajeDb } from '@/lib/erroresEs'
 
 type Body = {
   plan?: string
@@ -66,7 +67,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .maybeSingle()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
   if (!data) {
     return NextResponse.json({ error: 'Empresa no encontrada' }, { status: 404 })

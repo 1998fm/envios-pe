@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { urlHttpSegura } from '@/lib/urlSegura'
 
 import { Store, Package, Truck, ChevronRight } from 'lucide-react'
 import FormHeader from '@/components/FormHeader'
@@ -262,7 +263,8 @@ export default function PublicForm({
   useEffect(() => {
     if (enviado && isPro && redirectUrl) {
       const timer = setTimeout(() => {
-        window.location.href = redirectUrl
+        const destino = urlHttpSegura(redirectUrl)
+        if (destino) window.location.href = destino
       }, 3000)
       return () => clearTimeout(timer)
     }

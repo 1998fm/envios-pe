@@ -12,7 +12,6 @@ import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade, planNivel } from '@/lib/planGating'
 import EtiquetasProducto, { COPIAS_A4_OPCIONES, TAMANOS_ETIQUETA_PRODUCTO, type TamanoEtiquetaProducto } from '@/components/EtiquetasProducto'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { comprimirImagen, rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 
 type Props = {
@@ -168,7 +167,6 @@ const EJEMPLOS = [
 
 export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanancias = true }: Props) {
   const confirmar = useConfirm()
-  const supabase = createClient()
   const { startTour } = useOnboarding()
   const [productos, setProductos] = useState<Producto[]>([])
   const [busqueda, setBusqueda] = useState('')
@@ -314,15 +312,21 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
     }
   }
 
-  // Sube la foto ya comprimida al bucket 'productos' y devuelve su URL pública
+  // Sube la foto ya comprimida (el servidor valida y la guarda) y devuelve su URL pública
   async function subirFoto(foto: FotoPendiente): Promise<string> {
-    const filePath = `${userId}/producto-${Date.now()}.jpg`
-    const { error } = await supabase.storage
-      .from('productos')
-      .upload(filePath, foto.blob, { contentType: 'image/jpeg' })
-    if (error) throw new Error(error.message)
-    const { data } = supabase.storage.from('productos').getPublicUrl(filePath)
-    return data.publicUrl
+    const form = new FormData()
+    form.append('file', foto.blob, 'producto.jpg')
+    const res = await fetch('/api/uploads/producto', { method: 'POST', body: form })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(json.error || 'No se pudo subir la imagen')
+    return json.url as string
+  }
+
+  // Borra del servidor una foto subida que ya no se usa (por ejemplo si falló la creación)
+  async function descartarFoto(ruta: string) {
+    try {
+      await fetch(`/api/uploads/producto?ruta=${encodeURIComponent(ruta)}`, { method: 'DELETE' })
+    } catch {}
   }
 
   function iniciarEdicion(p: Producto) {
@@ -551,7 +555,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
         } else {
           errorAlCrear = true
           if (rutaSubidaVariante) {
-            try { await supabase.storage.from('productos').remove([rutaSubidaVariante]) } catch {}
+            await descartarFoto(rutaSubidaVariante)
           }
         }
       }
@@ -588,7 +592,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
       cargarProductosYConteos()
     } else {
       if (rutaSubida) {
-        try { await supabase.storage.from('productos').remove([rutaSubida]) } catch {}
+        await descartarFoto(rutaSubida)
       }
       if (res.status === 403) {
         const data = await res.json().catch(() => ({}))

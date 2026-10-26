@@ -3,6 +3,7 @@ import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireOwner } from '@/lib/ownerAuth'
 import { esTablaFaltante } from '@/lib/roles'
 import { crearInvitacion, linkDeInvitacion, renovarLink } from '@/lib/invitaciones'
+import { mensajeDb } from '@/lib/erroresEs'
 
 // ============================================================
 // INVITACIONES PENDIENTES
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
 
   if (error) {
     const status = esTablaFaltante(error) ? 409 : 400
-    return NextResponse.json({ error: error.message }, { status })
+    return NextResponse.json({ error: mensajeDb(error) }, { status })
   }
 
   const origin = originDe(request)
@@ -144,7 +145,7 @@ export async function DELETE(request: Request) {
     .eq('owner_id', auth.userId)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 400 })
   }
 
   return NextResponse.json({ ok: true })

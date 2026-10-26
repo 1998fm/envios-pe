@@ -5,8 +5,13 @@ import { checkRecordLimit } from '@/lib/planLimits'
 import { descontarStock, sumarStock } from '@/lib/stock'
 import { calcularResumenVentas, type ResumenVentas } from '@/lib/ventasUI'
 import { buscar, palabrasClave } from '@/lib/buscar'
-import { getSessionUser } from '@/lib/ownerAuth'
-import { resolverNegocioActual } from '@/lib/rolesClient'
+import { requireNegocio } from '@/lib/negocioAuth'
+import { mensajeDb } from '@/lib/erroresEs'
+
+function resumenSegunRol(resumen: ResumenVentas, verKpis: boolean, verGanancia: boolean): ResumenVentas {
+  if (!verKpis) return sinCifrasDeDinero(resumen)
+  return verGanancia ? resumen : sinGanancias(resumen)
+}
 
 const r2 = (n: number) => Math.round(n * 100) / 100
 
@@ -49,46 +54,34 @@ function sinGanancias(resumen: ResumenVentas): ResumenVentas {
   }
 }
 
-type PermisosDeVentas = {
-  verKpis: boolean
-  verGanancia: boolean
-}
-
-/**
- * ¿El que llama puede ver los KPIs de ventas y las ganancias? El dueño y el
- * super admin siempre. Un miembro, solo si su rol lo permite. Sin sesión no
- * hay rol que aplicar, así que se deja pasar (comportamiento actual de la API).
- */
-async function permisosDeVentas(): Promise<PermisosDeVentas> {
-  const sesion = await getSessionUser()
-  if (!sesion) return { verKpis: true, verGanancia: true }
-
-  const res = await resolverNegocioActual(supabaseAdmin, sesion.id)
-  if (res.esOwner || res.esSuperAdmin) return { verKpis: true, verGanancia: true }
-
-  const permisos = res.rol?.permisos
+/** Quita el costo de cada ítem: sin permiso de ganancias no debe salir del servidor. */
+function sinCostoEnItems<T extends { items?: unknown }>(venta: T): T {
+  const items = (venta as { items?: Record<string, unknown>[] }).items
+  if (!Array.isArray(items)) return venta
   return {
-    verKpis: permisos?.ver_kpis_venta === true,
-    verGanancia: permisos?.ver_ganancia_venta === true,
+    ...venta,
+    items: items.map((it) => {
+      const { costo_unitario: _omitido, ...resto } = it
+      return resto
+    }),
   }
 }
 
 export async function GET(request: Request) {
+  const auth = await requireNegocio('ver_ventas')
+  if (!auth.ok) return auth.response
+  const userId = auth.ownerId
+  // Se aplican SIEMPRE, con o sin ?resumen=1: el rol no se puede esquivar
+  // omitiendo un parámetro.
+  const verKpis = auth.permisos.ver_kpis_venta
+  const verGanancia = auth.permisos.ver_ganancia_venta
+
   const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
   const estado = searchParams.get('estado') || ''
   const busqueda = (searchParams.get('busqueda') || '').trim()
   const offset = parseInt(searchParams.get('offset') || '0')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
   const conResumen = searchParams.get('resumen') === '1'
-
-  if (!userId) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
-
-  // Solo hace falta averiguar el rol si la respuesta lleva el resumen.
-  const perm = conResumen ? await permisosDeVentas() : { verKpis: true, verGanancia: true }
-  const verKpis = perm.verKpis
 
   // Con palabras multiples el filtrado se hace en memoria (mas abajo), asi que
   // aqui solo se acota el universo con una coincidencia literal de cualquier
@@ -160,7 +153,7 @@ export async function GET(request: Request) {
       .range(0, TOPE_BUSQUEDA - 1)
 
     if (errBusqueda) {
-      return NextResponse.json({ error: errBusqueda.message }, { status: 500 })
+      return NextResponse.json({ error: mensajeDb(errBusqueda) }, { status: 500 })
     }
 
     const ordenadas = buscar(
@@ -195,14 +188,16 @@ export async function GET(request: Request) {
     const total = ordenadas.length
     const resumen = conResumen ? calcularResumenVentas(ordenadas as never[], total) : undefined
     return NextResponse.json({
-      data: ordenadas.slice(offset, offset + limit),
+      data: ordenadas
+        .slice(offset, offset + limit)
+        .map((v) => (verGanancia ? v : sinCostoEnItems(v))),
       total,
       offset,
       limit,
       // El resumen sale de lo que DE VERDAD coincide, no de lo que sobrevivo al
       // pre-filtro: si no, al buscar "polo verde" aparecerian en la franja de
       // arriba cifras de ventas que no se ven en la lista.
-      resumen: resumen ? (verKpis ? resumen : sinCifrasDeDinero(resumen)) : undefined,
+      resumen: resumen ? resumenSegunRol(resumen, verKpis, verGanancia) : undefined,
     })
   }
 
@@ -217,7 +212,7 @@ export async function GET(request: Request) {
     .range(offset, offset + limit - 1)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   // El resumen alimenta la franja de números y los contadores de los filtros.
@@ -238,19 +233,23 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({
-    data,
+    data: (data ?? []).map((v) => (verGanancia ? v : sinCostoEnItems(v))),
     total: count ?? 0,
     offset,
     limit,
-    resumen: resumen ? (verKpis ? resumen : sinCifrasDeDinero(resumen)) : undefined,
+    resumen: resumen ? resumenSegunRol(resumen, verKpis, verGanancia) : undefined,
   })
 }
 
 export async function POST(request: Request) {
-  const body = await request.json()
-  const { user_id, persona_id, persona_nombre, persona_dni, persona_telefono, items, metodo_pago, estado: estadoSolicitado, monto_pagado: montoPagadoSolicitado } = body
+  const auth = await requireNegocio('ver_ventas')
+  if (!auth.ok) return auth.response
+  const user_id = auth.ownerId
 
-  if (!user_id || !persona_id || !items?.length) {
+  const body = await request.json()
+  const { persona_id, persona_nombre, persona_dni, persona_telefono, items, metodo_pago, estado: estadoSolicitado, monto_pagado: montoPagadoSolicitado } = body
+
+  if (!persona_id || !Array.isArray(items) || !items.length) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
   }
 
@@ -302,7 +301,11 @@ export async function POST(request: Request) {
     const { data: productos } = await supabaseAdmin
       .from('productos')
       .select('id, precio_compra, stock_actual')
+      .eq('profile_id', user_id)
       .in('id', productoIds)
+    if ((productos?.length ?? 0) !== new Set(productoIds).size) {
+      return NextResponse.json({ error: 'Producto no válido' }, { status: 403 })
+    }
     const costoPorId = new Map((productos || []).map((p: any) => [p.id, p.precio_compra ?? 0]))
     for (const p of productos || []) {
       stockPorId.set(p.id, p.stock_actual ?? 0)
@@ -376,7 +379,7 @@ export async function POST(request: Request) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   const { error: itemsError } = await supabaseAdmin
@@ -387,7 +390,7 @@ export async function POST(request: Request) {
     // Bug 3: si fallan los items, borrar la venta recién creada para no dejar
     // una venta huérfana (el stock aún no se ha descontado).
     await supabaseAdmin.from('ventas').delete().eq('id', venta.id)
-    return NextResponse.json({ error: itemsError.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(itemsError) }, { status: 500 })
   }
 
   // Vincular la venta al envío pendiente más reciente del cliente. Mientras el

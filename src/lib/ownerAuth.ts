@@ -1,6 +1,7 @@
 import { cookies, headers } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { supabaseAnonKey, supabaseUrl } from '@/lib/supabaseEnv'
 
 // ============================================================
 // Autenticación de "dueño de negocio".
@@ -17,8 +18,8 @@ export async function getSessionUser(): Promise<{ id: string; email?: string | n
   const headerStore = await headers()
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl(),
+    supabaseAnonKey(),
     {
       cookies: {
         getAll() {

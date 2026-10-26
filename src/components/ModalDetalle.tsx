@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, type ReactNode } from 'react'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import { api } from '@/lib/clienteApi'
 import type { Envio } from '@/types/envio'
 import {
   Package,
@@ -161,7 +161,6 @@ function InfoTile({
 }
 
 export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Props) {
-  const supabase = createClient()
   const confirmar = useConfirm()
   const [fechaProgramada, setFechaProgramada] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -190,91 +189,14 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
 
   async function cargarVentasCliente() {
     setLoadingVentas(true)
-
-    let idsVentas: string[] = []
-    let ventas: any[] = []
-
-    // 1) Ventas ya vinculadas directamente a este envío (relación confiable).
-    //    No se filtran por estado_envio: al pasar el envío a ENVIADO las ventas
-    //    quedan como COMPLETADO y deben seguir viéndose (historial del pedido).
-    const { data: porEnvio, error: errEnvio } = await supabase
-      .from('ventas')
-      .select('*')
-      .eq('envio_id', current.id)
-      .in('estado', ['COMPLETADA', 'PENDIENTE'])
-      .order('created_at', { ascending: false })
-
-    if (!errEnvio && porEnvio && porEnvio.length > 0) {
-      ventas = porEnvio
-    } else {
-      // 2) Respaldo para datos sin vincular: localizar las ventas del cliente
-      //    por DNI o teléfono directamente en la tabla de ventas. Una misma
-      //    clienta puede tener personas duplicadas, así que el cruce por
-      //    persona_id solo no alcanza. Se buscan ventas aún libres o ya
-      //    asignadas a este envío para no mezclar pedidos de la misma clienta.
-      const condiciones = []
-      if (current.dni?.trim()) condiciones.push(`persona_dni.ilike.%${current.dni.trim()}%`)
-      if (current.telefono?.trim()) condiciones.push(`persona_telefono.ilike.%${current.telefono.trim()}%`)
-      if (condiciones.length > 0) {
-        const { data } = await supabase
-          .from('ventas')
-          .select('*')
-          .eq('profile_id', current.user_id)
-          .or(condiciones.join(','))
-          .in('estado', ['COMPLETADA', 'PENDIENTE'])
-          .not('estado_envio', 'eq', 'COMPLETADO')
-          .order('created_at', { ascending: false })
-          .limit(100)
-        // Solo ventas que NO estén ya asignadas a otro envío (evita mezclar
-        // productos de pedidos distintos del mismo cliente)
-        ventas = (data || []).filter(
-          (v: any) =>
-            v.envio_id === null ||
-            v.envio_id === undefined ||
-            v.envio_id === current.id
-        )
-      }
-    }
-
-    // Deduplicar si algún flujo devolvió la misma venta dos veces
-    idsVentas = [...new Set(ventas.map((v: any) => v.id))]
-
-    if (idsVentas.length === 0) {
+    try {
+      // El servidor arma el detalle: ventas ligadas al pedido (o, si no hay, las
+      // del cliente por DNI/teléfono aún libres) con sus ítems.
+      const { data } = await api<{ data: VentaConItems[] }>(`/api/envios/${current.id}/ventas`)
+      setVentasCliente(data)
+    } catch {
       setVentasCliente([])
-      setLoadingVentas(false)
-      return
     }
-
-    const { data: itemsData } = await supabase
-      .from('venta_items')
-      .select('*')
-      .in('venta_id', idsVentas)
-
-    const itemsPorVenta = new Map<string, VentaItemInfo[]>()
-    for (const item of itemsData || []) {
-      const lista = itemsPorVenta.get(item.venta_id) || []
-      lista.push({
-        id: item.id,
-        venta_id: item.venta_id,
-        producto_nombre: item.producto_nombre,
-        cantidad: item.cantidad,
-        precio_unitario: item.precio_unitario,
-        subtotal: item.subtotal,
-      })
-      itemsPorVenta.set(item.venta_id, lista)
-    }
-
-    const ventasConItems: VentaConItems[] = ventas.map((venta: any) => ({
-      id: venta.id,
-      codigo: venta.codigo,
-      estado: venta.estado,
-      estado_envio: venta.estado_envio || 'PENDIENTE',
-      total: venta.total,
-      persona_nombre: venta.persona_nombre,
-      items: itemsPorVenta.get(venta.id) || [],
-    }))
-
-    setVentasCliente(ventasConItems)
     setLoadingVentas(false)
   }
 
@@ -282,18 +204,15 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     if (!(await confirmar({ message: '¿Está seguro que todo lo listado ha sido empacado?', confirmLabel: 'Sí, validar' }))) return
     setMarcandoEnvio(true)
 
-    const ids = ventasCliente.map((v) => v.id)
-
-    const { error } = await supabase
-      .from('ventas')
-      .update({ estado_envio: 'EMPACADO', envio_id: current.id })
-      .in('id', ids)
-
-    if (error) {
-      toast.error('Error al validar el contenido')
-    } else {
+    try {
+      await api(`/api/envios/${current.id}/ventas`, {
+        method: 'POST',
+        json: { venta_ids: ventasCliente.map((v) => v.id) },
+      })
       toast.success('Contenido del pedido validado')
       cargarVentasCliente()
+    } catch {
+      toast.error('Error al validar el contenido')
     }
     setMarcandoEnvio(false)
   }
@@ -303,15 +222,12 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     setGuardando(true)
     setMensaje('')
     const nuevaFecha = new Date(fechaProgramada + 'T12:00:00').toISOString()
-    const { error } = await supabase
-      .from('envios')
-      .update({ fecha_programada: nuevaFecha })
-      .eq('id', current.id)
-    if (error) {
-      setMensaje('Error al guardar: ' + error.message)
-    } else {
+    try {
+      await api(`/api/envios/${current.id}`, { method: 'PATCH', json: { fecha_programada: nuevaFecha } })
       setMensaje('Fecha actualizada')
       onUpdate?.({ ...current, fecha_programada: nuevaFecha } as Envio)
+    } catch (e) {
+      setMensaje('Error al guardar: ' + (e instanceof Error ? e.message : ''))
     }
     setGuardando(false)
   }
@@ -320,15 +236,12 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     const texto = observacion.trim()
     if (!texto || texto === (current.observaciones || '').trim()) return
     setGuardando(true)
-    const { error } = await supabase
-      .from('envios')
-      .update({ observaciones: texto })
-      .eq('id', current.id)
-    if (error) {
-      toast.error('Error al guardar: ' + error.message)
-    } else {
+    try {
+      await api(`/api/envios/${current.id}`, { method: 'PATCH', json: { observaciones: texto } })
       toast.success('Observación guardada')
       onUpdate?.({ ...current, observaciones: texto } as Envio)
+    } catch (e) {
+      toast.error('Error al guardar: ' + (e instanceof Error ? e.message : ''))
     }
     setGuardando(false)
   }
@@ -336,28 +249,24 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
   async function limpiarObservacion() {
     if (!(await confirmar({ message: '¿Quitar la observación de este pedido?', confirmLabel: 'Sí, quitar' }))) return
     setGuardando(true)
-    const { error } = await supabase
-      .from('envios')
-      .update({ observaciones: null })
-      .eq('id', current.id)
-    if (error) {
-      toast.error('Error al quitar: ' + error.message)
-    } else {
+    try {
+      await api(`/api/envios/${current.id}`, { method: 'PATCH', json: { observaciones: null } })
       toast.success('Observación eliminada')
       setObservacion('')
       onUpdate?.({ ...current, observaciones: null } as Envio)
+    } catch (e) {
+      toast.error('Error al quitar: ' + (e instanceof Error ? e.message : ''))
     }
     setGuardando(false)
   }
 
   async function eliminarEnvio() {
-    const { error } = await supabase
-      .from('envios')
-      .delete()
-      .eq('id', current.id)
-    if (!error) {
+    try {
+      await api(`/api/envios/${current.id}`, { method: 'DELETE' })
       onDelete?.(current.id)
       onCerrar()
+    } catch (e) {
+      toast.error('No se pudo eliminar el pedido: ' + (e instanceof Error ? e.message : ''))
     }
     setConfirmandoEliminar(false)
   }

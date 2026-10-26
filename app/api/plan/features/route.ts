@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server'
+import { requireNegocio } from '@/lib/negocioAuth'
 import { checkTrialStatus, getPlanFeatures, type PlanFeature } from '@/lib/planLimits'
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
-
-  if (!userId) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
+export async function GET() {
+  const auth = await requireNegocio()
+  if (!auth.ok) return auth.response
+  const userId = auth.ownerId
 
   const trial = await checkTrialStatus(userId)
   const features: PlanFeature | null = await getPlanFeatures(trial.plan)

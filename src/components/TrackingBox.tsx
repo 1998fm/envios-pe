@@ -143,22 +143,31 @@ export default function TrackingBox({
 }) {
   const cssVars = formCssVars(colorPrimario ?? '#0284c7', colorSecundario ?? '#4f46e5')
   const [dni, setDni] = useState('')
+  const [telefono, setTelefono] = useState('')
   const [buscando, setBuscando] = useState(false)
   const [envios, setEnvios] = useState<TrackingEnvio[] | null>(null)
   const [error, setError] = useState('')
   const [desplegados, setDesplegados] = useState<Record<string, boolean>>({})
 
   async function buscar() {
-    if (!dni.trim()) {
-      setError('Ingresa tu DNI para consultar tu pedido.')
+    if (!dni.trim() || !telefono.trim()) {
+      setError('Ingresa tu DNI y el teléfono con el que hiciste el pedido.')
       return
     }
     setError('')
     setBuscando(true)
     try {
-      const params = new URLSearchParams({ user_id: userId, dni: dni.trim() })
+      const params = new URLSearchParams({
+        user_id: userId,
+        dni: dni.trim(),
+        telefono: telefono.trim(),
+      })
       const res = await fetch(`/api/tracking?${params.toString()}`)
       const json = await res.json()
+      if (res.status === 429) {
+        setError(json.error || 'Demasiados intentos. Espera unos minutos.')
+        return
+      }
       setEnvios(json.data ?? [])
     } catch {
       setError('No se pudo consultar tu pedido. Intenta nuevamente.')
@@ -206,7 +215,7 @@ export default function TrackingBox({
           </div>
 
           <p className="mt-3 text-sm text-slate-500">
-            Ingresa tu DNI para ver el estado de tus pedidos en este local.
+            Ingresa tu DNI y tu teléfono para ver el estado de tus pedidos en este local.
           </p>
 
           <div className="mt-4 space-y-3">
@@ -217,6 +226,15 @@ export default function TrackingBox({
               onChange={(e) => setDni(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && buscar()}
               placeholder="Tu DNI"
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-[color:var(--tori-c)] focus:outline-none focus:ring-2 focus:ring-[color:var(--tori-c-ring)]"
+            />
+            <input
+              type="text"
+              inputMode="tel"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && buscar()}
+              placeholder="Tu teléfono (el del pedido)"
               className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-[color:var(--tori-c)] focus:outline-none focus:ring-2 focus:ring-[color:var(--tori-c-ring)]"
             />
             <button

@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server'
+import { cronAutorizado } from '@/lib/cronAuth'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { sincronizarPagosMP } from '@/lib/facturacion'
 
 export const dynamic = 'force-dynamic'
 
-// GET: invocado por el cron diario de Vercel.
+// GET: invocado por el cron diario de Vercel (Authorization: Bearer $CRON_SECRET).
 // 1) Reconcilia pagos con MercadoPago (recupera suscripciones autorizadas que
 //    el webhook pudiera haber perdido). 2) Degrada a basic los perfiles cuyo
 //    trial/pro pagado ya venció, para que la columna plan no quede desactualizada.
 export async function GET(request: Request) {
-  const esCron = request.headers.get('x-vercel-cron')
-  if (!esCron) {
+  if (!cronAutorizado(request)) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 

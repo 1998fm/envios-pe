@@ -42,7 +42,8 @@ ALTER TABLE admin_audit_log ENABLE ROW LEVEL SECURITY;
 DO $$
 DECLARE
   target_id uuid;
-  target_email text := 'DOLLAR.MASIVE@GMAIL.COM';
+  -- Reemplaza por TU correo antes de ejecutar (no lo subas a Git).
+  target_email text := 'TU_CORREO_ADMIN@EJEMPLO.COM';
 BEGIN
   SELECT id INTO target_id FROM auth.users WHERE email = lower(target_email) LIMIT 1;
 

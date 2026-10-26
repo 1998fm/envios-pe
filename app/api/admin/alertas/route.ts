@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin } from '@/lib/adminAuth'
 import { computeEffectivePlan } from '@/lib/planGating'
+import { mensajeDb } from '@/lib/erroresEs'
 
 type Alerta = {
   tipo: 'trial' | 'plan_vencido' | 'inactiva' | 'cuota'
@@ -25,7 +26,7 @@ export async function GET() {
     .select('id, empresa, slug, plan, trial_end, pro_until, disabled, created_at')
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   const perfiles = profiles ?? []

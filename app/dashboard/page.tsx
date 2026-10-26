@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import { useEffect, useRef, useState } from 'react'
+import { api, cerrarSesion, ErrorApi, obtenerSesion } from '@/lib/clienteApi'
+import { guardarConfiguracionServidor } from '@/lib/configuracionCliente'
+import { usePolling } from '@/hooks/usePolling'
 import { useRouter } from 'next/navigation'
 import { exportarShalom, MAX_ENVIOS_POR_ARCHIVO } from 'app/f/[slug]/lib/shalomExport'
 import { toast } from 'sonner'
 import { obtenerConfiguracionLogistica } from '@/lib/logistica/guardarConfiguracionLogistica'
-import { sincronizarVentasEnviadas } from '@/lib/sincronizarVentasEnviadas'
 
 import EtiquetasImpresion from '../../src/components/EtiquetasImpresion'
 import ModalEtiquetas from '@/components/ModalEtiquetas'
@@ -41,7 +42,6 @@ import PanelResumen from '@/components/PanelResumen'
 import { ConfigState, initialConfigState } from '@/types/config'
 import type { Envio } from '@/types/envio'
 import { useRolActual } from '@/hooks/useRolActual'
-import { resolverNegocioActual } from '@/lib/rolesClient'
 import {
   PERMISOS_NINGUNO,
   PERMISOS_TODOS,
@@ -71,7 +71,6 @@ import {
 } from '@/lib/tours'
 
 export default function DashboardPage() {
-  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
   const { startTour, active } = useOnboarding()
 
@@ -432,70 +431,18 @@ const copiarDatosLocked =
 
   useEffect(() => {
     async function cargar() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      // Una sola llamada al servidor: sesión, negocio (dueño o miembro), perfil y tarifas.
+      // Si es miembro de otro negocio, los datos que ve son los de su dueño.
+      const sesion = await obtenerSesion().catch(() => null)
 
-      if (!user) {
+      if (!sesion) {
         router.push('/login')
         return
       }
 
-// ========================================
-// NEGOCIO AL QUE PERTENECE EL USUARIO
-// Si es miembro de otro negocio, los datos que ve son los de su dueño.
-// ========================================
-const negocio = await resolverNegocioActual(supabase, user.id)
-const ownerId = negocio.ownerId
-const esDueño = negocio.esOwner
-
-// ========================================
-// PERFIL + TARIFAS EN PARALELO
-// (upsert().select() dispara una sola llamada)
-// ========================================
-
-// IMPORTANTE: usar select('*') para que futuras columnas (pendientes de
-// migración SQL) no hagan fallar toda la consulta. Si una columna nueva
-// aún no existe, simplemente no aparece y se usa el default del código;
-// el plan (plan/trial_end/pro_until) siempre se lee bien.
-const [
-  { data: profile, error: crearPerfilError },
-  { data: tarifasData },
-] = await Promise.all([
-  esDueño
-    ? supabase
-        .from('profiles')
-        .upsert(
-          {
-            id: user.id,
-          },
-          {
-            onConflict: 'id',
-          }
-        )
-        .select('*')
-        .maybeSingle()
-    : supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', ownerId)
-        .maybeSingle(),
-  supabase
-    .from('tarifas_moto')
-    .select('tarifas')
-    .eq(
-      'profile_id',
-      ownerId
-    )
-    .maybeSingle(),
-])
-
-if (crearPerfilError) {
-  console.error(
-    'Error creando perfil:',
-    crearPerfilError
-  )
-}
+      const ownerId = sesion.negocio.ownerId
+      const profile = sesion.profile
+      const tarifasData = { tarifas: sesion.tarifas }
 
 setOrigenShalom(
   profile?.origen_shalom || ''
@@ -591,7 +538,7 @@ setLoading(false)
     }
 
     cargar()
-  }, [router, supabase])
+  }, [router])
 
   // ========================================
   // TRAYECTO GUIADO DE BIENVENIDA
@@ -701,17 +648,15 @@ setLoading(false)
     inicioMes.setHours(0, 0, 0, 0)
     ;(async () => {
       try {
-        const { count } = await supabase
-          .from('envios')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .gte('fecha_registro', inicioMes.toISOString())
+        const { count } = await api<{ count: number }>(
+          `/api/envios/count?desde=${encodeURIComponent(inicioMes.toISOString())}`
+        )
         setEnviosMesCount(count ?? 0)
       } catch {
         setEnviosMesCount(0)
       }
     })()
-  }, [userId, plan, supabase])
+  }, [userId, plan])
 
   // Manejar retorno de MercadoPago
   useEffect(() => {
@@ -729,13 +674,13 @@ setLoading(false)
     }
   }, [])
 
-  async function fetchEnviosPage(offset: number): Promise<{ data: Envio[]; hasMore: boolean }> {
+  async function fetchEnviosPage(offset: number, limite = 50): Promise<{ data: Envio[]; hasMore: boolean }> {
     if (!userId) return { data: [], hasMore: false }
     ultimoFetchEnviosRef.current = Date.now()
     const params = new URLSearchParams({
       user_id: userId,
       offset: String(offset),
-      limit: '50',
+      limit: String(limite),
       busqueda,
       estados: filtrosEstado.join(','),
       metodos: filtrosMetodo.join(','),
@@ -766,48 +711,28 @@ setLoading(false)
     return () => window.removeEventListener('afterprint', limpiar)
   }, [])
 
+  // Si otra sesión crea o cambia pedidos, la lista se actualiza: el navegador
+  // consulta al servidor cada pocos segundos mientras la pestaña está visible
+  // (antes abría una conexión en tiempo real directo contra la base).
+  const enviosRef = useRef<Envio[]>([])
   useEffect(() => {
-    if (!userId) return
-    const recargaLimitada = () => {
-      // Evita dobles recargas cuando la acción la hizo el mismo usuario en esta
-      // pestaña (que ya ha actualizado el estado localmente al guardar).
-      if (Date.now() - ultimoFetchEnviosRef.current < 1500) return
-      fetchEnviosRef.current(0).then((result) => {
-        setEnvios(result.data)
-        setHasMore(result.hasMore)
-      })
-    }
-    const channel = supabase
-      .channel('envios-realtime')
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'envios' },
-        (payload) => {
-          if ((payload.new as any)?.user_id === userId) {
-            recargaLimitada()
-          }
-        },
-      )
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'envios' },
-        (payload) => {
-          const nuevo = payload.new as any
-          if (nuevo?.user_id !== userId) return
-          // Si el filtro actual está activo podría no corresponder, recargamos la
-          // primera página completa para mantener consistencia.
-          recargaLimitada()
-        },
-      )
-      .on('postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'envios' },
-        (payload) => {
-          const viejo = payload.old as any
-          if (viejo?.user_id !== userId) return
-          setEnvios((prev) => prev.filter((e) => e.id !== viejo.id))
-        },
-      )
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [userId])
+    enviosRef.current = envios
+  })
+  const firmaEnvios = (lista: Envio[]) =>
+    lista.map((e) => `${e.id}|${e.estado}|${e.tamano ?? ''}|${e.fecha_programada ?? ''}|${e.observaciones ?? ''}`).join(';')
+
+  usePolling(() => {
+    // Evita dobles recargas cuando la acción la hizo el mismo usuario en esta
+    // pestaña (que ya ha actualizado el estado localmente al guardar).
+    if (Date.now() - ultimoFetchEnviosRef.current < 1500) return
+    const cargados = enviosRef.current.length
+    // Se piden tantos como ya hay en pantalla para no perder las páginas cargadas.
+    fetchEnviosRef.current(0, Math.min(200, Math.max(50, cargados))).then((result) => {
+      if (firmaEnvios(result.data) === firmaEnvios(enviosRef.current)) return
+      setEnvios(result.data)
+      setHasMore(result.hasMore)
+    })
+  }, 10_000, Boolean(userId))
 
   async function cargarMas() {
     const result = await fetchEnviosPage(envios.length)
@@ -835,24 +760,17 @@ async function exportarSeleccionados() {
 
   let lista: Envio[] = []
 
-  if (seleccionados.length > 0) {
-
-    const { data, error } =
-      await supabase
-        .from('envios')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('metodo', 'SHALOM')
-        .eq('estado', 'EMPACADO')
-        .in('id', seleccionados)
-
-    if (error) {
-      toast.error(error.message)
-      return
-    }
-
+  try {
+    // El servidor devuelve solo pedidos SHALOM ya empacados del propio negocio.
+    const ids = seleccionados.length > 0 ? `?ids=${encodeURIComponent(seleccionados.join(','))}` : ''
+    const { data } = await api<{ data: Envio[] }>(`/api/envios/export${ids}`)
     lista = data || []
+  } catch (e) {
+    toast.error(e instanceof ErrorApi ? e.message : 'No se pudo preparar la exportación')
+    return
+  }
 
+  if (seleccionados.length > 0) {
     const descartados = seleccionados.length - lista.length
     if (descartados > 0) {
       toast.warning(
@@ -863,28 +781,10 @@ async function exportarSeleccionados() {
     setMensajeExportar(
       `¿Está seguro que desea exportar los ${lista.length} envíos seleccionados?`
     )
-
   } else {
-
-    const { data, error } =
-      await supabase
-        .from('envios')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('metodo', 'SHALOM')
-        .eq('estado', 'EMPACADO')
-
-    if (error) {
-      toast.error(error.message)
-      return
-    }
-
-    lista = data || []
-
     setMensajeExportar(
       'No hay envíos seleccionados.\n\n¿Desea exportar todos los envíos SHALOM empacados?'
     )
-
   }
 
   if (lista.length === 0) {
@@ -961,42 +861,15 @@ if (marcarComoEnviado) {
       (e) => e.id
     )
 
-  const { error } =
-    await supabase
-      .from('envios')
-      .update({
-        estado: 'ENVIADO',
-      })
-      .in('id', ids)
-
- if (!error) {
-
-  sincronizarVentasEnviadas(ids)
-
-  const {
-  data: { user },
-} = await supabase.auth.getUser()
-
-const { data: nuevosEnvios } =
-  await supabase
-    .from('envios')
-    .select('*')
-    .eq(
-      'user_id',
-      user?.id
-    )
-    .order(
-      'fecha_registro',
-      {
-        ascending: false,
-      }
-    )
-
-setEnvios(
-  nuevosEnvios || []
-)
-
-}
+  try {
+    // El servidor cambia el estado y pasa a COMPLETADO las ventas ligadas.
+    await api('/api/envios/bulk', { method: 'PATCH', json: { ids, estado: 'ENVIADO' } })
+    const recarga = await fetchEnviosPage(0, 200)
+    setEnvios(recarga.data)
+    setHasMore(recarga.hasMore)
+  } catch {
+    // si falla, la lista queda como estaba y el usuario puede reintentar
+  }
 
 }
 
@@ -1068,24 +941,15 @@ async function aplicarCambioMasivo() {
     return
   }
 
-  const { error } =
-    await supabase
-      .from('envios')
-      .update({
-        estado:
-          estadoDestinoMasivo,
-      })
-      .in('id', ids)
-
-  if (error) {
-
-    toast.error(error.message)
-
+  try {
+    // El servidor también pasa a COMPLETADO las ventas ligadas si el destino es ENVIADO.
+    await api('/api/envios/bulk', {
+      method: 'PATCH',
+      json: { ids, estado: estadoDestinoMasivo },
+    })
+  } catch (e) {
+    toast.error(e instanceof ErrorApi ? e.message : 'No se pudo actualizar')
     return
-  }
-
-  if (estadoDestinoMasivo === 'ENVIADO') {
-    sincronizarVentasEnviadas(ids)
   }
 
   setEnvios((prev) =>
@@ -1124,216 +988,26 @@ async function aplicarCambioMasivo() {
 
 async function guardarConfiguracion(overrides: Partial<ConfigState> = {}) {
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) return
-
   const cfg = { ...config, ...overrides }
 
-  let nuevaLogoUrl = config.logoUrl
+  // El servidor valida, sube las imágenes, comprueba el nombre del negocio, aplica
+  // los límites del plan y guarda todo en una sola operación.
+  const r = await guardarConfiguracionServidor(cfg)
 
-  if (config.logoFile) {
-
-    const extension =
-      config.logoFile.name
-        .split('.')
-        .pop()
-
-    const filePath =
-      `${user.id}/logo.${extension}`
-
-    const {
-      error: uploadError,
-    } = await supabase.storage
-      .from('logos')
-      .upload(
-        filePath,
-        config.logoFile,
-        {
-          upsert: true,
-        }
-      )
-
-    if (uploadError) {
-      toast.error(
-        uploadError.message
-      )
-      return
-    }
-
-    const { data } =
-      supabase.storage
-        .from('logos')
-        .getPublicUrl(
-          filePath
-        )
-
-    nuevaLogoUrl =
-      data.publicUrl
-
-    setConfig(prev => ({...prev, logoUrl: nuevaLogoUrl}))
-  }
-
-  let nuevaMsgImagen = cfg.redirectMessageImage
-
-  if (cfg.redirectMessageImageFile) {
-
-    const extension =
-      cfg.redirectMessageImageFile.name
-        .split('.')
-        .pop()
-
-    const filePath =
-      `${user.id}/mensaje-exito.${extension}`
-
-    const {
-      error: uploadError,
-    } = await supabase.storage
-      .from('logos')
-      .upload(
-        filePath,
-        cfg.redirectMessageImageFile,
-        {
-          upsert: true,
-        }
-      )
-
-    if (uploadError) {
-      toast.error(
-        uploadError.message
-      )
-      return
-    }
-
-    const { data } =
-      supabase.storage
-        .from('logos')
-        .getPublicUrl(
-          filePath
-        )
-
-    nuevaMsgImagen =
-      data.publicUrl
-
-    setConfig(prev => ({...prev, redirectMessageImage: nuevaMsgImagen}))
-  }
-
-  const nuevoSlug =
-    config.empresa
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-
-  const { data: slugExistente } = await supabase
-    .from('profiles')
-    .select('slug')
-    .eq('slug', nuevoSlug)
-    .neq('id', user.id)
-    .maybeSingle()
-
-  if (slugExistente) {
-    toast.error('Ya existe otro negocio con ese nombre. Elige un nombre diferente.')
+  if (r.error) {
+    toast.error(r.error)
     return
   }
 
-  const tarifasObj = Object.fromEntries(
-    Object.entries(
-      config.tarifas
-    )
-      .filter(
-        ([_, precio]) =>
-          precio !== ''
-      )
-      .map(
-        ([distrito, precio]) => [
-          distrito,
-          Number(precio),
-        ]
-      )
-  )
+  setConfig(prev => ({
+    ...prev,
+    logoUrl: r.logoUrl ?? prev.logoUrl,
+    redirectMessageImage: r.redirectMessageImage ?? prev.redirectMessageImage,
+    logoFile: null,
+    redirectMessageImageFile: null,
+  }))
 
-  const {
-    data: rpcData,
-    error,
-  } = await supabase.rpc(
-    'guardar_configuracion',
-    {
-      p_profile_id: user.id,
-
-      p_empresa: config.empresa,
-      p_telefono: config.telefonoEmpresa,
-      p_direccion: config.direccionEmpresa,
-      p_slug: nuevoSlug,
-      p_origen_shalom: config.nuevoOrigen,
-      p_logo_url: nuevaLogoUrl,
-
-      p_redirect_url: cfg.redirectUrl,
-      p_redirect_message: cfg.redirectMessage,
-      p_redirect_message_image: nuevaMsgImagen,
-
-      p_instagram_url: config.instagramUrl,
-      p_facebook_url: config.facebookUrl,
-      p_tiktok_url: config.tiktokUrl,
-      p_web_url: config.webUrl,
-      p_whatsapp_url: config.whatsappUrl,
-
-      p_metodo_motorizado: config.metodoMotorizado,
-      p_metodo_shalom: config.metodoShalom,
-      p_metodo_olva: config.metodoOlva,
-      p_metodo_marvisur: config.metodoMarvisur,
-      p_metodo_flores: config.metodoFlores,
-      p_metodo_otro: config.metodoOtro,
-      p_nombre_metodo_otro: config.nombreMetodoOtro,
-      p_metodo_recojo: config.metodoRecojo,
-      p_mensaje_recojo: config.mensajeRecojo,
-
-      p_logistica_moto_dias: config.logisticaMotoDias,
-      p_logistica_moto_usa_hora_corte: plan === 'basic' ? false : config.logisticaMotoUsaHoraCorte,
-      p_logistica_moto_hora_corte: plan === 'basic' ? '18:00' : config.logisticaMotoHoraCorte,
-      p_logistica_moto_anticipacion: plan === 'basic' ? 1 : config.logisticaMotoAnticipacion,
-      p_logistica_moto_anticipacion_solo_habiles: plan === 'basic' ? false : (Number(config.logisticaMotoAnticipacion) >= 2 ? Boolean(config.logisticaMotoAnticipacionSoloHabiles) : false),
-      p_logistica_moto_limitar: plan === 'basic' ? false : config.logisticaMotoLimitar,
-      p_logistica_moto_cupo: plan === 'basic' ? 0 : config.logisticaMotoCupo,
-
-      p_logistica_agencias_dias: config.logisticaAgenciasDias,
-      p_logistica_agencias_usa_hora_corte: plan === 'basic' ? false : config.logisticaAgenciasUsaHoraCorte,
-      p_logistica_agencias_hora_corte: plan === 'basic' ? '18:00' : config.logisticaAgenciasHoraCorte,
-      p_logistica_agencias_anticipacion: plan === 'basic' ? 1 : config.logisticaAgenciasAnticipacion,
-      p_logistica_agencias_anticipacion_solo_habiles: plan === 'basic' ? false : (Number(config.logisticaAgenciasAnticipacion) >= 2 ? Boolean(config.logisticaAgenciasAnticipacionSoloHabiles) : false),
-      p_logistica_agencias_limitar: plan === 'basic' ? false : config.logisticaAgenciasLimitar,
-      p_logistica_agencias_cupo: plan === 'basic' ? 0 : config.logisticaAgenciasCupo,
-
-      p_solicitar_cantidad_productos: cfg.solicitarCantidadProductos,
-      p_mostrar_escoger_fecha: config.mostrarEscogerFecha,
-      p_mostrar_tracking: cfg.mostrarTracking,
-      p_cerrar_formulario: cfg.cerrarFormulario,
-      p_cerrar_formulario_mensaje: cfg.cerradoFormularioMensaje,
-
-      p_moto_region: config.motoRegion,
-      p_cerrar_formulario_dias: cfg.cerrarFormularioDias ?? [],
-      p_color_formulario_primario: cfg.colorPrimario ?? '#0284c7',
-      p_color_formulario_secundario: cfg.colorSecundario ?? '#4f46e5',
-      p_tarifas: tarifasObj,
-    }
-  )
-
-  if (error) {
-    toast.error(error.message)
-    return
-  }
-
-  const errorRpc = Array.isArray(rpcData) ? rpcData[0]?.error_text : null
-  if (errorRpc) {
-    toast.error(errorRpc)
-    return
-  }
-
-  setOrigenShalom(
-    config.nuevoOrigen
-  )
+  if (r.slug) setSlugEmpresa(r.slug)
 
   setOrigenShalom(
     config.nuevoOrigen
@@ -1456,7 +1130,7 @@ for (
       }}
       onUpgrade={() => setMostrarUpgrade(true)}
       onLogout={async () => {
-        await supabase.auth.signOut()
+        await cerrarSesion()
         router.push('/login')
       }}
     />
@@ -1501,25 +1175,15 @@ for (
           seleccionados.includes(envio.id)
         )
 
-        const { data: ventas, error: ventasError } = await supabase
-          .from('ventas')
-          .select('envio_id, items:venta_items(producto_nombre, cantidad)')
-          .in('envio_id', seleccionados)
-
-        if (ventasError) {
-          toast.error('Error al leer los productos: ' + ventasError.message)
+        let productosPorEnvio = new Map<string, { nombre: string; cantidad: number }[]>()
+        try {
+          const { data } = await api<{ data: Record<string, { nombre: string; cantidad: number }[]> }>(
+            `/api/envios/productos?ids=${encodeURIComponent(seleccionados.join(','))}`
+          )
+          productosPorEnvio = new Map(Object.entries(data))
+        } catch (e) {
+          toast.error('Error al leer los productos: ' + (e instanceof Error ? e.message : ''))
           return
-        }
-
-        const productosPorEnvio = new Map<string, { nombre: string; cantidad: number }[]>()
-        for (const venta of ventas || []) {
-          for (const item of venta.items || []) {
-            const lista = productosPorEnvio.get(venta.envio_id) || []
-            const existente = lista.find((p) => p.nombre === item.producto_nombre)
-            if (existente) existente.cantidad += item.cantidad
-            else lista.push({ nombre: item.producto_nombre, cantidad: item.cantidad })
-            productosPorEnvio.set(venta.envio_id, lista)
-          }
         }
 
         setEnviosEtiquetas(

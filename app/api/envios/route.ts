@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
 import { calcularFechaEntrega } from '@/lib/logistica/calcularFechaEntrega'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { checkEnvioLimit } from '@/lib/planLimits'
 import { buscar } from '@/lib/buscar'
+import { mensajeDb } from '@/lib/erroresEs'
 
 export async function GET(request: Request) {
+  const auth = await requireNegocio('ver_envios')
+  if (!auth.ok) return auth.response
+  const userId = auth.ownerId
+
   const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
   const offset = parseInt(searchParams.get('offset') || '0')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
   const busqueda = searchParams.get('busqueda') || ''
@@ -15,10 +20,6 @@ export async function GET(request: Request) {
   const metodos = searchParams.get('metodos')?.split(',').filter(Boolean) || []
   const fechaDesde = searchParams.get('fecha_desde')
   const fechaHasta = searchParams.get('fecha_hasta')
-
-  if (!userId) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
 
   let query = supabaseAdmin
     .from('envios')
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
       .range(0, 9999)
 
     if (errBusqueda) {
-      return NextResponse.json({ error: errBusqueda.message }, { status: 500 })
+      return NextResponse.json({ error: mensajeDb(errBusqueda) }, { status: 500 })
     }
 
     const ordenados = buscar(
@@ -97,7 +98,7 @@ export async function GET(request: Request) {
     .range(offset, offset + limit)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   const hasMore = (data?.length ?? 0) > limit
@@ -110,6 +111,13 @@ export async function GET(request: Request) {
     offset,
     limit,
   })
+}
+
+// El POST es público (formulario del cliente final): cuando devuelve un envío
+// ya existente (duplicado / pedido abierto) no puede exponer sus datos
+// personales a quien solo conoce un DNI o teléfono. Solo lo que el formulario usa.
+function envioPublico(e: { id?: unknown; fecha_programada?: unknown } | null) {
+  return e ? { id: e.id, fecha_programada: e.fecha_programada } : null
 }
 
 export async function POST(req: Request) {
@@ -169,7 +177,7 @@ export async function POST(req: Request) {
       if (!errLlave && porLlave) {
         return NextResponse.json({
           success: true,
-          envio: porLlave,
+          envio: envioPublico(porLlave),
           duplicado: true,
         })
       }
@@ -216,7 +224,7 @@ export async function POST(req: Request) {
     if (duplicado) {
       return NextResponse.json({
         success: true,
-        envio: duplicado,
+        envio: envioPublico(duplicado),
         duplicado: true,
       })
     }
@@ -245,7 +253,7 @@ export async function POST(req: Request) {
     if (duplicadoReciente) {
       return NextResponse.json({
         success: true,
-        envio: duplicadoReciente,
+        envio: envioPublico(duplicadoReciente),
         duplicado: true,
       })
     }
@@ -271,7 +279,7 @@ export async function POST(req: Request) {
         if (mismoDni || mismoTel) {
           return NextResponse.json({
             success: true,
-            envio: e,
+            envio: envioPublico(e),
             pendienteExistente: true,
           })
         }
@@ -411,7 +419,7 @@ export async function POST(req: Request) {
       if (porLlave) {
         return NextResponse.json({
           success: true,
-          envio: porLlave,
+          envio: envioPublico(porLlave),
           duplicado: true,
         })
       }
@@ -420,7 +428,7 @@ export async function POST(req: Request) {
     if (error) {
       return NextResponse.json(
         {
-          error: error.message,
+          error: mensajeDb(error),
         },
         {
           status: 400,

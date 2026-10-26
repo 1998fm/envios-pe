@@ -1,5 +1,6 @@
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { obtenerAgenciasShalom } from '@/lib/shalom/agencias'
+import { mensajeDb } from '@/lib/erroresEs'
 
 export type SyncResult = {
   ok: boolean
@@ -47,7 +48,7 @@ export async function ejecutarSyncShalom(): Promise<SyncResult> {
     )
 
   if (upsert.error) {
-    return { ok: false, error: upsert.error.message }
+    return { ok: false, error: mensajeDb(upsert.error) }
   }
 
   // Marcar como inactivas las agencias que Shalom ya no reporta.
@@ -58,7 +59,7 @@ export async function ejecutarSyncShalom(): Promise<SyncResult> {
     .not('ter_id', 'in', `(${idsRecibidos.join(',')})`)
 
   if (desactivar.error) {
-    return { ok: false, error: desactivar.error.message }
+    return { ok: false, error: mensajeDb(desactivar.error) }
   }
 
   return { ok: true, sincronizadas: agencias.length, version: resultado.version ?? null }

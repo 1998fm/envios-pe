@@ -1,13 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import { api, ErrorApi } from '@/lib/clienteApi'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ToriMascot from '@/components/ToriMascot'
 
 export default function RegisterPage() {
-  const supabase = createClient()
   const router = useRouter()
 
   const [email, setEmail] = useState('')
@@ -15,6 +14,7 @@ export default function RegisterPage() {
   const [empresa, setEmpresa] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [aviso, setAviso] = useState('')
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
@@ -35,14 +35,18 @@ export default function RegisterPage() {
       return
     }
 
-    // Iniciar sesión automáticamente
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    // Con confirmación de correo activa, la cuenta aún no puede iniciar sesión.
+    if (data.requiereConfirmacion) {
+      setAviso('Te enviamos un correo para confirmar tu cuenta. Ábrelo y luego inicia sesión.')
+      setLoading(false)
+      return
+    }
 
-    if (signInError) {
-      setError('Cuenta creada. Intenta iniciar sesión.')
+    // Iniciar sesión automáticamente
+    try {
+      await api('/api/auth/login', { method: 'POST', json: { email, password } })
+    } catch (e) {
+      setError(e instanceof ErrorApi && e.status === 429 ? e.message : 'Cuenta creada. Intenta iniciar sesión.')
       setLoading(false)
       return
     }
@@ -70,6 +74,12 @@ export default function RegisterPage() {
             Registra tu negocio en Tori
           </p>
         </div>
+
+        {aviso && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-700">
+            {aviso}
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50  border border-red-200  rounded-xl px-4 py-3 text-sm text-red-700 ">
@@ -111,11 +121,11 @@ export default function RegisterPage() {
           </label>
           <input
             type="password"
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Mínimo 8 caracteres"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={6}
+            minLength={8}
             className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
           />
         </div>

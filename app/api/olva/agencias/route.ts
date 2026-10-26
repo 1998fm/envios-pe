@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabaseServer } from 'app/f/[slug]/lib/supabase/server'
+import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import agenciasFallback from '@/data/agencias-olva.json'
 
 export const dynamic = 'force-dynamic'
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 //      o la consulta falla (el sistema nunca se queda sin lista).
 export async function GET() {
   try {
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabaseAdmin
       .from('agencias_olva')
       .select(
         'office_id, nombres, direccion, department, province, district, office_type, lat, lng'

@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
+import { mensajeDb } from '@/lib/erroresEs'
+
+const CATEGORIAS_GASTO = ['MATERIALES', 'PASAJES', 'DELIVERY', 'PUBLICIDAD', 'SERVICIOS', 'OTROS']
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_gastos')
+  if (!auth.ok) return auth.response
   const { id } = await params
   const body = await request.json()
+
+  if ('categoria' in body && !CATEGORIAS_GASTO.includes(body.categoria)) {
+    return NextResponse.json({ error: 'Categoría no válida' }, { status: 400 })
+  }
 
   const fields: Record<string, any> = {}
   if ('categoria' in body) fields.categoria = body.categoria
@@ -17,26 +27,37 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .from('gastos')
     .update(fields)
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
     .select()
-    .single()
+    .maybeSingle()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
+  }
+  if (!data) {
+    return NextResponse.json({ error: 'Gasto no encontrado' }, { status: 404 })
   }
 
   return NextResponse.json({ data })
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_gastos')
+  if (!auth.ok) return auth.response
   const { id } = await params
 
-  const { error } = await supabaseAdmin
+  const { data: borrados, error } = await supabaseAdmin
     .from('gastos')
     .delete()
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
+    .select('id')
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
+  }
+  if (!borrados?.length) {
+    return NextResponse.json({ error: 'Gasto no encontrado' }, { status: 404 })
   }
 
   return NextResponse.json({ ok: true })

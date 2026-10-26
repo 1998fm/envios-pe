@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin } from '@/lib/adminAuth'
 import { computeEffectivePlan, type PlanName } from '@/lib/planGating'
+import { mensajeDb } from '@/lib/erroresEs'
 
 export async function GET(request: Request) {
   const auth = await requireSuperAdmin()
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     .select('*')
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   // Mapa de email por usuario (para mostrar en la tabla).

@@ -3,6 +3,7 @@ import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireOwner } from '@/lib/ownerAuth'
 import { esTablaFaltante, esVistaValida, normalizarPermisos } from '@/lib/roles'
 import { checkRolesLimit } from '@/lib/planLimits'
+import { mensajeDb } from '@/lib/erroresEs'
 
 // ============================================================
 // Roles del negocio del usuario autenticado.
@@ -28,7 +29,7 @@ export async function GET() {
       {
         error: esTablaFaltante(rolesError)
           ? 'Falta ejecutar supabase/roles-negocio.sql en Supabase'
-          : rolesError.message,
+          : mensajeDb(rolesError),
         code: rolesError.code,
       },
       { status }
@@ -46,7 +47,7 @@ export async function GET() {
       {
         error: esTablaFaltante(membersError)
           ? 'Falta ejecutar supabase/roles-negocio.sql en Supabase'
-          : membersError.message,
+          : mensajeDb(membersError),
         code: membersError.code,
       },
       { status }
@@ -110,7 +111,7 @@ export async function POST(request: Request) {
       {
         error: esTablaFaltante(error)
           ? 'Falta ejecutar supabase/roles-negocio.sql en Supabase'
-          : error.message,
+          : mensajeDb(error),
       },
       { status }
     )
@@ -154,7 +155,7 @@ export async function PATCH(request: Request) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 400 })
   }
 
   return NextResponse.json({ role: data })
@@ -179,7 +180,7 @@ export async function DELETE(request: Request) {
     .eq('owner_id', auth.userId)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 400 })
   }
 
   return NextResponse.json({ ok: true })

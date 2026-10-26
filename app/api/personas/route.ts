@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
+import { mensajeDb } from '@/lib/erroresEs'
 
 function norm(v: string | null | undefined): string {
   return (v || '').replace(/\s+/g, '').toUpperCase()
@@ -9,11 +11,17 @@ function norm(v: string | null | undefined): string {
 // NO trayendo todas las personas: la tabla puede superar las 1000 filas y un
 // select sin límite se trunca, dejando a los clientes recién registrados fuera.
 export async function GET(request: Request) {
+  // Antes era público y buscaba en TODA la plataforma: cualquiera podía sacar
+  // nombre y teléfono de una persona probando DNIs. Ahora exige sesión y solo
+  // encuentra a los clientes ya vinculados al negocio de quien llama.
+  const auth = await requireNegocio('ver_ventas', 'ver_clientes', 'ver_envios')
+  if (!auth.ok) return auth.response
+  const userId = auth.ownerId
+
   const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
   const busqueda = (searchParams.get('busqueda') || '').trim()
 
-  if (!userId || !busqueda) {
+  if (!busqueda) {
     return NextResponse.json({ data: null })
   }
 
@@ -30,9 +38,20 @@ export async function GET(request: Request) {
     .or(`dni.ilike.${terminoSeguro},telefono.ilike.${terminoSeguro}`)
     .limit(50)
 
-  const data = (personas.data || []).find(
+  const candidatas = (personas.data || []).filter(
     (p: any) => norm(p.dni) === qNorm || norm(p.telefono) === qNorm
   )
+
+  let data: any = null
+  if (candidatas.length > 0) {
+    const { data: vinculos } = await supabaseAdmin
+      .from('cliente_de')
+      .select('persona_id')
+      .eq('profile_id', userId)
+      .in('persona_id', candidatas.map((p: any) => p.id))
+    const propias = new Set((vinculos ?? []).map((v: any) => v.persona_id))
+    data = candidatas.find((p: any) => propias.has(p.id)) ?? null
+  }
 
   if (data) return NextResponse.json({ data })
 
@@ -42,13 +61,17 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const auth = await requireNegocio('ver_ventas', 'ver_clientes', 'ver_envios')
+  if (!auth.ok) return auth.response
+  const user_id = auth.ownerId
+
   const body = await request.json()
-  const { user_id, nombre } = body
+  const { nombre } = body
   const dni = body.dni ? String(body.dni).replace(/\s+/g, '') : null
   const telefono = body.telefono ? String(body.telefono).replace(/\s+/g, '') : null
 
-  if (!user_id || !nombre) {
-    return NextResponse.json({ error: 'user_id y nombre son requeridos' }, { status: 400 })
+  if (!nombre) {
+    return NextResponse.json({ error: 'nombre es requerido' }, { status: 400 })
   }
 
   // Buscar persona existente por DNI o teléfono (comparación normalizada,
@@ -95,6 +118,20 @@ export async function POST(request: Request) {
   }
 
   if (existing) {
+    // `personas` es compartida entre negocios: solo se edita la ficha (y las
+    // ventas) si ya es cliente de este negocio. Si no, solo se vincula.
+    const { data: yaVinculada } = await supabaseAdmin
+      .from('cliente_de')
+      .select('id')
+      .eq('persona_id', existing.id)
+      .eq('profile_id', user_id)
+      .maybeSingle()
+
+    if (!yaVinculada) {
+      await supabaseAdmin.from('cliente_de').insert({ persona_id: existing.id, profile_id: user_id })
+      return NextResponse.json({ data: { id: existing.id } })
+    }
+
     const updates: Record<string, any> = { updated_at: new Date().toISOString() }
     if (dni && existing.dni !== dni) updates.dni = dni
     if (telefono && existing.telefono !== telefono) updates.telefono = telefono
@@ -105,7 +142,11 @@ export async function POST(request: Request) {
     const ventaBackfill: Record<string, any> = { updated_at: new Date().toISOString() }
     if (telefono) ventaBackfill.persona_telefono = telefono
     if (nombre) ventaBackfill.persona_nombre = nombre
-    await supabaseAdmin.from('ventas').update(ventaBackfill).eq('persona_id', existing.id)
+    await supabaseAdmin
+      .from('ventas')
+      .update(ventaBackfill)
+      .eq('persona_id', existing.id)
+      .eq('profile_id', user_id)
     const { data: vinculo } = await supabaseAdmin
       .from('cliente_de')
       .select('id')
@@ -126,7 +167,7 @@ export async function POST(request: Request) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   await supabaseAdmin

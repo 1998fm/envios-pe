@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
 import { coincide } from '@/lib/buscar'
 
 // Normaliza dni/teléfono para comparaciones: quita espacios y caracteres invisibles
@@ -47,13 +48,12 @@ function agruparPersonas(personas: any[]) {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
-  const busqueda = (searchParams.get('busqueda') || '').trim().toLowerCase()
+  const auth = await requireNegocio('ver_clientes')
+  if (!auth.ok) return auth.response
+  const userId = auth.ownerId
 
-  if (!userId) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
+  const { searchParams } = new URL(request.url)
+  const busqueda = (searchParams.get('busqueda') || '').trim().toLowerCase()
 
   const [{ data: vinculos }, { data: ventas }, { data: envios }] = await Promise.all([
     supabaseAdmin

@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useEffect, useState } from 'react'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import { api, obtenerSesion } from '@/lib/clienteApi'
 import { useRouter } from 'next/navigation'
 import ToriMascot from '@/components/ToriMascot'
 
@@ -14,7 +14,6 @@ type Info = {
 
 export default function PaginaInvitacion({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params)
-  const supabase = createClient()
   const router = useRouter()
 
   const [info, setInfo] = useState<Info | null>(null)
@@ -33,9 +32,9 @@ export default function PaginaInvitacion({ params }: { params: Promise<{ token: 
 
     async function cargar() {
       // ¿La persona ya tiene sesión (ya estaba registrada)?
-      const { data } = await supabase.auth.getSession()
+      const sesion = await obtenerSesion().catch(() => null)
       if (!vivo) return
-      setConSesion(!!data.session)
+      setConSesion(!!sesion)
 
       try {
         const res = await fetch(`/api/roles/accept?token=${token}`)
@@ -55,7 +54,7 @@ export default function PaginaInvitacion({ params }: { params: Promise<{ token: 
     return () => {
       vivo = false
     }
-  }, [supabase, token])
+  }, [token])
 
   async function aceptar(e: React.FormEvent) {
     e.preventDefault()
@@ -92,11 +91,9 @@ export default function PaginaInvitacion({ params }: { params: Promise<{ token: 
 
       // Si la cuenta ya existía, hay que iniciar sesión.
       if (!conSesion && json.requiereLogin) {
-        const { error: loginError } = await supabase.auth.signInWithPassword({
-          email: json.email,
-          password,
-        })
-        if (loginError) {
+        try {
+          await api('/api/auth/login', { method: 'POST', json: { email: json.email, password } })
+        } catch {
           setError('Tu cuenta ya existe. Inicia sesión con tu contraseña.')
           setCargando(false)
           return

@@ -1,13 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import { api, ErrorApi } from '@/lib/clienteApi'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ToriMascot from '@/components/ToriMascot'
 
 export default function LoginPage() {
-  const supabase = createClient()
   const router = useRouter()
 
   const [email, setEmail] = useState('')
@@ -24,18 +23,15 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    setLoading(false)
-
-    if (error) {
-      setError(error.message)
+    try {
+      await api('/api/auth/login', { method: 'POST', json: { email, password } })
+    } catch (e) {
+      setLoading(false)
+      setError(e instanceof ErrorApi ? e.message : 'No se pudo iniciar sesión')
       return
     }
 
+    setLoading(false)
     router.push('/dashboard')
   }
 
@@ -44,17 +40,15 @@ export default function LoginPage() {
     setEnviandoReset(true)
     setError('')
 
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-
-    setEnviandoReset(false)
-
-    if (error) {
-      setError(error.message)
+    try {
+      await api('/api/auth/forgot', { method: 'POST', json: { email: resetEmail } })
+    } catch (e) {
+      setEnviandoReset(false)
+      setError(e instanceof ErrorApi ? e.message : 'No se pudo enviar el correo')
       return
     }
 
+    setEnviandoReset(false)
     setResetEnviado(true)
   }
 
@@ -66,16 +60,13 @@ export default function LoginPage() {
           Tu ayudante fiel te espera
         </p>
       </div>
-      <form
-        onSubmit={handleLogin}
-        className="w-full max-w-sm bg-white  border border-slate-200  rounded-2xl p-8 space-y-5 shadow-sm"
-      >
+      <div className="w-full max-w-sm bg-white  border border-slate-200  rounded-2xl p-8 space-y-5 shadow-sm">
         <div className="text-center">
           <h1 className="text-2xl font-extrabold text-slate-900 ">
-            Iniciar sesión
+            {mostrarReset ? 'Recuperar contraseña' : 'Iniciar sesión'}
           </h1>
           <p className="text-sm text-slate-500  mt-1">
-            Accede a tu panel de Tori
+            {mostrarReset ? 'Te enviaremos un enlace a tu correo' : 'Accede a tu panel de Tori'}
           </p>
         </div>
 
@@ -85,34 +76,8 @@ export default function LoginPage() {
           </div>
         )}
 
-        <div className="space-y-1">
-          <label className="text-sm font-semibold text-slate-700 ">
-            Correo electrónico
-          </label>
-          <input
-            type="email"
-            placeholder="correo@ejemplo.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm font-semibold text-slate-700 ">
-            Contraseña
-          </label>
-          <input
-            type="password"
-            placeholder="••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
-          />
-        </div>
-
+        {/* Dos formularios hermanos (no anidados): un <form> dentro de otro es HTML
+            inválido y hacía que "Enviar enlace" también disparara el inicio de sesión. */}
         {mostrarReset ? (
           <form onSubmit={handleResetPassword} className="space-y-3">
             {resetEnviado ? (
@@ -143,14 +108,42 @@ export default function LoginPage() {
             )}
             <button
               type="button"
-              onClick={() => { setMostrarReset(false); setResetEnviado(false) }}
+              onClick={() => { setMostrarReset(false); setResetEnviado(false); setError('') }}
               className="w-full text-sm text-slate-400 hover:text-slate-600 transition-colors"
             >
               Volver al inicio de sesión
             </button>
           </form>
         ) : (
-          <>
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-slate-700 ">
+                Correo electrónico
+              </label>
+              <input
+                type="email"
+                placeholder="correo@ejemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-slate-700 ">
+                Contraseña
+              </label>
+              <input
+                type="password"
+                placeholder="••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full border border-slate-200  rounded-xl px-4 py-3 bg-white  text-slate-900  placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -161,12 +154,12 @@ export default function LoginPage() {
 
             <button
               type="button"
-              onClick={() => setMostrarReset(true)}
+              onClick={() => { setMostrarReset(true); setError('') }}
               className="w-full text-center text-sm text-sky-600 hover:text-sky-700 hover:underline font-medium"
             >
               ¿Olvidaste tu contraseña?
             </button>
-          </>
+          </form>
         )}
 
         <p className="text-center text-sm text-slate-500 ">
@@ -175,7 +168,7 @@ export default function LoginPage() {
             Regístrate
           </Link>
         </p>
-      </form>
+      </div>
     </main>
   )
 }

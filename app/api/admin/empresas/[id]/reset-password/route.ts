@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
+import { mensajeDb } from '@/lib/erroresEs'
+import { mensajeAuth } from '@/lib/erroresEs'
 
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
 
@@ -36,7 +38,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeAuth(error) }, { status: 500 })
   }
 
   const { data: perfil } = await supabaseAdmin

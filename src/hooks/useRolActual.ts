@@ -1,58 +1,39 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
-import { resolverNegocioActual } from '@/lib/rolesClient'
+import { obtenerSesion } from '@/lib/clienteApi'
 import type { ResolucionNegocio } from '@/lib/roles'
 
 // Caché a nivel de módulo para que el dashboard, la topbar y el modal
 // compartan una sola consulta en lugar de disparar varias.
 let cache: ResolucionNegocio | null = null
-let cacheUserId: string | null = null
-let inflight: Promise<ResolucionNegocio> | null = null
+let inflight: Promise<ResolucionNegocio | null> | null = null
 
 export function useRolActual() {
   const [resolucion, setResolucion] = useState<ResolucionNegocio | null>(cache)
   const [loading, setLoading] = useState(cache === null)
 
   const cargar = useCallback(async (forzar = false) => {
-    const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      setLoading(false)
-      return
-    }
-
-    if (!forzar && cache && cacheUserId === user.id) {
+    if (!forzar && cache) {
       setResolucion(cache)
       setLoading(false)
       return
     }
 
-    if (inflight) {
-      const r = await inflight
-      setResolucion(r)
-      setLoading(false)
-      return
+    if (!inflight) {
+      inflight = obtenerSesion()
+        .then((s) => {
+          cache = s?.negocio ?? null
+          return cache
+        })
+        .finally(() => {
+          inflight = null
+        })
     }
 
     setLoading(true)
-    inflight = resolverNegocioActual(supabase, user.id)
-      .then((r) => {
-        cache = r
-        cacheUserId = user.id
-        return r
-      })
-      .finally(() => {
-        inflight = null
-      })
-
     try {
-      const r = await inflight
-      setResolucion(r)
+      setResolucion(await inflight)
     } catch {
       setResolucion(null)
     } finally {
@@ -69,7 +50,6 @@ export function useRolActual() {
 
   const refrescar = useCallback(async () => {
     cache = null
-    cacheUserId = null
     await cargar(true)
   }, [cargar])
 

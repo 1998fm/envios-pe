@@ -1,22 +1,38 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
+import { conImagenesProxy, desdeProxy } from '@/lib/mediaUrl'
 import { checkRecordLimit } from '@/lib/planLimits'
 import { ajustarStock } from '@/lib/stock'
 import { buscar } from '@/lib/buscar'
+import { mensajeDb } from '@/lib/erroresEs'
+
+/** Sin permiso de ganancias por producto, el costo de compra no sale del servidor. */
+function sinCosto<T extends Record<string, unknown>>(p: T, puedeVer: boolean): T {
+  if (puedeVer) return p
+  const { precio_compra: _omitido, ...resto } = p
+  return resto as T
+}
+
+/** Lo que sale hacia el navegador: sin costo si no puede verlo y con imágenes por /media. */
+function salida<T extends Record<string, unknown>>(p: T, puedeVerCosto: boolean): T {
+  return conImagenesProxy(sinCosto(p, puedeVerCosto), ['imagen_url'])
+}
 
 export async function GET(request: Request) {
+  // El catálogo también alimenta los selectores de ventas y compras.
+  const auth = await requireNegocio('ver_productos', 'ver_ventas', 'ver_compras', 'ver_envios')
+  if (!auth.ok) return auth.response
+  const userId = auth.ownerId
+  const verCosto = auth.permisos.ver_ganancia_producto
+
   const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
   const busqueda = searchParams.get('busqueda') || ''
   // Por defecto solo se listan los activos (no archivados). Con archivado=true
   // se listan los archivados, para la vista correspondiente.
   const archivado = searchParams.get('archivado')
   const offset = parseInt(searchParams.get('offset') || '0')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 1000)
-
-  if (!userId) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
 
   let query = supabaseAdmin
     .from('productos')
@@ -36,7 +52,7 @@ export async function GET(request: Request) {
       .range(0, 9999)
 
     if (errTodos) {
-      return NextResponse.json({ error: errTodos.message }, { status: 500 })
+      return NextResponse.json({ error: mensajeDb(errTodos) }, { status: 500 })
     }
 
     const campos = (p: Record<string, unknown>) => [
@@ -53,7 +69,9 @@ export async function GET(request: Request) {
     )
 
     const total = ordenados.length
-    const page = ordenados.slice(offset, offset + limit)
+    const page = ordenados
+      .slice(offset, offset + limit)
+      .map((p) => salida(p, verCosto))
     return NextResponse.json({ data: page, total, offset, limit })
   }
 
@@ -62,28 +80,34 @@ export async function GET(request: Request) {
     .range(offset, offset + limit - 1)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
-  return NextResponse.json({ data, total: count ?? 0, offset, limit })
+  return NextResponse.json({
+    data: (data ?? []).map((p) => salida(p, verCosto)),
+    total: count ?? 0,
+    offset,
+    limit,
+  })
 }
 
 export async function POST(request: Request) {
-  const body = await request.json()
-  const { user_id, nombre, sku, descripcion, precio_venta, precio_compra, stock_actual, stock_minimo, unidad, imagen_url } = body
+  const auth = await requireNegocio('ver_productos')
+  if (!auth.ok) return auth.response
+  const user_id = auth.ownerId
 
-  if (!user_id || !nombre) {
-    return NextResponse.json({ error: 'user_id y nombre son requeridos' }, { status: 400 })
+  const body = await request.json()
+  const { nombre, sku, descripcion, precio_venta, precio_compra, stock_actual, stock_minimo, unidad, imagen_url } = body
+
+  if (!nombre) {
+    return NextResponse.json({ error: 'nombre es requerido' }, { status: 400 })
   }
 
   // La URL de la imagen solo se acepta si apunta al bucket público de productos
   let imagenUrl: string | null = null
-  if (
-    typeof imagen_url === 'string' &&
-    imagen_url.length <= 500 &&
-    imagen_url.includes('/object/public/productos/')
-  ) {
-    imagenUrl = imagen_url
+  const imagenCanonica = typeof imagen_url === 'string' ? desdeProxy(imagen_url) : ''
+  if (imagenCanonica.length <= 500 && imagenCanonica.includes('/object/public/productos/')) {
+    imagenUrl = imagenCanonica
   }
 
   const { allowed, reason } = await checkRecordLimit(user_id, 'productos')
@@ -99,7 +123,7 @@ export async function POST(request: Request) {
       sku: sku || null,
       descripcion: descripcion || null,
       precio_venta: precio_venta ?? 0,
-      precio_compra: precio_compra ?? 0,
+      precio_compra: auth.permisos.ver_ganancia_producto ? (precio_compra ?? 0) : 0,
       stock_actual: 0, // el stock inicial se registra vía ajustarStock (kardex)
       stock_minimo: stock_minimo ?? 0,
       unidad: unidad || 'unidad',
@@ -109,7 +133,7 @@ export async function POST(request: Request) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   // Stock inicial se registra en el kardex como AJUSTE (0 → inicial).
@@ -122,5 +146,7 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ data: { ...data, stock_actual: stockInicial } })
+  return NextResponse.json({
+    data: salida({ ...data, stock_actual: stockInicial }, auth.permisos.ver_ganancia_producto),
+  })
 }
