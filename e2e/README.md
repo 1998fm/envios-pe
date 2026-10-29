@@ -23,6 +23,9 @@ pausa), `E2E_BASE_URL` (probar contra una app ya levantada), `APP_PORT`.
 
 | Archivo | Qué cubre |
 |---|---|
+| `landing.spec.ts` | Landing: simulador, diagnóstico, pestañas, precios, FAQ, móvil sin desbordes |
+| `configuracion.spec.ts` | Modal Configuración: Guardar persiste en la base y se ve al recargar, sin errores de página |
+| `movil.spec.ts` | Celular (360 y 390 px): ninguna pestaña se corta ni se desplaza de lado, barra inferior, acciones de productos al alcance, toque abre el detalle |
 | `auth.spec.ts` | Registro (perfil + prueba de 30 días), validaciones, límite por IP, login/logout, rutas privadas, recuperar contraseña |
 | `core-flows.spec.ts` | Productos y stock, ventas (descuento, anulación, edición, abonos), compras, gastos, clientes, pedidos públicos, límites de plan |
 | `dashboard.spec.ts` | Panel por UI: cada pestaña, cambiar estado/tamaño de pedidos, búsqueda, detalle y borrado, formulario público |

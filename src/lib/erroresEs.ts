@@ -41,6 +41,8 @@ export function mensajeDb(error: unknown, porDefecto = GENERICO): string {
       return 'El sistema está ocupado. Intenta de nuevo en unos segundos.'
     case 'PGRST116':
       return 'No se encontró el registro.'
+    case 'PGRST202':
+    case '42883':
     case 'PGRST205':
     case '42P01':
     case '42703':

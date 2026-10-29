@@ -173,9 +173,13 @@ export async function startStack(opts = {}) {
     }
   }
   await apply('00-bootstrap.sql', readSql(path.join(here, 'sql', '00-bootstrap.sql')))
-  await apply('01-base-tables.sql', readSql(path.join(here, 'sql', '01-base-tables.sql')))
-  for (const f of SCHEMA_ORDER) {
-    await apply(f, readSql(path.join(root, 'supabase', f)))
+  // sinEsquema: solo el esqueleto de Supabase (roles, auth, storage); el llamador
+  // aplica el esquema (lo usa generar-instalacion.mjs --probar).
+  if (!opts.sinEsquema) {
+    await apply('01-base-tables.sql', readSql(path.join(here, 'sql', '01-base-tables.sql')))
+    for (const f of SCHEMA_ORDER) {
+      await apply(f, readSql(path.join(root, 'supabase', f)))
+    }
   }
   log(`esquema listo (${applied.length} scripts)`)
 

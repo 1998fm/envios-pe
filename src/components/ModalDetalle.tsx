@@ -338,14 +338,14 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
     ESTADO_ENVIO_STYLES[current.estado] || ESTADO_ENVIO_STYLES.NO_EMPACADO
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-2 backdrop-blur-sm sm:p-4">
+      <div className="flex max-h-[94vh] supports-[height:100dvh]:max-h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
         {/* Barra superior de color según el estado */}
         <div className={`h-1 w-full shrink-0 ${ESTADO_ENVIO_BAR[current.estado] || 'bg-slate-300'}`} />
 
         {/* ============================ HEADER ============================ */}
-        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-100 bg-white px-6 py-5">
-          <div className="flex min-w-0 items-center gap-3.5">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-slate-100 bg-white px-4 py-4 sm:items-center sm:gap-4 sm:px-6 sm:py-5">
+          <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-3.5 sm:flex-none">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 text-lg font-extrabold text-white shadow-md">
               {envio.nombre.charAt(0).toUpperCase()}
             </div>
@@ -353,7 +353,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Detalle del pedido
               </p>
-              <p className="truncate text-lg font-bold text-slate-900">
+              <p className="break-words text-base font-bold leading-snug text-slate-900 sm:truncate sm:text-lg">
                 {envio.nombre}
                 {envio.codigo && (
                   <span className="ml-2 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500 align-middle ring-1 ring-slate-200">
@@ -378,7 +378,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
           <div className="flex shrink-0 items-center gap-2">
             <span
               data-tour="detalle-envio-estado"
-              className={`inline-block rounded-full px-3 py-1 text-xs font-bold whitespace-nowrap ${estadoEnvioStyle}`}
+              className={`hidden rounded-full px-3 py-1 text-xs font-bold whitespace-nowrap sm:inline-block ${estadoEnvioStyle}`}
             >
               {ESTADO_ENVIO_LABEL[envio.estado] || envio.estado}
             </span>
@@ -394,7 +394,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
         </div>
 
         {/* ============================ BODY ============================ */}
-        <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50/60 px-6 py-5">
+        <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50/60 px-3 py-4 sm:px-6 sm:py-5">
           {/* 1. SEGUIMIENTO */}
           <Card
             title="Seguimiento del pedido"

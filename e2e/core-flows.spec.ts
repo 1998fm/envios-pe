@@ -306,7 +306,7 @@ test.describe('Pedidos (formulario público) y panel', () => {
     expect(r.status(), await r.text()).toBe(200)
     const j = await r.json()
     expect(j.success).toBe(true)
-    expect(j.envio.fecha_programada).toBeTruthy()
+    expect(j.envio.fecha_programada).toMatch(/^\d{4}-\d{2}-\d{2}$/) // solo la fecha: la pantalla de éxito le agrega la hora
 
     // reenviar lo mismo (doble clic) no crea otro
     const otra = await (await publico.post('/api/envios', { data: pedido })).json()

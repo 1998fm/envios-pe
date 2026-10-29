@@ -621,8 +621,8 @@ setLoading(false)
         if (d && d.plan) {
           setPlanFeatures(d)
           setMaxMiembros(d.max_miembros ?? 0)
-          // puedeUsarRoles: solo Business Plus PAGADO (no trial vencido)
-          setPuedeUsarRoles(d.plan === 'business_plus' && d.isPaid)
+          // Roles: Business Plus vigente, también durante la prueba gratuita
+          setPuedeUsarRoles(d.plan === 'business_plus')
         }
       })
       .catch(() => {})
@@ -988,7 +988,9 @@ async function aplicarCambioMasivo() {
 
 async function guardarConfiguracion(overrides: Partial<ConfigState> = {}) {
 
-  const cfg = { ...config, ...overrides }
+  // Si se pasa directo como onClick llega el evento del clic, no un objeto de cambios.
+  const cambios = overrides && Object.getPrototypeOf(overrides) === Object.prototype ? overrides : {}
+  const cfg = { ...config, ...cambios }
 
   // El servidor valida, sube las imágenes, comprueba el nombre del negocio, aplica
   // los límites del plan y guarda todo en una sola operación.
@@ -1115,7 +1117,7 @@ for (
 
   return (
   <main id="dashboard-content"
-    className="min-h-screen bg-slate-50  p-4 sm:p-6 lg:p-8"
+    className="min-h-screen bg-slate-50 p-3 pb-28 sm:p-6 md:pb-6 lg:p-8 lg:pl-[18.5rem]"
   >
     <DashboardTopBar
       logoUrl={config.logoUrl}

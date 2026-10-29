@@ -1,5 +1,6 @@
 'use client'
 
+import { useEsMovil } from '@/hooks/useEsMovil'
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -19,6 +20,7 @@ const fmtSoles = (n: number) => 'S/ ' + n.toLocaleString('es-PE', { minimumFract
 const formVacio = { categoria: 'OTROS', concepto: '', monto: '', fecha: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' }), notas: '' }
 
 export default function SeccionGastos({ userId }: Props) {
+  const esMovil = useEsMovil()
   const confirmar = useConfirm()
   const { startTour } = useOnboarding()
   const [gastos, setGastos] = useState<Gasto[]>([])
@@ -181,7 +183,39 @@ export default function SeccionGastos({ userId }: Props) {
         </div>
       )}
 
-      {gastos.length > 0 && (
+      {gastos.length > 0 && esMovil && (
+        <div data-tour="gastos-tabla" className="space-y-2.5">
+          {gastos.map((g) => (
+            <article key={g.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${CATEGORIA_GASTO_STYLE[g.categoria] || 'bg-slate-100 text-slate-600'}`}>
+                      {CATEGORIA_GASTO_LABEL[g.categoria] || g.categoria}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {new Date(g.fecha + 'T00:00:00').toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 break-words font-semibold text-slate-900">{g.concepto}</p>
+                  {g.notas && <p className="mt-0.5 break-words text-xs text-slate-400">{g.notas}</p>}
+                </div>
+                <p className="shrink-0 text-lg font-extrabold text-red-600">{fmtSoles(g.monto)}</p>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button onClick={() => abrirEdicion(g)} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-sky-50 text-sm font-bold text-sky-700 active:bg-sky-100">
+                  <Pencil size={15} /> Editar
+                </button>
+                <button onClick={() => eliminarGasto(g)} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-red-50 text-sm font-bold text-red-600 active:bg-red-100">
+                  <X size={15} /> Eliminar
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {gastos.length > 0 && !esMovil && (
         <div data-tour="gastos-tabla" className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>

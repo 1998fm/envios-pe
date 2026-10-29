@@ -195,6 +195,53 @@ test.describe('#10 Roles y permisos se aplican en el servidor', () => {
     expect(j.data[0].items[0]).not.toHaveProperty('costo_unitario')
   })
 
+  test('el resumen no filtra dinero ni ganancias a un rol que no puede verlos', async () => {
+    const { dueno, miembro } = await miembroConRol({ ver_resumen: true, ver_envios: true })
+    const apiD = await appApi(dueno.token)
+    const apiM = await appApi(miembro.token)
+    const prod = await crearProducto(apiD, { precio_compra: 30, precio_venta: 100, stock_actual: 20 })
+    await crearVenta(apiD, await crearPersona(apiD), [{ producto_id: prod.id, cantidad: 2, precio_unitario: 100 }])
+    await crearGasto(apiD, { monto: 40 })
+
+    const d = await (await apiD.get('/api/dashboard')).json()
+    expect(d.acceso).toEqual({ dinero: true, ganancia: true, egresos: true })
+    expect(d.hoy.ventas).toBe(200)
+    expect(d.hoy.ganancia).toBe(140)
+    expect(d.kpis.gananciaMes).toBe(140)
+    expect(d.kpis.gastosMes).toBe(40)
+
+    const m = await (await apiM.get('/api/dashboard')).json()
+    expect(m.acceso).toEqual({ dinero: false, ganancia: false, egresos: false })
+    for (const n of [m.hoy.ventas, m.hoy.ganancia, m.kpis.ventasMes, m.kpis.gananciaMes, m.kpis.ventasHoy, m.kpis.saldoDisponible, m.kpis.totalGastos, m.kpis.gastosMes, m.kpis.totalVentas, m.kpis.cobrosPendientesTotal]) {
+      expect(n).toBe(0)
+    }
+    expect(m.historico.ventas.every((h: { total: number }) => h.total === 0)).toBe(true)
+    expect(m.graficos.ventasPorMetodo.every((x: { total: number }) => x.total === 0)).toBe(true)
+  })
+
+  test('con ver_kpis_venta ve lo vendido pero no ganancia ni saldo', async () => {
+    const { dueno, miembro } = await miembroConRol({ ver_resumen: true, ver_kpis_venta: true })
+    const apiD = await appApi(dueno.token)
+    const apiM = await appApi(miembro.token)
+    const prod = await crearProducto(apiD, { precio_compra: 30, precio_venta: 100, stock_actual: 20 })
+    await crearVenta(apiD, await crearPersona(apiD), [{ producto_id: prod.id, cantidad: 1, precio_unitario: 100 }])
+    const m = await (await apiM.get('/api/dashboard')).json()
+    expect(m.acceso).toEqual({ dinero: true, ganancia: false, egresos: false })
+    expect(m.hoy.ventas).toBe(100)
+    expect(m.hoy.ganancia).toBe(0)
+    expect(m.kpis.gananciaMes).toBe(0)
+    expect(m.kpis.saldoDisponible).toBe(0)
+  })
+
+  test('el dueño puede crear roles durante la prueba gratuita de Business Plus', async () => {
+    const dueno = await createUser({ plan: 'business_plus', trial: true })
+    const api = await appApi(dueno.token)
+    const r = await api.post('/api/roles', { data: { nombre: 'Vendedor', vista_default: 'ventas', permisos: { ver_ventas: true } } })
+    expect(r.status(), await r.text()).toBe(200)
+    const f = await (await api.get('/api/plan/features')).json()
+    expect(f.plan).toBe('business_plus')
+  })
+
   test('un permiso no abre otras pestañas: sin ver_gastos → 403, sin ver_productos no hay costo', async () => {
     const { dueno, miembro } = await miembroConRol({ ver_ventas: true })
     const apiD = await appApi(dueno.token)
@@ -679,13 +726,13 @@ test.describe('#11 Datos personales en rutas públicas', () => {
 })
 
 test.describe('#12 Registro', () => {
-  test('el correo queda sin confirmar si el proyecto lo exige y nunca se marca confirmado a la fuerza', async () => {
-    // En el stack local el autoconfirm está activo; lo importante es que /api/register
-    // no pase email_confirm:true. Se comprueba por el contrato: usa signUp, no admin.createUser.
+  test('la app no envía correos al registrar y el alta sigue limitada por IP', async () => {
+    // Decisión de producto: sin correos (el límite gratuito de Supabase es de pocos por
+    // hora). La defensa contra altas masivas es el límite por IP.
     const { readFileSync } = await import('node:fs')
     const fuente = readFileSync('app/api/register/route.ts', 'utf8')
-    expect(fuente).not.toMatch(/email_confirm\s*:\s*true/)
-    expect(fuente).toMatch(/auth\.signUp/)
+    expect(fuente).toMatch(/admin\.createUser/)
+    expect(fuente).not.toMatch(/auth\.signUp/)
     expect(fuente).toMatch(/permitir\(/)
   })
 })

@@ -184,7 +184,10 @@ export async function guardarConfiguracion(
     p_tarifas: tarifas,
   })
 
-  if (error) return { error: mensajeDb(error) }
+  if (error) {
+    console.error('[configuracion] guardar_configuracion falló:', error.code, error.message)
+    return { error: mensajeDb(error) }
+  }
   const errorRpc = Array.isArray(data) ? data[0]?.error_text : null
   if (errorRpc) return { error: errorRpc }
 

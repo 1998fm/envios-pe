@@ -117,7 +117,9 @@ export async function GET(request: Request) {
 // ya existente (duplicado / pedido abierto) no puede exponer sus datos
 // personales a quien solo conoce un DNI o teléfono. Solo lo que el formulario usa.
 function envioPublico(e: { id?: unknown; fecha_programada?: unknown } | null) {
-  return e ? { id: e.id, fecha_programada: e.fecha_programada } : null
+  // Solo la fecha (AAAA-MM-DD): la pantalla de éxito le agrega la hora al mostrarla.
+  const fecha = typeof e?.fecha_programada === 'string' ? e.fecha_programada.slice(0, 10) : e?.fecha_programada
+  return e ? { id: e.id, fecha_programada: fecha } : null
 }
 
 export async function POST(req: Request) {
@@ -595,7 +597,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      envio: data,
+      envio: envioPublico(data),
     })
 } catch (err) {
 

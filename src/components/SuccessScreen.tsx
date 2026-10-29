@@ -128,7 +128,7 @@ export default function SuccessScreen({
               <span>Fecha programada</span>
             </div>
             <div className="text-lg font-bold text-[color:var(--tori-c)] ">
-              {new Date(fechaProgramada + 'T12:00:00').toLocaleDateString('es-PE', {
+              {new Date(fechaProgramada.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-PE', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',

@@ -55,6 +55,7 @@ test.describe('El navegador no conoce la base de datos', () => {
   })
 
   test('dashboard completo (todas las pestañas): nada de la base en el navegador', async ({ page }) => {
+    test.setTimeout(150_000) // 8 navegaciones: la primera visita de cada ruta compila en dev
     const k = await keys()
     const host = new URL(k.url).host
     const cuerpos: { url: string; texto: string }[] = []

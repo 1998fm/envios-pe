@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { permitir } from '@/lib/rateLimit'
-import { supabaseAnonKey, supabaseServiceKey, supabaseUrl } from '@/lib/supabaseEnv'
+import { supabaseServiceKey, supabaseUrl } from '@/lib/supabaseEnv'
 import { mensajeAuth } from '@/lib/erroresEs'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -10,19 +10,10 @@ export async function POST(request: Request) {
     supabaseUrl(),
     supabaseServiceKey()
   )
-  // El alta del usuario va por el flujo normal de signUp (con la clave
-  // pública) para que Supabase envíe el correo de confirmación.
-  const supabaseAnon = createClient(
-    supabaseUrl(),
-    supabaseAnonKey()
-  )
-
   const body = await request.json().catch(() => ({}))
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
   const password = typeof body.password === 'string' ? body.password : ''
   const empresa = typeof body.empresa === 'string' ? body.empresa.trim() : ''
-  // Token del CAPTCHA (si está activado en Supabase → Auth → Attack Protection).
-  const captchaToken = typeof body.captchaToken === 'string' ? body.captchaToken : undefined
 
   if (!email || !password || !empresa) {
     return Response.json({ error: 'Faltan campos requeridos' }, { status: 400 })
@@ -74,23 +65,21 @@ export async function POST(request: Request) {
     return Response.json({ error: 'No se pudo generar un slug único' }, { status: 409 })
   }
 
-  // Crear usuario en Auth: NO confirmado; Supabase manda el correo de verificación.
-  const { data: authData, error: authError } = await supabaseAnon.auth.signUp({
+  // Crear usuario en Auth ya confirmado: la app no envía correos (el límite de la
+  // cuenta gratuita de Supabase es de pocos por hora). El freno contra altas masivas
+  // es el límite por IP de arriba.
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    options: { captchaToken },
+    email_confirm: true,
   })
 
   if (authError || !authData.user) {
+    const yaExiste = authError?.code === 'email_exists' || /already|registered/i.test(authError?.message ?? '')
     return Response.json(
-      { error: authError ? mensajeAuth(authError) : 'No se pudo crear la cuenta' },
+      { error: yaExiste ? 'No se pudo crear la cuenta con ese correo' : authError ? mensajeAuth(authError) : 'No se pudo crear la cuenta' },
       { status: 400 }
     )
-  }
-
-  // Correo ya registrado: Supabase devuelve un usuario "falso" sin identidades.
-  if (!authData.user.identities || authData.user.identities.length === 0) {
-    return Response.json({ error: 'No se pudo crear la cuenta con ese correo' }, { status: 400 })
   }
 
   const userId = authData.user.id
@@ -113,6 +102,5 @@ export async function POST(request: Request) {
     return Response.json({ error: 'No se pudo crear la cuenta' }, { status: 500 })
   }
 
-  // Si el proyecto exige confirmar el correo no hay sesión todavía.
-  return Response.json({ ok: true, slug, requiereConfirmacion: !authData.session })
+  return Response.json({ ok: true, slug })
 }

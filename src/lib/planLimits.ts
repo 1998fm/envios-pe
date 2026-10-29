@@ -212,9 +212,10 @@ export async function registrarExportacionShalom(userId: string, cantidad: numbe
 }
 
 export async function checkRolesLimit(ownerId: string): Promise<LimitCheck> {
-  const { plan, isTrial, isPaid } = await checkTrialStatus(ownerId)
+  // Business Plus vigente: incluye la prueba gratuita (si venció, el plan efectivo es basic).
+  const { plan } = await checkTrialStatus(ownerId)
 
-  if (plan !== 'business_plus' || (isTrial && !isPaid)) {
+  if (plan !== 'business_plus') {
     return {
       allowed: false,
       used: 0,

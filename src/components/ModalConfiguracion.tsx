@@ -17,12 +17,20 @@ import { useOnboarding } from '@/context/OnboardingContext'
 import { comprimirImagenWebP } from '@/lib/comprimirImagen'
 import { useEffect } from 'react'
 
-export default function ModalConfiguracion({
+type Props = ConfigModalProps & { onUpgrade?: () => void }
+
+// Cerrado no monta nada: así los hooks del contenido siempre se llaman en el mismo
+// orden (antes un `return null` previo a los hooks rompía las reglas de React).
+export default function ModalConfiguracion(props: Props) {
+  if (!props.abierto) return null
+  return <ModalConfiguracionContenido {...props} />
+}
+
+function ModalConfiguracionContenido({
   abierto, onCerrar,
   config, setConfig,
   distritosMoto, guardarConfiguracion, plan = 'basic', onUpgrade, maxMetodos,
-}: ConfigModalProps & { onUpgrade?: () => void }) {
-  if (!abierto) return null
+}: Props) {
   const { startTour } = useOnboarding()
   const { agencias: agenciasShalom } = useAgenciasShalom()
 
@@ -461,7 +469,7 @@ export default function ModalConfiguracion({
             Cancelar
           </button>
           <button
-            onClick={guardarConfiguracion}
+            onClick={() => guardarConfiguracion()}
             className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200"
           >
             Guardar

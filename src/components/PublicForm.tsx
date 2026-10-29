@@ -95,7 +95,7 @@ function liberarLlave(userId: string) {
 }
 
 function formatearFecha(fechaStr: string): string {
-  const [y, m, d] = fechaStr.split('-').map(Number)
+  const [y, m, d] = fechaStr.slice(0, 10).split('-').map(Number)
   const fecha = new Date(y, m - 1, d)
   return fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' })
 }

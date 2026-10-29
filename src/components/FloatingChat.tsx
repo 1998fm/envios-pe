@@ -72,7 +72,7 @@ export default function FloatingChat() {
       {/* Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-xl hover:shadow-sky-500/30 hover:scale-110 transition-all duration-200 flex items-center justify-center z-40"
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-3 w-12 h-12 md:bottom-6 md:right-6 md:w-14 md:h-14 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-xl hover:shadow-sky-500/30 hover:scale-110 transition-all duration-200 flex items-center justify-center z-40"
         title="Ayuda"
       >
         <HelpCircle size={22} />
@@ -86,7 +86,7 @@ export default function FloatingChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="fixed bottom-24 right-6 w-[90vw] sm:w-[380px] max-h-[600px] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden"
+            className="fixed bottom-[calc(8rem+env(safe-area-inset-bottom))] right-3 w-[calc(100vw-1.5rem)] md:bottom-24 md:right-6 sm:w-[380px] max-h-[70dvh] sm:max-h-[600px] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-sky-600 to-indigo-600 px-5 pt-5 pb-4 shrink-0">
