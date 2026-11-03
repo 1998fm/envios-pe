@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useEsMovil } from '@/hooks/useEsMovil'
 import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera, Archive, ArchiveRestore, CheckSquare, Package, History, Boxes, Tag, Info } from 'lucide-react'
 import { fmtSoles } from '@/lib/format'
@@ -443,6 +443,26 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
     cambiarArchivo([...seleccion], true, `${n} producto${n === 1 ? '' : 's'} archivado${n === 1 ? '' : 's'}`)
   }
 
+  async function eliminarSeleccion() {
+    const n = seleccion.size
+    if (n === 0) return
+    if (!(await confirmar({ message: `¿Eliminar ${n} producto${n === 1 ? '' : 's'} definitivamente? Esta acción no se puede deshacer.`, danger: true, confirmLabel: `Sí, eliminar ${n}` }))) return
+    const res = await fetch('/api/productos/batch', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [...seleccion] }),
+    })
+    if (res.ok) {
+      toast.success(`${n} producto${n === 1 ? '' : 's'} eliminado${n === 1 ? '' : 's'}`)
+      setSeleccion(new Set())
+      setModoSeleccion(false)
+      cargarProductosYConteos()
+    } else {
+      const err = await res.json().catch(() => null)
+      toast.error(err?.error || 'Error al eliminar')
+    }
+  }
+
   async function restaurarSeleccion() {
     const n = seleccion.size
     if (n === 0) return
@@ -479,7 +499,23 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
     setLoading(true)
   }
 
+  // Evita duplicados por doble clic: la marca del ref es inmediata (el estado tarda un render).
+  const creandoProductoRef = useRef(false)
+  const [creandoProducto, setCreandoProducto] = useState(false)
+
   async function crearProducto() {
+    if (creandoProductoRef.current) return
+    creandoProductoRef.current = true
+    setCreandoProducto(true)
+    try {
+      await crearProductoInterno()
+    } finally {
+      creandoProductoRef.current = false
+      setCreandoProducto(false)
+    }
+  }
+
+  async function crearProductoInterno() {
     if (tipoCreacion === 'variantes') {
       const validas = variantes.filter((v) => v.nombre.trim())
       if (validas.length === 0) {
@@ -832,6 +868,13 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
               <ArchiveRestore size={15} /> Restaurar
             </button>
           )}
+          <button
+            onClick={eliminarSeleccion}
+            disabled={seleccion.size === 0}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-all"
+          >
+            <Trash2 size={15} /> Eliminar
+          </button>
           <button
             onClick={toggleTodos}
             disabled={productos.length === 0}
@@ -1841,10 +1884,10 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                 <button
                   data-tour="nuevo-producto-crear"
                   onClick={crearProducto}
-                  disabled={subiendoFoto}
+                  disabled={subiendoFoto || creandoProducto}
                   className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-tori-600 to-tori-700 text-sm font-extrabold text-white shadow-lg shadow-tori-600/30 transition-all hover:shadow-xl disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
                 >
-                  {subiendoFoto ? 'Subiendo foto...' : 'Crear producto'}
+                  {subiendoFoto ? 'Subiendo foto...' : creandoProducto ? 'Creando...' : 'Crear producto'}
                 </button>
 </div>
               </div>

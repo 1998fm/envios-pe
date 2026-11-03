@@ -244,7 +244,20 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
     onCerrar()
   }
 
+  // Evita ventas duplicadas por doble clic: la marca del ref es inmediata (el estado tarda un render).
+  const creandoRef = useRef(false)
+
   async function crearVenta() {
+    if (creandoRef.current) return
+    creandoRef.current = true
+    try {
+      await crearVentaInterna()
+    } finally {
+      creandoRef.current = false
+    }
+  }
+
+  async function crearVentaInterna() {
     if (!personaSel) return
     if (itemsVenta.length === 0) return
     setCreando(true)
