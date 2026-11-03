@@ -56,6 +56,7 @@ export async function registrarPago(params: {
     .eq('id', params.userId)
 
   if (errPerfil) {
-    throw new Error(`No se pudo actualizar el perfil: ${errPerfil.message}`)
+    console.error('[pagos] error al actualizar el perfil:', errPerfil.message)
+    throw new Error('No se pudo actualizar el perfil del usuario.')
   }
 }

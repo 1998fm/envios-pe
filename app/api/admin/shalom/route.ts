@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
 import { ejecutarSyncShalom } from '@/lib/shalom/sync'
+import { mensajeDb } from '@/lib/erroresEs'
 
 export async function GET() {
   const auth = await requireSuperAdmin()
@@ -27,7 +28,7 @@ export async function GET() {
 
   if (errTotal || errActivas) {
     return NextResponse.json(
-      { error: errTotal?.message ?? errActivas?.message ?? 'Error' },
+      { error: mensajeDb(errTotal ?? errActivas) },
       { status: 500 }
     )
   }

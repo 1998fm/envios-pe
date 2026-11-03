@@ -1,5 +1,6 @@
 'use client'
 
+import { useEsMovil } from '@/hooks/useEsMovil'
 import { useEffect, useMemo, useState } from 'react'
 import { Search, Pencil, Copy, Check, X, Users, Phone, Tag, ShoppingCart, Truck, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -29,6 +30,7 @@ type Props = {
 }
 
 export default function SeccionClientes({ userId }: Props) {
+  const esMovil = useEsMovil()
   const { startTour } = useOnboarding()
   const confirmar = useConfirm()
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -174,7 +176,65 @@ export default function SeccionClientes({ userId }: Props) {
         </div>
       )}
 
-      {filtrados.length > 0 && (
+      {filtrados.length > 0 && esMovil && (
+        <div data-tour="clientes-tabla" className="space-y-2.5">
+          {filtrados.map((c) => (
+            <article
+              key={c.clave}
+              onClick={() => setDetalleCliente(c)}
+              className="cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm active:bg-slate-50"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-100 to-indigo-100 text-sm font-bold text-sky-700">
+                  {c.nombre.charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="break-words font-semibold leading-snug text-slate-900">{c.nombre}</p>
+                  <p className="font-mono text-xs text-slate-400">{c.dni ? c.dni : 'Sin DNI'}</p>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-xl bg-slate-50 px-2 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Ventas</p>
+                  <p className={`text-sm font-extrabold ${c.ventas > 0 ? 'text-sky-700' : 'text-slate-300'}`}>{c.ventas}</p>
+                </div>
+                <div className="rounded-xl bg-slate-50 px-2 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Total</p>
+                  <p className="text-sm font-extrabold text-slate-800">{c.totalVentas > 0 ? `S/ ${c.totalVentas.toFixed(2)}` : '—'}</p>
+                </div>
+                <div className="rounded-xl bg-slate-50 px-2 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Envíos</p>
+                  <p className={`text-sm font-extrabold ${c.envios > 0 ? 'text-indigo-700' : 'text-slate-300'}`}>{c.envios}</p>
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-500">
+                <span>Última actividad: {formatFecha(c.ultimaActividad)}</span>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => c.telefono && copiarTelefono(c.telefono)}
+                  disabled={!c.telefono}
+                  className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 active:bg-slate-200 disabled:opacity-40"
+                >
+                  {ultimoCopiado === c.telefono ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                  {c.telefono ? c.telefono : 'Sin tel.'}
+                </button>
+                <button onClick={() => iniciarEdicion(c)} className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-sky-50 text-xs font-bold text-sky-700 active:bg-sky-100">
+                  <Pencil size={14} /> Editar
+                </button>
+                <button onClick={() => eliminarCliente(c)} className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-red-50 text-xs font-bold text-red-600 active:bg-red-100">
+                  <Trash2 size={14} /> Quitar
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {filtrados.length > 0 && !esMovil && (
         <div data-tour="clientes-tabla" className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

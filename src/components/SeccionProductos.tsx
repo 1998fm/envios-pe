@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ChangeEvent } from 'react'
+import { useEsMovil } from '@/hooks/useEsMovil'
 import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera, Archive, ArchiveRestore, CheckSquare, Package, History, Boxes, Tag, Info } from 'lucide-react'
 import { fmtSoles } from '@/lib/format'
 import { toast } from 'sonner'
@@ -12,7 +13,6 @@ import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade, planNivel } from '@/lib/planGating'
 import EtiquetasProducto, { COPIAS_A4_OPCIONES, TAMANOS_ETIQUETA_PRODUCTO, type TamanoEtiquetaProducto } from '@/components/EtiquetasProducto'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { comprimirImagen, rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 
 type Props = {
@@ -168,7 +168,7 @@ const EJEMPLOS = [
 
 export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanancias = true }: Props) {
   const confirmar = useConfirm()
-  const supabase = createClient()
+  const esMovil = useEsMovil()
   const { startTour } = useOnboarding()
   const [productos, setProductos] = useState<Producto[]>([])
   const [busqueda, setBusqueda] = useState('')
@@ -314,15 +314,21 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
     }
   }
 
-  // Sube la foto ya comprimida al bucket 'productos' y devuelve su URL pública
+  // Sube la foto ya comprimida (el servidor valida y la guarda) y devuelve su URL pública
   async function subirFoto(foto: FotoPendiente): Promise<string> {
-    const filePath = `${userId}/producto-${Date.now()}.jpg`
-    const { error } = await supabase.storage
-      .from('productos')
-      .upload(filePath, foto.blob, { contentType: 'image/jpeg' })
-    if (error) throw new Error(error.message)
-    const { data } = supabase.storage.from('productos').getPublicUrl(filePath)
-    return data.publicUrl
+    const form = new FormData()
+    form.append('file', foto.blob, 'producto.jpg')
+    const res = await fetch('/api/uploads/producto', { method: 'POST', body: form })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(json.error || 'No se pudo subir la imagen')
+    return json.url as string
+  }
+
+  // Borra del servidor una foto subida que ya no se usa (por ejemplo si falló la creación)
+  async function descartarFoto(ruta: string) {
+    try {
+      await fetch(`/api/uploads/producto?ruta=${encodeURIComponent(ruta)}`, { method: 'DELETE' })
+    } catch {}
   }
 
   function iniciarEdicion(p: Producto) {
@@ -551,7 +557,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
         } else {
           errorAlCrear = true
           if (rutaSubidaVariante) {
-            try { await supabase.storage.from('productos').remove([rutaSubidaVariante]) } catch {}
+            await descartarFoto(rutaSubidaVariante)
           }
         }
       }
@@ -588,7 +594,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
       cargarProductosYConteos()
     } else {
       if (rutaSubida) {
-        try { await supabase.storage.from('productos').remove([rutaSubida]) } catch {}
+        await descartarFoto(rutaSubida)
       }
       if (res.status === 403) {
         const data = await res.json().catch(() => ({}))
@@ -658,12 +664,12 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
               </p>
             </div>
 
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2">
               {productos.length > 0 && !modoSeleccion && (
                 <button
                   data-tour="productos-seleccionar"
                   onClick={toggleSeleccion}
-                  className="flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-white/25"
+                  className="flex items-center gap-2 rounded-2xl bg-white/15 px-3 py-2.5 sm:px-4 text-sm font-bold text-white transition-all hover:bg-white/25"
                 >
                   <CheckSquare size={15} /> Seleccionar
                 </button>
@@ -671,7 +677,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
               <button
                 data-tour="productos-nuevo"
                 onClick={() => setShowNuevo(true)}
-                className="btn-shine flex items-center gap-2 rounded-2xl bg-white px-5 py-2.5 text-sm font-extrabold text-tori-700 transition-all hover:bg-tori-50 active:scale-[0.98]"
+                className="btn-shine flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-extrabold sm:px-5 text-tori-700 transition-all hover:bg-tori-50 active:scale-[0.98]"
               >
                 <Plus size={16} /> Nuevo producto
               </button>
@@ -890,7 +896,221 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
         </div>
       )}
 
-      {productos.length > 0 && (
+      {productos.length > 0 && esMovil && (
+        <div data-tour="productos-tabla" className="space-y-2.5">
+          {modoSeleccion && (
+            <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600">
+              <input
+                type="checkbox"
+                checked={productos.length > 0 && seleccion.size === productos.length}
+                onChange={toggleTodos}
+                className="h-5 w-5 accent-tori-600"
+              />
+              Seleccionar todos ({seleccion.size})
+            </label>
+          )}
+          {productos.map((p) => {
+            const editando = editandoId === p.id
+            const bajoStock = p.stock_actual <= p.stock_minimo && p.stock_minimo > 0
+            const campo = 'h-11 w-full min-w-0 rounded-xl border border-tori-400 bg-white px-3 text-sm font-bold outline-none'
+            return (
+              <article
+                key={p.id}
+                onClick={modoSeleccion ? () => toggleUno(p.id) : undefined}
+                className={`rounded-2xl border bg-white p-4 shadow-sm ${bajoStock ? 'border-red-200 bg-red-50/50' : 'border-slate-200'}`}
+              >
+                {editando ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <label className="relative h-12 w-12 shrink-0 cursor-pointer overflow-hidden rounded-xl" title="Cambiar foto">
+                        {editFoto ? (
+                          <img src={editFoto.preview} alt="Nueva foto" className="h-full w-full object-cover" />
+                        ) : editForm.imagen_url ? (
+                          <img src={editForm.imagen_url} alt={p.nombre} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="flex h-full w-full items-center justify-center bg-slate-100 text-sm font-bold text-slate-400">
+                            {(editForm.nombre || p.nombre).charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                        <span className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full border border-white bg-sky-600">
+                          <Pencil size={10} className="text-white" />
+                        </span>
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => escogerFoto(e, 'editar')} />
+                      </label>
+                      <input
+                        value={editForm.nombre || ''}
+                        onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value, sku: generarSKU(e.target.value) })}
+                        aria-label="Nombre"
+                        className={campo}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <label className="space-y-1 text-[10px] font-black uppercase tracking-wide text-slate-400">
+                        SKU
+                        <input
+                          value={editForm.sku || ''}
+                          onChange={(e) => setEditForm({ ...editForm, sku: e.target.value })}
+                          className={`${campo} font-mono`}
+                        />
+                      </label>
+                      <label className="space-y-1 text-[10px] font-black uppercase tracking-wide text-slate-400">
+                        Stock
+                        <input
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          type="text"
+                          value={String(editForm.stock_actual ?? 0)}
+                          onChange={(e) => setEditForm({ ...editForm, stock_actual: parseInt(e.target.value, 10) || 0 })}
+                          className={`${campo} tabular-nums`}
+                        />
+                      </label>
+                      {stockOriginalEditando !== null && Number(editForm.stock_actual ?? 0) !== stockOriginalEditando && (
+                        <input
+                          value={motivoStock}
+                          onChange={(e) => setMotivoStock(e.target.value)}
+                          placeholder="Motivo del ajuste"
+                          className="col-span-2 h-11 rounded-xl border border-warning-300 px-3 text-sm placeholder:text-slate-400 outline-none"
+                        />
+                      )}
+                      <label className="space-y-1 text-[10px] font-black uppercase tracking-wide text-slate-400">
+                        P. venta
+                        <input
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          type="text"
+                          value={String(editForm.precio_venta ?? 0)}
+                          onChange={(e) => setEditForm({ ...editForm, precio_venta: parseFloat(e.target.value) || 0 })}
+                          className={`${campo} tabular-nums`}
+                        />
+                      </label>
+                      {puedeVerGanancias && (
+                        <label className="space-y-1 text-[10px] font-black uppercase tracking-wide text-slate-400">
+                          P. compra
+                          <input
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            type="text"
+                            value={String(editForm.precio_compra ?? 0)}
+                            onChange={(e) => setEditForm({ ...editForm, precio_compra: parseFloat(e.target.value) || 0 })}
+                            className={`${campo} tabular-nums`}
+                          />
+                        </label>
+                      )}
+                      <div className="col-span-2 space-y-1 text-[10px] font-black uppercase tracking-wide text-slate-400">
+                        Unidad
+                        <SelectUnidad value={editForm.unidad || 'unidad'} onChange={(v) => setEditForm({ ...editForm, unidad: v })} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={guardarEdicion}
+                        disabled={subiendoFoto}
+                        className="flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-50"
+                      >
+                        <Check size={16} /> Guardar
+                      </button>
+                      <button
+                        onClick={() => { setEditandoId(null); if (editFoto) { URL.revokeObjectURL(editFoto.preview); setEditFoto(null) } }}
+                        className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-100 text-sm font-bold text-slate-600"
+                      >
+                        <X size={16} /> Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-start gap-3">
+                      {modoSeleccion && (
+                        <input
+                          type="checkbox"
+                          checked={seleccion.has(p.id)}
+                          onChange={() => toggleUno(p.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-3 h-5 w-5 shrink-0 accent-tori-600"
+                        />
+                      )}
+                      {p.imagen_url ? (
+                        <PreviewImagenProducto src={p.imagen_url} alt={p.nombre} />
+                      ) : (
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-sm font-bold text-slate-400">
+                          {p.nombre.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words text-sm font-bold leading-snug text-slate-900">{p.nombre}</p>
+                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-400">
+                          <span className="font-mono">{p.sku || 'Sin SKU'}</span>
+                          <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10.5px] font-bold text-slate-600">{p.unidad}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className={`mt-3 grid gap-2 text-center ${puedeVerGanancias ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                      <div className="rounded-xl bg-slate-50 px-2 py-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Stock</p>
+                        <p className={`text-base font-extrabold tabular-nums ${bajoStock ? 'text-red-600' : 'text-slate-900'}`}>{p.stock_actual}</p>
+                        {p.stock_minimo > 0 && <p className="text-[10px] text-slate-400">mín {p.stock_minimo}</p>}
+                      </div>
+                      <div className="rounded-xl bg-slate-50 px-2 py-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">P. venta</p>
+                        <p className="text-sm font-extrabold tabular-nums text-slate-900">{fmtSoles(p.precio_venta)}</p>
+                      </div>
+                      {puedeVerGanancias && (
+                        <div className="rounded-xl bg-slate-50 px-2 py-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Ganancia</p>
+                          <p className={`text-sm font-extrabold tabular-nums ${p.precio_venta - p.precio_compra >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {fmtSoles(p.precio_venta - p.precio_compra)}
+                          </p>
+                          <p className="text-[10px] text-slate-400">compra {fmtSoles(p.precio_compra)}</p>
+                        </div>
+                      )}
+                    </div>
+                    {bajoStock && <p className="mt-2 text-[11px] font-bold text-red-500">Stock bajo (mín {p.stock_minimo})</p>}
+
+                    {!modoSeleccion && (
+                      <div className="mt-3 grid grid-cols-5 gap-2">
+                        {[
+                          vista === 'archivados'
+                            ? { icono: ArchiveRestore, titulo: 'Restaurar', clase: 'text-emerald-600 bg-emerald-50', fn: () => restaurarProducto(p) }
+                            : { icono: Archive, titulo: 'Archivar', clase: 'text-slate-600 bg-slate-100', fn: () => archivarProducto(p) },
+                          {
+                            icono: Printer,
+                            titulo: planNivel(plan) < 1 ? 'Disponible en Pro y Business Plus' : 'Imprimir etiqueta',
+                            clase: 'text-slate-600 bg-slate-100',
+                            fn: () => {
+                              if (planNivel(plan) < 1) {
+                                openUpgrade()
+                                return
+                              }
+                              setImprimirProducto(p)
+                              setMostrarModalImprimir(true)
+                            },
+                          },
+                          { icono: History, titulo: 'Historial de movimientos', clase: 'text-violet-600 bg-violet-50', fn: () => abrirHistorial(p) },
+                          { icono: Pencil, titulo: 'Editar', clase: 'text-sky-700 bg-sky-50', fn: () => iniciarEdicion(p) },
+                          { icono: Trash2, titulo: 'Eliminar', clase: 'text-red-600 bg-red-50', fn: () => eliminarProducto(p.id, p.nombre) },
+                        ].map((a) => (
+                          <button
+                            key={a.titulo}
+                            title={a.titulo}
+                            aria-label={a.titulo}
+                            onClick={a.fn}
+                            className={`grid h-11 place-items-center rounded-xl ${a.clase}`}
+                          >
+                            <a.icono size={18} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </article>
+            )
+          })}
+        </div>
+      )}
+
+      {productos.length > 0 && !esMovil && (
         <div data-tour="productos-tabla" className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
           <table className="w-full">
             <thead>

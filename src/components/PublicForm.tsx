@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { urlHttpSegura } from '@/lib/urlSegura'
 
 import { Store, Package, Truck, ChevronRight } from 'lucide-react'
 import FormHeader from '@/components/FormHeader'
@@ -94,7 +95,7 @@ function liberarLlave(userId: string) {
 }
 
 function formatearFecha(fechaStr: string): string {
-  const [y, m, d] = fechaStr.split('-').map(Number)
+  const [y, m, d] = fechaStr.slice(0, 10).split('-').map(Number)
   const fecha = new Date(y, m - 1, d)
   return fecha.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' })
 }
@@ -262,7 +263,8 @@ export default function PublicForm({
   useEffect(() => {
     if (enviado && isPro && redirectUrl) {
       const timer = setTimeout(() => {
-        window.location.href = redirectUrl
+        const destino = urlHttpSegura(redirectUrl)
+        if (destino) window.location.href = destino
       }, 3000)
       return () => clearTimeout(timer)
     }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { getSessionUser } from '@/lib/ownerAuth'
 import { esTablaFaltante } from '@/lib/roles'
+import { mensajeAuth, mensajeDb } from '@/lib/erroresEs'
 
 // ============================================================
 // ACEPTAR INVITACIÓN
@@ -58,7 +59,7 @@ export async function GET(request: Request) {
       {
         error: esTablaFaltante(inviteError)
           ? 'Falta ejecutar supabase/roles-negocio.sql en Supabase'
-          : inviteError.message,
+          : mensajeDb(inviteError),
       },
       { status }
     )
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
       {
         error: esTablaFaltante(inviteError)
           ? 'Falta ejecutar supabase/roles-negocio.sql en Supabase'
-          : inviteError.message,
+          : mensajeDb(inviteError),
       },
       { status }
     )
@@ -153,7 +154,7 @@ export async function POST(request: Request) {
         password,
       })
       if (passError) {
-        return NextResponse.json({ error: passError.message }, { status: 400 })
+        return NextResponse.json({ error: mensajeAuth(passError) }, { status: 400 })
       }
     }
   } else if (password.length >= 6) {
@@ -181,7 +182,7 @@ export async function POST(request: Request) {
         userId = encontrado.id
         requiereLogin = true
       } else {
-        return NextResponse.json({ error: error.message }, { status: 400 })
+        return NextResponse.json({ error: mensajeAuth(error) }, { status: 400 })
       }
     } else {
       userId = data.user.id
@@ -214,7 +215,7 @@ export async function POST(request: Request) {
       plan: 'basic',
     })
     if (perfilError) {
-      return NextResponse.json({ error: perfilError.message }, { status: 400 })
+      return NextResponse.json({ error: mensajeDb(perfilError) }, { status: 400 })
     }
   }
 
@@ -231,7 +232,7 @@ export async function POST(request: Request) {
     )
 
   if (miembroError) {
-    return NextResponse.json({ error: miembroError.message }, { status: 400 })
+    return NextResponse.json({ error: mensajeDb(miembroError) }, { status: 400 })
   }
 
   // 4. Marcar la invitación como aceptada

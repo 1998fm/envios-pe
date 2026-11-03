@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
+import { mensajeDb } from '@/lib/erroresEs'
 
 type Body = {
   id?: string
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   if (errTarget) {
-    return NextResponse.json({ error: errTarget.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(errTarget) }, { status: 500 })
   }
   if (!target) {
     return NextResponse.json({ error: 'El usuario no es super admin o no existe.' }, { status: 404 })
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
     .eq('id', targetId)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   await registrarAuditoria(auth, 'revocar_admin', { targetId, empresa: target.empresa })

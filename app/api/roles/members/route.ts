@@ -4,6 +4,7 @@ import { buscarUsuarioPorEmail, requireOwner } from '@/lib/ownerAuth'
 import { esTablaFaltante } from '@/lib/roles'
 import { crearInvitacion } from '@/lib/invitaciones'
 import { checkRolesLimit } from '@/lib/planLimits'
+import { mensajeDb } from '@/lib/erroresEs'
 
 // ============================================================
 // Miembros del negocio: qué usuarios tienen acceso y con qué rol.
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
       {
         error: esTablaFaltante(rolError)
           ? 'Falta ejecutar supabase/roles-negocio.sql en Supabase'
-          : rolError.message,
+          : mensajeDb(rolError),
       },
       { status }
     )
@@ -115,7 +116,7 @@ export async function POST(request: Request) {
       {
         error: esTablaFaltante(error)
           ? 'Falta ejecutar supabase/roles-negocio.sql en Supabase'
-          : error.message,
+          : mensajeDb(error),
       },
       { status }
     )
@@ -162,7 +163,7 @@ export async function PATCH(request: Request) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 400 })
   }
 
   return NextResponse.json({ member: data })
@@ -189,7 +190,7 @@ export async function DELETE(request: Request) {
     .eq('user_id', userId)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 400 })
   }
 
   return NextResponse.json({ ok: true })

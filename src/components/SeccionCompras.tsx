@@ -1,5 +1,6 @@
 'use client'
 
+import { useEsMovil } from '@/hooks/useEsMovil'
 import { useEffect, useState } from 'react'
 import { Plus, X, RotateCcw, Eye } from 'lucide-react'
 import { toast } from 'sonner'
@@ -16,6 +17,7 @@ type Props = { userId: string }
 const ESTADOS = ['COMPLETADA', 'ANULADA'] as const
 
 export default function SeccionCompras({ userId }: Props) {
+  const esMovil = useEsMovil()
   const confirmar = useConfirm()
   const { startTour } = useOnboarding()
   const [compras, setCompras] = useState<Compra[]>([])
@@ -215,7 +217,48 @@ export default function SeccionCompras({ userId }: Props) {
         </div>
       )}
 
-      {compras.length > 0 && (
+      {compras.length > 0 && esMovil && (
+        <div data-tour="compras-tabla" className="space-y-2.5">
+          {compras.map((c) => {
+            const badge = {
+              COMPLETADA: 'bg-emerald-100 text-emerald-700',
+              ANULADA: 'bg-red-100 text-red-700',
+            }[c.estado]
+            return (
+              <article key={c.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words font-semibold leading-snug text-slate-900">{c.proveedor}</p>
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      {new Date(c.created_at).toLocaleDateString('es-PE')} · {c.items?.length ?? 0} ítems
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-lg font-extrabold text-slate-900">S/ {c.total.toFixed(2)}</p>
+                </div>
+                <div className="mt-2">
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${badge}`}>{c.estado}</span>
+                </div>
+                <div className={`mt-3 grid gap-2 ${c.estado === 'COMPLETADA' ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                  <button data-tour="compras-detalle" onClick={() => setCompraDetalle(c)} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-sky-50 text-sm font-bold text-sky-700 active:bg-sky-100">
+                    <Eye size={15} /> Ver detalle
+                  </button>
+                  {c.estado === 'COMPLETADA' ? (
+                    <button onClick={() => anularCompra(c)} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-red-50 text-sm font-bold text-red-600 active:bg-red-100">
+                      <RotateCcw size={15} /> Anular
+                    </button>
+                  ) : (
+                    <button onClick={() => eliminarCompra(c.id)} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-red-50 text-sm font-bold text-red-600 active:bg-red-100">
+                      <X size={15} /> Eliminar
+                    </button>
+                  )}
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      )}
+
+      {compras.length > 0 && !esMovil && (
         <div data-tour="compras-tabla" className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>

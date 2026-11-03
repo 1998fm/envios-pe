@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import { obtenerSesion } from '@/lib/clienteApi'
+import { guardarPasoServidor } from '@/lib/configuracionCliente'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, ArrowRight, Check, X, Copy, CheckCheck } from 'lucide-react'
 import confetti from 'canvas-confetti'
@@ -13,12 +14,6 @@ import OnboardingStep2Metodos from '@/components/OnboardingStep2Metodos'
 import OnboardingStep3Logistica from '@/components/OnboardingStep3Logistica'
 import OnboardingStep4Tarifas from '@/components/OnboardingStep4Tarifas'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
-import {
-  guardarPasoEmpresa,
-  guardarPasoMetodos,
-  guardarPasoLogistica,
-  guardarPasoTarifas,
-} from '@/lib/onboardingGuardar'
 import type { ConfigState } from '@/types/config'
 import { clearAllTours } from '@/lib/tours'
 
@@ -83,7 +78,6 @@ const tips: Record<number, { tip: string; icon: 'onboard' | 'guide' | 'happy' }>
 
 export default function OnboardingWizard() {
   const router = useRouter()
-  const supabase = createClient()
   const [step, setStep] = useState(1)
   const [config, setConfig] = useState<ConfigState>(initialConfig)
   const [saving, setSaving] = useState(false)
@@ -96,8 +90,8 @@ export default function OnboardingWizard() {
   const firedConfetti = useRef(false)
 
   async function checkAuth() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const sesion = await obtenerSesion().catch(() => null)
+    if (!sesion) {
       router.push('/register')
     }
   }
@@ -126,24 +120,17 @@ export default function OnboardingWizard() {
         if (Date.now() < end) requestAnimationFrame(frame)
       }
       frame()
-
-      // Obtener slug del negocio
-      supabase.from('profiles').select('slug').eq('id', config.empresa ? undefined : undefined).then(({ data }) => {
-        // Lo intentamos después del guardado
-      })
     }
   }, [step])
 
   // Cargar slug al llegar al paso 5
   useEffect(() => {
     if (step === 5) {
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user) {
-          supabase.from('profiles').select('slug').eq('id', user.id).single().then(({ data }) => {
-            if (data?.slug) setSlugEmpresa(data.slug)
-          })
-        }
-      })
+      obtenerSesion()
+        .then((sesion) => {
+          if (sesion?.profile?.slug) setSlugEmpresa(sesion.profile.slug)
+        })
+        .catch(() => {})
     }
   }, [step])
 
@@ -154,9 +141,6 @@ export default function OnboardingWizard() {
   async function handleSiguiente() {
     setSaving(true)
     setError('')
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setError('Sesión expirada'); setSaving(false); return }
 
     if (step === 2 && config.metodoShalom) {
       const origenValido = agenciasShalom.some(
@@ -169,11 +153,8 @@ export default function OnboardingWizard() {
       }
     }
 
-    let result: { error?: string; slug?: string } = {}
-    if (step === 1) result = await guardarPasoEmpresa(supabase, user.id, config)
-    else if (step === 2) result = await guardarPasoMetodos(supabase, user.id, config)
-    else if (step === 3) result = await guardarPasoLogistica(supabase, user.id, config)
-    else if (step === 4) result = await guardarPasoTarifas(supabase, user.id, config)
+    // El servidor guarda el paso (y sube las imágenes del paso 1).
+    const result = await guardarPasoServidor(step, config)
 
     if (result.error) {
       setError(result.error)
@@ -181,7 +162,7 @@ export default function OnboardingWizard() {
       return
     }
 
-    if ((result as any).slug) setSlugEmpresa((result as any).slug)
+    if (result.slug) setSlugEmpresa(result.slug)
 
     setSaving(false)
     if (step < 4) {

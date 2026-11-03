@@ -1,10 +1,9 @@
 'use client'
 
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { useState } from 'react'
 import MenuSelect from '@/components/ui/MenuSelect'
 import { toast } from 'sonner'
-import { sincronizarVentasEnviadas } from '@/lib/sincronizarVentasEnviadas'
+import { api, ErrorApi } from '@/lib/clienteApi'
 
 type Props = {
   envioId: string
@@ -32,17 +31,18 @@ function badge(value: string) {
 }
 
 export default function EstadoSelect({ envioId, estadoActual }: Props) {
-  const supabase = createClient()
   const [estado, setEstado] = useState(estadoActual)
 
   async function cambiarEstado(nuevoEstado: string) {
+    const anterior = estado
     setEstado(nuevoEstado)
-    const { error } = await supabase
-      .from('envios')
-      .update({ estado: nuevoEstado })
-      .eq('id', envioId)
-    if (error) toast.error(error.message)
-    else if (nuevoEstado === 'ENVIADO') sincronizarVentasEnviadas([envioId])
+    try {
+      // El servidor también pasa a COMPLETADO las ventas ligadas si es ENVIADO.
+      await api(`/api/envios/${envioId}`, { method: 'PATCH', json: { estado: nuevoEstado } })
+    } catch (e) {
+      setEstado(anterior)
+      toast.error(e instanceof ErrorApi ? e.message : 'No se pudo cambiar el estado')
+    }
   }
 
   return (

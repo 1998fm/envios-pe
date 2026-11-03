@@ -18,6 +18,9 @@ import {
   BarChart3,
   CircleDashed,
   Sparkles,
+  Sun,
+  TrendingUp,
+  Clock,
   type LucideIcon,
 } from 'lucide-react'
 import {
@@ -34,7 +37,19 @@ import ToriMascot from '@/components/ToriMascot'
 import type { ConfigState } from '@/types/config'
 
 type DashboardData = {
+  acceso: { dinero: boolean; ganancia: boolean; egresos: boolean }
+  hoy: {
+    fecha: string
+    ventas: number
+    ventasCantidad: number
+    ganancia: number
+    pedidosNuevos: number
+    porEnviar: number
+    enviados: number
+    atrasados: number
+  }
   kpis: {
+    gananciaMes: number
     ventasMes: number
     ventasHoy: number
     cobrosPendientes: number
@@ -236,22 +251,55 @@ function SectionHeader({
   )
 }
 
-function Tile({ icon: Icon, label, valor }: { icon: LucideIcon; label: string; valor: string }) {
-  return (
-    <div className="group relative rounded-2xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/70 p-3 sm:p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-emerald-200">
-      <div className="flex items-start justify-between gap-2">
-        <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-sm">
-          <Icon size={15} className="text-white" />
-        </span>
-        <span className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
-          <CheckCircle2 size={11} className="text-emerald-600" />
-        </span>
-      </div>
-      <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">
+type Tono = 'neutro' | 'verde' | 'ambar' | 'rojo'
+
+const TONOS: Record<Tono, { caja: string; icono: string }> = {
+  neutro: { caja: 'border-slate-100 bg-white', icono: 'from-sky-400 to-blue-600' },
+  verde: { caja: 'border-emerald-100 bg-gradient-to-br from-white to-emerald-50/70', icono: 'from-emerald-400 to-emerald-600' },
+  ambar: { caja: 'border-amber-200 bg-gradient-to-br from-white to-amber-50', icono: 'from-amber-400 to-orange-500' },
+  rojo: { caja: 'border-red-200 bg-gradient-to-br from-white to-rose-50', icono: 'from-red-400 to-rose-600' },
+}
+
+function Metrica({
+  icon: Icon,
+  label,
+  valor,
+  detalle,
+  tono = 'neutro',
+  onClick,
+}: {
+  icon: LucideIcon
+  label: string
+  valor: string
+  detalle?: string
+  tono?: Tono
+  onClick?: () => void
+}) {
+  const t = TONOS[tono]
+  const contenido = (
+    <>
+      <span
+        className={`flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm ${t.icono}`}
+      >
+        <Icon size={15} className="text-white" />
+      </span>
+      <p className="mt-3 truncate text-[10px] font-bold uppercase tracking-wider text-slate-400">
         {label}
       </p>
-      <p className="mt-0.5 text-lg font-extrabold text-slate-900 leading-none truncate">{valor}</p>
-    </div>
+      <p className="mt-0.5 truncate text-xl font-extrabold leading-tight text-slate-900">{valor}</p>
+      {detalle && <p className="mt-0.5 truncate text-[11px] text-slate-500">{detalle}</p>}
+    </>
+  )
+  const clase = `rounded-2xl border p-3 text-left sm:p-4 ${t.caja}`
+  if (!onClick) return <div className={clase}>{contenido}</div>
+  return (
+    <button
+      type="button"
+      onClick={() => onClick()}
+      className={`${clase} transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md`}
+    >
+      {contenido}
+    </button>
   )
 }
 
@@ -259,8 +307,10 @@ export default function PanelResumen({ userId, onNavegar, onConfig, config }: Pr
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [periodo, setPeriodo] = useState<7 | 30 | 90>(30)
-  const [metrica, setMetrica] = useState<'monto' | 'pedidos'>('monto')
+  const [metricaElegida, setMetrica] = useState<'monto' | 'pedidos'>('monto')
   const [verDetalle, setVerDetalle] = useState(false)
+  // Sin permiso de dinero el histórico solo puede mostrar pedidos.
+  const metrica = data?.acceso && !data.acceso.dinero ? 'pedidos' : metricaElegida
 
   useEffect(() => {
     fetch(`/api/dashboard?user_id=${encodeURIComponent(userId)}`)
@@ -269,6 +319,7 @@ export default function PanelResumen({ userId, onNavegar, onConfig, config }: Pr
       .catch(() => setData(null))
       .finally(() => setLoading(false))
   }, [userId])
+
 
   const serie = useMemo(() => {
     if (!data?.historico) return []
@@ -411,6 +462,7 @@ export default function PanelResumen({ userId, onNavegar, onConfig, config }: Pr
       data.kpis.pedidosPorDespachar === 0 &&
       data.kpis.stockBajo === 0)
 
+  const acc = data?.acceso ?? { dinero: true, ganancia: true, egresos: true }
   const saldo = data?.kpis.saldoDisponible ?? 0
   const areaColor = metrica === 'monto' ? '#0284c7' : '#6366f1'
   const sparkData = useMemo(() => (data?.historico.ventas ?? []).slice(-14).map((v) => v.total), [data])
@@ -457,7 +509,7 @@ export default function PanelResumen({ userId, onNavegar, onConfig, config }: Pr
           invert: true,
           color: 'bg-rose-500',
         },
-      ]
+      ].filter((r) => (r.label === 'Ventas' ? acc.dinero : r.label === 'Gastos' ? acc.egresos : true))
     : []
 
   if (loading) {
@@ -505,80 +557,169 @@ export default function PanelResumen({ userId, onNavegar, onConfig, config }: Pr
         </span>
       </div>
 
-      {/* ============ SALDO DISPONIBLE ============ */}
+      {/* ============ FACTURADO DEL MES ============ */}
       {data && (
         <div
           data-tour="resumen-saldo"
-          className={`relative overflow-hidden rounded-3xl text-white shadow-xl ${
-            saldo >= 0
-              ? 'bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700'
-              : 'bg-gradient-to-br from-rose-500 via-red-600 to-rose-700'
-          }`}
+          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white shadow-xl"
         >
-          <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl pointer-events-none" />
-          <div className="absolute -left-10 -bottom-28 h-64 w-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />
-          <div className="absolute right-8 top-6 hidden sm:block h-20 w-20 rounded-3xl border border-white/15 rotate-12 pointer-events-none" />
-          <div className="absolute right-20 top-24 hidden lg:block h-6 w-6 rounded-xl bg-white/10 rotate-6 pointer-events-none" />
+          <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 -left-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
 
-          <div className="relative p-5 sm:p-7 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="relative grid gap-6 p-5 sm:p-7 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <div className="flex items-center gap-2.5">
-                <span className="w-9 h-9 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
                   <Wallet size={17} className="text-white" />
                 </span>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-white/75">
-                  Saldo disponible
+                  {acc.dinero ? 'Facturado este mes' : 'Envíos este mes'}
                 </p>
-                <span
-                  className={`ml-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                    saldo >= 0 ? 'bg-emerald-400/20 text-emerald-100' : 'bg-white/20 text-white'
-                  }`}
-                >
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${saldo >= 0 ? 'bg-emerald-300' : 'bg-red-200'}`}
-                  />
-                  {saldo >= 0 ? 'Negocio sano' : 'Saldo negativo'}
-                </span>
+                {acc.dinero && data.deltas.ventasMes !== null && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <DeltaBadge delta={data.deltas.ventasMes} />
+                    <span className="text-[10px] text-white/60">vs mes anterior</span>
+                  </span>
+                )}
               </div>
-              <p className="mt-3 text-4xl sm:text-5xl font-extrabold leading-none tracking-tight drop-shadow-sm">
-                {fmtSoles(saldo)}
+              <p className="mt-3 text-4xl font-extrabold leading-none tracking-tight drop-shadow-sm sm:text-5xl">
+                {acc.dinero ? fmtSoles(data.kpis.ventasMes) : String(data.kpis.enviosMes)}
               </p>
-              <p className="text-[11px] text-white/65 mt-2.5">
-                Ventas cobradas − Compras − Gastos
-              </p>
+
               <div className="mt-4 flex flex-wrap gap-2">
-                <div className="rounded-2xl bg-white/10 backdrop-blur px-3.5 py-2 border border-white/10">
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-white/55">
-                    Por cobrar
-                  </p>
-                  <p className="text-base font-extrabold leading-none mt-0.5">
-                    {fmtSoles(data.kpis.cobrosPendientesTotal)}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white/10 backdrop-blur px-3.5 py-2 border border-white/10">
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-white/55">
-                    Gastos del mes
-                  </p>
-                  <p className="text-base font-extrabold leading-none mt-0.5">
-                    {fmtSoles(data.kpis.gastosMes)}
-                  </p>
-                </div>
+                {acc.ganancia && (
+                  <div className="rounded-2xl border border-white/10 bg-white/10 px-3.5 py-2 backdrop-blur">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-white/55">
+                      Tu ganancia
+                    </p>
+                    <p className="mt-0.5 text-base font-extrabold leading-none">
+                      {fmtSoles(data.kpis.gananciaMes)}
+                      {data.kpis.ventasMes > 0 && (
+                        <span className="ml-1.5 text-[10px] font-semibold text-emerald-200">
+                          {Math.round((data.kpis.gananciaMes / data.kpis.ventasMes) * 100)}% margen
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
+                {acc.dinero && (
+                  <div className="rounded-2xl border border-white/10 bg-white/10 px-3.5 py-2 backdrop-blur">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-white/55">
+                      Por cobrar
+                    </p>
+                    <p className="mt-0.5 text-base font-extrabold leading-none">
+                      {fmtSoles(data.kpis.cobrosPendientesTotal)}
+                    </p>
+                  </div>
+                )}
+                {acc.egresos && (
+                  <div className="rounded-2xl border border-white/10 bg-white/10 px-3.5 py-2 backdrop-blur">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-white/55">
+                      Saldo disponible
+                    </p>
+                    <p
+                      className={`mt-0.5 text-base font-extrabold leading-none ${
+                        saldo < 0 ? 'text-red-200' : ''
+                      }`}
+                    >
+                      {fmtSoles(saldo)}
+                    </p>
+                  </div>
+                )}
               </div>
+              {acc.egresos && (
+                <p className="mt-2.5 text-[11px] text-white/60">
+                  Saldo = ventas cobradas − compras − gastos
+                </p>
+              )}
             </div>
 
-            <div className="hidden lg:block w-56 rounded-2xl bg-white/10 backdrop-blur border border-white/15 p-4">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-white/55">
-                Ventas últimos 14 días
-              </p>
-              <div className="mt-2">
-                <Sparkline data={sparkData} />
+            {acc.dinero && (
+              <div className="hidden w-56 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur lg:block">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-white/55">
+                  Ventas últimos 14 días
+                </p>
+                <div className="mt-2">
+                  <Sparkline data={sparkData} />
+                </div>
+                <p className="mt-1.5 text-[11px] text-white/70">
+                  {sparkData.length > 0
+                    ? fmtSoles(sparkData.reduce((x, y) => x + y, 0)) + ' este período'
+                    : 'Aún sin ventas'}
+                </p>
               </div>
-              <p className="text-[11px] text-white/70 mt-1.5">
-                {sparkData.length > 0
-                  ? fmtSoles(sparkData.reduce((a, b) => a + b, 0)) + ' este período'
-                  : 'Aún sin ventas'}
-              </p>
-            </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ============ HOY ============ */}
+      {data && (
+        <div
+          data-tour="resumen-kpis"
+          className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5"
+        >
+          <SectionHeader
+            icon={Sun}
+            grad="from-amber-400 to-orange-500"
+            title="Hoy"
+            subtitle="Cómo va el día y qué toca despachar."
+            badge={
+              data.hoy.atrasados > 0
+                ? `${data.hoy.atrasados} atrasado${data.hoy.atrasados === 1 ? '' : 's'}`
+                : data.hoy.porEnviar > 0
+                  ? `${data.hoy.porEnviar} por enviar`
+                  : 'Al día'
+            }
+          />
+          <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-6">
+            {acc.dinero && (
+              <Metrica
+                icon={Banknote}
+                label="Vendido hoy"
+                valor={fmtSoles(data.hoy.ventas)}
+                detalle={`${data.hoy.ventasCantidad} venta${data.hoy.ventasCantidad === 1 ? '' : 's'}`}
+                tono="verde"
+                onClick={() => onNavegar('ventas')}
+              />
+            )}
+            {acc.ganancia && (
+              <Metrica
+                icon={TrendingUp}
+                label="Ganancia de hoy"
+                valor={fmtSoles(data.hoy.ganancia)}
+                tono="verde"
+              />
+            )}
+            <Metrica
+              icon={PackageOpen}
+              label="Pedidos nuevos"
+              valor={String(data.hoy.pedidosNuevos)}
+              detalle="registrados hoy"
+              onClick={() => onNavegar('envios')}
+            />
+            <Metrica
+              icon={Truck}
+              label="Por enviar hoy"
+              valor={String(data.hoy.porEnviar)}
+              detalle={data.hoy.porEnviar > 0 ? 'programados para hoy' : 'nada pendiente'}
+              tono={data.hoy.porEnviar > 0 ? 'ambar' : 'neutro'}
+              onClick={() => onNavegar('envios')}
+            />
+            <Metrica
+              icon={CheckCircle2}
+              label="Enviados hoy"
+              valor={String(data.hoy.enviados)}
+              tono={data.hoy.enviados > 0 ? 'verde' : 'neutro'}
+            />
+            <Metrica
+              icon={Clock}
+              label="Atrasados"
+              valor={String(data.hoy.atrasados)}
+              detalle={data.hoy.atrasados > 0 ? 'fecha ya pasó' : 'todo en fecha'}
+              tono={data.hoy.atrasados > 0 ? 'rojo' : 'neutro'}
+              onClick={() => onNavegar('envios')}
+            />
           </div>
         </div>
       )}
@@ -601,45 +742,6 @@ export default function PanelResumen({ userId, onNavegar, onConfig, config }: Pr
           <ChevronRight size={16} className="text-red-400 shrink-0" />
         </button>
       )}
-
-      {/* ============ LO QUE TIENES ============ */}
-      <div
-        data-tour="resumen-kpis"
-        className="rounded-3xl border border-slate-100 bg-white p-4 sm:p-5 shadow-sm"
-      >
-        <SectionHeader
-          icon={CheckCircle2}
-          grad="from-emerald-400 to-emerald-600"
-          title="Lo que tienes"
-          subtitle="Tu negocio listo para vender."
-          badge={`${configOk}/${configTotal} listo`}
-        />
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5">
-          {data && (
-            <>
-              <Tile icon={Banknote} label="Ventas del mes" valor={fmtSoles(data.kpis.ventasMes)} />
-              <Tile icon={Banknote} label="Ventas de hoy" valor={fmtSoles(data.kpis.ventasHoy)} />
-              <Tile icon={PackageOpen} label="Envíos del mes" valor={String(data.kpis.enviosMes)} />
-              <Tile
-                icon={Truck}
-                label="Métodos de envío"
-                valor={`${metodosActivos.length} activos`}
-              />
-            </>
-          )}
-          {pasosConfig
-            .filter(
-              (p) =>
-                p.ok &&
-                !(p.id === 'metodos' && data) &&
-                p.id !== 'logo' &&
-                p.id !== 'origen'
-            )
-            .map((p) => (
-              <Tile key={p.id} icon={CheckCircle2} label={p.label} valor={p.listo} />
-            ))}
-        </div>
-      </div>
 
       {/* ============ FALTA + ATENCIÓN al lado ============ */}
       {(falta.length > 0 || mal.length > 0) && (
@@ -809,6 +911,7 @@ export default function PanelResumen({ userId, onNavegar, onConfig, config }: Pr
                     <div className="inline-flex rounded-lg bg-slate-100 p-0.5">
                       <button
                         onClick={() => setMetrica('monto')}
+                        hidden={!acc.dinero}
                         className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
                           metrica === 'monto'
                             ? 'bg-white shadow text-slate-900'
@@ -923,7 +1026,7 @@ export default function PanelResumen({ userId, onNavegar, onConfig, config }: Pr
                   </span>
                 </div>
                 <div className="mt-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-px bg-slate-100">
-                  <section className="bg-white p-4">
+                  <section className={`bg-white p-4 ${acc.dinero ? '' : 'hidden'}`}>
                     <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                       Métodos de pago
                     </h4>

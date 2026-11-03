@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { supabaseAnonKey, supabaseUrl } from '@/lib/supabaseEnv'
 
 // Resultado de la autenticación de super admin.
 export type AdminAuthResult =
@@ -14,8 +15,8 @@ async function getSessionUser(): Promise<{
 } | null> {
   const cookieStore = await cookies()
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl(),
+    supabaseAnonKey(),
     {
       cookies: {
         getAll() {

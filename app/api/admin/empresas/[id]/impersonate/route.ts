@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
+import { origenPublico } from '@/lib/authServidor'
+import { mensajeDb } from '@/lib/erroresEs'
+import { mensajeAuth } from '@/lib/erroresEs'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireSuperAdmin()
@@ -23,18 +26,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'No puedes entrar como tu mismo.' }, { status: 400 })
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-
-  // Resolver la URL de la app de forma robusta:
-  // 1. Variable de entorno explícita
-  // 2. Host header del request (funciona tanto en Vercel como en local)
-  const host = request.headers.get('host')
-  const proto = request.headers.get('x-forwarded-proto') || 'https'
-  const appUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (host ? `${proto}://${host}` : '') ||
-    new URL(request.url).origin
-
+  // El enlace apunta a NUESTRO servidor (/auth/impersonar), no al de la base:
+  // el navegador nunca ve la dirección del servicio de autenticación.
+  const appUrl = await origenPublico()
   const redirectTo = new URL('/dashboard', appUrl).toString()
 
   // Genera un magic link para iniciar sesión como la empresa objetivo.
@@ -46,13 +40,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   if (error || !data?.properties?.hashed_token) {
     return NextResponse.json(
-      { error: error?.message ?? 'No se pudo generar el enlace de acceso.' },
+      { error: (error ? mensajeAuth(error) : 'No se pudo generar el enlace de acceso.') },
       { status: 500 }
     )
   }
 
   const token = data.properties.hashed_token
-  const link = `${baseUrl}/auth/v1/verify?token=${token}&type=magiclink&redirect_to=${encodeURIComponent(redirectTo)}`
+  const link = `${appUrl}/auth/impersonar?token_hash=${encodeURIComponent(token)}`
 
   const { data: perfil } = await supabaseAdmin
     .from('profiles')

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { mensajeDb } from '@/lib/erroresEs'
 
 // ============================================================
 // STOCK ATÓMICO vía RPC (anti-CAS)
@@ -52,7 +53,7 @@ export async function descontarStock(
     p_motivo: motivo ?? null,
   })
 
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: mensajeDb(error) }
 
   if (stockFinalDe(data) !== null) return { ok: true }
 
@@ -88,7 +89,7 @@ export async function sumarStock(
     p_motivo: motivo ?? null,
   })
 
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: mensajeDb(error) }
 
   if (stockFinalDe(data) !== null) return { ok: true }
 
@@ -111,7 +112,7 @@ export async function restarStock(
     p_motivo: null,
   })
 
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: mensajeDb(error) }
 
   if (stockFinalDe(data) !== null) return { ok: true }
 
@@ -164,7 +165,7 @@ export async function editarVentaAtomico(
     p_persona_dni: params.persona_dni ?? null,
     p_monto_pagado: params.monto_pagado ?? null,
   })
-  return { data: data ?? null, error: error ? error.message : null }
+  return { data: data ?? null, error: error ? mensajeDb(error) : null }
 }
 
 export async function anularVentaAtomico(
@@ -173,7 +174,7 @@ export async function anularVentaAtomico(
   const { data, error } = await supabaseAdmin.rpc('anular_venta_atomico', {
     p_venta_id: ventaId,
   })
-  return { data: data ?? null, error: error ? error.message : null }
+  return { data: data ?? null, error: error ? mensajeDb(error) : null }
 }
 
 export async function eliminarVentaAtomico(
@@ -182,7 +183,7 @@ export async function eliminarVentaAtomico(
   const { data, error } = await supabaseAdmin.rpc('eliminar_venta_atomico', {
     p_venta_id: ventaId,
   })
-  return { data: data ?? null, error: error ? error.message : null }
+  return { data: data ?? null, error: error ? mensajeDb(error) : null }
 }
 
 // Ajuste de inventario con motivo OBLIGATORIO (registra AJUSTE en el kardex)
@@ -197,7 +198,7 @@ export async function ajustarStock(
     p_motivo: motivo,
   })
 
-  if (error) return { ok: false, error: error.message }
+  if (error) return { ok: false, error: mensajeDb(error) }
   if (stockFinalDe(data) !== null) return { ok: true }
   return { ok: false, error: `Producto ${productoId} no encontrado` }
 }

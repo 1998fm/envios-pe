@@ -1,9 +1,9 @@
 'use client'
 
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
 import { useState } from 'react'
 import MenuSelect from '@/components/ui/MenuSelect'
 import { toast } from 'sonner'
+import { api, ErrorApi } from '@/lib/clienteApi'
 
 type Props = {
   envioId: string
@@ -19,16 +19,17 @@ const options = [
 ]
 
 export default function TamanoSelect({ envioId, tamanoActual }: Props) {
-  const supabase = createClient()
   const [tamano, setTamano] = useState(tamanoActual || '')
 
   async function actualizarTamano(nuevoTamano: string) {
+    const anterior = tamano
     setTamano(nuevoTamano)
-    const { error } = await supabase
-      .from('envios')
-      .update({ tamano: nuevoTamano })
-      .eq('id', envioId)
-    if (error) toast.error(error.message)
+    try {
+      await api(`/api/envios/${envioId}`, { method: 'PATCH', json: { tamano: nuevoTamano } })
+    } catch (e) {
+      setTamano(anterior)
+      toast.error(e instanceof ErrorApi ? e.message : 'No se pudo cambiar el tamaño')
+    }
   }
 
   return (

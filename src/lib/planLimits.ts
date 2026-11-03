@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 import { computeEffectivePlan } from '@/lib/planGating'
+import { supabaseServiceKey, supabaseUrl } from '@/lib/supabaseEnv'
 
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  supabaseUrl(),
+  supabaseServiceKey()
 )
 
 export type PlanFeature = {
@@ -211,9 +212,10 @@ export async function registrarExportacionShalom(userId: string, cantidad: numbe
 }
 
 export async function checkRolesLimit(ownerId: string): Promise<LimitCheck> {
-  const { plan, isTrial, isPaid } = await checkTrialStatus(ownerId)
+  // Business Plus vigente: incluye la prueba gratuita (si venció, el plan efectivo es basic).
+  const { plan } = await checkTrialStatus(ownerId)
 
-  if (plan !== 'business_plus' || (isTrial && !isPaid)) {
+  if (plan !== 'business_plus') {
     return {
       allowed: false,
       used: 0,

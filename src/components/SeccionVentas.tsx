@@ -21,7 +21,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import { usePolling } from '@/hooks/usePolling'
 import type { Venta } from '@/types/inventario'
 import ModalDetalleVenta from '@/components/ModalDetalleVenta'
 import ModalNuevaVenta from '@/components/ModalNuevaVenta'
@@ -127,26 +127,13 @@ export default function SeccionVentas({
     return () => clearTimeout(t)
   }, [cargarVentas, busqueda])
 
-  // Realtime: si otra sesión registra o edita una venta, la lista se actualiza.
-  // Se omite si acabamos de hacer un fetch, para no recargar dos veces por la
-  // propia acción del usuario.
-  useEffect(() => {
-    if (!userId) return
-    const supabase = createClient()
-    const recarga = () => {
-      if (Date.now() - ultimoFetchRef.current < 1500) return
-      cargarVentas(0)
-    }
-    const canal = supabase
-      .channel('ventas-realtime')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ventas' }, recarga)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ventas' }, recarga)
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'ventas' }, recarga)
-      .subscribe()
-    return () => {
-      supabase.removeChannel(canal)
-    }
-  }, [userId, cargarVentas])
+  // Si otra sesión registra o edita una venta, la lista se actualiza: se consulta
+  // al servidor cada pocos segundos mientras la pestaña está visible. Se omite si
+  // acabamos de hacer un fetch, para no recargar dos veces por la propia acción.
+  usePolling(() => {
+    if (Date.now() - ultimoFetchRef.current < 1500) return
+    cargarVentas(0)
+  }, 10_000, Boolean(userId))
 
   const irAPagina = async (page: number) => {
     setNavegando(true)

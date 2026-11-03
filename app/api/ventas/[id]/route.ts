@@ -1,9 +1,14 @@
-﻿import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 import { editarVentaAtomico, anularVentaAtomico, eliminarVentaAtomico } from '@/lib/stock'
+import { mensajeDb } from '@/lib/erroresEs'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_ventas')
+  if (!auth.ok) return auth.response
+
   const { id } = await params
   const body = await request.json()
   const { estado, metodo_pago, persona_nombre, persona_dni, items, monto_pagado } = body
@@ -12,10 +17,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .from('ventas')
     .select('*, items:venta_items(*)')
     .eq('id', id)
-    .single()
+    .eq('profile_id', auth.ownerId)
+    .maybeSingle()
 
   if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(fetchError) }, { status: 500 })
+  }
+  if (!venta) {
+    return NextResponse.json({ error: 'Venta no encontrada' }, { status: 404 })
   }
 
   const esEdicion = Array.isArray(items)
@@ -36,6 +45,21 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           { error: 'Cada ítem debe tener un precio_unitario mayor o igual a 0.' },
           { status: 400 }
         )
+      }
+    }
+
+    // Los productos de los ítems deben ser del propio negocio.
+    const idsEnviados = [
+      ...new Set((items as any[]).map((it: any) => it.producto_id).filter(Boolean)),
+    ] as string[]
+    if (idsEnviados.length > 0) {
+      const { data: propios } = await supabaseAdmin
+        .from('productos')
+        .select('id')
+        .eq('profile_id', auth.ownerId)
+        .in('id', idsEnviados)
+      if ((propios?.length ?? 0) !== idsEnviados.length) {
+        return NextResponse.json({ error: 'Producto no válido' }, { status: 403 })
       }
     }
 
@@ -154,17 +178,21 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .from('ventas')
     .update(updates)
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
     .select('*, items:venta_items(*)')
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   return NextResponse.json({ data })
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_ventas')
+  if (!auth.ok) return auth.response
+
   const { id } = await params
 
   // Lectura ANTES de borrar para poder sincronizar archivado de los productos
@@ -172,7 +200,12 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     .from('ventas')
     .select('estado, items:venta_items(producto_id, cantidad)')
     .eq('id', id)
-    .single()
+    .eq('profile_id', auth.ownerId)
+    .maybeSingle()
+
+  if (!venta) {
+    return NextResponse.json({ error: 'Venta no encontrada' }, { status: 404 })
+  }
 
   // Eliminación ATÓMICA: el RPC restaura el stock (COMPLETADA/PENDIENTE) y
   // borra venta + items en UNA transacción. ANULADA no restaura (ya devolvió).

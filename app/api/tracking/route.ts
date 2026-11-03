@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { permitir } from '@/lib/rateLimit'
+import { mensajeDb } from '@/lib/erroresEs'
 
 function norm(v: string | null | undefined): string {
   return (v || '').replace(/\s+/g, '').toUpperCase()
@@ -10,11 +12,21 @@ function norm(v: string | null | undefined): string {
 // Un mismo DNI en varios negocios de la plataforma vive en filas con user_id
 // distintos, así que filtrar por user_id garantiza que nunca se mezclen.
 export async function GET(request: Request) {
+  // Un DNI son 8 dígitos y se puede probar de corrido: se exige un segundo
+  // dato (el teléfono del pedido) y se limitan los intentos por IP.
+  if (!permitir(request, 'tracking', 15, 10 * 60 * 1000)) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Espera unos minutos.' },
+      { status: 429 }
+    )
+  }
+
   const { searchParams } = new URL(request.url)
   const userId = searchParams.get('user_id')
   const dni = norm(searchParams.get('dni'))
+  const telefono = norm(searchParams.get('telefono'))
 
-  if (!userId || !dni) {
+  if (!userId || !dni || telefono.length < 6) {
     return NextResponse.json({ data: null })
   }
 
@@ -31,10 +43,12 @@ export async function GET(request: Request) {
     .limit(200)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
-  const coinciden = (envios || []).filter((e: any) => norm(e.dni) === dni)
+  const coinciden = (envios || []).filter(
+    (e: any) => norm(e.dni) === dni && norm(e.telefono) === telefono
+  )
 
   if (coinciden.length === 0) {
     return NextResponse.json({ data: [] })
@@ -42,6 +56,11 @@ export async function GET(request: Request) {
 
   // Ventas vinculadas a esos envíos + sus items (prendas/montos)
   const envioIds = coinciden.map((e: any) => e.id)
+  const { data: ventasDeEnvios } = await supabaseAdmin
+    .from('ventas')
+    .select('id')
+    .in('envio_id', envioIds)
+  const ventaIds = (ventasDeEnvios || []).map((v: any) => v.id)
   const [ventasRes, itemsRes] = await Promise.all([
     supabaseAdmin
       .from('ventas')
@@ -50,7 +69,8 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false }),
     supabaseAdmin
       .from('venta_items')
-      .select('venta_id, producto_nombre, cantidad, precio_unitario, subtotal'),
+      .select('venta_id, producto_nombre, cantidad, precio_unitario, subtotal')
+      .in('venta_id', ventaIds),
   ])
 
   const itemsPorVenta = new Map<string, any[]>()
@@ -78,12 +98,12 @@ export async function GET(request: Request) {
   const data = coinciden.map((e: any) => ({
     id: e.id,
     codigo: e.codigo,
-    nombre: e.nombre,
+    // Solo el primer nombre: el seguimiento no necesita exponer el nombre completo.
+    nombre: String(e.nombre || '').trim().split(/\s+/)[0] || null,
     estado: e.estado,
     metodo: e.metodo,
     nombre_metodo: e.nombre_metodo,
     destino: e.destino,
-    direccion: e.direccion,
     detalle: e.detalle,
     fecha_registro: e.fecha_registro,
     fecha_programada: e.fecha_programada,

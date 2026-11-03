@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
 
 const DIAS_HISTORICO = 90
 
@@ -16,13 +17,10 @@ const DIAS_HISTORICO = 90
 // encadenar 20 conteos.
 // ============================================================
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
-
-  if (!userId) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
+export async function GET() {
+  const auth = await requireNegocio('ver_resumen')
+  if (!auth.ok) return auth.response
+  const userId = auth.ownerId
 
   const now = new Date()
   const PE = '-05:00'
@@ -49,13 +47,13 @@ export async function GET(request: Request) {
     // serie histórica, los gráficos y los saldos por cobrar.
     supabaseAdmin
       .from('ventas')
-      .select('created_at, total, monto_pagado, estado, metodo_pago, envio_id')
+      .select('created_at, total, monto_pagado, estado, metodo_pago, envio_id, items:venta_items(cantidad, costo_unitario)')
       .eq('profile_id', userId),
     // Todos los envíos: de aquí salen el histórico de pedidos, los gráficos
     // por estado/método y los contadores de despachar.
     supabaseAdmin
       .from('envios')
-      .select('id, estado, fecha_registro, metodo')
+      .select('id, estado, fecha_registro, fecha_programada, metodo')
       .eq('user_id', userId),
     // Compras: total histórico y comparación con el mes anterior.
     supabaseAdmin
@@ -94,7 +92,37 @@ export async function GET(request: Request) {
     return acc
   }
 
+  // Ganancia = total de la venta - costo de sus ítems (foto del costo al vender).
+  function gananciaVentas(desde: Date, hasta?: Date) {
+    let acc = 0
+    for (const v of ventas as any[]) {
+      if (!esVentaVigente(v.estado)) continue
+      const t = new Date(v.created_at).getTime()
+      if (t < desde.getTime()) continue
+      if (hasta && t >= hasta.getTime()) continue
+      const costo = ((v.items ?? []) as any[]).reduce(
+        (a, it) => a + Number(it.cantidad || 0) * Number(it.costo_unitario || 0),
+        0
+      )
+      acc += Number(v.total || 0) - costo
+    }
+    return Math.round(acc * 100) / 100
+  }
+
+  function cantidadVentas(desde: Date, hasta?: Date) {
+    let n = 0
+    for (const v of ventas as any[]) {
+      if (!esVentaVigente(v.estado)) continue
+      const t = new Date(v.created_at).getTime()
+      if (t >= desde.getTime() && (!hasta || t < hasta.getTime())) n += 1
+    }
+    return n
+  }
+
   const ventasMes = sumaVentas(startOfMonth, startOfNextMonth)
+  const gananciaMes = gananciaVentas(startOfMonth, startOfNextMonth)
+  const gananciaHoy = gananciaVentas(startOfDay, now)
+  const ventasHoyCantidad = cantidadVentas(startOfDay, now)
   const ventasMesAnterior = sumaVentas(startOfPrevMonth, startOfMonth)
   const ventasHoy = sumaVentas(startOfDay, now)
   const ventasAyer = sumaVentas(startOfYesterday, startOfDay)
@@ -123,10 +151,24 @@ export async function GET(request: Request) {
 
   let sinEmpacar = 0
   let empacados = 0
+  // Lo que toca despachar HOY (día calendario Perú) y lo que ya venció.
+  let porEnviarHoy = 0
+  let enviadosHoy = 0
+  let atrasados = 0
+  let pedidosNuevosHoy = 0
   let enviosMes = 0
   let enviosMesAnterior = 0
   const enviosPendientesIds = new Set<string>()
   for (const e of envios as any[]) {
+    const diaProg = e.fecha_programada ? diaLima(e.fecha_programada) : null
+    const pendiente = e.estado === 'NO_EMPACADO' || e.estado === 'EMPACADO' || e.estado === 'EN_OBSERVACION'
+    if (diaProg === hoyLima) {
+      if (pendiente) porEnviarHoy += 1
+      if (e.estado === 'ENVIADO') enviadosHoy += 1
+    } else if (diaProg && diaProg < hoyLima && pendiente) {
+      atrasados += 1
+    }
+    if (e.fecha_registro && diaLima(e.fecha_registro) === hoyLima) pedidosNuevosHoy += 1
     if (e.estado === 'NO_EMPACADO') sinEmpacar += 1
     if (e.estado === 'EMPACADO') empacados += 1
     if (e.estado === 'NO_EMPACADO' || e.estado === 'EN_OBSERVACION') {
@@ -171,7 +213,7 @@ export async function GET(request: Request) {
   // compara con el día, no con la hora.
   const diaGasto = (g: any) => String(g.fecha || '').slice(0, 10)
   const hoyStr = hoyLima
-  const mesStr = hoyLima.slice(0, 8)
+  const mesStr = hoyLima.slice(0, 7)
   const mesAntStr = (() => {
     const d = new Date(startOfPrevMonth)
     return d.toLocaleDateString('en-CA', { timeZone: 'America/Lima' }).slice(0, 7)
@@ -254,42 +296,61 @@ export async function GET(request: Request) {
   const delta = (actual: number, anterior: number) =>
     anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : null
 
+  // Las cifras de dinero salen del servidor solo si el rol las permite: ocultarlas
+  // únicamente en pantalla no sirve, quien abre la pestaña Red las vería igual.
+  const verDinero = auth.permisos.ver_kpis_venta
+  const verGanancia = auth.permisos.ver_ganancia_venta
+  const verEgresos = verDinero && auth.permisos.ver_gastos && auth.permisos.ver_compras
+  const d = (permitido: boolean, n: number) => (permitido ? n : 0)
+
   return NextResponse.json({
+    acceso: { dinero: verDinero, ganancia: verGanancia, egresos: verEgresos },
+    hoy: {
+      fecha: hoyLima,
+      ventas: d(verDinero, ventasHoy),
+      ventasCantidad: ventasHoyCantidad,
+      ganancia: d(verGanancia, gananciaHoy),
+      pedidosNuevos: pedidosNuevosHoy,
+      porEnviar: porEnviarHoy,
+      enviados: enviadosHoy,
+      atrasados,
+    },
     kpis: {
-      ventasMes,
-      ventasHoy,
+      ventasMes: d(verDinero, ventasMes),
+      gananciaMes: d(verGanancia, gananciaMes),
+      ventasHoy: d(verDinero, ventasHoy),
       cobrosPendientes,
-      cobrosPendientesTotal,
+      cobrosPendientesTotal: d(verDinero, cobrosPendientesTotal),
       pedidosPorDespachar: sinEmpacar + empacados,
       enviosMes,
       stockBajo: stockBajoCount,
-      totalVentas: totalCobrado,
-      totalCompras,
-      totalGastos,
-      gastosMes,
-      saldoDisponible: totalCobrado - totalCompras - totalGastos,
+      totalVentas: d(verEgresos, totalCobrado),
+      totalCompras: d(verEgresos, totalCompras),
+      totalGastos: d(verEgresos, totalGastos),
+      gastosMes: d(verEgresos, gastosMes),
+      saldoDisponible: d(verEgresos, totalCobrado - totalCompras - totalGastos),
     },
     pendientes: {
       sinEmpacar,
       empacados,
       cobrosPendientes,
-      cobrosPendientesTotal,
+      cobrosPendientesTotal: d(verDinero, cobrosPendientesTotal),
       stockBajo: stockBajoCount,
       pedidosSinVenta,
     },
     deltas: {
-      ventasMes: delta(ventasMes, ventasMesAnterior),
+      ventasMes: verDinero ? delta(ventasMes, ventasMesAnterior) : null,
       enviosMes: delta(enviosMes, enviosMesAnterior),
-      ventasHoy: delta(ventasHoy, ventasAyer),
-      gastosMes: delta(gastosMes, gastosMesAnterior),
+      ventasHoy: verDinero ? delta(ventasHoy, ventasAyer) : null,
+      gastosMes: verEgresos ? delta(gastosMes, gastosMesAnterior) : null,
     },
     historico: {
-      ventas: historicoVentas,
+      ventas: verDinero ? historicoVentas : historicoVentas.map((h) => ({ ...h, total: 0 })),
       pedidos: historicoPedidos,
     },
     graficos: {
       ventasPorMetodo: Object.entries(ventasPorMetodo)
-        .map(([metodo, total]) => ({ metodo, total }))
+        .map(([metodo, total]) => ({ metodo, total: d(verDinero, total) }))
         .sort((a, b) => b.total - a.total),
       enviosPorEstado: Object.entries(enviosPorEstado)
         .map(([estado, count]) => ({ estado, count }))

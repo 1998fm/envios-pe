@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin } from '@/lib/adminAuth'
 import { computeEffectivePlan } from '@/lib/planGating'
+import { mensajeDb } from '@/lib/erroresEs'
 
 const DIAS_SERIE = 14
 
@@ -21,7 +22,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     .maybeSingle()
 
   if (errPerfil) {
-    return NextResponse.json({ error: errPerfil.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(errPerfil) }, { status: 500 })
   }
   if (!perfil) {
     return NextResponse.json({ error: 'Empresa no encontrada' }, { status: 404 })

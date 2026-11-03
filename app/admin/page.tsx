@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import { cerrarSesion, obtenerSesion } from '@/lib/clienteApi'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Select from '@/components/ui/Select'
@@ -274,7 +274,7 @@ export default function AdminPage() {
     })
     if (!res.ok) {
       const d = await res.json().catch(() => ({}))
-      throw new Error((d as { error?: string }).error ?? `Error ${res.status}`)
+      throw new Error((d as { error?: string }).error ?? `Error del servidor (código ${res.status})`)
     }
     return res.json()
   }, [])
@@ -282,12 +282,15 @@ export default function AdminPage() {
   // Verificar sesión y rol
   useEffect(() => {
     async function check() {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
+      const sesion = await obtenerSesion().catch(() => null)
+      if (!sesion) {
         router.replace('/login')
+        return
+      }
+      // Solo un super admin ve este panel (los datos ya los protege la API, pero
+      // tampoco se muestra la pantalla a quien no corresponde).
+      if (!sesion.negocio.esSuperAdmin) {
+        router.replace('/dashboard')
         return
       }
       setSesion(true)
@@ -448,8 +451,7 @@ export default function AdminPage() {
   }
 
   const logout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await cerrarSesion()
     router.replace('/login')
   }
 

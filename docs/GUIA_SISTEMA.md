@@ -79,16 +79,18 @@ src/
 └── data/                 # agencias-shalom.json, provincias-olva.json, distritos-moto.json
 ```
 
-**Clientes de Supabase (importante):**
+**Acceso a datos (importante):**
 
-| Cliente | Archivo | Key | Dónde se usa |
+El navegador **no tiene cliente de Supabase** y no conoce la URL ni las llaves de la base. Todo lee y escribe a través de las rutas `/api/*` del servidor.
+
+| Pieza | Archivo | Llave | Dónde se usa |
 |---|---|---|---|
-| `supabase` | `app/f/[slug]/lib/supabase.ts` | anon | legacy/global |
-| `createClient` (browser) | `app/f/[slug]/lib/supabase/client.ts` | anon (cookies) | Componentes `'use client'` |
-| `createClient` (server) | `app/f/[slug]/lib/supabase/server.ts` | anon | Server components (lee perfiles públicos) |
-| `createClient` (admin) | `app/f/[slug]/lib/supabase/admin.ts` | **service_role** | **Todas** las rutas `/api/*` (bypass RLS) |
+| Cliente admin | `app/f/[slug]/lib/supabase/admin.ts` | **service_role** | **Todas** las rutas `/api/*` y páginas de servidor |
+| Cliente de sesión | `src/lib/authServidor.ts` (`clienteAuth`) | anon + cookies httpOnly | Solo rutas de autenticación (`/api/auth/*`, `/auth/*`) |
+| Variables | `src/lib/supabaseEnv.ts` | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Solo servidor (nada `NEXT_PUBLIC_`) |
+| Cliente HTTP del navegador | `src/lib/clienteApi.ts` | — | Componentes `'use client'` (`api()`, `obtenerSesion()`) |
 
-> **Regla de oro del sistema:** las **lecturas/escrituras del dashboard sobre envíos** (cambiar estado, tamaño, fecha, eliminar, cambio masivo) se hacen **directo con el cliente del navegador** (RLS permite al dueño). Las rutas `/api/*` usan `service_role` y se encargan de crear registros con reglas de negocio (límites de plan, stock, cálculo de fechas).
+> **Regla de oro del sistema:** como las rutas usan `service_role` (saltan RLS), el control de acceso vive en el código: `requireNegocio()` (`src/lib/negocioAuth.ts`) saca el dueño de los datos de la **sesión**, aplica los permisos del rol y cada consulta filtra por ese dueño. Además, el SQL `supabase/acceso-solo-servidor.sql` quita a `anon` y `authenticated` todo permiso sobre el esquema `public`, así que aunque alguien conozca la URL del proyecto y la clave anónima no puede leer nada. Las imágenes salen por `/media/...` (reenvío en `next.config.ts`) y no por la URL del almacenamiento. El tiempo real se reemplazó por consulta periódica (`src/hooks/usePolling.ts`).
 
 ---
 
@@ -521,7 +523,7 @@ Precedencia (de mayor a menor):
 
 ## 20. API REST
 
-Todas las rutas están en `app/api/`. Usan `service_role` (admin). **No validan sesión**: confían en `user_id`/`userId` del query o body.
+Todas las rutas están en `app/api/`. Usan `service_role` (admin), por lo que el control de acceso vive en el código: las rutas de negocio llaman a `requireNegocio()` (`src/lib/negocioAuth.ts`), que toma el dueño de los datos de la **sesión** (nunca de `user_id` en query/body) y aplica los permisos del rol. Las únicas rutas públicas son las del formulario de clientes (`POST /api/envios`, `/api/tarifa-moto`, `/api/logistica/moto`, `/api/tracking` con DNI + teléfono, listas de agencias).
 
 | Método | Ruta | Qué hace | Gating |
 |---|---|---|---|

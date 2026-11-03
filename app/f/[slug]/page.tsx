@@ -1,4 +1,6 @@
-import { supabaseServer } from 'app/f/[slug]/lib/supabase/server'
+import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { urlHttpSegura } from '@/lib/urlSegura'
+import { aProxy } from '@/lib/mediaUrl'
 import PublicForm from '@/components/PublicForm'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { validarHoraCorte } from '@/lib/logistica/validarHoraCorte'
@@ -11,7 +13,7 @@ export default async function FormPage({
 }) {
   const { slug } = await params
 
-  const { data: profile } = await supabaseServer
+  const { data: profile } = await supabaseAdmin
     .from('profiles')
     .select('*')
     .eq('slug', slug)
@@ -48,7 +50,7 @@ export default async function FormPage({
   // distritos-metropolitanos precargada.
   let distritosMotorizado: string[] | undefined
   if ((profile.moto_region ?? 'lima') === 'provincia') {
-    const { data: tarifas } = await supabaseServer
+    const { data: tarifas } = await supabaseAdmin
       .from('tarifas_moto')
       .select('tarifas')
       .eq('profile_id', profile.id)
@@ -89,16 +91,16 @@ export default async function FormPage({
         userId={profile.id}
         isPro={isPro}
         isBusinessPlus={isBusinessPlus}
-        logoUrl={profile.logo_url}
+        logoUrl={aProxy(profile.logo_url) ?? undefined}
         redirectMessage={profile.redirect_message}
-        redirectMessageImage={profile.redirect_message_image}
-        redirectUrl={profile.redirect_url}
+        redirectMessageImage={aProxy(profile.redirect_message_image) ?? undefined}
+        redirectUrl={urlHttpSegura(profile.redirect_url)}
 
-        instagramUrl={profile.instagram_url}
-        facebookUrl={profile.facebook_url}
-        tiktokUrl={profile.tiktok_url}
-        webUrl={profile.web_url}
-        whatsappUrl={profile.whatsapp_url}
+        instagramUrl={urlHttpSegura(profile.instagram_url)}
+        facebookUrl={urlHttpSegura(profile.facebook_url)}
+        tiktokUrl={urlHttpSegura(profile.tiktok_url)}
+        webUrl={urlHttpSegura(profile.web_url)}
+        whatsappUrl={urlHttpSegura(profile.whatsapp_url)}
         metodoMotorizado={motorizadoActivo}
 
 metodoShalom={profile.metodo_shalom}

@@ -1,25 +1,23 @@
 import { NextResponse } from 'next/server'
+import { requireNegocio } from '@/lib/negocioAuth'
 import { checkShalomExportLimit, registrarExportacionShalom } from '@/lib/planLimits'
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
-
-  if (!userId) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
+export async function GET() {
+  const auth = await requireNegocio('ver_envios')
+  if (!auth.ok) return auth.response
+  const userId = auth.ownerId
 
   const { used, max } = await checkShalomExportLimit(userId)
   return NextResponse.json({ used, max })
 }
 
 export async function POST(request: Request) {
-  const body = await request.json()
-  const { user_id, cantidad } = body
+  const auth = await requireNegocio('ver_envios')
+  if (!auth.ok) return auth.response
+  const user_id = auth.ownerId
 
-  if (!user_id) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
+  const body = await request.json().catch(() => ({}))
+  const cantidad = Math.max(0, Math.floor(Number(body.cantidad) || 0))
 
   const { allowed, used, max, reason } = await checkShalomExportLimit(user_id)
 

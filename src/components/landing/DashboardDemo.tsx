@@ -1,7 +1,9 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { Check } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Check, MousePointerClick } from 'lucide-react'
+import { useState } from 'react'
+import { CountUp, Reveal, Resaltado } from './ui'
 
 const beneficios = [
   'Pedidos y envíos organizados.',
@@ -10,93 +12,133 @@ const beneficios = [
   'Menos tareas repetitivas.',
 ]
 
-const pedidos = [
-  { name: 'María · Lima', badge: 'Pendiente', badgeClass: 'bg-amber-400/10 text-amber-300' },
-  { name: 'Andrea · Callao', badge: 'Listo', badgeClass: 'bg-emerald-400/10 text-emerald-300' },
-  { name: 'Sofía · Surco', badge: 'Envío', badgeClass: 'bg-tori-400/10 text-tori-300' },
-]
+const ESTADOS = ['Pendiente', 'Listo', 'Envío'] as const
+type Estado = (typeof ESTADOS)[number]
+
+const estiloEstado: Record<Estado, string> = {
+  Pendiente: 'bg-amber-50 text-amber-700 ring-amber-300',
+  Listo: 'bg-emerald-50 text-emerald-700 ring-emerald-300',
+  Envío: 'bg-tori-50 text-tori-700 ring-tori-300',
+}
 
 export default function DashboardDemo() {
+  const [pedidos, setPedidos] = useState<{ name: string; estado: Estado }[]>([
+    { name: 'María · Lima', estado: 'Pendiente' },
+    { name: 'Andrea · Callao', estado: 'Listo' },
+    { name: 'Sofía · Surco', estado: 'Envío' },
+  ])
+
+  function avanzar(i: number) {
+    setPedidos((p) =>
+      p.map((x, idx) =>
+        idx === i ? { ...x, estado: ESTADOS[(ESTADOS.indexOf(x.estado) + 1) % ESTADOS.length] } : x
+      )
+    )
+  }
+
+  // "Por preparar" = lo que todavía no salió en envío (6 de base + los que aún no salen en esta lista: 8 al inicio).
+  const porPreparar = 6 + pedidos.filter((p) => p.estado !== 'Envío').length
+  const todoEnviado = pedidos.every((p) => p.estado === 'Envío')
+
   return (
-    <section className="py-20 sm:py-28 bg-slate-950 text-white overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          >
-            <span className="text-xs uppercase tracking-[.18em] font-black text-tori-300">Una sola vista</span>
-            <h2 className="mt-3 text-3xl sm:text-5xl font-black tracking-tight">
+    <section className="relative overflow-hidden bg-tori-50/60 py-24 sm:py-32">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="grid items-center gap-14 lg:grid-cols-2">
+          <Reveal>
+            <span className="inline-flex items-center gap-2 rounded-full border border-tori-200 bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[.18em] text-tori-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-tori-500" />
+              Una sola vista
+            </span>
+            <h2 className="mt-4 text-3xl font-black leading-[1.1] tracking-tight text-tori-900 sm:text-5xl">
               De &ldquo;¿dónde estaba?&rdquo; a{' '}
-              <span className="gradient-text">&ldquo;ya sé qué tengo que hacer&rdquo;.</span>
+              <Resaltado>&ldquo;ya sé qué tengo que hacer&rdquo;.</Resaltado>
             </h2>
-            <p className="mt-5 text-slate-300 text-lg leading-relaxed">
+            <p className="mt-5 text-lg leading-relaxed text-slate-600">
               Tori reúne la información que necesitas para gestionar tu día sin estar saltando entre chats, hojas y
               notas.
             </p>
-            <div className="mt-7 space-y-3">
-              {beneficios.map((b) => (
-                <div key={b} className="flex gap-3 items-start">
-                  <span className="w-5 h-5 rounded-full bg-tori-400/15 text-tori-300 flex items-center justify-center shrink-0 mt-0.5">
+            <ul className="mt-8 space-y-3">
+              {beneficios.map((b, i) => (
+                <motion.li
+                  key={b}
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.15 + i * 0.08 }}
+                  className="flex items-start gap-3"
+                >
+                  <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-tori-600 text-white">
                     <Check size={12} />
                   </span>
-                  <span className="text-slate-200">{b}</span>
-                </div>
+                  <span className="text-slate-700">{b}</span>
+                </motion.li>
               ))}
-            </div>
-          </motion.div>
+            </ul>
+          </Reveal>
 
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
-          >
-            <div className="bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-800 flex justify-between">
-                <span className="font-bold">Panel de control</span>
-                <span className="text-xs text-emerald-300 bg-emerald-400/10 rounded-full px-2.5 py-1">
-                  Todo en orden
+          <Reveal delay={0.1}>
+            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-tori-900/10">
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <span className="font-bold text-tori-900">Panel de control</span>
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
+                    todoEnviado ? 'bg-tori-50 text-tori-700' : 'bg-emerald-50 text-emerald-700'
+                  }`}
+                >
+                  {todoEnviado ? 'Todo enviado' : 'Todo en orden'}
                 </span>
               </div>
-              <div className="p-5">
+              <div className="bg-slate-50/60 p-5">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-slate-800 p-4">
-                    <p className="text-xs text-slate-400">Ventas</p>
-                    <p className="text-2xl font-black mt-1">S/ 1,248</p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-800 p-4">
-                    <p className="text-xs text-slate-400">Disponible</p>
-                    <p className="text-2xl font-black mt-1">S/ 764</p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-800 p-4">
-                    <p className="text-xs text-slate-400">Pedidos</p>
-                    <p className="text-2xl font-black mt-1">32</p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-800 p-4">
-                    <p className="text-xs text-slate-400">Productos</p>
-                    <p className="text-2xl font-black mt-1">286</p>
-                  </div>
+                  {[
+                    { l: 'Ventas', v: <CountUp value={1248} prefix="S/ " /> },
+                    { l: 'Disponible', v: <CountUp value={764} prefix="S/ " /> },
+                    { l: 'Pedidos', v: <CountUp value={32} /> },
+                    { l: 'Productos', v: <CountUp value={286} /> },
+                  ].map((s) => (
+                    <div key={s.l} className="rounded-2xl border border-slate-200 bg-white p-4">
+                      <p className="text-xs text-slate-400">{s.l}</p>
+                      <p className="mt-1 text-2xl font-black text-tori-900">{s.v}</p>
+                    </div>
+                  ))}
                 </div>
-                <div className="mt-3 rounded-2xl bg-slate-800 p-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-bold">Pedidos por preparar</span>
-                    <span className="text-tori-300 font-bold">8</span>
+
+                <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-bold text-tori-900">Pedidos por preparar</span>
+                    <CountUp value={porPreparar} className="text-lg font-black text-tori-600" />
                   </div>
-                  <div className="mt-4 space-y-3">
-                    {pedidos.map((p) => (
+                  <div className="mt-4 space-y-2.5">
+                    {pedidos.map((p, i) => (
                       <div key={p.name} className="flex items-center justify-between">
-                        <span className="text-sm text-slate-300">{p.name}</span>
-                        <span className={`text-xs px-2 py-1 rounded-full ${p.badgeClass}`}>{p.badge}</span>
+                        <span className="text-sm text-slate-600">{p.name}</span>
+                        <button
+                          onClick={() => avanzar(i)}
+                          className={`min-w-[88px] cursor-pointer rounded-full px-3 py-1 text-xs font-bold ring-1 transition hover:scale-105 active:scale-95 ${estiloEstado[p.estado]}`}
+                        >
+                          <AnimatePresence mode="wait" initial={false}>
+                            <motion.span
+                              key={p.estado}
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -6 }}
+                              transition={{ duration: 0.15 }}
+                              className="block"
+                            >
+                              {p.estado}
+                            </motion.span>
+                          </AnimatePresence>
+                        </button>
                       </div>
                     ))}
                   </div>
+                  <p className="mt-4 flex items-center gap-1.5 text-[11px] text-slate-400">
+                    <MousePointerClick size={12} /> Toca un estado para avanzar el pedido
+                  </p>
                 </div>
               </div>
             </div>
-          </motion.div>
+          </Reveal>
         </div>
       </div>
     </section>

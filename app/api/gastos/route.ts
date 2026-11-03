@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
+import { mensajeDb } from '@/lib/erroresEs'
+
+const CATEGORIAS_GASTO = ['MATERIALES', 'PASAJES', 'DELIVERY', 'PUBLICIDAD', 'SERVICIOS', 'OTROS']
 
 export async function GET(request: Request) {
+  const auth = await requireNegocio('ver_gastos')
+  if (!auth.ok) return auth.response
+  const userId = auth.ownerId
+
   const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('user_id')
   const categoria = searchParams.get('categoria') || ''
   const offset = parseInt(searchParams.get('offset') || '0')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
-
-  if (!userId) {
-    return NextResponse.json({ error: 'user_id requerido' }, { status: 400 })
-  }
 
   let query = supabaseAdmin
     .from('gastos')
@@ -27,24 +30,30 @@ export async function GET(request: Request) {
     .range(offset, offset + limit - 1)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   return NextResponse.json({ data, total: count ?? 0, offset, limit })
 }
 
 export async function POST(request: Request) {
-  const body = await request.json()
-  const { user_id, categoria, concepto, monto, fecha, notas } = body
+  const auth = await requireNegocio('ver_gastos')
+  if (!auth.ok) return auth.response
 
-  if (!user_id || !concepto) {
+  const body = await request.json()
+  const { categoria, concepto, monto, fecha, notas } = body
+
+  if (!concepto) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
+  }
+  if (categoria && !CATEGORIAS_GASTO.includes(categoria)) {
+    return NextResponse.json({ error: 'Categoría no válida' }, { status: 400 })
   }
 
   const { data: gasto, error } = await supabaseAdmin
     .from('gastos')
     .insert({
-      profile_id: user_id,
+      profile_id: auth.ownerId,
       categoria: categoria || 'OTROS',
       concepto,
       monto: Math.max(0, Number(monto) || 0),
@@ -55,7 +64,7 @@ export async function POST(request: Request) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   return NextResponse.json({ data: gasto })

@@ -50,6 +50,10 @@ export default function EnvioCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: index * 0.03 }}
       onDoubleClick={() => onDoubleClick(envio)}
+      // en celular no hay doble clic: un toque abre el detalle
+      onClick={() => {
+        if (window.matchMedia('(max-width: 767px)').matches) onDoubleClick(envio)
+      }}
       className={`
         ${colorBorder(envio.estado)}
         bg-white 
@@ -78,10 +82,10 @@ export default function EnvioCard({
 
           {/* Left: nombre + datos + fecha programada (inline on mobile) */}
           <div data-tour="info" className="min-w-0 flex-1 sm:w-[200px] sm:shrink-0">
-            <div className="font-bold text-slate-900  truncate">
-              {envio.nombre}
+            <div className="flex min-w-0 items-center gap-2 font-bold text-slate-900">
+              <span className="min-w-0 truncate">{envio.nombre}</span>
               {envio.codigo && (
-                <span className="ml-2 inline-block rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 align-middle">
+                <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
                   {envio.codigo}
                 </span>
               )}
@@ -109,7 +113,7 @@ export default function EnvioCard({
         </div>
 
         {/* Right: badges + selects - full width on mobile */}
-        <div className="flex items-center gap-2 self-center w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 self-center w-full sm:w-auto sm:flex-nowrap">
           <span data-tour="metodo" className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100  text-slate-700  whitespace-nowrap truncate max-w-[100px] sm:max-w-none shrink-0">
             {envio.nombre_metodo || envio.metodo}
           </span>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireSuperAdmin } from '@/lib/adminAuth'
 import { sincronizarPagosMP } from '@/lib/facturacion'
+import { mensajeDb } from '@/lib/erroresEs'
 
 // POST: botón "Sincronizar pagos" en Facturación. Consulta MercadoPago y
 // registra/renueva los comprobantes de suscripciones autorizadas.
@@ -14,6 +15,6 @@ export async function POST() {
     const result = await sincronizarPagosMP()
     return NextResponse.json({ ok: true, ...result })
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 })
+    return NextResponse.json({ error: 'No se pudo sincronizar los pagos con MercadoPago.' }, { status: 500 })
   }
 }

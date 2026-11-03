@@ -17,7 +17,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import { usePolling } from '@/hooks/usePolling'
 import type { Producto } from '@/types/inventario'
 import EscannerVentas from '@/components/EscannerVentas'
 import TourHelpButton from '@/components/TourHelpButton'
@@ -93,18 +93,8 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
 
   // Mientras el modal está abierto, el stock puede cambiar desde otra pestaña
   // (una compra, otra venta, un ajuste). Sin esto, lo que se ve puede ya no
-  // ser lo que hay y el POST falla por 409.
-  useEffect(() => {
-    if (!abierto || !userId) return
-    const supabase = createClient()
-    const canal = supabase
-      .channel('productos-venta-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'productos' }, cargarProductos)
-      .subscribe()
-    return () => {
-      supabase.removeChannel(canal)
-    }
-  }, [abierto, userId])
+  // ser lo que hay y el POST falla por 409. Se refresca cada pocos segundos.
+  usePolling(cargarProductos, 8_000, Boolean(abierto && userId))
 
   useEffect(() => {
     if (abierto && trayectoDone() && !tourDone('modal-nueva-venta')) {

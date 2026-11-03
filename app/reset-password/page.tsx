@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from 'app/f/[slug]/lib/supabase/client'
+import { api, ErrorApi, obtenerSesion } from '@/lib/clienteApi'
 import { useRouter } from 'next/navigation'
 import ToriMascot from '@/components/ToriMascot'
 
 export default function ResetPasswordPage() {
-  const supabase = createClient()
   const router = useRouter()
 
   const [password, setPassword] = useState('')
@@ -15,24 +14,26 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [listo, setListo] = useState(false)
   const [verificando, setVerificando] = useState(true)
+  const [sesionValida, setSesionValida] = useState(false)
 
+  // El enlace del correo pasa por /auth/callback, que ya dejó la sesión lista en
+  // el servidor. Aquí solo se comprueba que exista.
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setVerificando(false)
-      }
-    })
-
-    const timeout = setTimeout(() => setVerificando(false), 3000)
-    return () => clearTimeout(timeout)
-  }, [supabase])
+    obtenerSesion()
+      .then((sesion) => {
+        if (!sesion) setError('El enlace venció o no es válido. Pide uno nuevo desde "¿Olvidaste tu contraseña?".')
+        else setSesionValida(true)
+      })
+      .catch(() => setError('No se pudo verificar el enlace.'))
+      .finally(() => setVerificando(false))
+  }, [])
 
   async function handleReset(e: React.FormEvent) {
     e.preventDefault()
     setError('')
 
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
+    if (password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres')
       return
     }
 
@@ -43,15 +44,15 @@ export default function ResetPasswordPage() {
 
     setLoading(true)
 
-    const { error } = await supabase.auth.updateUser({ password })
-
-    setLoading(false)
-
-    if (error) {
-      setError(error.message)
+    try {
+      await api('/api/auth/password', { method: 'POST', json: { password } })
+    } catch (e) {
+      setLoading(false)
+      setError(e instanceof ErrorApi ? e.message : 'No se pudo actualizar la contraseña')
       return
     }
 
+    setLoading(false)
     setListo(true)
   }
 
@@ -94,6 +95,13 @@ export default function ResetPasswordPage() {
           >
             Ir al dashboard
           </button>
+        ) : !sesionValida ? (
+          <button
+            onClick={() => router.push('/login')}
+            className="w-full py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all"
+          >
+            Volver al inicio de sesión
+          </button>
         ) : (
           <form onSubmit={handleReset} className="space-y-4">
             <div className="space-y-1">
@@ -106,7 +114,7 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
               />
             </div>
@@ -120,7 +128,7 @@ export default function ResetPasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
               />
             </div>

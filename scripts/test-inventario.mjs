@@ -34,6 +34,8 @@ for (const line of readFileSync(envPath, 'utf8').split('\n')) {
   }
 }
 
+// Contraseña aleatoria por ejecución: nada fijo en el repositorio.
+const TEST_PASSWORD = `T${crypto.randomUUID()}!`
 const SB_URL = env.NEXT_PUBLIC_SUPABASE_URL
 const SB_SERVICE = env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -103,7 +105,7 @@ const tag = `test${Date.now()}`
 const email = `${tag}@inventario.test`
 const { data: authData, error: authErr } = await admin.auth.admin.createUser({
   email,
-  password: 'TestInventario123!',
+  password: TEST_PASSWORD,
   email_confirm: true,
 })
 if (authErr) {
@@ -388,7 +390,7 @@ try {
   // segundo perfil NO debe poder mover el stock del perfil A.
   const { data: authData2, error: authErr2 } = await admin.auth.admin.createUser({
     email: `test2-${tag}@inventario.test`,
-    password: 'TestInventario123!',
+    password: TEST_PASSWORD,
     email_confirm: true,
   })
   if (authErr2) {
@@ -406,7 +408,7 @@ try {
     const anon = createClient(SB_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     const { data: sesion, error: sesionErr } = await anon.auth.signInWithPassword({
       email: `test2-${tag}@inventario.test`,
-      password: 'TestInventario123!',
+      password: TEST_PASSWORD,
     })
     if (sesionErr || !sesion?.session?.access_token) {
       fallo('login del perfil 2', sesionErr?.message || 'sin sesión')

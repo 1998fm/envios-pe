@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { urlHttpSegura } from '@/lib/urlSegura'
 import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { CheckCircle2, Calendar } from 'lucide-react'
@@ -59,7 +60,8 @@ export default function SuccessScreen({
   useEffect(() => {
     if (redirectUrl) {
       const timer = setTimeout(() => {
-        window.location.href = redirectUrl
+        const destino = urlHttpSegura(redirectUrl)
+        if (destino) window.location.href = destino
       }, 3000)
       return () => clearTimeout(timer)
     }
@@ -126,7 +128,7 @@ export default function SuccessScreen({
               <span>Fecha programada</span>
             </div>
             <div className="text-lg font-bold text-[color:var(--tori-c)] ">
-              {new Date(fechaProgramada + 'T12:00:00').toLocaleDateString('es-PE', {
+              {new Date(fechaProgramada.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-PE', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',

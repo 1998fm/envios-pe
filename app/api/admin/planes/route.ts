@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
+import { mensajeDb } from '@/lib/erroresEs'
 
 // Campos editables de cada plan (límites y features booleanos; NO precios).
 export const CAMPOS_PLAN = [
@@ -27,7 +28,7 @@ export async function GET() {
   const { data, error } = await supabaseAdmin.from('plan_features').select('*').order('plan')
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   return NextResponse.json({ planes: data })
@@ -79,7 +80,7 @@ export async function PUT(request: Request) {
   for (const c of cambios) {
     const { error } = await supabaseAdmin.from('plan_features').update(c.valores).eq('plan', c.plan)
     if (error) {
-      return NextResponse.json({ error: `Error en ${c.plan}: ${error.message}` }, { status: 500 })
+      return NextResponse.json({ error: `No se pudo actualizar el plan ${c.plan}. ${mensajeDb(error)}` }, { status: 500 })
     }
   }
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin } from '@/lib/adminAuth'
 import { computeEffectivePlan } from '@/lib/planGating'
+import { mensajeDb } from '@/lib/erroresEs'
 
 // Precios mensuales por plan (mismo criterio que overvview para MRR).
 const PRECIO_MENSUAL: Record<string, number> = {
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
     .select('id, empresa, slug, plan, trial_end, pro_until, created_at')
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   let emails = new Map<string, string>()

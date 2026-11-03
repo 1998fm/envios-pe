@@ -87,6 +87,19 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  -- Autorización: solo el dueño del perfil (o el backend con service role)
+  -- puede guardar esta configuración. SECURITY DEFINER salta RLS, así que sin
+  -- este chequeo cualquiera podría pisar el perfil de otro negocio.
+  IF auth.role() IS DISTINCT FROM 'service_role'
+     AND (auth.uid() IS NULL OR auth.uid() <> p_profile_id) THEN
+    RAISE EXCEPTION 'No autorizado';
+  END IF;
+
+  -- Las URLs que se abren desde el formulario público deben ser http(s).
+  IF coalesce(p_redirect_url, '') <> '' AND p_redirect_url !~* '^https?://' THEN
+    RAISE EXCEPTION 'La URL de redirección debe empezar con http:// o https://';
+  END IF;
+
   -- =======================
   -- PASO 1: TODO PROFILES EN UN SOLO UPDATE (atómico)
   -- =======================

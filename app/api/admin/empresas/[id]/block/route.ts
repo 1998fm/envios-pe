@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
+import { mensajeDb } from '@/lib/erroresEs'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireSuperAdmin()
@@ -25,7 +26,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .maybeSingle()
 
   if (perfilError) {
-    return NextResponse.json({ error: perfilError.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(perfilError) }, { status: 500 })
   }
   if (!perfil) {
     return NextResponse.json({ error: 'Empresa no encontrada' }, { status: 404 })
@@ -43,7 +44,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .eq('id', id)
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(updateError) }, { status: 500 })
   }
 
   // Bloquear/desbloquear el login en Supabase Auth (impedir/habilitar sesión).
@@ -55,7 +56,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     })
     authError = error?.message ?? null
   } catch (e) {
-    authError = e instanceof Error ? e.message : 'Error de auth'
+    authError = e instanceof Error ? e.message : 'Error de autenticación'
   }
 
   await registrarAuditoria(auth, blocked ? 'bloquear_empresa' : 'desbloquear_empresa', {
@@ -67,7 +68,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   if (authError) {
     return NextResponse.json(
-      { ok: true, aviso: `Cuenta marcada pero hubo error de auth: ${authError}`, blocked },
+      { ok: true, aviso: 'La cuenta quedó marcada, pero no se pudo actualizar el acceso. Intenta de nuevo.', blocked },
       { status: 200 }
     )
   }

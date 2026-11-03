@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { requireNegocio } from '@/lib/negocioAuth'
+import { conImagenesProxy, desdeProxy } from '@/lib/mediaUrl'
 import { rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 import { ajustarStock } from '@/lib/stock'
+import { mensajeDb } from '@/lib/erroresEs'
 
 // La URL de la imagen solo se acepta si apunta al bucket público de productos
 function validarImagenUrl(valor: unknown): string | null {
-  if (
-    typeof valor === 'string' &&
-    valor.length <= 500 &&
-    valor.includes('/object/public/productos/')
-  ) {
-    return valor
+  const canonica = typeof valor === 'string' ? desdeProxy(valor) : ''
+  if (canonica.length <= 500 && canonica.includes('/object/public/productos/')) {
+    return canonica
   }
   return null
 }
@@ -29,6 +29,8 @@ async function borrarArchivoProducto(imagenUrl: string | null | undefined) {
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_productos')
+  if (!auth.ok) return auth.response
   const { id } = await params
   const body = await request.json()
 
@@ -38,7 +40,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .from('productos')
     .select('imagen_url, stock_actual')
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
     .maybeSingle()
+
+  if (!actual) {
+    return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
+  }
 
   // El stock NUNCA se escribe directo en el PUT: para cambiarlo se exige un
   // motivo y se usa el RPC ajustar_stock (queda registrado en el kardex).
@@ -73,18 +80,21 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       sku: body.sku ?? null,
       descripcion: body.descripcion ?? null,
       precio_venta: body.precio_venta ?? 0,
-      precio_compra: body.precio_compra ?? 0,
+      ...(auth.permisos.ver_ganancia_producto
+        ? { precio_compra: body.precio_compra ?? 0 }
+        : {}),
       stock_minimo: body.stock_minimo ?? 0,
       unidad: body.unidad || 'unidad',
       ...(body.imagen_url !== undefined ? { imagen_url: nuevaImagenUrl } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
     .select()
     .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   // Si cambió la foto, eliminar el archivo anterior del bucket
@@ -95,10 +105,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   // Stock 0 o negativo archiva automáticamente; stock > 0 reactiva
   await sincronizarArchivoPorStock([id])
 
-  return NextResponse.json({ data })
+  if (!auth.permisos.ver_ganancia_producto) delete (data as Record<string, unknown>).precio_compra
+
+  return NextResponse.json({ data: conImagenesProxy(data, ['imagen_url']) })
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireNegocio('ver_productos')
+  if (!auth.ok) return auth.response
   const { id } = await params
 
   // Leer la URL de la foto ANTES de eliminar el registro
@@ -106,15 +120,21 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     .from('productos')
     .select('imagen_url')
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
     .maybeSingle()
+
+  if (!actual) {
+    return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
+  }
 
   const { error } = await supabaseAdmin
     .from('productos')
     .delete()
     .eq('id', id)
+    .eq('profile_id', auth.ownerId)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
   // Eliminar también la imagen para no ocupar espacio del Storage

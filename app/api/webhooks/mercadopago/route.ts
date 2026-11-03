@@ -7,23 +7,29 @@ export async function POST(request: Request) {
     const body = await request.json()
     const url = new URL(request.url)
 
-    // Validar firma si está presente.
+    // La firma es OBLIGATORIA: sin cabecera o sin secreto configurado se
+    // rechaza (falla cerrado). Antes la verificación se saltaba si faltaba.
     const xSignature = request.headers.get('x-signature')
     const xRequestId = request.headers.get('x-request-id')
     const dataId = url.searchParams.get('data.id') || body.data?.id
 
-    if (xSignature && process.env.MP_WEBHOOK_SECRET) {
-      try {
-        WebhookSignatureValidator.validate({
-          xSignature,
-          xRequestId,
-          dataId: dataId || '',
-          secret: process.env.MP_WEBHOOK_SECRET,
-          toleranceSeconds: 600,
-        })
-      } catch {
-        return new Response('Invalid signature', { status: 401 })
-      }
+    if (!process.env.MP_WEBHOOK_SECRET) {
+      console.error('[mp-webhook] MP_WEBHOOK_SECRET no configurado')
+      return new Response('Webhook no configurado', { status: 500 })
+    }
+    if (!xSignature) {
+      return new Response('Falta la firma', { status: 401 })
+    }
+    try {
+      WebhookSignatureValidator.validate({
+        xSignature,
+        xRequestId,
+        dataId: dataId || '',
+        secret: process.env.MP_WEBHOOK_SECRET,
+        toleranceSeconds: 600,
+      })
+    } catch {
+      return new Response('Firma no válida', { status: 401 })
     }
 
     // Determinar tópico e ID (soporta formato ?topic=… y body.type/action).
@@ -32,7 +38,7 @@ export async function POST(request: Request) {
     const id = url.searchParams.get('id') || body.data?.id || body.id
 
     if (!id) {
-      return new Response('Missing id', { status: 400 })
+      return new Response('Falta el id', { status: 400 })
     }
 
     // Solo las notificaciones de suscripción (preapproval) modifican planes.
@@ -42,7 +48,7 @@ export async function POST(request: Request) {
       const status = preapproval.status
 
       if (!userId || (planRef !== 'pro' && planRef !== 'business_plus')) {
-        return new Response('Missing external_reference', { status: 400 })
+        return new Response('Falta la referencia externa', { status: 400 })
       }
 
       if (status === 'authorized') {
@@ -75,7 +81,7 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error('[mp-webhook] error procesando notificación:', err)
     // No tragar el error: devolvemos 500 para que MercadoPago reintente.
-    return new Response('Error', { status: 500 })
+    return new Response('Error al procesar la notificación', { status: 500 })
   }
 }
 
