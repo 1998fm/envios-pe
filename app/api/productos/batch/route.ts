@@ -68,7 +68,7 @@ export async function DELETE(request: Request) {
   }
 
   const rutas = actuales
-    .map((p) => rutaDesdeUrlProducto(p.imagen_url))
+    .map((p) => (p.imagen_url ? rutaDesdeUrlProducto(p.imagen_url) : null))
     .filter((r): r is string => !!r)
   if (rutas.length > 0) {
     try {
