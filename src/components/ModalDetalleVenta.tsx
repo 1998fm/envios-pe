@@ -1,5 +1,7 @@
 'use client'
 
+import PrecioInput from '@/components/PrecioInput'
+
 import { useEffect, useState } from 'react'
 import { Pencil, X, Plus, Minus, Check, Loader2, Copy } from 'lucide-react'
 import { toast } from 'sonner'
@@ -267,7 +269,7 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
 
               <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl">
                 {itemsEdit.map((it, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 text-sm">
+                  <div key={it.producto_id} className="flex items-center gap-2 px-3 py-2 text-sm">
                     <span className="flex-1 font-medium text-slate-700 truncate">{it.producto_nombre}</span>
                     <button onClick={() => cambiarCantidad(i, -1)} className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100">
                       <Minus size={14} />
@@ -277,11 +279,10 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
                       <Plus size={14} />
                     </button>
                     <span className="text-slate-400">×</span>
-                    <input
-                      inputMode="decimal"
-                      type="text"
+                    <PrecioInput
                       value={it.precio_unitario}
-                      onChange={(e) => cambiarPrecio(i, parseFloat(e.target.value) || 0)}
+                      onChange={(value) => cambiarPrecio(i, value)}
+                      aria-label={`Precio de ${it.producto_nombre}`}
                       className="w-20 px-2 py-1 rounded border border-slate-200 text-sm text-right"
                     />
                     <span className="text-slate-600 font-mono w-20 text-right">S/ {(it.cantidad * it.precio_unitario).toFixed(2)}</span>

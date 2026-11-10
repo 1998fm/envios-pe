@@ -1,5 +1,7 @@
 'use client'
 
+import PrecioInput from '@/components/PrecioInput'
+
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -209,12 +211,9 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
     setItemsVenta(nuevos)
   }
 
-  function cambiarPrecio(idx: number, texto: string) {
-    const n = parsearNumero(texto)
+  function cambiarPrecio(idx: number, precio: number) {
     const nuevos = [...itemsVenta]
-    // Mientras escribe se guarda lo que hay (puede ser "" a medio teclear);
-    // si no hay dígitos, se deja el precio tal como estaba.
-    nuevos[idx] = { ...nuevos[idx], precio: n == null ? nuevos[idx].precio : Math.max(0, n) }
+    nuevos[idx] = { ...nuevos[idx], precio }
     setItemsVenta(nuevos)
   }
 
@@ -595,10 +594,9 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
                           <span className="shrink-0 text-xs text-slate-300">×</span>
                           <div className="relative shrink-0">
                             <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-400">S/</span>
-                            <input
-                              inputMode="decimal"
-                              value={String(it.precio)}
-                              onChange={(e) => cambiarPrecio(i, e.target.value)}
+                            <PrecioInput
+                              value={it.precio}
+                              onChange={(value) => cambiarPrecio(i, value)}
                               aria-label={`Precio de ${it.nombre}`}
                               className="h-9 w-24 rounded-lg border border-slate-200 pl-6 pr-2 text-right text-sm font-bold outline-none focus:border-tori-400"
                             />

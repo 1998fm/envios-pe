@@ -1,5 +1,7 @@
 'use client'
 
+import PrecioInput from '@/components/PrecioInput'
+
 import { useEsMovil } from '@/hooks/useEsMovil'
 import { useEffect, useRef, useState } from 'react'
 import { Plus, X, RotateCcw, Eye } from 'lucide-react'
@@ -393,7 +395,7 @@ export default function SeccionCompras({ userId }: Props) {
                   <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Items de la compra</label>
                   <div className="mt-1 divide-y divide-slate-100 border border-slate-200 rounded-xl">
                     {itemsCompra.map((it, i) => (
-                      <div key={i} className="flex items-center gap-2 px-3 py-2 text-sm">
+                      <div key={it.producto_id} className="flex items-center gap-2 px-3 py-2 text-sm">
                         <span className="flex-1 font-medium text-slate-700 truncate">{it.nombre}</span>
 <input
                            inputMode="numeric"
@@ -404,12 +406,10 @@ export default function SeccionCompras({ userId }: Props) {
                            className="w-16 px-2 py-1 rounded border border-slate-200 text-sm text-center"
                          />
                          <span className="text-slate-400">×</span>
-<input
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            type="text"
+                          <PrecioInput
                             value={it.precio}
-                            onChange={(e) => cambiarPrecio(i, parseFloat(e.target.value) || 0)}
+                            onChange={(value) => cambiarPrecio(i, value)}
+                            aria-label={`Precio de ${it.nombre}`}
                             className="w-24 px-2 py-1 rounded border border-slate-200 text-sm text-right"
                           />
                           <span className="text-slate-600 font-mono w-20 text-right">S/ {((Number(it.cantidad) || 0) * it.precio).toFixed(2)}</span>
