@@ -1,3 +1,4 @@
+import { distritoExcluido } from '@/lib/coberturaMoto'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireNegocio } from '@/lib/negocioAuth'
@@ -201,6 +202,20 @@ export async function POST(req: Request) {
           status: 400,
         }
       )
+    }
+
+    if (metodo === 'MOTORIZADO' && typeof destino === 'string') {
+      const { data: cobertura, error: errorCobertura } = await supabaseAdmin
+        .from('tarifas_moto')
+        .select('tarifas')
+        .eq('profile_id', user_id)
+        .maybeSingle()
+      if (errorCobertura) {
+        return NextResponse.json({ error: 'No se pudo verificar la cobertura de entrega.' }, { status: 503 })
+      }
+      if (distritoExcluido(cobertura?.tarifas ?? {}, destino)) {
+        return NextResponse.json({ error: 'No realizamos entregas en ese distrito. Elige otro distrito.' }, { status: 400 })
+      }
     }
 
     // NOTA: el límite de envíos del plan se aplica SOLO en la exhibición del

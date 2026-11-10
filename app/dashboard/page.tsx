@@ -1,5 +1,7 @@
 'use client'
 
+import { DISTRITO_SIN_COBERTURA, distritosConCobertura } from '@/lib/coberturaMoto'
+
 import { useEffect, useRef, useState } from 'react'
 import { api, cerrarSesion, ErrorApi, obtenerSesion } from '@/lib/clienteApi'
 import { guardarConfiguracionServidor } from '@/lib/configuracionCliente'
@@ -1319,7 +1321,7 @@ for (
            guardarConfiguracion={guardarConfiguracion}
            plan={plan}
            onUpgrade={() => setMostrarUpgrade(true)}
-           distritosMotorizado={distritosMoto}
+           distritosMotorizado={distritosConCobertura(config.tarifas, config.motoRegion === 'provincia' ? Object.keys(config.tarifas) : distritosMoto)}
          />
        )}
 
@@ -1418,7 +1420,7 @@ for (
 
   envios={enviosMotoSeleccionados}
 
-  tarifas={Object.entries(config.tarifas).map(
+  tarifas={Object.entries(config.tarifas).filter(([, precio]) => precio !== DISTRITO_SIN_COBERTURA).map(
 
     ([distrito, precio]) => ({
 

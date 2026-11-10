@@ -1,3 +1,5 @@
+import distritosMoto from '@/data/distritos-moto.json'
+import { distritosConCobertura } from '@/lib/coberturaMoto'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { urlHttpSegura } from '@/lib/urlSegura'
 import { aProxy } from '@/lib/mediaUrl'
@@ -45,20 +47,16 @@ export default async function FormPage({
     (profile.cerrar_formulario ?? false) &&
     (superaCorteMoto || superaCorteAgencias || cerradoPorDia)
 
-  // Para usuarios de PROVINCIA, el formulario lista SOLO los distritos que
-  // configuró (las claves de sus tarifas). Para LIMA se usa la lista de
-  // distritos-metropolitanos precargada.
-  let distritosMotorizado: string[] | undefined
-  if ((profile.moto_region ?? 'lima') === 'provincia') {
-    const { data: tarifas } = await supabaseAdmin
-      .from('tarifas_moto')
-      .select('tarifas')
-      .eq('profile_id', profile.id)
-      .maybeSingle()
-    if (tarifas?.tarifas) {
-      distritosMotorizado = Object.keys(tarifas.tarifas)
-    }
-  }
+  const { data: tarifasMoto } = await supabaseAdmin
+    .from('tarifas_moto')
+    .select('tarifas')
+    .eq('profile_id', profile.id)
+    .maybeSingle()
+  const tarifas = tarifasMoto?.tarifas ?? {}
+  const distritosMotorizado = distritosConCobertura(
+    tarifas,
+    profile.moto_region === 'provincia' ? Object.keys(tarifas) : distritosMoto
+  )
 
   // Motorizado solo aparece en el formulario si el negocio marcó al menos un
   // día de entrega. Sin días configurados, es como si no lo hubiera elegido.

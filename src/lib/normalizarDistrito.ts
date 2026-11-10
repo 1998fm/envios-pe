@@ -30,7 +30,8 @@ export function buscarPrecioPorDistrito(
 
   // 1) Coincidencia exacta directa.
   if (tarifas[distrito] != null) {
-    return Number(tarifas[distrito]) || null
+    const precio = Number(tarifas[distrito])
+    return Number.isFinite(precio) && precio > 0 ? precio : null
   }
 
   // 2) Coincidencia normalizada.
@@ -38,7 +39,8 @@ export function buscarPrecioPorDistrito(
     ([k]) => normalizarDistrito(k) === objetivo
   )
   if (entrada && entrada[1] != null) {
-    return Number(entrada[1]) || null
+    const precio = Number(entrada[1])
+    return Number.isFinite(precio) && precio > 0 ? precio : null
   }
 
   return null

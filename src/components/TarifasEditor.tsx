@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { ConfigState } from '@/types/config'
+import { DISTRITO_SIN_COBERTURA, distritosConCobertura } from '@/lib/coberturaMoto'
 import { normalizarDistrito } from '@/lib/normalizarDistrito'
 import { Search, DollarSign, Plus, Trash2, MapPin } from 'lucide-react'
 
@@ -20,11 +21,15 @@ export default function TarifasEditor({ config, upd, distritosMoto }: Props) {
 
   const esProvincia = config.motoRegion === 'provincia'
 
+  const distritosActivos = distritosConCobertura(config.tarifas, distritosMoto)
+  const distritosEliminados = distritosMoto.filter((d) => !distritosActivos.includes(d))
+
   const listaOrdenada = Object.entries(config.tarifas)
+    .filter(([, precio]) => precio !== DISTRITO_SIN_COBERTURA)
     .map(([nombre, precio]) => ({ nombre, precio }))
     .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
 
-  const filtrados = distritosMoto.filter((d: string) =>
+  const filtrados = distritosActivos.filter((d: string) =>
     d.toLowerCase().includes(busqueda.toLowerCase())
   )
 
@@ -33,7 +38,7 @@ export default function TarifasEditor({ config, upd, distritosMoto }: Props) {
     if (isNaN(val) || val <= 0) return
     const claves = esProvincia
       ? Object.keys(config.tarifas)
-      : distritosMoto
+      : distritosActivos
     const nuevas: Record<string, string> = { ...config.tarifas }
     claves.forEach((d) => { nuevas[d] = String(val) })
     upd('tarifas', nuevas)
@@ -67,7 +72,8 @@ export default function TarifasEditor({ config, upd, distritosMoto }: Props) {
 
   function eliminarDistrito(nombre: string) {
     const nuevas = { ...config.tarifas }
-    delete nuevas[nombre]
+    if (esProvincia) delete nuevas[nombre]
+    else nuevas[nombre] = DISTRITO_SIN_COBERTURA
     upd('tarifas', nuevas)
   }
 
@@ -108,7 +114,7 @@ export default function TarifasEditor({ config, upd, distritosMoto }: Props) {
         <p className="text-xs text-slate-500 mt-2">
           {esProvincia
             ? 'Agrega manualmente los distritos donde entregas y su precio. En tu formulario solo aparecerán esos distritos.'
-            : 'Usamos la lista oficial de distritos de Lima Metropolitana. Asigna un precio a cada uno.'}
+            : 'Usamos la lista oficial de distritos de Lima Metropolitana. Asigna precios y elimina los distritos donde no entregas.'}
         </p>
       </div>
 
@@ -140,6 +146,26 @@ export default function TarifasEditor({ config, upd, distritosMoto }: Props) {
               Aplicar a todos
             </button>
           </div>
+        </div>
+      )}
+
+      {!esProvincia && distritosEliminados.length > 0 && (
+        <div>
+          <label htmlFor="restaurar-distrito-lima" className="text-sm font-semibold text-slate-700">Restaurar distrito eliminado</label>
+          <select
+            id="restaurar-distrito-lima"
+            value=""
+            onChange={(e) => {
+              if (!e.target.value) return
+              const nuevas = { ...config.tarifas }
+              delete nuevas[e.target.value]
+              upd('tarifas', nuevas)
+            }}
+            className="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 bg-white text-sm text-slate-900"
+          >
+            <option value="">Selecciona un distrito para restaurar</option>
+            {distritosEliminados.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
         </div>
       )}
 
@@ -177,13 +203,22 @@ export default function TarifasEditor({ config, upd, distritosMoto }: Props) {
                       }
                       className={inputNumber}
                     />
+                    <button
+                      type="button"
+                      onClick={() => eliminarDistrito(distrito)}
+                      className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                      aria-label={`Eliminar ${distrito}`}
+                      title="Eliminar distrito"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
                 </div>
               ))
             )}
           </div>
           <p className="text-xs text-slate-400 mt-2">
-            {filtrados.length} de {distritosMoto.length} distritos
+            {filtrados.length} de {distritosActivos.length} distritos activos
           </p>
         </div>
       ) : (
