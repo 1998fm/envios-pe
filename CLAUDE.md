@@ -137,6 +137,15 @@ docs/                          GUIA_SISTEMA.md, MANUAL_FUNCIONAL_TORI.md, WINDOW
 - Nuevas suscripciones: solo `business_plus`; mensual y trimestral usan frecuencias de 1 y 3 meses respectivamente. Webhook y conciliación siguen aceptando referencias Pro anteriores; registran el recibo original y habilitan Plus sin cambiar importes ni fechas pagadas.
 - Las pruebas existentes mantienen su fecha de fin; los 14 días se aplican a los nuevos registros. Ningún cambio en la política de limpieza del historial de envíos.
 
+## Centro de soporte del superadmin
+
+- `/admin` abre `AdminSupportCenter`: búsqueda de negocios, diagnóstico, configuración, pedidos, acceso Plus, cuenta/sesión e historial. Los módulos de facturación, agencias, actividad y administradores siguen disponibles en la navegación lateral.
+- API `/api/admin/empresas/[id]/soporte`: solo cookie de superadmin activo, selección explícita de campos; nunca devuelve credenciales de infraestructura ni los objetos completos de Auth.
+- Correcciones con motivo obligatorio, previsualización antes/después y comprobación de versión al guardar. Se registra una intención de auditoría antes de modificar y el resultado después. Sin tabla de auditoría, falla cerrado.
+- Permite corregir empresa/enlace/contacto, cierre del formulario, métodos/días de entrega/origen Shalom; corregir pedidos del negocio seleccionado; ampliar acceso Plus; pasar a Básico conservando recibos; bloquear/reactivar, generar nueva contraseña y preparar acceso de soporte. No realiza cobros ni cancela suscripciones de MercadoPago.
+- Contraseñas y enlaces de soporte son efímeros en la interfaz y nunca se incluyen en auditoría. La propia cuenta no se puede bloquear ni degradar desde estos controles.
+- Usa tablas existentes: no necesita una migración adicional. Pruebas en `e2e/admin-support.spec.ts`, además de `security`, `no-leaks` y `core-flows`.
+
 ## Gotchas / decisiones no obvias
 
 - **Zona horaria Perú (UTC-5, sin DST)**: las fechas se guardan en UTC; filtros por día se calculan con `-05:00` (ver `app/api/envios/route.ts`). No uses la hora local del servidor (Vercel = UTC).

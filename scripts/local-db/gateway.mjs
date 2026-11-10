@@ -372,12 +372,12 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
         const u = await getUserByEmail(String(b.email || ''))
         if (!u) return fail(res, 404, 'user_not_found', 'User not found')
         const type = b.type || 'magiclink'
-        const redirectTo = b.options?.redirectTo || b.redirect_to || `${baseUrl}/`
+        const redirectTo = b.redirectTo || b.options?.redirectTo || b.redirect_to || `${baseUrl}/`
         const token = await newOtp(u, type, redirectTo)
         const link = `${baseUrl}/auth/v1/verify?token=${token}&type=${type}&redirect_to=${encodeURIComponent(redirectTo)}`
         return send(res, 200, {
-          properties: { action_link: link, email_otp: token.slice(0, 6), hashed_token: token, redirect_to: redirectTo, verification_type: type },
-          user: userJson(u),
+          ...userJson(u),
+          action_link: link, email_otp: token.slice(0, 6), hashed_token: token, redirect_to: redirectTo, verification_type: type,
         })
       }
     }

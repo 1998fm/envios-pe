@@ -30,9 +30,10 @@ import {
   Receipt,
   Store,
 } from 'lucide-react'
+import AdminSupportCenter from '@/components/admin/AdminSupportCenter'
 import CompanyDetailModal from '@/components/admin/CompanyDetailModal'
 
-type Tab = 'resumen' | 'empresas' | 'planes' | 'shalom' | 'olva' | 'auditoria' | 'actividad' | 'facturacion' | 'admins'
+type Tab = 'soporte' | 'resumen' | 'empresas' | 'planes' | 'shalom' | 'olva' | 'auditoria' | 'actividad' | 'facturacion' | 'admins'
 
 const PLANES = ['basic', 'business_plus']
 const PLAN_LABEL: Record<string, string> = {
@@ -216,6 +217,7 @@ function BotonExportar({ onClick, label, className = '' }: { onClick: () => void
 }
 
 const tabsList: { key: Tab; label: string; icon: React.ReactNode }[] = [
+  { key: 'soporte', label: 'Centro de soporte', icon: <ShieldCheck size={16} /> },
   { key: 'resumen', label: 'Resumen', icon: <LayoutDashboard size={16} /> },
   { key: 'empresas', label: 'Empresas', icon: <Building2 size={16} /> },
   { key: 'facturacion', label: 'Facturación', icon: <Receipt size={16} /> },
@@ -229,7 +231,7 @@ const tabsList: { key: Tab; label: string; icon: React.ReactNode }[] = [
 
 export default function AdminPage() {
   const router = useRouter()
-  const [tab, setTab] = useState<Tab>('resumen')
+  const [tab, setTab] = useState<Tab>('soporte')
   const [chequeando, setChequeando] = useState(true)
   const [sesion, setSesion] = useState(false)
 
@@ -424,7 +426,7 @@ export default function AdminPage() {
   // Carga según la pestaña activa
   useEffect(() => {
     if (!sesion) return
-    if (tab === 'resumen') cargarOverview()
+    if (tab === 'resumen' || tab === 'soporte') cargarOverview()
     if (tab === 'empresas') cargarEmpresas()
     if (tab === 'planes') cargarPlanes()
     if (tab === 'actividad') cargarActividad()
@@ -438,7 +440,7 @@ export default function AdminPage() {
   }, [sesion, tab, paginaE, paginaA])
 
   const refetchCurrent = () => {
-    if (tab === 'resumen') cargarOverview()
+    if (tab === 'resumen' || tab === 'soporte') cargarOverview()
     if (tab === 'empresas') cargarEmpresas()
     if (tab === 'planes') cargarPlanes()
     if (tab === 'actividad') cargarActividad()
@@ -612,7 +614,12 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 lg:pl-64">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-slate-800 bg-slate-950 text-slate-300 lg:flex">
+        <div className="border-b border-slate-800 p-6"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-sky-500 text-white"><ShieldCheck size={23} /></span><div><p className="text-lg font-black tracking-tight text-white">Tori Control</p><p className="text-[10px] font-bold uppercase tracking-[.18em] text-slate-500">Administración central</p></div></div></div>
+        <nav aria-label="Administración" className="flex-1 space-y-1 overflow-y-auto p-3">{tabsList.map((t) => <button key={t.key} onClick={() => setTab(t.key)} aria-current={tab === t.key ? 'page' : undefined} className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors ${tab === t.key ? 'bg-sky-500 text-white shadow-lg shadow-sky-950/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}>{t.icon}{t.label}</button>)}</nav>
+        <div className="border-t border-slate-800 p-5"><p className="text-xs font-semibold text-slate-400">Acceso de superadministrador</p><p className="mt-1 text-[11px] leading-relaxed text-slate-600">Las operaciones de soporte quedan registradas en auditoría.</p></div>
+      </aside>
       <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
@@ -624,7 +631,7 @@ export default function AdminPage() {
           </button>
           <div>
             <h1 className="text-lg font-bold text-slate-900 leading-tight">Panel Super Admin</h1>
-            <p className="text-xs text-slate-400">Control y supervisión global de envios.pe</p>
+            <p className="text-xs text-slate-400">Centro de control de negocios, cuentas y operación</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -638,7 +645,7 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div className="px-4 pt-4 flex gap-1 overflow-x-auto">
+      <div className="px-4 pt-4 flex gap-1 overflow-x-auto lg:hidden">
         {tabsList.map((t) => (
           <button
             key={t.key}
@@ -662,7 +669,8 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div className="p-4">
+      <div className="p-4 sm:p-6">
+        {tab === 'soporte' && <AdminSupportCenter summary={overview} onNavigate={setTab} onRefresh={() => cargarOverview()} />}
         {/* ============ RESUEN ============ */}
         {tab === 'resumen' && overview && (
           <div className="space-y-5">

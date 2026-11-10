@@ -24,6 +24,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'Body inválido' }, { status: 400 })
   }
 
+  if (id === auth.userId && body.role === 'user') {
+    return NextResponse.json({ error: 'No puedes quitarte tu propio acceso de superadministrador' }, { status: 400 })
+  }
+
   const update: Record<string, unknown> = {}
 
   const planesValidos = ['basic', 'business_plus']
