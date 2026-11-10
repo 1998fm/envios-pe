@@ -1,7 +1,7 @@
 'use client'
 
 import { useEsMovil } from '@/hooks/useEsMovil'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus, X, RotateCcw, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Compra, Producto } from '@/types/inventario'
@@ -118,7 +118,20 @@ export default function SeccionCompras({ userId }: Props) {
 
   const total = itemsCompra.reduce((sum, it) => sum + (Number(it.cantidad) || 0) * it.precio, 0)
 
+  // Evita compras duplicadas por doble clic: la marca del ref es inmediata (el estado tarda un render).
+  const creandoRef = useRef(false)
+
   async function crearCompra() {
+    if (creandoRef.current) return
+    creandoRef.current = true
+    try {
+      await crearCompraInterna()
+    } finally {
+      creandoRef.current = false
+    }
+  }
+
+  async function crearCompraInterna() {
     if (!proveedor.trim()) { toast.error('Ingresa el nombre del proveedor'); return }
     if (itemsCompra.length === 0) { toast.error('Agrega al menos un producto'); return }
     setCreando(true)
