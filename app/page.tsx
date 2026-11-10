@@ -2,9 +2,9 @@ import LandingPage from '@/components/LandingPage'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Vende por WhatsApp. Recibe tus pedidos en orden.',
+  title: 'Vender por WhatsApp debería darte más ventas, no más desorden — Tori',
   description:
-    'Comparte tu formulario y recibe tus pedidos organizados en un solo panel. Prueba Plus por 14 días sin tarjeta y después continúa en Básico gratis.',
+    'Tori es el compañero de negocio de los emprendedores que venden por WhatsApp. Organiza tus pedidos, ventas, inventario y envíos para perder menos tiempo ordenando y tener más tiempo para vender. 14 días gratis, sin tarjeta.',
 }
 
 export default function Home() {

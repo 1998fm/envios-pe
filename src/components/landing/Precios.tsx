@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ArrowRight, Check } from 'lucide-react'
+import { ArrowRight, Check, CheckCircle2, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { PRECIOS_PLUS } from '@/lib/planGating'
@@ -42,17 +42,44 @@ export default function Precios() {
     Math.round((PRECIOS_PLAN[plan].mensual.valor * 3 - PRECIOS_PLAN[plan].trimestral.valor) * 100) / 100
 
   return (
-    <section id="precios" className="relative bg-tori-50/60 py-14 sm:py-20">
+    <section id="precios" className="relative bg-tori-50/60 py-24 sm:py-32">
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHead
           center
           eyebrow="Pruébalo sin riesgo"
-          title="Empieza gratis. Crece con Plus."
-          sub="Prueba Plus durante 14 días, sin tarjeta. Después elige cómo seguir."
+          title="14 días para descubrir si Tori es para ti."
+          sub="Empieza gratis y decide después."
         />
 
+        <Reveal delay={0.1} className="mx-auto mt-10 max-w-4xl">
+          <div className="rounded-[2rem] border border-tori-200 bg-white p-7 shadow-sm sm:p-10">
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                { icon: ShieldCheck, t: '14 días gratis', c: 'text-tori-600' },
+                { icon: ShieldCheck, t: 'Sin tarjeta', c: 'text-emerald-600' },
+                { icon: CheckCircle2, t: 'Cancela cuando quieras', c: 'text-tori-600' },
+              ].map((x) => (
+                <div key={x.t} className="rounded-2xl border border-slate-100 bg-slate-50 p-5 text-center">
+                  <x.icon size={24} className={`mx-auto ${x.c}`} />
+                  <p className="mt-2 font-black text-tori-900">{x.t}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 text-center">
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center rounded-xl bg-tori-600 px-8 py-4 font-black text-white shadow-xl shadow-tori-600/25 transition hover:scale-[1.03] hover:bg-tori-700 active:scale-95"
+              >
+                Probar Tori gratis
+                <ArrowRight size={16} className="ml-2" />
+              </Link>
+              <p className="mt-3 text-xs text-slate-400">Sin tarjeta · Sin compromiso</p>
+            </div>
+          </div>
+        </Reveal>
+
         {/* selector de periodo */}
-        <Reveal className="mt-7 flex flex-col items-center gap-3">
+        <Reveal className="mt-14 flex flex-col items-center gap-3">
           <div className="relative flex rounded-full border border-slate-200 bg-white p-1 shadow-sm">
             {(['mensual', 'trimestral'] as Periodo[]).map((o) => (
               <button
@@ -81,14 +108,14 @@ export default function Precios() {
         <div className="mt-6 grid gap-6 md:grid-cols-2">
           {/* Básico */}
           <Reveal>
-            <Spotlight className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
+            <Spotlight className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-7 shadow-sm sm:p-8">
               <h3 className="text-lg font-bold text-tori-900">Básico</h3>
-              <p className="mt-1 text-sm text-slate-500">Recibe y gestiona tus pedidos</p>
+              <p className="mt-1 text-sm text-slate-500">Para empezar a ordenarte</p>
               <div className="mt-4">
                 <span className="text-5xl font-extrabold text-tori-900">Gratis</span>
               </div>
-              <p className="mt-1 text-xs text-slate-400">Sin límite mensual de solicitudes</p>
-              <ul className="mt-5 flex-1 space-y-2">
+              <p className="mt-1 text-xs text-slate-400">Para siempre, después de la prueba</p>
+              <ul className="mt-6 flex-1 space-y-2.5">
                 {basico.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
                     <Check size={15} className="mt-0.5 shrink-0 text-tori-500" />
@@ -109,9 +136,9 @@ export default function Precios() {
           <Reveal delay={0.16}>
             <div className="relative h-full">
               <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-violet-600 px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
-                Todas las herramientas
+                Negocios que escalan
               </div>
-              <Spotlight className="flex h-full flex-col rounded-3xl border border-violet-200 bg-white p-6 shadow-sm sm:p-7" glow="rgba(124,58,237,0.10)">
+              <Spotlight className="flex h-full flex-col rounded-3xl border border-violet-200 bg-white p-7 shadow-sm sm:p-8" glow="rgba(124,58,237,0.10)">
                 <h3 className="mt-2 text-lg font-bold text-tori-900">Plus</h3>
                 <p className="mt-1 text-sm text-slate-500">Ilimitado y con herramientas avanzadas</p>
                 <div className="mt-4">
@@ -130,7 +157,7 @@ export default function Precios() {
                 <p className="mt-2 text-sm text-slate-500">
                   {trim ? 'Pago cada 3 meses' : `O S/ ${PRECIOS_PLAN.business_plus.trimestral.valor.toFixed(2)} cada 3 meses`}
                 </p>
-                <ul className="mt-5 flex-1 space-y-2">
+                <ul className="mt-6 flex-1 space-y-2.5">
                   {businessPlus.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm">
                       <Check size={15} className="mt-0.5 shrink-0 text-violet-500" />
@@ -142,7 +169,7 @@ export default function Precios() {
                   href="/register"
                   className="mt-7 flex items-center justify-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-600/25 transition hover:bg-violet-700"
                 >
-                  Probar Plus gratis
+                  Comenzar prueba gratis
                   <ArrowRight size={16} />
                 </Link>
               </Spotlight>
@@ -150,8 +177,8 @@ export default function Precios() {
           </Reveal>
         </div>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
-          Sin tarjeta para probar. Puedes continuar en Básico gratis al terminar los 14 días.
+        <p className="mt-10 text-center text-sm text-slate-500">
+          Sin permanencia. Puedes cambiar o cancelar tu plan cuando quieras.
         </p>
       </div>
     </section>
