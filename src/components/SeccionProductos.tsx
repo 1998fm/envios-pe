@@ -4,6 +4,7 @@ import { useEffect, useState, type ChangeEvent } from 'react'
 import { useEsMovil } from '@/hooks/useEsMovil'
 import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera, Archive, ArchiveRestore, CheckSquare, Package, History, Boxes, Tag, Info } from 'lucide-react'
 import { fmtSoles } from '@/lib/format'
+import PrecioInput from '@/components/PrecioInput'
 import { toast } from 'sonner'
 import type { Producto, MovimientoInventario } from '@/types/inventario'
 import { UNIDADES_MEDIDA } from '@/types/inventario'
@@ -974,24 +975,18 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                       )}
                       <label className="space-y-1 text-[10px] font-black uppercase tracking-wide text-slate-400">
                         P. venta
-                        <input
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          type="text"
-                          value={String(editForm.precio_venta ?? 0)}
-                          onChange={(e) => setEditForm({ ...editForm, precio_venta: parseFloat(e.target.value) || 0 })}
+                        <PrecioInput
+                          value={editForm.precio_venta ?? 0}
+                          onChange={(value) => setEditForm({ ...editForm, precio_venta: value })}
                           className={`${campo} tabular-nums`}
                         />
                       </label>
                       {puedeVerGanancias && (
                         <label className="space-y-1 text-[10px] font-black uppercase tracking-wide text-slate-400">
                           P. compra
-                          <input
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            type="text"
-                            value={String(editForm.precio_compra ?? 0)}
-                            onChange={(e) => setEditForm({ ...editForm, precio_compra: parseFloat(e.target.value) || 0 })}
+                          <PrecioInput
+                            value={editForm.precio_compra ?? 0}
+                            onChange={(value) => setEditForm({ ...editForm, precio_compra: value })}
                             className={`${campo} tabular-nums`}
                           />
                         </label>
@@ -1267,12 +1262,9 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                     </td>
                     <td className="px-3 py-3.5 text-right">
                       {editando ? (
-                        <input
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          type="text"
-                          value={String(editForm.precio_venta ?? 0)}
-                          onChange={(e) => setEditForm({ ...editForm, precio_venta: parseFloat(e.target.value) || 0 })}
+                        <PrecioInput
+                          value={editForm.precio_venta ?? 0}
+                          onChange={(value) => setEditForm({ ...editForm, precio_venta: value })}
                           className="w-24 rounded-lg border border-tori-400 px-2 py-1 text-right text-sm font-bold tabular-nums outline-none"
                         />
                       ) : (
@@ -1285,12 +1277,9 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                       <>
                         <td className="px-3 py-3.5 text-right">
                           {editando ? (
-                            <input
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              type="text"
-                              value={String(editForm.precio_compra ?? 0)}
-                              onChange={(e) => setEditForm({ ...editForm, precio_compra: parseFloat(e.target.value) || 0 })}
+                            <PrecioInput
+                              value={editForm.precio_compra ?? 0}
+                              onChange={(value) => setEditForm({ ...editForm, precio_compra: value })}
                               className="w-24 rounded-lg border border-tori-400 px-2 py-1 text-right text-sm font-bold tabular-nums outline-none"
                             />
                           ) : (
@@ -1755,23 +1744,17 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                 <div data-tour="nuevo-producto-precios" className="mt-2.5 grid grid-cols-2 gap-3">
                  <div>
                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio venta (S/)</label>
-                   <input
-                     inputMode="numeric"
-                     pattern="[0-9]*"
-                     type="text"
-                     value={nuevoForm.precio_venta || ''}
-                     onChange={(e) => setNuevoForm({ ...nuevoForm, precio_venta: parseFloat(e.target.value) || 0 })}
+                   <PrecioInput
+                     value={nuevoForm.precio_venta}
+                     onChange={(value) => setNuevoForm({ ...nuevoForm, precio_venta: value })}
                      className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                    />
                  </div>
                  <div>
                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio compra (S/)</label>
-                   <input
-                     inputMode="numeric"
-                     pattern="[0-9]*"
-                     type="text"
-                     value={nuevoForm.precio_compra || ''}
-                     onChange={(e) => setNuevoForm({ ...nuevoForm, precio_compra: parseFloat(e.target.value) || 0 })}
+                   <PrecioInput
+                     value={nuevoForm.precio_compra}
+                     onChange={(value) => setNuevoForm({ ...nuevoForm, precio_compra: value })}
                      className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
                    />
                  </div>
