@@ -1,3 +1,4 @@
+import { PRECIOS_PLUS } from '@/lib/planGating'
 import MercadoPagoConfig, { PreApproval } from 'mercadopago'
 
 function getClient() {
@@ -26,7 +27,7 @@ export const PRECIOS_PLAN: Record<PlanPago, Record<Periodo, Precio>> = {
   },
 }
 
-export const PRECIOS = PRECIOS_PLAN.pro
+export const PRECIOS = PRECIOS_PLAN.business_plus
 
 export async function crearSuscripcion(params: {
   email: string
@@ -35,16 +36,17 @@ export async function crearSuscripcion(params: {
   periodo: Periodo
   backUrl: string
 }) {
-  const precio = PRECIOS_PLAN[params.plan][params.periodo]
+  if (params.plan !== 'business_plus') throw new Error('El plan Pro ya no está disponible para contratar.')
+  const precio = PRECIOS_PLAN.business_plus[params.periodo]
   const preApproval = getPreApproval()
 
   const result = await preApproval.create({
     body: {
       payer_email: params.email,
-      reason: `Tori ${params.plan === 'business_plus' ? 'Business Plus' : 'Pro'} - ${precio.label}`,
+      reason: `Tori Plus - ${precio.label}`,
       external_reference: `${params.userId}__${params.plan}`,
       auto_recurring: {
-        frequency: 1,
+        frequency: PRECIOS_PLUS[params.periodo].meses,
         frequency_type: 'months',
         transaction_amount: precio.valor,
         currency_id: 'PEN',

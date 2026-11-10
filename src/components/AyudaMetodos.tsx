@@ -32,7 +32,7 @@ const bloques: AyudaBloque[] = [
       'Reparto local en moto dentro de tu ciudad. El cliente elige "Motorizado" y su distrito.',
     ejemplo:
       'El cliente pide y selecciona su distrito; tú recargas la moto y lo entregas.',
-    dato: 'Para que funcione necesitas marcar días de entrega en Logística y, en Pro/Business Plus, tarifas por distrito.',
+    dato: 'Para que funcione necesitas marcar días de entrega en Logística y, en Plus, tarifas por distrito.',
   },
   {
     icon: Building2,
@@ -84,7 +84,7 @@ const limitaciones = [
       'Puedes tener hasta un máximo de métodos activos (según tu plan). Prioriza los que más usas, porque al llegar al tope no podrás activar más sin quitar alguno.',
   },
   {
-    titulo: 'Pro y Business Plus',
+    titulo: 'Plus',
     texto:
       'No tienen límite de métodos: activas todos los que ofrezcas.',
   },

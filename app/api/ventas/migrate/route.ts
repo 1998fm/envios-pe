@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { mensajeDb } from '@/lib/erroresEs'
 
 export async function POST(request: Request) {
-  const auth = await requireNegocio('ver_ventas')
+  const auth = await requirePlus('ver_ventas')
   if (!auth.ok) return auth.response
   const user_id = auth.ownerId
 

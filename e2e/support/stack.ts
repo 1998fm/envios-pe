@@ -65,7 +65,7 @@ export async function createUser(opts: { empresa?: string; plan?: 'basic' | 'pro
   await admin.dispose()
 
   const db = await supabase('service')
-  const trialEnd = plan !== 'basic' && opts.trial !== false ? new Date(Date.now() + 30 * 864e5).toISOString() : null
+  const trialEnd = plan !== 'basic' && opts.trial !== false ? new Date(Date.now() + 14 * 864e5).toISOString() : null
   const prof = await db.post('/rest/v1/profiles', {
     data: { id, empresa, slug, plan, trial_end: trialEnd, metodo_motorizado: true, metodo_shalom: true, logistica_moto_dias: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] },
   })

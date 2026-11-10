@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { mensajeDb } from '@/lib/erroresEs'
 import { idsValidos } from '@/lib/enviosServidor'
 import { rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 
 // Archiva o restaura varios productos a la vez (selección múltiple).
 export async function PATCH(request: Request) {
-  const auth = await requireNegocio('ver_productos')
+  const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
 
   const body = await request.json()
@@ -38,7 +38,7 @@ export async function PATCH(request: Request) {
 
 // Elimina varios productos a la vez (selección múltiple) y borra sus fotos.
 export async function DELETE(request: Request) {
-  const auth = await requireNegocio('ver_productos')
+  const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
 
   const body = await request.json().catch(() => null)

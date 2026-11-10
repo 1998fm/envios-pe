@@ -58,7 +58,7 @@ import SeccionCompras from '@/components/SeccionCompras'
 import SeccionGastos from '@/components/SeccionGastos'
 import SeccionClientes from '@/components/SeccionClientes'
 import ModalRoles from '@/components/ModalRoles'
-import { UPGRADE_EVENT, computeEffectivePlan } from '@/lib/planGating'
+import { UPGRADE_EVENT, computeEffectivePlan, puedeUsarSeccion, openUpgrade } from '@/lib/planGating'
 import { useOnboarding } from '@/context/OnboardingContext'
 import {
   tourDone,
@@ -102,7 +102,6 @@ const [mensajeToast, setMensajeToast] =
   useState<ConfigState>(initialConfigState)
 const [plan, setPlan] = useState('basic')
 const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
-const [enviosMesCount, setEnviosMesCount] = useState(0)
 const [shalomUso, setShalomUso] = useState<{ used: number; max: number | null }>({ used: 0, max: null })
 const [planFeatures, setPlanFeatures] = useState<{ max_metodos?: number | null; max_pedidos_copiar?: number | null; max_envios?: number | null; max_miembros?: number | null } | null>(null)
 const [maxMiembros, setMaxMiembros] = useState(0)
@@ -118,7 +117,7 @@ type PESTANA = typeof PESTANAS[number]
 // La pestaña activa se restaura desde el URL (?v=...) al recargar o
 // compartir un enlace. Va en un efecto (y no en el inicializador) para que
 // el HTML del servidor y el del cliente coincidan.
-const [pestañaActiva, setPestañaActiva] = useState<PESTANA>('resumen')
+const [pestañaActiva, setPestañaActiva] = useState<PESTANA>('envios')
 
 // ========================================
 // ROL Y PERMISOS
@@ -135,7 +134,7 @@ const {
 const permisos: PermisosRol = esOwner ? PERMISOS_TODOS : (rol?.permisos ?? PERMISOS_NINGUNO)
 
 const pestanasPermitidas = PESTANAS.filter((p) =>
-  puedeVerVista(permisos, p as VistaDashboard)
+  puedeVerVista(permisos, p as VistaDashboard) && puedeUsarSeccion(plan, p)
 )
 
 const puedeVerGananciasVenta = esOwner || permisos.ver_ganancia_venta
@@ -152,6 +151,7 @@ useEffect(() => {
 }, [])
 
 const cambiarPestaña = (tab: PESTANA) => {
+  if (!puedeUsarSeccion(plan, tab)) { openUpgrade(); return }
   if (!puedeVerVista(permisos, tab as VistaDashboard)) return
   setPestañaActiva(tab)
   const url = tab === 'resumen' ? '/dashboard' : `/dashboard?v=${tab}`
@@ -162,7 +162,7 @@ const cambiarPestaña = (tab: PESTANA) => {
 // vista inicial del rol (o a la primera sección permitida).
 const pestanasPermitidasKey = pestanasPermitidas.join(',')
 useEffect(() => {
-  if (cargandoRol) return
+  if (loading || cargandoRol) return
   if (pestanasPermitidas.length === 0) return
   if (pestanasPermitidas.includes(pestañaActiva)) return
 
@@ -176,7 +176,7 @@ useEffect(() => {
   setPestañaActiva(destino as PESTANA)
   const url = destino === 'resumen' ? '/dashboard' : `/dashboard?v=${destino}`
   window.history.replaceState({}, '', url)
-}, [cargandoRol, pestanasPermitidasKey, pestañaActiva, rol?.vista_default])
+}, [loading, cargandoRol, pestanasPermitidasKey, pestañaActiva, rol?.vista_default])
 // ========================================
 // ETIQUETAS
 // ========================================
@@ -222,6 +222,7 @@ const [
 ======================================== */
 
 function abrirModalCopiar() {
+  if (plan === 'basic') { openUpgrade(); return }
 
   const estadoInicial: Record<string, boolean> = {}
 
@@ -427,9 +428,7 @@ const mostrarBotonCopiar =
   enviosMotoSeleccionados.length ===
     seleccionados.length
 
-const copiarDatosLocked =
-  plan === 'basic' &&
-  enviosMotoSeleccionados.length > (planFeatures?.max_pedidos_copiar ?? 50)
+const copiarDatosLocked = plan === 'basic'
 
   useEffect(() => {
     async function cargar() {
@@ -534,6 +533,9 @@ setSlugEmpresa(
 
 const planEfectivo = computeEffectivePlan(profile ?? {})
 setPlan(planEfectivo.plan)
+if (!new URLSearchParams(window.location.search).get('v')) {
+  setPestañaActiva(planEfectivo.plan === 'basic' ? 'envios' : 'resumen')
+}
 setDiasRestantes(planEfectivo.diasRestantes)
 setUserId(ownerId)
 setLoading(false)
@@ -571,6 +573,7 @@ setLoading(false)
     }
 
     const tab = TOUR_TAB[tourId]
+    if (tab && !puedeUsarSeccion(plan, tab)) { markTrayectoDone(); return }
     if (tab && tab !== pestañaActiva) {
       setPestañaActiva(tab)
       return
@@ -623,14 +626,14 @@ setLoading(false)
         if (d && d.plan) {
           setPlanFeatures(d)
           setMaxMiembros(d.max_miembros ?? 0)
-          // Roles: Business Plus vigente, también durante la prueba gratuita
+          // Roles: Plus vigente, también durante la prueba gratuita
           setPuedeUsarRoles(d.plan === 'business_plus')
         }
       })
       .catch(() => {})
   }, [userId])
 
-  // Banner de trial vencido (Business Plus expirado)
+  // Banner de trial vencido (Plus expirado)
   useEffect(() => {
     if (plan === 'business_plus' && diasRestantes !== null && diasRestantes <= 0) {
       setMostrarBannerTrial(true)
@@ -639,33 +642,14 @@ setLoading(false)
     }
   }, [plan, diasRestantes])
 
-  // Contador de envíos del mes actual (solo relevante en plan Básico)
-  useEffect(() => {
-    if (!userId || plan !== 'basic') {
-      setEnviosMesCount(0)
-      return
-    }
-    const inicioMes = new Date()
-    inicioMes.setDate(1)
-    inicioMes.setHours(0, 0, 0, 0)
-    ;(async () => {
-      try {
-        const { count } = await api<{ count: number }>(
-          `/api/envios/count?desde=${encodeURIComponent(inicioMes.toISOString())}`
-        )
-        setEnviosMesCount(count ?? 0)
-      } catch {
-        setEnviosMesCount(0)
-      }
-    })()
-  }, [userId, plan])
+
 
   // Manejar retorno de MercadoPago
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const paymentStatus = params.get('payment')
     if (paymentStatus === 'success') {
-      toast.success('¡Pago exitoso! Bienvenido a Pro')
+      toast.success('¡Pago exitoso! Bienvenido a Plus')
       window.history.replaceState({}, '', '/dashboard')
     } else if (paymentStatus === 'failure') {
       toast.error('El pago no pudo completarse. Intenta de nuevo.')
@@ -757,6 +741,7 @@ setLoading(false)
   }
 
 async function exportarSeleccionados() {
+  if (plan === 'basic') { openUpgrade(); return }
 
   if (!userId) return
 
@@ -889,6 +874,7 @@ setMostrarModalExportar(false)
 }
 
 async function aplicarCambioMasivo() {
+  if (plan === 'basic') { openUpgrade(); return }
 
   let ids: string[] = []
 
@@ -1034,23 +1020,8 @@ async function guardarConfiguracion(overrides: Partial<ConfigState> = {}) {
 // AGRUPAR POR FECHA
 // ========================================
 
-// En plan Básico solo se muestran los primeros `max_envios` (50) envíos del
-// mes actual; el resto del mes se oculta (aunque siguen guardados en la DB)
-// y se muestra un aviso de upgrade a Pro. En Pro/Business Plus no hay corte.
-const maxEnviosMes = plan === 'basic' ? (planFeatures?.max_envios ?? 50) : Infinity
-
-const enviosVisibles = plan !== 'basic'
-  ? envios
-  : (() => {
-      const inicioMes = new Date()
-      inicioMes.setDate(1)
-      inicioMes.setHours(0, 0, 0, 0)
-      const inicioMesIso = inicioMes.toISOString()
-      const delMes = envios.filter((e) => e.fecha_registro >= inicioMesIso)
-      const deOtrosMes = envios.filter((e) => e.fecha_registro < inicioMesIso)
-      const delMesVisibles = delMes.slice(0, maxEnviosMes)
-      return [...deOtrosMes, ...delMesVisibles]
-    })()
+// Ambos planes muestran todos los pedidos recibidos.
+const enviosVisibles = envios
 
 const enviosAgrupados = enviosVisibles.reduce(
   (acc, envio) => {
@@ -1143,9 +1114,9 @@ for (
       <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-semibold text-red-800">Tu trial de Business Plus ha terminado</p>
+            <p className="font-semibold text-red-800">Tu prueba de Plus ha terminado</p>
             <p className="text-sm text-red-700 mt-1">
-              Los miembros de tu equipo han perdido acceso al dashboard.
+              Ahora estás en Básico. Tus productos y ventas se conservan; las herramientas de Plus y el acceso del equipo requieren renovar.
               <span className="font-medium"> Renueva tu plan</span> para restaurar su acceso.
             </p>
           </div>
@@ -1153,7 +1124,7 @@ for (
             onClick={() => setMostrarUpgrade(true)}
             className="rounded-xl bg-red-600 px-4 py-2 text-white font-semibold hover:bg-red-700"
           >
-            Renovar Business Plus
+            Renovar Plus
           </button>
         </div>
       </div>
@@ -1169,8 +1140,9 @@ for (
       puedeConfigurar={esOwner}
       onNavegar={cambiarPestaña}
       onExportShalom={exportarSeleccionados}
-      onCambioMasivo={() => setMostrarModalEstado(true)}
+      onCambioMasivo={() => plan === 'basic' ? openUpgrade() : setMostrarModalEstado(true)}
       onGenerarEtiquetas={async () => {
+        if (plan === 'basic') { openUpgrade(); return }
         if (seleccionados.length === 0) {
           toast.error('Selecciona al menos un envío')
           return
@@ -1206,7 +1178,7 @@ for (
       esOwner={esOwner}
     />
 
-    {userId && pestañaActiva === 'resumen' && (
+    {userId && pestañaActiva === 'resumen' && puedeUsarSeccion(plan, 'resumen') && (
       <PanelResumen
         userId={userId}
         onNavegar={cambiarPestaña}
@@ -1239,34 +1211,8 @@ for (
        {pestañaActiva === 'envios' && (
          <>
            {plan === 'basic' && (
-             <div className="mb-4 space-y-3">
-               <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4">
-                 <div className="text-sm text-slate-600">
-                   <span className="font-semibold text-slate-900">Envíos este mes:</span>{' '}
-                   {enviosMesCount} de {maxEnviosMes === Infinity ? 'ilimitados' : maxEnviosMes}
-                 </div>
-                 {enviosMesCount >= maxEnviosMes && maxEnviosMes !== Infinity && (
-                   <button
-                     onClick={() => setMostrarUpgrade(true)}
-                     className="shrink-0 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 transition-colors"
-                   >
-                     Actualizar a Pro
-                   </button>
-                 )}
-               </div>
-
-               {maxEnviosMes !== Infinity && enviosMesCount >= maxEnviosMes && (
-                 <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
-                   Tienes más solicitudes de las que tu plan dispone. Recomendamos pasar al plan{' '}
-                   <span className="font-semibold">Pro</span> para ver y gestionar todos tus envíos sin límite.
-                 </div>
-               )}
-               {maxEnviosMes !== Infinity && enviosMesCount >= maxEnviosMes - 5 && enviosMesCount < maxEnviosMes && (
-                 <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800">
-                   Te acercas al límite de {maxEnviosMes} envíos del plan Básico. Actualiza a{' '}
-                   <span className="font-semibold">Pro</span> para no interrumpir tu operación.
-                 </div>
-               )}
+             <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+               Básico · solicitudes ilimitadas y gestión individual. <button onClick={() => setMostrarUpgrade(true)} className="font-semibold text-tori-600">Ver herramientas de Plus</button>
              </div>
            )}
 
@@ -1282,7 +1228,7 @@ for (
              onCambiarAgruparPor={setAgruparPor}
            />
 
-           {hasMore && (plan !== 'basic' || enviosMesCount <= maxEnviosMes) && (
+           {hasMore && (
              <div className="flex justify-center pt-4 pb-8">
                <button
                  onClick={cargarMas}
@@ -1295,14 +1241,14 @@ for (
          </>
        )}
 
-        {pestañaActiva === 'productos' && (
+        {pestañaActiva === 'productos' && puedeUsarSeccion(plan, 'productos') && (
           <SeccionProductos
             userId={userId || ''}
             plan={plan}
             puedeVerGanancias={puedeVerGananciasProducto}
           />
         )}
-        {pestañaActiva === 'ventas' && (
+        {pestañaActiva === 'ventas' && puedeUsarSeccion(plan, 'ventas') && (
           <SeccionVentas
             userId={userId || ''}
             plan={plan}
@@ -1310,9 +1256,9 @@ for (
             puedeVerKpis={puedeVerKpisVenta}
           />
         )}
-        {pestañaActiva === 'compras' && <SeccionCompras userId={userId || ''} />}
-        {pestañaActiva === 'gastos' && <SeccionGastos userId={userId || ''} />}
-        {pestañaActiva === 'clientes' && <SeccionClientes userId={userId || ''} />}
+        {pestañaActiva === 'compras' && puedeUsarSeccion(plan, 'compras') && <SeccionCompras userId={userId || ''} />}
+        {pestañaActiva === 'gastos' && puedeUsarSeccion(plan, 'gastos') && <SeccionGastos userId={userId || ''} />}
+        {pestañaActiva === 'clientes' && puedeUsarSeccion(plan, 'clientes') && <SeccionClientes userId={userId || ''} />}
        {pestañaActiva === 'formulario' && (
          <SeccionFormulario
            userId={userId || ''}
@@ -1353,6 +1299,7 @@ for (
 />
 
 <ModalDetalle
+  plan={plan}
   envio={envioDetalle}
   onCerrar={() => setEnvioDetalle(null)}
   onUpdate={(actualizado) =>

@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Periodo inválido' }, { status: 400 })
   }
 
-  if (plan !== 'pro' && plan !== 'business_plus') {
+  if (plan !== 'business_plus') {
     return Response.json({ error: 'Plan inválido' }, { status: 400 })
   }
 

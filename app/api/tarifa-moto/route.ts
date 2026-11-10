@@ -23,8 +23,8 @@ export async function GET(req: NextRequest) {
 
   }
 
-  // Las tarifas por distrito son una función de plan Pro/Business Plus.
-  // Si el usuario no tiene un plan pagado/Pro activo, no se aplican precios
+  // Las tarifas por distrito son una función de plan Plus.
+  // Si el usuario no tiene un plan Plus activo, no se aplican precios
   // por distrito (se neutraliza igual que la configuración logística).
   const { data: perfil } = await supabaseAdmin
     .from('profiles')

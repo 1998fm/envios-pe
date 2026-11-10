@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { conImagenesProxy, desdeProxy } from '@/lib/mediaUrl'
 import { rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
@@ -29,7 +29,7 @@ async function borrarArchivoProducto(imagenUrl: string | null | undefined) {
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_productos')
+  const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
   const { id } = await params
   const body = await request.json()
@@ -111,7 +111,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_productos')
+  const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
   const { id } = await params
 

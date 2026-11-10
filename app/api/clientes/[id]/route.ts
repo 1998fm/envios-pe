@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { mensajeDb } from '@/lib/erroresEs'
 
 // `personas` es global a la plataforma; cada negocio solo ve las que tiene
@@ -21,7 +21,7 @@ function norm(v: string | null | undefined): string {
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_clientes')
+  const auth = await requirePlus('ver_clientes')
   if (!auth.ok) return auth.response
   const user_id = auth.ownerId
 
@@ -95,7 +95,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_clientes')
+  const auth = await requirePlus('ver_clientes')
   if (!auth.ok) return auth.response
   const user_id = auth.ownerId
 
@@ -209,7 +209,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_clientes')
+  const auth = await requirePlus('ver_clientes')
   if (!auth.ok) return auth.response
   const user_id = auth.ownerId
 

@@ -278,7 +278,7 @@ test.describe('#10 Roles y permisos se aplican en el servidor', () => {
     const intruso = await createUser({ plan: 'basic' })
     await crearGasto(await appApi(dueno.token))
     const r = await (await appApi(intruso.token)).get(`/api/gastos?user_id=${dueno.id}`)
-    expect((await r.json()).data).toHaveLength(0)
+    expect(r.status()).toBe(403)
   })
 })
 

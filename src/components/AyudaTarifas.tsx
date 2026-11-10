@@ -29,7 +29,7 @@ const bloques: AyudaBloque[] = [
       'Es el monto que le cobras a tu cliente por el reparto motorizado según el distrito de destino. El cliente ve el total en vivo al elegir su distrito.',
     ejemplo:
       'Cobras S/ 8 en Miraflores → el cliente elige Miraflores y ve "Envío: S/ 8.00" antes de confirmar.',
-    dato: 'Solo aplica en plan Pro/Business Plus. En Básico, Motorizado no muestra precio por distrito.',
+    dato: 'Solo aplica en plan Plus. En Básico, Motorizado no muestra precio por distrito.',
   },
   {
     icon: MapPin,

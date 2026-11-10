@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     q: '¿Cuánto cuesta probar Tori?',
-    a: 'Puedes probar Tori durante 30 días gratis, sin tarjeta.',
+    a: 'Puedes probar Tori durante 14 días gratis, sin tarjeta.',
   },
 ]
 

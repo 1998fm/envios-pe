@@ -283,7 +283,7 @@ export default function SeccionFormulario({ userId, config, setConfig, guardarCo
               iconBg="bg-gradient-to-br from-rose-500 to-pink-500"
               titulo="URL de redirección"
               desc={
-                isBasic ? 'Disponible en Pro y Business Plus.' : 'A dónde van tus clientes tras enviar el pedido.'
+                isBasic ? 'Disponible en Plus.' : 'A dónde van tus clientes tras enviar el pedido.'
               }
               derecha={
                 isBasic ? (

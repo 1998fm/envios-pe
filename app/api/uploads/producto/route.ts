@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { subirImagen } from '@/lib/configuracionNegocio'
 import { aProxy } from '@/lib/mediaUrl'
 
 // Foto de producto (el navegador ya la comprimió). Va al servidor, que valida
 // tipo y tamaño y la guarda en la carpeta del negocio.
 export async function POST(request: Request) {
-  const auth = await requireNegocio('ver_productos')
+  const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
 
   let form: FormData
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
 // Borra una foto subida (por ejemplo, si falló la creación del producto).
 export async function DELETE(request: Request) {
-  const auth = await requireNegocio('ver_productos')
+  const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
 
   const ruta = new URL(request.url).searchParams.get('ruta') || ''

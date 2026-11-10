@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireOwner } from '@/lib/ownerAuth'
+import { requirePlusOwner } from '@/lib/ownerAuth'
 import { esTablaFaltante } from '@/lib/roles'
 import { crearInvitacion, linkDeInvitacion, renovarLink } from '@/lib/invitaciones'
 import { mensajeDb } from '@/lib/erroresEs'
@@ -19,7 +19,7 @@ function originDe(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const auth = await requireOwner()
+  const auth = await requirePlusOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
 
 // Crear invitación (devuelve el link para compartir)
 export async function POST(request: Request) {
-  const auth = await requireOwner()
+  const auth = await requirePlusOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
 
 // Genera un link nuevo (invalida el anterior)
 export async function PATCH(request: Request) {
-  const auth = await requireOwner()
+  const auth = await requirePlusOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
@@ -126,7 +126,7 @@ export async function PATCH(request: Request) {
 
 // Cancelar una invitación
 export async function DELETE(request: Request) {
-  const auth = await requireOwner()
+  const auth = await requirePlusOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }

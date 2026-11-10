@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { idsValidos } from '@/lib/enviosServidor'
 import { mensajeDb } from '@/lib/erroresEs'
 
 // Pedidos SHALOM ya empacados, listos para exportar. Con ?ids= se limita a esa
 // selección; sin ella, devuelve todos los del negocio.
 export async function GET(request: Request) {
-  const auth = await requireNegocio('ver_envios')
+  const auth = await requirePlus('ver_envios')
   if (!auth.ok) return auth.response
 
   const ids = idsValidos(new URL(request.url).searchParams.get('ids'))

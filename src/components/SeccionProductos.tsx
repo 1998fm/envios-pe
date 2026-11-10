@@ -1113,7 +1113,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                             : { icono: Archive, titulo: 'Archivar', clase: 'text-slate-600 bg-slate-100', fn: () => archivarProducto(p) },
                           {
                             icono: Printer,
-                            titulo: planNivel(plan) < 1 ? 'Disponible en Pro y Business Plus' : 'Imprimir etiqueta',
+                            titulo: planNivel(plan) < 1 ? 'Disponible en Plus' : 'Imprimir etiqueta',
                             clase: 'text-slate-600 bg-slate-100',
                             fn: () => {
                               if (planNivel(plan) < 1) {
@@ -1389,7 +1389,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                             icono={Printer}
                             titulo={
                               planNivel(plan) < 1
-                                ? 'Disponible en Pro y Business Plus'
+                                ? 'Disponible en Plus'
                                 : 'Imprimir etiqueta'
                             }
                             onClick={() => {
@@ -1809,7 +1809,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                       <button
                         onClick={openUpgrade}
                         className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold flex items-center justify-between bg-slate-50 text-slate-500 border border-dashed border-slate-300 hover:border-sky-300 transition-colors"
-                         title="Disponible en Pro y Business Plus"
+                         title="Disponible en Plus"
                       >
                         <span className="flex items-center gap-2">
                           <Lock size={14} className="text-slate-400" />

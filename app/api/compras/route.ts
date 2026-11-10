@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 import { sumarStock, restarStock } from '@/lib/stock'
 import { mensajeDb } from '@/lib/erroresEs'
 
 export async function GET(request: Request) {
-  const auth = await requireNegocio('ver_compras')
+  const auth = await requirePlus('ver_compras')
   if (!auth.ok) return auth.response
   const userId = auth.ownerId
 
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireNegocio('ver_compras')
+  const auth = await requirePlus('ver_compras')
   if (!auth.ok) return auth.response
 
   const body = await request.json()

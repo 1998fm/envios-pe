@@ -351,7 +351,7 @@ export default function OnboardingWizard() {
                   </div>
                   <div className="bg-gradient-to-r from-sky-50 to-indigo-50 rounded-xl px-5 py-3 flex items-center justify-between text-sm">
                     <span className="text-sky-700">Plan</span>
-                    <span className="font-bold text-sky-700">Pro · 30 días gratis</span>
+                    <span className="font-bold text-sky-700">Plus · 14 días gratis</span>
                   </div>
                 </div>
 

@@ -27,7 +27,7 @@ if (seed) {
   const u = await stack.createUser({ email: DEMO.email, password: DEMO.password, confirmed: true })
   await stack.pool.query(
     `INSERT INTO profiles (id, empresa, slug, plan, trial_end, metodo_motorizado, metodo_shalom, logistica_moto_dias)
-     VALUES ($1, $2, $3, 'business_plus', now() + interval '30 days', true, true, '{MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY}')`,
+     VALUES ($1, $2, $3, 'business_plus', now() + interval '14 days', true, true, '{MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY}')`,
     [u.id, DEMO.empresa, DEMO.slug]
   )
   await stack.pool.query(

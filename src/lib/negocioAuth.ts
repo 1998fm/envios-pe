@@ -1,3 +1,4 @@
+import { computeEffectivePlan } from '@/lib/planGating'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { getSessionUser } from '@/lib/ownerAuth'
@@ -90,4 +91,15 @@ export function esDelNegocio(
   columna = 'profile_id'
 ): boolean {
   return !!fila && fila[columna] === ownerId
+}
+
+/** El plan se verifica además del rol, incluso para el dueño del negocio. */
+export async function requirePlus(...requeridos: PermisoKey[]): Promise<NegocioAuthResult> {
+  const auth = await requireNegocio(...requeridos)
+  if (!auth.ok) return auth
+  const { data, error } = await supabaseAdmin.from('profiles')
+    .select('plan, trial_end, pro_until').eq('id', auth.ownerId).maybeSingle()
+  if (error || !data) return fallo(503, 'No se pudo verificar el plan del negocio')
+  if (computeEffectivePlan(data).plan === 'basic') return fallo(403, 'Esta función requiere el plan Plus')
+  return auth
 }

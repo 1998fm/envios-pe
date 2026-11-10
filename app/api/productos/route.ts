@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { conImagenesProxy, desdeProxy } from '@/lib/mediaUrl'
 import { checkRecordLimit } from '@/lib/planLimits'
 import { ajustarStock } from '@/lib/stock'
@@ -21,7 +21,7 @@ function salida<T extends Record<string, unknown>>(p: T, puedeVerCosto: boolean)
 
 export async function GET(request: Request) {
   // El catálogo también alimenta los selectores de ventas y compras.
-  const auth = await requireNegocio('ver_productos', 'ver_ventas', 'ver_compras', 'ver_envios')
+  const auth = await requirePlus('ver_productos', 'ver_ventas', 'ver_compras', 'ver_envios')
   if (!auth.ok) return auth.response
   const userId = auth.ownerId
   const verCosto = auth.permisos.ver_ganancia_producto
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireNegocio('ver_productos')
+  const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
   const user_id = auth.ownerId
 

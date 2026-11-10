@@ -143,8 +143,8 @@ export default function AyudaShalomPro({ className = '' }: { className?: string 
                     Shalom Pro.
                   </p>
                   <p>
-                    <span className="font-semibold text-slate-800">Plan Básico tiene tope mensual.</span> El export a
-                    Shalom tiene un límite de usos hasta que actualices a Pro o Business Plus.
+                    <span className="font-semibold text-slate-800">Exportar a Shalom requiere Plus.</span> Básico permite
+                    recibir solicitudes y gestionar los pedidos individualmente sin límite mensual.
                   </p>
                 </div>
               </div>

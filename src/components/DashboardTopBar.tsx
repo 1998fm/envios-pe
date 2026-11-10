@@ -39,12 +39,10 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
           <div className="min-w-0">
             {isTrial ? (
               <span className={`${chip} bg-amber-100 text-amber-700`}>
-                {plan === 'business_plus' ? 'Business Plus' : 'Pro'} · Trial {diasRestantes}d
+                Plus · Trial {diasRestantes}d
               </span>
             ) : plan === 'business_plus' ? (
-              <span className={`${chip} bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white`}>Business Plus</span>
-            ) : plan === 'pro' ? (
-              <span className={`${chip} bg-gradient-to-r from-sky-600 to-indigo-600 text-white`}>Pro</span>
+              <span className={`${chip} bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white`}>Plus</span>
             ) : (
               <span className={`${chip} bg-slate-200 text-slate-500`}>Básico</span>
             )}
@@ -62,6 +60,8 @@ export default function DashboardTopBar({ logoUrl, plan, diasRestantes, onCompar
             <Share2 size={17} className="sm:hidden" />
             <span className="hidden sm:inline">Compartir formulario</span>
           </button>
+
+          <button onClick={onUpgrade} className="rounded-xl px-2 py-2 text-xs font-bold text-tori-700 hover:bg-tori-50 sm:px-3 sm:text-sm" aria-label="Ver planes">Planes</button>
 
           <button
             onClick={onLogout}

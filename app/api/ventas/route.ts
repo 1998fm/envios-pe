@@ -5,7 +5,7 @@ import { checkRecordLimit } from '@/lib/planLimits'
 import { descontarStock, sumarStock } from '@/lib/stock'
 import { calcularResumenVentas, type ResumenVentas } from '@/lib/ventasUI'
 import { buscar, palabrasClave } from '@/lib/buscar'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { mensajeDb } from '@/lib/erroresEs'
 
 function resumenSegunRol(resumen: ResumenVentas, verKpis: boolean, verGanancia: boolean): ResumenVentas {
@@ -68,7 +68,7 @@ function sinCostoEnItems<T extends { items?: unknown }>(venta: T): T {
 }
 
 export async function GET(request: Request) {
-  const auth = await requireNegocio('ver_ventas')
+  const auth = await requirePlus('ver_ventas')
   if (!auth.ok) return auth.response
   const userId = auth.ownerId
   // Se aplican SIEMPRE, con o sin ?resumen=1: el rol no se puede esquivar
@@ -242,7 +242,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireNegocio('ver_ventas')
+  const auth = await requirePlus('ver_ventas')
   if (!auth.ok) return auth.response
   const user_id = auth.ownerId
 

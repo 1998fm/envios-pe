@@ -11,7 +11,7 @@ test.describe('Landing', () => {
       await expect(page.getByRole('navigation').getByRole('link', { name: label })).toBeVisible()
     }
     await expect(page.getByRole('link', { name: 'Quiero ordenar mi negocio' })).toHaveAttribute('href', '/register')
-    await expect(page.getByText('30 días gratis').first()).toBeVisible()
+    await expect(page.getByText('14 días gratis').first()).toBeVisible()
   })
 
   test('el héroe cuenta la historia sola: el vaivén de hoy y luego Tori', async ({ page }) => {
@@ -128,9 +128,10 @@ test.describe('Landing', () => {
   test('el selector de precios alterna mensual y trimestral', async ({ page }) => {
     const sec = page.locator('#precios')
     await sec.scrollIntoViewIfNeeded()
-    await expect(sec.getByText('S/ 29.90').first()).toBeVisible()
+    await expect(sec.getByRole('heading', { name: 'Plus', exact: true })).toBeVisible()
+    await expect(sec.getByRole('heading', { name: 'Pro', exact: true })).toHaveCount(0)
+    await expect(sec.getByText('S/ 49.90').first()).toBeVisible()
     await sec.getByRole('button', { name: 'trimestral' }).click()
-    await expect(sec.getByText('S/ 79.90').first()).toBeVisible()
     await expect(sec.getByText('S/ 129.90').first()).toBeVisible()
     await sec.getByRole('button', { name: 'mensual' }).click()
     await expect(sec.getByText('S/ 49.90').first()).toBeVisible()

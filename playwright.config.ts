@@ -35,7 +35,7 @@ export default defineConfig({
   use: {
     baseURL,
     headless,
-    launchOptions: { slowMo },
+    launchOptions: { slowMo, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

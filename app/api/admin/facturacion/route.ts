@@ -102,7 +102,7 @@ export async function GET(request: Request) {
         pro_until: p.pro_until,
         estado: (vigente ? 'vigente' : 'vencido') as 'vigente' | 'vencido',
         dias,
-        mrr: vigente ? (PRECIO_MENSUAL[eff.plan] ?? 0) : 0,
+        mrr: vigente ? (PRECIO_MENSUAL[p.plan === 'pro' ? 'pro' : eff.plan] ?? 0) : 0,
         ultimo_pago: p.pro_until,
       }
     })

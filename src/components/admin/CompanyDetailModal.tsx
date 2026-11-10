@@ -68,8 +68,8 @@ type Detalle = {
 
 const PLAN_LABEL: Record<string, string> = {
   basic: 'Básico',
-  pro: 'Pro',
-  business_plus: 'Business Plus',
+  pro: 'Pro (anterior)',
+  business_plus: 'Plus',
 }
 
 const ESTADO_LABEL: Record<string, string> = {

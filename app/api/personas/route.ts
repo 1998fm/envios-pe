@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { mensajeDb } from '@/lib/erroresEs'
 
 function norm(v: string | null | undefined): string {
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   // Antes era público y buscaba en TODA la plataforma: cualquiera podía sacar
   // nombre y teléfono de una persona probando DNIs. Ahora exige sesión y solo
   // encuentra a los clientes ya vinculados al negocio de quien llama.
-  const auth = await requireNegocio('ver_ventas', 'ver_clientes', 'ver_envios')
+  const auth = await requirePlus('ver_ventas', 'ver_clientes', 'ver_envios')
   if (!auth.ok) return auth.response
   const userId = auth.ownerId
 
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireNegocio('ver_ventas', 'ver_clientes', 'ver_envios')
+  const auth = await requirePlus('ver_ventas', 'ver_clientes', 'ver_envios')
   if (!auth.ok) return auth.response
   const user_id = auth.ownerId
 

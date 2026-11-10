@@ -657,11 +657,11 @@ export const TOURS: Tour[] = [
     steps: [
       {
         target: '[data-tour="upgrade-periodo"]',
-        text: 'Elige entre pago mensual o trimestral. Puedes actualizar a Pro o Business Plus para desbloquear más funciones, o quedarte en el plan Básico gratis.',
+        text: 'Elige entre pago mensual o trimestral. Puedes actualizar a Plus para desbloquear más funciones, o quedarte en el plan Básico gratis.',
       },
       {
         target: '[data-tour="upgrade-planes"]',
-        text: 'Compara los tres planes: Básico es gratis para siempre, Pro es ideal para crecer y Business Plus es ilimitado con herramientas avanzadas.',
+        text: 'Compara los dos planes: Básico recibe pedidos sin límite mensual; Plus incluye todas las herramientas para gestionar tu negocio.',
       },
       {
         target: '[data-tour="upgrade-pagar"]',

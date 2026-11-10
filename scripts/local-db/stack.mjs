@@ -75,6 +75,7 @@ export const SCHEMA_ORDER = [
   'realtime-ventas.sql',
   'rls-policies.sql',
   'seguridad-fixes.sql',
+  'plan-basico-plus.sql',
   'acceso-solo-servidor.sql',
 ]
 

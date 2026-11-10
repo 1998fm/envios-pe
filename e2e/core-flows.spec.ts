@@ -47,14 +47,10 @@ test.describe('Productos e inventario', () => {
     expect(await dbSelect('productos', `id=eq.${p.id}`)).toHaveLength(0)
   })
 
-  test('el plan Básico limita a 50 productos', async () => {
+  test('Básico bloquea productos y Plus los permite', async () => {
     const u = await createUser({ plan: 'basic' })
     const api = await appApi(u.token)
-    for (let i = 0; i < 50; i++) {
-      const r = await api.post('/api/productos', { data: { nombre: `P${i}`, precio_venta: 1, stock_actual: 0 } })
-      expect(r.status(), `producto ${i + 1}`).toBe(200)
-    }
-    const r = await api.post('/api/productos', { data: { nombre: 'P51', precio_venta: 1, stock_actual: 0 } })
+    const r = await api.post('/api/productos', { data: { nombre: 'Solo Plus', precio_venta: 1, stock_actual: 0 } })
     expect(r.status()).toBe(403)
     // Business Plus no tiene tope
     const bp = await createUser({ plan: 'business_plus' })
@@ -165,16 +161,10 @@ test.describe('Ventas', () => {
     expect(lista.data).toHaveLength(0)
   })
 
-  test('Básico limita a 100 ventas', async () => {
+  test('Básico bloquea ventas desde la primera operación', async () => {
     const u = await createUser({ plan: 'basic' })
     const api = await appApi(u.token)
-    const persona = await crearPersona(api)
-    // se siembran 100 ventas directo en la base para no tardar; el límite lo valida la API
-    const { dbInsert } = await import('./support/stack')
-    for (let i = 0; i < 100; i++) {
-      await dbInsert('ventas', { profile_id: u.id, persona_id: persona.id, persona_nombre: 'x', total: 1, estado: 'COMPLETADA', metodo_pago: 'EFECTIVO', monto_pagado: 1 })
-    }
-    const r = await crearVenta(api, persona, [{ producto_nombre: 'suelto', cantidad: 1, precio_unitario: 1 }])
+    const r = await api.post('/api/ventas', { data: { persona_nombre: 'Cliente', items: [{ producto_nombre: 'suelto', cantidad: 1, precio_unitario: 1 }] } })
     expect(r.status()).toBe(403)
   })
 })
@@ -349,8 +339,8 @@ test.describe('Pedidos (formulario público) y panel', () => {
     const bp = await createUser({ plan: 'business_plus' })
     const b = await (await (await appApi(basic.token)).get('/api/plan/features')).json()
     expect(b.plan).toBe('basic')
-    expect(b.max_envios).toBe(50)
-    expect(b.max_productos).toBe(50)
+    expect(b.max_envios).toBeNull()
+    expect(b.max_productos).toBe(0)
     const p = await (await (await appApi(bp.token)).get('/api/plan/features')).json()
     expect(p.plan).toBe('business_plus')
     expect(p.isTrial).toBe(true)

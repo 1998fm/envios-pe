@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireOwner } from '@/lib/ownerAuth'
+import { requirePlusOwner } from '@/lib/ownerAuth'
 import { esTablaFaltante, esVistaValida, normalizarPermisos } from '@/lib/roles'
 import { checkRolesLimit } from '@/lib/planLimits'
 import { mensajeDb } from '@/lib/erroresEs'
@@ -12,7 +12,7 @@ import { mensajeDb } from '@/lib/erroresEs'
 // ============================================================
 
 export async function GET() {
-  const auth = await requireOwner()
+  const auth = await requirePlusOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
@@ -79,7 +79,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireOwner()
+  const auth = await requirePlusOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const auth = await requireOwner()
+  const auth = await requirePlusOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
@@ -162,7 +162,7 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const auth = await requireOwner()
+  const auth = await requirePlusOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }

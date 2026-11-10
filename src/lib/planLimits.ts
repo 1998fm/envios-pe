@@ -44,7 +44,23 @@ export async function getPlanFeatures(plan: string): Promise<PlanFeature | null>
     .select('*')
     .eq('plan', plan)
     .single()
-  return data
+  // Política comercial autoritativa: no depende de que una migración ya esté aplicada.
+  const plus = plan === 'business_plus' || plan === 'pro'
+  return {
+    ...data,
+    plan: plus ? 'business_plus' : 'basic',
+    max_envios: null,
+    max_metodos: plus ? null : (data?.max_metodos ?? 2),
+    form_branding: plus,
+    dashboard_completo: plus,
+    envios_masivos: plus,
+    control_logistico: plus,
+    max_productos: plus ? null : 0,
+    max_ventas: plus ? null : 0,
+    max_exportaciones_shalom: plus ? null : 0,
+    max_pedidos_copiar: plus ? null : 0,
+    max_miembros: plus ? 4 : 0,
+  }
 }
 
 export async function checkTrialStatus(userId: string): Promise<TrialStatus> {
@@ -84,39 +100,9 @@ export async function checkTrialStatus(userId: string): Promise<TrialStatus> {
   }
 }
 
-export async function checkEnvioLimit(userId: string): Promise<{ allowed: boolean; reason?: string }> {
-  const { plan } = await checkTrialStatus(userId)
-  const features = await getPlanFeatures(plan)
-
-  if (!features) {
-    return { allowed: false, reason: 'Plan no encontrado' }
-  }
-
-  if (features.max_envios === null) {
-    return { allowed: true }
-  }
-
-  // Inicio del mes en hora Perú (UTC-5): el día 1 arranca a las 05:00 UTC.
-  const hoyLima = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
-  const inicioMes = new Date(`${hoyLima.slice(0, 8)}01T00:00:00-05:00`)
-
-  const { count, error } = await supabaseAdmin
-    .from('envios')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .gte('fecha_registro', inicioMes.toISOString())
-
-  if (error) {
-    return { allowed: false, reason: 'Error al verificar límite' }
-  }
-
-  if ((count ?? 0) >= features.max_envios) {
-    return {
-      allowed: false,
-      reason: `Límite de ${features.max_envios} envíos mensuales alcanzado. Actualiza a Pro (500/mes) o Business Plus (ilimitado).`,
-    }
-  }
-
+// Ambos planes reciben solicitudes sin límite mensual.
+export async function checkEnvioLimit(_userId: string): Promise<{ allowed: boolean; reason?: string }> {
+  void _userId
   return { allowed: true }
 }
 
@@ -161,7 +147,7 @@ export async function checkRecordLimit(
       allowed: false,
       used,
       max: limite,
-      reason: `Límite de ${limite} ${nombre} alcanzado en el plan Básico. Actualiza a Pro o Business Plus para más ${nombre}.`,
+      reason: `Límite de ${limite} ${nombre} alcanzado en el plan Básico. Actualiza a Plus para más ${nombre}.`,
     }
   }
 
@@ -198,7 +184,7 @@ export async function checkShalomExportLimit(userId: string): Promise<LimitCheck
       allowed: false,
       used,
       max,
-      reason: `Límite de ${max} exportaciones a Shalom por mes alcanzado. Actualiza a Pro o Business Plus para exportaciones ilimitadas.`,
+      reason: `Límite de ${max} exportaciones a Shalom por mes alcanzado. Actualiza a Plus para exportaciones ilimitadas.`,
     }
   }
 
@@ -212,7 +198,7 @@ export async function registrarExportacionShalom(userId: string, cantidad: numbe
 }
 
 export async function checkRolesLimit(ownerId: string): Promise<LimitCheck> {
-  // Business Plus vigente: incluye la prueba gratuita (si venció, el plan efectivo es basic).
+  // Plus vigente: incluye la prueba gratuita (si venció, el plan efectivo es basic).
   const { plan } = await checkTrialStatus(ownerId)
 
   if (plan !== 'business_plus') {
@@ -220,7 +206,7 @@ export async function checkRolesLimit(ownerId: string): Promise<LimitCheck> {
       allowed: false,
       used: 0,
       max: 0,
-      reason: 'Requiere plan Business Plus activo',
+      reason: 'Requiere plan Plus activo',
     }
   }
 
@@ -241,7 +227,7 @@ export async function checkRolesLimit(ownerId: string): Promise<LimitCheck> {
       allowed: false,
       used,
       max,
-      reason: `Límite de ${max} miembros alcanzado en Business Plus`,
+      reason: `Límite de ${max} miembros alcanzado en Plus`,
     }
   }
 

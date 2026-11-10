@@ -26,7 +26,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const update: Record<string, unknown> = {}
 
-  const planesValidos = ['basic', 'pro', 'business_plus']
+  const planesValidos = ['basic', 'business_plus']
   if (body.plan !== undefined) {
     if (!planesValidos.includes(body.plan)) {
       return NextResponse.json({ error: 'Plan inválido' }, { status: 400 })

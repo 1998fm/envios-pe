@@ -152,7 +152,7 @@ function ModalConfiguracionContenido({
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-slate-700">Logo del negocio</h3>
-                      <p className="text-xs text-slate-500">Disponible en Pro y Business Plus</p>
+                      <p className="text-xs text-slate-500">Disponible en Plus</p>
                     </div>
                   </div>
                   <button
@@ -191,7 +191,7 @@ function ModalConfiguracionContenido({
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-slate-700">Redes sociales</h3>
-                      <p className="text-xs text-slate-500">Disponible en el plan Business Plus</p>
+                      <p className="text-xs text-slate-500">Disponible en el plan Plus</p>
                     </div>
                   </div>
                   <button
@@ -429,7 +429,7 @@ function ModalConfiguracionContenido({
                 ¿Necesitas más funciones?
               </p>
               <p className="text-xs text-amber-700  mt-1">
-                Actualiza a Pro o Business Plus y obtén logo personalizado, tarifas, control logístico y más.
+                Actualiza a Plus y obtén logo personalizado, tarifas, control logístico y más.
               </p>
               <button
                 onClick={onUpgrade}

@@ -1,3 +1,4 @@
+import { DIAS_PRUEBA_PLUS } from '@/lib/planGating'
 import { createClient } from '@supabase/supabase-js'
 import { permitir } from '@/lib/rateLimit'
 import { supabaseServiceKey, supabaseUrl } from '@/lib/supabaseEnv'
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
       empresa,
       slug,
       plan: 'business_plus',
-      trial_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      trial_end: new Date(Date.now() + DIAS_PRUEBA_PLUS * 24 * 60 * 60 * 1000).toISOString(),
     })
 
   if (profileError) {

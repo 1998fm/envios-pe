@@ -4,54 +4,41 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Check, CheckCircle2, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
+import { PRECIOS_PLUS } from '@/lib/planGating'
 import { CountUp, Reveal, SectionHead, Spotlight } from './ui'
 
 const basico = [
-  'Hasta 50 envíos al mes',
+  'Solicitudes de pedidos ilimitadas',
+  'Formulario para tus clientes',
   'Hasta 2 métodos de envío',
-  '50 productos y 100 ventas',
-  'Compras y gastos',
-  'Etiquetas de envío',
-  'Exportar a Shalom (8 al mes)',
-]
-
-const pro = [
-  '500 envíos al mes',
-  '200 productos y 2000 ventas',
-  'Todos los métodos de envío',
-  'Logo, colores y marca blanca',
-  'Tarifas por distrito',
-  'Hora de corte, anticipación y cupo diario',
-  'Etiquetas de producto con QR',
-  'Ganancia por venta',
-  'URL de redirección y cambio masivo',
+  'Búsqueda y filtros de pedidos',
+  'Validación y gestión individual de pedidos',
+  'Configuración básica de tu negocio',
 ]
 
 const businessPlus = [
-  'Envíos, productos y ventas ilimitados',
+  'Todo lo de Básico',
+  'Productos, inventario, ventas, compras y gastos',
+  'Resumen y reportes de tu negocio',
+  'Copiar datos y exportar Excel/CSV',
+  'Etiquetas de envío y de producto con QR',
+  'Shalom Pro y cambios masivos',
   'Todos los métodos de envío',
-  'Redes sociales en tu formulario',
-  'Lector de QR en ventas',
-  'Exportar datos a Excel/CSV',
-  'Todo lo del plan Pro',
-  'Soporte prioritario',
+  'Logo, redes sociales y marca blanca',
+  'Tarifas por distrito y control logístico',
+  'Lector QR y hasta 4 miembros del equipo',
 ]
 
 type Periodo = 'mensual' | 'trimestral'
 
-// Mismos precios que lib/mercadopago.ts (no se importa de allí: arrastra el SDK de servidor).
-const PRECIOS_PLAN = {
-  pro: { mensual: { valor: 29.9 }, trimestral: { valor: 79.9 } },
-  business_plus: { mensual: { valor: 49.9 }, trimestral: { valor: 129.9 } },
-} as const
+const PRECIOS_PLAN = { business_plus: PRECIOS_PLUS }
 
 export default function Precios() {
   const [periodo, setPeriodo] = useState<Periodo>('mensual')
   const trim = periodo === 'trimestral'
 
-  const p = PRECIOS_PLAN.pro[periodo]
   const b = PRECIOS_PLAN.business_plus[periodo]
-  const ahorro = (plan: 'pro' | 'business_plus') =>
+  const ahorro = (plan: 'business_plus') =>
     Math.round((PRECIOS_PLAN[plan].mensual.valor * 3 - PRECIOS_PLAN[plan].trimestral.valor) * 100) / 100
 
   return (
@@ -60,7 +47,7 @@ export default function Precios() {
         <SectionHead
           center
           eyebrow="Pruébalo sin riesgo"
-          title="30 días para descubrir si Tori es para ti."
+          title="14 días para descubrir si Tori es para ti."
           sub="Empieza gratis y decide después."
         />
 
@@ -68,7 +55,7 @@ export default function Precios() {
           <div className="rounded-[2rem] border border-tori-200 bg-white p-7 shadow-sm sm:p-10">
             <div className="grid gap-4 sm:grid-cols-3">
               {[
-                { icon: ShieldCheck, t: '30 días gratis', c: 'text-tori-600' },
+                { icon: ShieldCheck, t: '14 días gratis', c: 'text-tori-600' },
                 { icon: ShieldCheck, t: 'Sin tarjeta', c: 'text-emerald-600' },
                 { icon: CheckCircle2, t: 'Cancela cuando quieras', c: 'text-tori-600' },
               ].map((x) => (
@@ -118,7 +105,7 @@ export default function Precios() {
           </p>
         </Reveal>
 
-        <div className="mt-6 grid gap-6 md:grid-cols-3">
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
           {/* Básico */}
           <Reveal>
             <Spotlight className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-7 shadow-sm sm:p-8">
@@ -140,71 +127,19 @@ export default function Precios() {
                 href="/register"
                 className="mt-7 flex items-center justify-center rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-tori-900 transition hover:border-tori-400 hover:bg-tori-50"
               >
-                Probar Pro gratis
+                Probar Plus gratis
               </Link>
             </Spotlight>
           </Reveal>
 
-          {/* Pro */}
-          <Reveal delay={0.08}>
-            <div className="relative h-full rounded-3xl bg-gradient-to-b from-tori-400 to-tori-700 p-[2px] shadow-2xl shadow-tori-600/25">
-              <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-tori-600 px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
-                Más popular
-              </div>
-              <Spotlight className="flex h-full flex-col rounded-[22px] bg-white p-7 sm:p-8" glow="rgba(8,123,192,0.14)">
-                <h3 className="mt-2 text-lg font-bold text-tori-900">Pro</h3>
-                <p className="mt-1 text-sm text-slate-500">Para negocios en crecimiento</p>
-                <div className="mt-4">
-                  <div className="flex h-6 items-center gap-2">
-                    {!trim && (
-                      <>
-                        <p className="text-sm text-slate-400 line-through">S/ 39.90</p>
-                        <span className="whitespace-nowrap rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-                          Precio de lanzamiento
-                        </span>
-                      </>
-                    )}
-                    {trim && (
-                      <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                        Ahorras S/ {ahorro('pro').toFixed(2)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <CountUp value={p.valor} prefix="S/ " decimals={2} className="text-5xl font-extrabold text-tori-900" />
-                    <span className="text-sm font-medium text-slate-500">{trim ? '/3 meses' : '/mes'}</span>
-                  </div>
-                </div>
-                <p className="mt-2 text-sm text-slate-500">
-                  {trim ? `30 días gratis, luego S/ ${p.valor.toFixed(2)} cada 3 meses` : '30 días gratis, luego S/ 29.90/mes'}
-                </p>
-                <ul className="mt-6 flex-1 space-y-2.5">
-                  {pro.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
-                      <Check size={15} className="mt-0.5 shrink-0 text-tori-500" />
-                      <span className="font-semibold text-slate-800">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/register"
-                  className="mt-7 flex items-center justify-center gap-2 rounded-2xl bg-tori-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-tori-600/25 transition hover:bg-tori-700"
-                >
-                  Comenzar prueba gratis
-                  <ArrowRight size={16} />
-                </Link>
-              </Spotlight>
-            </div>
-          </Reveal>
-
-          {/* Business Plus */}
+          {/* Plus */}
           <Reveal delay={0.16}>
             <div className="relative h-full">
               <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-violet-600 px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
                 Negocios que escalan
               </div>
               <Spotlight className="flex h-full flex-col rounded-3xl border border-violet-200 bg-white p-7 shadow-sm sm:p-8" glow="rgba(124,58,237,0.10)">
-                <h3 className="mt-2 text-lg font-bold text-tori-900">Business Plus</h3>
+                <h3 className="mt-2 text-lg font-bold text-tori-900">Plus</h3>
                 <p className="mt-1 text-sm text-slate-500">Ilimitado y con herramientas avanzadas</p>
                 <div className="mt-4">
                   <div className="flex h-6 items-center">

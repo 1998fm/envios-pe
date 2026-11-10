@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
+import { getPlanFeatures } from '@/lib/planLimits'
 import { mensajeDb } from '@/lib/erroresEs'
 
 // Campos editables de cada plan (límites y features booleanos; NO precios).
@@ -25,7 +26,8 @@ export async function GET() {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
 
-  const { data, error } = await supabaseAdmin.from('plan_features').select('*').order('plan')
+  const data = await Promise.all(['basic', 'business_plus'].map(getPlanFeatures))
+  const error = null
 
   if (error) {
     return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
@@ -51,11 +53,11 @@ export async function PUT(request: Request) {
   const cambiosAuditoria: Record<string, unknown> = {}
 
   for (const [plan, valores] of Object.entries(body)) {
-    if (!['basic', 'pro', 'business_plus'].includes(plan)) continue
+    if (!['basic', 'business_plus'].includes(plan)) continue
     const limpio: Record<string, unknown> = {}
 
     for (const campo of CAMPOS_PLAN) {
-      if (valores[campo] === undefined) continue
+      if (campo !== 'max_metodos' || plan !== 'basic' || valores[campo] === undefined) continue
       const v = valores[campo]
       if (BOOLEANOS.has(campo)) {
         limpio[campo] = v === true
@@ -86,6 +88,6 @@ export async function PUT(request: Request) {
 
   await registrarAuditoria(auth, 'editar_planes', cambiosAuditoria)
 
-  const { data } = await supabaseAdmin.from('plan_features').select('*').order('plan')
+  const data = await Promise.all(['basic', 'business_plus'].map(getPlanFeatures))
   return NextResponse.json({ ok: true, planes: data })
 }

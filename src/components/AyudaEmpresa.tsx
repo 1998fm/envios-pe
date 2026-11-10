@@ -60,11 +60,11 @@ const bloques: AyudaBloque[] = [
   },
   {
     icon: Image,
-    titulo: '5. Logo del negocio (Pro+)',
+    titulo: '5. Logo del negocio (Plus)',
     queHace:
       'Tu logotipo en la cabecera del formulario que ven tus clientes. Le da presencia a tu marca.',
     ejemplo: 'Subes tu logo en PNG/JPG y Tori lo comprime solo a WebP para que cargue rápido.',
-    dato: 'Disponible en Pro y Business Plus.',
+    dato: 'Disponible en Plus.',
   },
   {
     icon: MessageCircle,
@@ -76,7 +76,7 @@ const bloques: AyudaBloque[] = [
   },
   {
     icon: Link2,
-    titulo: '7. URL de redirección (Pro+)',
+    titulo: '7. URL de redirección (Plus)',
     queHace:
       'La página a la que envías al cliente unos segundos después de confirmar su pedido.',
     ejemplo: '"https://mipagina.com/gracias" → el cliente llega ahí tras hacer el pedido.',
@@ -84,11 +84,11 @@ const bloques: AyudaBloque[] = [
   },
   {
     icon: Globe,
-    titulo: '8. Redes sociales (Business Plus)',
+    titulo: '8. Redes sociales (Plus)',
     queHace:
       'Iconos clicables en el formulario: Instagram, Facebook, TikTok, página web y WhatsApp.',
     ejemplo: 'Pones "https://instagram.com/moda.chic" y aparece el icono de Instagram en el formulario.',
-    dato: 'Solo disponible en el plan Business Plus.',
+    dato: 'Solo disponible en el plan Plus.',
   },
 ]
 
@@ -146,8 +146,8 @@ export default function AyudaEmpresa({ className = '' }: { className?: string })
               ))}
 
               <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                Algunos campos dependen de tu plan: Logo y URL de redirección son de Pro, y las Redes
-                sociales de Business Plus. Si no los ves, revisa tu plan en la barra superior.
+                Algunos campos dependen de tu plan: Logo y URL de redirección son de Plus, y las Redes
+                sociales de Plus. Si no los ves, revisa tu plan en la barra superior.
               </p>
             </div>
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 
 const DIAS_HISTORICO = 90
 
@@ -18,7 +18,7 @@ const DIAS_HISTORICO = 90
 // ============================================================
 
 export async function GET() {
-  const auth = await requireNegocio('ver_resumen')
+  const auth = await requirePlus('ver_resumen')
   if (!auth.ok) return auth.response
   const userId = auth.ownerId
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { idsValidos } from '@/lib/enviosServidor'
 import { mensajeDb } from '@/lib/erroresEs'
 
@@ -16,7 +16,7 @@ type VentaFila = {
 
 // Ventas del cliente de este pedido, con sus ítems (detalle del pedido).
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_envios')
+  const auth = await requirePlus('ver_envios')
   if (!auth.ok) return auth.response
   const { id } = await params
 
@@ -96,7 +96,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
 // "Validar contenido": marca como empacadas las ventas del pedido.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_envios')
+  const auth = await requirePlus('ver_envios')
   if (!auth.ok) return auth.response
   const { id } = await params
 

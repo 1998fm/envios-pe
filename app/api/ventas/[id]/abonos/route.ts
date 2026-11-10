@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { mensajeDb } from '@/lib/erroresEs'
 
 /** ¿La venta pertenece al negocio del que llama? */
@@ -24,7 +24,7 @@ export type Abono = {
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_ventas')
+  const auth = await requirePlus('ver_ventas')
   if (!auth.ok) return auth.response
   const { id } = await params
 
@@ -46,7 +46,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_ventas')
+  const auth = await requirePlus('ver_ventas')
   if (!auth.ok) return auth.response
   const { id } = await params
   const body = await request.json()
@@ -127,7 +127,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_ventas')
+  const auth = await requirePlus('ver_ventas')
   if (!auth.ok) return auth.response
   const { id } = await params
 

@@ -20,7 +20,7 @@ const bloques: AyudaBloque[] = [
       'Deja que el cliente elija la fecha en la que recibirá su pedido de motorizado, entre las disponibles según tus días de entrega.',
     ejemplo:
       'El cliente no puede recibir el miércoles y elige el jueves. Si está oculta, se le asigna automáticamente el primer día disponible.',
-    dato: 'Solo aplica al método Motorizado y en plan Pro+. En Básico no se muestran fechas.',
+    dato: 'Solo aplica al método Motorizado y en plan Plus+. En Básico no se muestran fechas.',
   },
   {
     icon: PackageCheck,

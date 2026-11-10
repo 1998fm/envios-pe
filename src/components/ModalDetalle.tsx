@@ -26,6 +26,7 @@ import { useConfirm } from '@/components/ConfirmDialog'
 import TourHelpButton from '@/components/TourHelpButton'
 
 type Props = {
+  plan?: string
   envio: Envio | null
   onCerrar: () => void
   onUpdate?: (envio: Envio) => void
@@ -160,7 +161,7 @@ function InfoTile({
   )
 }
 
-export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Props) {
+export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan = 'basic' }: Props) {
   const confirmar = useConfirm()
   const [fechaProgramada, setFechaProgramada] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -172,11 +173,11 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
   const [marcandoEnvio, setMarcandoEnvio] = useState(false)
 
   useEffect(() => {
-    if (envio?.dni || envio?.telefono) {
+    if (plan !== 'basic' && (envio?.dni || envio?.telefono)) {
       cargarVentasCliente()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [envio?.id])
+  }, [envio?.id, plan])
 
   useEffect(() => {
     setObservacion(envio?.observaciones ?? '')
@@ -545,6 +546,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
           </Card>
 
           {/* 3. CONTENIDO / PRODUCTOS */}
+          {plan !== 'basic' && (
           <Card
             title="Contenido del pedido"
             subtitle="Revisa y valida que todo lo listado esté correcto"
@@ -647,6 +649,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete }: Pr
               </div>
             )}
           </Card>
+          )}
 
           {/* 5. OBSERVACIONES */}
           <div data-tour="detalle-envio-observacion">

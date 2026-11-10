@@ -49,7 +49,7 @@ export async function GET() {
       pagando++
     }
     if (eff.plan !== 'basic') {
-      mrr += PRECIO_MENSUAL[eff.plan] ?? 0
+      mrr += PRECIO_MENSUAL[p.plan === 'pro' ? 'pro' : eff.plan] ?? 0
     }
   }
 

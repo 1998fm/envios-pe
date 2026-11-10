@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { checkShalomExportLimit, registrarExportacionShalom } from '@/lib/planLimits'
 
 export async function GET() {
-  const auth = await requireNegocio('ver_envios')
+  const auth = await requirePlus('ver_envios')
   if (!auth.ok) return auth.response
   const userId = auth.ownerId
 
@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireNegocio('ver_envios')
+  const auth = await requirePlus('ver_envios')
   if (!auth.ok) return auth.response
   const user_id = auth.ownerId
 

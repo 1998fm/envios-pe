@@ -506,7 +506,7 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
                   ) : (
                     <button
                       onClick={openUpgrade}
-                      title="Lector de QR — disponible en Business Plus"
+                      title="Lector de QR — disponible en Plus"
                       className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 text-sm font-bold text-slate-400 transition-colors hover:border-tori-400 hover:text-tori-600"
                     >
                       <Lock size={15} />

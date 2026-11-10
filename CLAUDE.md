@@ -7,7 +7,7 @@ Guía rápida para quien abre el proyecto por primera vez. Detalle por pantalla/
 SaaS para vendedores online peruanos. Cada negocio tiene:
 - **Formulario público** con su marca (`/f/[slug]`) donde el cliente ingresa sus datos de envío.
 - **Dashboard** (`/dashboard`): envíos (Motorizado, Shalom, Olva, Marvisur, Flores, recojo en tienda, método propio), ventas, productos + kardex, compras, gastos, clientes, resumen.
-- **Planes** `basic | pro | business_plus`, suscripción por MercadoPago. Registro = trial Pro 30 días.
+- **Planes** `basic | business_plus` (Básico y Plus), suscripción por MercadoPago. Registro = prueba Plus de 14 días. `pro` solo se interpreta como legado compatible con Plus.
 - **Panel super-admin** (`/admin`) para operar empresas, planes, facturación, impersonación.
 - Landing en `/` (`LandingPage` + `src/components/landing/*`).
 
@@ -48,7 +48,7 @@ npm run lint
 ## Roles, planes, límites
 
 - **Dueño** = `profiles.id`. Miembros con rol vía `business_members` (solo `business_plus`, hasta 4). `src/lib/roles.ts` define `PermisosRol` (`ver_resumen/envios/productos/ventas/compras/gastos/clientes/formulario`, `ver_kpis_venta`, `ver_ganancia_venta`, `ver_ganancia_producto`); `rolesClient.ts` → `resolverNegocioActual`; hooks `useRolActual`, `useRolePermissions`, `useUserRole`. Invitaciones por token en `/invitacion/[token]` (`src/lib/invitaciones.ts`); registro/invitaciones **sin correos**.
-- **Plan efectivo**: `computeEffectivePlan` (`src/lib/planGating.ts`): Pro pagado (`pro_until > now`) > trial (`trial_end > now` y plan pro) > basic. Catálogo de features en `FEATURES` (basic/pro/business_plus). `src/lib/planLimits.ts` (servidor): `checkTrialStatus` (persiste downgrade), `checkEnvioLimit`, `checkRecordLimit`, `checkShalomExportLimit` → 403.
+- **Plan efectivo**: `computeEffectivePlan` (`src/lib/planGating.ts`): Plus pagado (`pro_until > now`) > prueba vigente > Básico; Pro legado se interpreta como Plus. Catálogo de features en `FEATURES` (basic/business_plus). `src/lib/planLimits.ts` (servidor): `checkTrialStatus` (persiste downgrade), `checkEnvioLimit`, `checkRecordLimit`, `checkShalomExportLimit` → 403.
 - **Doble gating**: UI (`LockedFeature`, `ModalUpgrade`) **y** servidor. Para básicos el servidor neutraliza la config Pro (hora de corte, cupo, etc.). Cron `/api/cron/downgrade-plans` baja planes vencidos.
 - Pagos: `src/lib/mercadopago.ts`, `pagos.ts`, `facturacion.ts`; rutas `/api/mercadopago/*`, `/api/payment/*`, webhook `/api/webhooks/mercadopago` (exige `MP_WEBHOOK_SECRET`).
 
@@ -122,16 +122,20 @@ docs/                          GUIA_SISTEMA.md, MANUAL_FUNCIONAL_TORI.md, WINDOW
 
 ## Planes y precios (fuente de verdad: `src/lib/planGating.ts` FEATURES + `src/lib/mercadopago.ts` PRECIOS_PLAN + tabla `plan_features`)
 
-| | Básico | Pro | Business Plus |
-|---|---|---|---|
-| Precio | gratis | S/ 29.90/mes · S/ 79.90/3 meses | S/ 49.90/mes · S/ 129.90/3 meses |
-| Envíos/mes | 50 | 500 | ilimitados |
-| Productos / Ventas | 50 / 100 | 200 / 2000 | ilimitados |
-| Export Shalom/mes | 8 | ilimitado | ilimitado |
-| Solo Pro+ | — | logo, redirect, logística (corte/cupo), tarifas distrito, cambio masivo, marca blanca, ganancia, etiquetas de producto | todo lo de Pro + |
-| Solo Business Plus | — | — | redes sociales en formulario, lector QR en ventas, roles y permisos, hasta 4 miembros |
+| | Básico | Plus (`business_plus`) |
+|---|---|---|
+| Precio | gratis | S/ 49.90/mes · S/ 129.90/3 meses |
+| Solicitudes de envío | ilimitadas | ilimitadas |
+| Pedidos | búsqueda, filtros y gestión individual | además copia, exportación, etiquetas, Shalom Pro y acciones masivas |
+| Operación | bloqueada | productos, inventario, ventas, compras, gastos, clientes, resumen y reportes |
+| Configuración | mantiene las restricciones anteriores (2 métodos, sin funciones Plus) | completa |
+| Equipo | sin miembros | hasta 4 miembros |
 
-Si cambias límites hay que tocar **los tres sitios** (FEATURES, `plan_features` vía SQL, y `Precios.tsx`/`ModalUpgrade` si es visible). La suscripción MP usa `external_reference = "<userId>__<plan>"`; el webhook activa `pro_until`.
+- Fuente de política: `planGating.ts` (catálogo, precios compartidos y días de prueba), `getPlanFeatures` (servidor). La política de dos planes se aplica aun si la tabla `plan_features` contiene valores anteriores; `max_metodos` de Básico conserva su ajuste en DB.
+- `requirePlus` agrega la comprobación de plan vigente a las rutas de operación; `requirePlusOwner` hace lo propio para administrar el equipo. El rol por sí solo no habilita herramientas Plus.
+- `plan-basico-plus.sql` sincroniza el catálogo de DB y migra perfiles Pro sin tocar vencimientos ni recibos. No es requisito para que el código aplique los bloqueos nuevos. Aplicar solo esta migración a una base existente, nunca `instalacion-completa.sql`.
+- Nuevas suscripciones: solo `business_plus`; mensual y trimestral usan frecuencias de 1 y 3 meses respectivamente. Webhook y conciliación siguen aceptando referencias Pro anteriores; registran el recibo original y habilitan Plus sin cambiar importes ni fechas pagadas.
+- Las pruebas existentes mantienen su fecha de fin; los 14 días se aplican a los nuevos registros. Ningún cambio en la política de limpieza del historial de envíos.
 
 ## Gotchas / decisiones no obvias
 
@@ -161,7 +165,7 @@ Si cambias límites hay que tocar **los tres sitios** (FEATURES, `plan_features`
 
 ## Desfases conocidos (no confíes ciegamente en la doc)
 
-- `docs/GUIA_SISTEMA.md` habla de planes Básico/Pro, de `app/middleware.ts` y de APIs "sin autenticación por sesión": **obsoleto**. Hoy hay 3 planes, `proxy.ts` y `requireNegocio`. Los límites reales están en `src/lib/planGating.ts` (`FEATURES`), no en esa guía/README.
+- `docs/GUIA_SISTEMA.md` habla de planes Básico/Pro, de `app/middleware.ts` y de APIs "sin autenticación por sesión": **obsoleto**. Hoy hay 2 planes comerciales, `proxy.ts` y `requireNegocio`. Los límites reales están en `src/lib/planGating.ts` (`FEATURES`), no en esa guía/README.
 - README menciona `x-vercel-cron` y Realtime; hoy el cron usa `CRON_SECRET` y se usa polling.
 - `README.md` dice `app/f/[slug]/lib/` con helpers de Supabase de cliente; ahora solo queda el cliente admin de servidor.
 

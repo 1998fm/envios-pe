@@ -1,3 +1,4 @@
+import { computeEffectivePlan } from '@/lib/planGating'
 import { cookies, headers } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
@@ -120,4 +121,15 @@ export async function buscarUsuarioPorEmail(
   }
 
   return null
+}
+
+/** Administración del equipo: dueño y Plus vigente son requisitos independientes. */
+export async function requirePlusOwner(): Promise<OwnerAuthResult> {
+  const auth = await requireOwner()
+  if (!auth.ok) return auth
+  const { data, error } = await supabaseAdmin.from('profiles')
+    .select('plan, trial_end, pro_until').eq('id', auth.userId).maybeSingle()
+  if (error || !data) return { ok: false, status: 503, error: 'No se pudo verificar el plan' }
+  if (computeEffectivePlan(data).plan === 'basic') return { ok: false, status: 403, error: 'Esta función requiere el plan Plus' }
+  return auth
 }

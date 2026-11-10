@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
 import { restarStock } from '@/lib/stock'
 import { mensajeDb } from '@/lib/erroresEs'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_compras')
+  const auth = await requirePlus('ver_compras')
   if (!auth.ok) return auth.response
   const { id } = await params
   const body = await request.json()
@@ -62,7 +62,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireNegocio('ver_compras')
+  const auth = await requirePlus('ver_compras')
   if (!auth.ok) return auth.response
   const { id } = await params
 

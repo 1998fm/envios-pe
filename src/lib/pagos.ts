@@ -52,7 +52,7 @@ export async function registrarPago(params: {
 
   const { error: errPerfil } = await supabaseAdmin
     .from('profiles')
-    .update({ plan: params.plan, pro_until: final.toISOString() })
+    .update({ plan: 'business_plus', pro_until: final.toISOString() })
     .eq('id', params.userId)
 
   if (errPerfil) {

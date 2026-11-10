@@ -147,7 +147,7 @@ export default function ModalRoles({
 
   function empezarNuevo() {
     if (!puedeUsarRoles) {
-      toast.error('Roles disponibles solo en Business Plus')
+      toast.error('Roles disponibles solo en Plus')
       return
     }
     setEditandoId(null)
@@ -284,11 +284,11 @@ export default function ModalRoles({
       return
     }
     if (!puedeUsarRoles) {
-      toast.error('Roles disponibles solo en Business Plus')
+      toast.error('Roles disponibles solo en Plus')
       return
     }
     if (miembros.length >= maxMiembros) {
-      toast.error(`Límite de ${maxMiembros} miembros alcanzado en Business Plus`)
+      toast.error(`Límite de ${maxMiembros} miembros alcanzado en Plus`)
       return
     }
 
@@ -480,7 +480,7 @@ export default function ModalRoles({
 
           {!puedeUsarRoles && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 mb-4">
-              <p className="font-semibold text-amber-800">Roles disponibles solo en Business Plus</p>
+              <p className="font-semibold text-amber-800">Roles disponibles solo en Plus</p>
               <p className="text-sm text-amber-700 mt-1">
                 Actualiza tu plan para gestionar miembros y permisos.
               </p>

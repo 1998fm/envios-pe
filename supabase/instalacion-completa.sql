@@ -2697,6 +2697,26 @@ GRANT EXECUTE ON FUNCTION slug_disponible(text) TO authenticated;
 --       AND NOT EXISTS (SELECT 1 FROM pagos g WHERE g.user_id = p.id)
 --       AND (p.trial_end IS NULL OR p.trial_end < now());
 
+-- >>>>>>>>>> supabase/plan-basico-plus.sql <<<<<<<<<<
+-- Dos planes comerciales. Idempotente; no modifica importes de suscripciones,
+-- recibos, datos de operación ni las fechas de pruebas o pagos existentes.
+BEGIN;
+UPDATE plan_features SET
+  max_envios = NULL, max_productos = 0, max_ventas = 0,
+  max_exportaciones_shalom = 0, max_pedidos_copiar = 0,
+  dashboard_completo = FALSE, envios_masivos = FALSE, max_miembros = 0
+WHERE plan = 'basic';
+UPDATE plan_features SET
+  max_envios = NULL, max_metodos = NULL, max_productos = NULL, max_ventas = NULL,
+  max_exportaciones_shalom = NULL, max_pedidos_copiar = NULL,
+  form_branding = TRUE, dashboard_completo = TRUE, envios_masivos = TRUE,
+  control_logistico = TRUE, max_miembros = 4
+WHERE plan = 'business_plus';
+-- Compatibilidad: los antiguos Pro conservan trial_end y pro_until.
+UPDATE profiles SET plan = 'business_plus' WHERE plan = 'pro';
+DELETE FROM plan_features WHERE plan = 'pro';
+COMMIT;
+
 -- >>>>>>>>>> supabase/acceso-solo-servidor.sql <<<<<<<<<<
 -- ============================================================
 -- ACCESO A LOS DATOS SOLO DESDE EL SERVIDOR

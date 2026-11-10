@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireNegocio } from '@/lib/negocioAuth'
+import { requirePlus } from '@/lib/negocioAuth'
 import { coincide } from '@/lib/buscar'
 
 // Normaliza dni/teléfono para comparaciones: quita espacios y caracteres invisibles
@@ -48,7 +48,7 @@ function agruparPersonas(personas: any[]) {
 }
 
 export async function GET(request: Request) {
-  const auth = await requireNegocio('ver_clientes')
+  const auth = await requirePlus('ver_clientes')
   if (!auth.ok) return auth.response
   const userId = auth.ownerId
 

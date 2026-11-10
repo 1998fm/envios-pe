@@ -221,7 +221,7 @@ export async function POST(req: Request) {
     // NOTA: el límite de envíos del plan se aplica SOLO en la exhibición del
     // dashboard (los envíos más allá del tope se ocultan con aviso de upgrade),
     // NUNCA en el registro. El formulario público siempre guarda el pedido,
-    // incluso si el mes supera los 50 envíos del plan Básico.
+    // sin un límite mensual por plan.
 
     // Deduplicación: si ya existe un envío idéntico creado en los últimos 30 segundos
     // (doble clic, doble tap o reintento), devolver el existente en lugar de duplicarlo.
@@ -305,7 +305,7 @@ export async function POST(req: Request) {
 
     const esPro = computeEffectivePlan(perfil).plan !== 'basic'
 
-    // Límite mensual de envíos según plan (50/mes en Básico, ilimitado en Pro+).
+    // Recepción ilimitada en ambos planes; se conserva la interfaz del comprobador.
     const limiteEnvio = await checkEnvioLimit(user_id)
     if (!limiteEnvio.allowed) {
       return NextResponse.json({ error: limiteEnvio.reason }, { status: 403 })

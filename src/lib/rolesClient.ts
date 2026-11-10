@@ -92,7 +92,7 @@ export async function resolverNegocioActual(
 
   // ---- Es miembro: el negocio es del dueño ------------------------
   // PRIMERO: verificar que el dueño tenga Business Plus activo.
-  // Si el trial venció o bajó a Basic/Pro, el miembro pierde acceso.
+  // Si el trial venció o bajó a Básico, el miembro pierde acceso.
   let ownerPlan: 'basic' | 'pro' | 'business_plus' = 'basic'
   try {
     const { data: ownerProfile } = await supabase

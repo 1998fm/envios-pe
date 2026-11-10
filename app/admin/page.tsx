@@ -34,11 +34,11 @@ import CompanyDetailModal from '@/components/admin/CompanyDetailModal'
 
 type Tab = 'resumen' | 'empresas' | 'planes' | 'shalom' | 'olva' | 'auditoria' | 'actividad' | 'facturacion' | 'admins'
 
-const PLANES = ['basic', 'pro', 'business_plus']
+const PLANES = ['basic', 'business_plus']
 const PLAN_LABEL: Record<string, string> = {
   basic: 'Básico',
-  pro: 'Pro',
-  business_plus: 'Business Plus',
+  pro: 'Pro (anterior)',
+  business_plus: 'Plus',
 }
 
 // ---------- tipos ----------
@@ -808,7 +808,7 @@ export default function AdminPage() {
               <BotonExportar
                 label="Exportar CSV"
                 onClick={() =>
-                  exportarCSV('empresas', ['Empresa', 'Slug', 'Email', 'Teléfono', 'Plan', 'Estado', 'Pro hasta', 'Trial hasta', 'Registro', 'Rol'], empresas.map((e) => [
+                  exportarCSV('empresas', ['Empresa', 'Slug', 'Email', 'Teléfono', 'Plan', 'Estado', 'Plus hasta', 'Trial hasta', 'Registro', 'Rol'], empresas.map((e) => [
                     e.empresa,
                     e.slug,
                     e.email,
@@ -833,7 +833,7 @@ export default function AdminPage() {
                       <th className="px-4 py-3 font-semibold">Teléfono</th>
                       <th className="px-4 py-3 font-semibold">Plan</th>
                       <th className="px-4 py-3 font-semibold">Estado</th>
-                      <th className="px-4 py-3 font-semibold">Pro hasta</th>
+                      <th className="px-4 py-3 font-semibold">Plus hasta</th>
                       <th className="px-4 py-3 font-semibold">Registro</th>
                       <th className="px-4 py-3 font-semibold text-right">Acciones</th>
                     </tr>
@@ -939,11 +939,12 @@ export default function AdminPage() {
                   <tbody className="divide-y divide-slate-100">
                     {planRows.map((p) => (
                       <tr key={p.plan} className="align-top">
-                        <td className="px-4 py-3 font-semibold text-slate-900 capitalize">{p.plan}</td>
+                        <td className="px-4 py-3 font-semibold text-slate-900">{PLAN_LABEL[p.plan] ?? p.plan}</td>
                         {(['max_envios', 'max_metodos', 'max_productos', 'max_ventas', 'max_exportaciones_shalom', 'max_pedidos_copiar'] as const).map((campo) => (
                           <td key={campo} className="px-4 py-3">
                             <input
                               type="text"
+                              disabled={p.plan !== 'basic' || campo !== 'max_metodos'}
                               value={p[campo] === null ? '' : String(p[campo])}
                               onChange={(e) => setCampoPlan(p.plan, campo, e.target.value)}
                               placeholder="Ilimit."
@@ -962,6 +963,7 @@ export default function AdminPage() {
                               <label key={campo} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
                                 <input
                                   type="checkbox"
+                                  disabled
                                   checked={!!p[campo]}
                                   onChange={(e) => setCampoPlan(p.plan, campo, e.target.checked)}
                                   className="h-4 w-4 rounded border-slate-300"
@@ -1037,7 +1039,7 @@ export default function AdminPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <p className="text-sm text-slate-600">
-                  Empresas que han pagado (con <strong>pro_until</strong> registrado). Un pago vigente los mantiene en Pro/Business Plus.
+                  Empresas que han pagado (con <strong>pro_until</strong> registrado). Un pago vigente los mantiene en Plus.
                 </p>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   <select
@@ -1419,7 +1421,7 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Pro hasta (fecha)</label>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Plus hasta (fecha)</label>
               <input
                 type="datetime-local"
                 value={editando.pro_until ? new Date(new Date(editando.pro_until).getTime() - 5 * 3600 * 1000).toISOString().slice(0, 16) : ''}

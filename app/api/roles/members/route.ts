@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { buscarUsuarioPorEmail, requireOwner } from '@/lib/ownerAuth'
+import { buscarUsuarioPorEmail, requirePlusOwner } from '@/lib/ownerAuth'
 import { esTablaFaltante } from '@/lib/roles'
 import { crearInvitacion } from '@/lib/invitaciones'
 import { checkRolesLimit } from '@/lib/planLimits'
@@ -12,7 +12,7 @@ import { mensajeDb } from '@/lib/erroresEs'
 
 // Agrega un usuario al negocio por email.
 export async function POST(request: Request) {
-  const auth = await requireOwner()
+  const auth = await requirePlusOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
 
 // Cambia el rol de un miembro.
 export async function PATCH(request: Request) {
-  const auth = await requireOwner()
+  const auth = await requirePlusOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
@@ -171,7 +171,7 @@ export async function PATCH(request: Request) {
 
 // Quita a un miembro del negocio.
 export async function DELETE(request: Request) {
-  const auth = await requireOwner()
+  const auth = await requirePlusOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }

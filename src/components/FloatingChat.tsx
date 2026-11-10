@@ -17,7 +17,7 @@ const FAQS: FAQ[] = [
   },
   {
     q: '¿Qué plan tengo y cómo cambio?',
-    a: 'Tu plan se muestra en la barra superior. Si estás en Business Plus Trial, cuando se cumplan los 30 días pasas automáticamente a Básico (gratis, 50 envíos/mes, 2 métodos). Puedes actualizar a Pro (S/29.90/mes) o Business Plus (S/49.90/mes) —se desbloquean tarifas por distrito, cambio masivo, tu marca en el formulario, control de logística y más; Business Plus añade redes sociales, lector QR en ventas y exportación a Excel/CSV. El pago es vía MercadoPago y se activa al instante.',
+    a: 'Tu cuenta nueva incluye 14 días de Plus gratis. Después puedes seguir en Básico: solicitudes ilimitadas y gestión individual de pedidos. Plus cuesta S/ 49.90 al mes o S/ 129.90 cada 3 meses e incluye todas las herramientas. Tus productos y ventas se conservan al cambiar de plan.',
   },
   {
     q: '¿Mis clientes necesitan una cuenta?',
@@ -25,7 +25,7 @@ const FAQS: FAQ[] = [
   },
   {
     q: '¿Cómo cambio el estado de un pedido?',
-    a: 'Cada pedido tiene un menú desplegable en su tarjeta con tres opciones: No Empacado (borde rojo), Empacado (borde ámbar) y Enviado (borde verde). Solo selecciona el estado y se actualiza al instante. También puedes seleccionar varios y usar el Cambio Masivo (solo Pro).',
+    a: 'Cada pedido tiene un menú desplegable en su tarjeta con tres opciones: No Empacado (borde rojo), Empacado (borde ámbar) y Enviado (borde verde). Solo selecciona el estado y se actualiza al instante. También puedes seleccionar varios y usar el Cambio Masivo (solo Plus).',
   },
   {
     q: '¿Para qué sirve "Generar etiquetas"?',
@@ -37,7 +37,7 @@ const FAQS: FAQ[] = [
   },
   {
     q: '¿Qué es el Cambio Masivo y cómo se usa?',
-    a: 'Es una herramienta del plan Pro o Business Plus que te permite cambiar el estado de varios pedidos a la vez. Por ejemplo: selecciona 20 pedidos que ya entregaste y pásalos todos de "Empacado" a "Enviado" en un solo clic. Ahorra tiempo cuando tienes muchos pedidos.',
+    a: 'Es una herramienta del plan Plus que te permite cambiar el estado de varios pedidos a la vez. Por ejemplo: selecciona 20 pedidos que ya entregaste y pásalos todos de "Empacado" a "Enviado" en un solo clic. Ahorra tiempo cuando tienes muchos pedidos.',
   },
   {
     q: '¿Cómo uso los filtros y estadísticas?',
@@ -53,11 +53,11 @@ const FAQS: FAQ[] = [
   },
   {
     q: '¿Puedo poner precio diferente por distrito?',
-    a: 'Sí. En la configuración de tarifas (plan Pro o Business Plus) puedes definir un precio distinto para cada distrito de Lima. También puedes usar "Precio único para todos" si prefieres simplificar. El cliente verá el costo exacto antes de confirmar su pedido.',
+    a: 'Sí. En la configuración de tarifas (plan Plus) puedes definir un precio distinto para cada distrito de Lima. También puedes usar "Precio único para todos" si prefieres simplificar. El cliente verá el costo exacto antes de confirmar su pedido.',
   },
   {
-    q: '¿Qué pasa si supero el límite del plan Básico?',
-    a: 'El plan Pro permite 500 envíos, 200 productos y 2000 ventas al mes; Business Plus no tiene límites. Si estás en Básico y necesitas más de 50 envíos al mes, puedes actualizar desde tu dashboard con un clic. Tus datos y configuración se mantienen intactos.',
+    q: '¿El plan Básico tiene límite de pedidos?',
+    a: 'Básico permite recibir y gestionar pedidos individualmente sin límite mensual. Copiar datos, etiquetas, Shalom Pro, acciones masivas, inventario, ventas, compras, gastos y reportes requieren Plus.',
   },
 ]
 

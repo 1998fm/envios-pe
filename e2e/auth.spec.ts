@@ -15,7 +15,7 @@ async function entrar(page: Page, email: string, password: string) {
 }
 
 test.describe('Registro', () => {
-  test('crea la cuenta, el perfil con prueba de 30 días y entra al onboarding', async ({ page }) => {
+  test('crea la cuenta, el perfil con prueba de 14 días y entra al onboarding', async ({ page }) => {
     const tag = uniq('reg')
     const email = `${tag}@e2e.test`
     const empresa = `Tienda ${tag}`
@@ -36,8 +36,8 @@ test.describe('Registro', () => {
     expect(perfil.plan).toBe('business_plus')
     expect(perfil.role).toBe('user')
     const dias = (new Date(perfil.trial_end).getTime() - Date.now()) / 864e5
-    expect(dias).toBeGreaterThan(29)
-    expect(dias).toBeLessThan(31)
+    expect(dias).toBeGreaterThan(13)
+    expect(dias).toBeLessThan(15)
   })
 
   test('el navegador exige contraseña de 8+ caracteres', async ({ page }) => {

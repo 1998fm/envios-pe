@@ -289,7 +289,7 @@ export default function LandingPage() {
                 transition={{ delay: 0.5 }}
                 className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500"
               >
-                {['30 días gratis', 'Sin tarjeta', 'Cancela cuando quieras'].map((b) => (
+                {['14 días gratis', 'Sin tarjeta', 'Cancela cuando quieras'].map((b) => (
                   <span key={b} className="flex items-center gap-1.5">
                     <Check size={14} className="text-emerald-500" />
                     {b}

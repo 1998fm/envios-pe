@@ -94,11 +94,11 @@ export default function ConfiguracionMetodo({
         <div className="space-y-3">
           <FilaBloqueada
             titulo="Hora de corte"
-            descripcion="Disponible en Pro y Business Plus"
+            descripcion="Disponible en Plus"
           />
           <FilaBloqueada
             titulo="Limitar envíos por día"
-            descripcion="Cupo diario — disponible en Pro y Business Plus"
+            descripcion="Cupo diario — disponible en Plus"
           />
         </div>
       ) : (
