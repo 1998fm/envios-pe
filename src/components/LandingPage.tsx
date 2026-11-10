@@ -6,21 +6,15 @@ import Link from 'next/link'
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import LogoTori from '@/components/LogoTori'
 import ToriMascot from '@/components/ToriMascot'
-import AntesDespues from '@/components/landing/AntesDespues'
-import DashboardDemo from '@/components/landing/DashboardDemo'
-import Diagnostico from '@/components/landing/Diagnostico'
 import FAQ from '@/components/landing/FAQ'
 import FeaturesSection from '@/components/landing/FeaturesSection'
-import HeroConversacion from '@/components/landing/HeroConversacion'
-import ParaQuien from '@/components/landing/ParaQuien'
 import Pasos from '@/components/landing/Pasos'
+import PedidoDemo from '@/components/landing/PedidoDemo'
 import Precios from '@/components/landing/Precios'
-import ProblemaFlujo from '@/components/landing/ProblemaFlujo'
 import TestimonialsSection from '@/components/landing/TestimonialsSection'
-import { Reveal, Resaltado, Tachado } from '@/components/landing/ui'
+import { Reveal, Resaltado } from '@/components/landing/ui'
 
 const navLinks = [
-  { label: '¿Te pasa?', href: '#diagnostico', id: 'diagnostico' },
   { label: 'Cómo funciona', href: '#solucion', id: 'solucion' },
   { label: 'Soluciones', href: '#funciones', id: 'funciones' },
   { label: 'Historias', href: '#historias', id: 'historias' },
@@ -166,7 +160,7 @@ export default function LandingPage() {
                   href="/register"
                   className="hidden items-center justify-center rounded-xl bg-tori-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-tori-600/25 transition hover:bg-tori-700 sm:inline-flex"
                 >
-                  Probar Tori
+                  Probar Plus
                 </Link>
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
@@ -214,7 +208,7 @@ export default function LandingPage() {
                       onClick={() => setMenuOpen(false)}
                       className="mt-2 flex items-center justify-center rounded-xl bg-tori-600 px-5 py-2.5 text-sm font-bold text-white"
                     >
-                      Probar Tori
+                      Probar Plus
                     </Link>
                   </div>
                 </motion.div>
@@ -224,14 +218,14 @@ export default function LandingPage() {
         </header>
 
         {/* ============ HERO ============ */}
-        <section ref={heroRef} id="inicio" className="relative overflow-hidden pb-24 pt-32 sm:pb-32 sm:pt-40">
+        <section ref={heroRef} id="inicio" className="relative overflow-hidden pb-14 pt-28 sm:pb-20 sm:pt-36">
           <motion.div
             style={{ y: heroY }}
-            className="relative mx-auto grid max-w-7xl items-center gap-16 px-4 sm:px-6 lg:grid-cols-[1.05fr_1fr]"
+            className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1.05fr_1fr]"
           >
             <div>
               <motion.div
-                initial={{ opacity: 0, y: 16 }}
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-6 inline-flex items-center gap-2 rounded-full border border-tori-200 bg-white px-3 py-1.5 text-xs font-bold text-tori-700 shadow-sm"
               >
@@ -243,27 +237,27 @@ export default function LandingPage() {
               </motion.div>
 
               <motion.h1
-                initial={{ opacity: 0, y: 24 }}
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
                 className="text-4xl font-black leading-[1.12] tracking-tight text-tori-900 sm:text-5xl lg:text-6xl"
               >
-                Vender por WhatsApp debería darte <Resaltado>más ventas</Resaltado>, no más{' '}
-                <Tachado nota="¡adiós!">desorden</Tachado>.
+                Vende por WhatsApp.<br />
+                Recibe tus pedidos <Resaltado>en orden.</Resaltado>
               </motion.h1>
 
               <motion.p
-                initial={{ opacity: 0, y: 24 }}
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
                 className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl"
               >
-                Cada venta trae un cliente, un pedido, un pago, un producto y un envío.{' '}
-                <strong className="text-tori-900">Tori conecta todo para que tú no tengas que recordarlo todo.</strong>
+                Comparte tu formulario con tus clientes y recibe sus datos organizados en un solo panel.
+                <strong className="text-tori-900"> Con Plus, también controla tus ventas, inventario y gastos.</strong>
               </motion.p>
 
               <motion.div
-                initial={{ opacity: 0, y: 24 }}
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
                 className="mt-8 flex flex-col gap-3 sm:flex-row"
@@ -272,24 +266,24 @@ export default function LandingPage() {
                   href="/register"
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-tori-600 px-6 py-3.5 font-extrabold text-white shadow-xl shadow-tori-600/25 transition hover:scale-[1.03] hover:bg-tori-700 active:scale-95"
                 >
-                  Quiero ordenar mi negocio
+                  Probar Plus gratis
                   <ArrowRight size={16} />
                 </Link>
                 <a
-                  href="#diagnostico"
+                  href="#solucion"
                   className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3.5 font-bold text-tori-900 transition hover:border-tori-400 hover:bg-tori-50"
                 >
-                  Quiero saber si Tori es para mí
+                  Ver cómo funciona
                 </a>
               </motion.div>
 
               <motion.div
-                initial={{ opacity: 0 }}
+                initial={false}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
                 className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500"
               >
-                {['14 días gratis', 'Sin tarjeta', 'Cancela cuando quieras'].map((b) => (
+                {['14 días gratis', 'Sin tarjeta', 'Después, Básico gratis'].map((b) => (
                   <span key={b} className="flex items-center gap-1.5">
                     <Check size={14} className="text-emerald-500" />
                     {b}
@@ -298,85 +292,29 @@ export default function LandingPage() {
               </motion.div>
 
               <p className="mt-5 max-w-md text-sm text-slate-500">
-                Tori no se conecta a tu WhatsApp: tu cliente llena un formulario y sus datos llegan ordenados.
+                El cliente completa tu formulario. No necesitas conectar tu WhatsApp.
               </p>
             </div>
 
             <motion.div
-              initial={{ opacity: 0, y: 40, scale: 0.97 }}
+              initial={false}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="pb-10 sm:pr-10"
+              className="px-1 sm:px-6"
             >
-              <HeroConversacion />
+              <PedidoDemo />
             </motion.div>
           </motion.div>
         </section>
 
-        <Diagnostico />
-        <ProblemaFlujo />
-        <AntesDespues />
-        <DashboardDemo />
-        <FeaturesSection />
-
-        {/* ============ FACILIDAD ============ */}
-        <section className="relative py-24 sm:py-32">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6">
-            <Reveal>
-              <div className="relative overflow-hidden rounded-[2rem] border border-tori-200 bg-gradient-to-br from-tori-50 to-white p-8 text-center shadow-sm sm:p-14">
-                <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-tori-200/50 blur-3xl" />
-                <div className="relative">
-                  <div className="flex justify-center">
-                    <ToriMascot variant="guide" size={72} />
-                  </div>
-                  <span className="mt-4 inline-block text-xs font-black uppercase tracking-[.18em] text-tori-600">
-                    ¿Te preocupa que sea complicado?
-                  </span>
-                  <h2 className="mt-3 text-3xl font-black text-tori-900 sm:text-4xl">A nuestro primer emprendedor también.</h2>
-                  <p className="mx-auto mt-5 max-w-2xl text-slate-600">
-                    Antes de probar Tori pensaba que podía ser complicado y que no entendería cómo usarlo.
-                  </p>
-                  <blockquote className="mt-8 text-2xl font-black text-tori-900 sm:text-4xl">
-                    &ldquo;<Resaltado>Es como mi Excel, pero en orden.</Resaltado>&rdquo;
-                  </blockquote>
-                  <p className="mt-4 text-sm text-slate-500">
-                    La mejor explicación de Tori puede venir de alguien que ya lo usa.
-                  </p>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ============ MOMENTO TORI ============ */}
-        <section className="py-16 sm:py-20">
-          <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
-            <Reveal>
-              <div className="flex justify-center">
-                <ToriMascot variant="happy" size={64} />
-              </div>
-              <h2 className="mt-4 text-2xl font-black text-tori-900 sm:text-3xl">Tori no viene a decirte cómo emprender.</h2>
-              <p className="mt-2 text-xl text-slate-500 sm:text-2xl">Viene a ayudarte a que sea un poco más fácil.</p>
-              <motion.div
-                whileHover={{ scale: 1.03, rotate: -0.5 }}
-                className="mt-6 inline-block rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm"
-              >
-                <p className="font-black text-tori-900">
-                  &ldquo;Tú encárgate de vender. Yo ayudo con que no se te pierda todo lo demás.&rdquo;
-                </p>
-              </motion.div>
-            </Reveal>
-          </div>
-        </section>
-
-        <TestimonialsSection />
-        <ParaQuien />
         <Pasos />
+        <FeaturesSection />
+        <TestimonialsSection />
         <Precios />
         <FAQ />
 
         {/* ============ CTA FINAL ============ */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
+        <section className="relative overflow-hidden py-14 sm:py-20">
           <div className="absolute inset-0 bg-gradient-to-br from-tori-700 via-tori-600 to-tori-500" />
           <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-white/15 blur-3xl" />
           <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-tori-300/30 blur-3xl" />
@@ -385,20 +323,20 @@ export default function LandingPage() {
               <div className="flex justify-center">
                 <ToriMascot variant="happy" size={88} />
               </div>
-              <h2 className="mt-5 text-3xl font-black tracking-tight sm:text-5xl">Tu negocio ya está creciendo.</h2>
+              <h2 className="mt-5 text-3xl font-black tracking-tight sm:text-5xl">Tú encárgate de vender.</h2>
               <p className="mt-4 text-xl text-white/90 sm:text-2xl">
-                Ahora haz que organizarlo no te quite el tiempo para hacerlo crecer.
+                Tori te ayuda a que los pedidos y todo lo demás estén en orden.
               </p>
               <div className="mt-6">
                 <BotonMagnetico
                   href="/register"
                   className="inline-flex items-center justify-center rounded-xl bg-white px-8 py-4 font-black text-tori-700 shadow-2xl transition hover:bg-tori-50"
                 >
-                  Empezar a usar Tori
+                  Probar Plus gratis
                   <ArrowRight size={16} className="ml-2" />
                 </BotonMagnetico>
               </div>
-              <p className="text-sm text-white/80">Menos tiempo buscando y ordenando. Más tiempo para vender.</p>
+              <p className="text-sm text-white/80">14 días de Plus sin tarjeta. Después puedes seguir en Básico gratis.</p>
             </Reveal>
           </div>
         </section>
@@ -452,7 +390,7 @@ export default function LandingPage() {
                 href="/register"
                 className="flex items-center justify-center rounded-2xl bg-tori-600 py-3.5 font-black text-white shadow-2xl shadow-tori-900/30"
               >
-                Probar Tori gratis
+                Probar Plus gratis
               </Link>
             </motion.div>
           )}

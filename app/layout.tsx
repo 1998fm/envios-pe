@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: '%s | Tori',
   },
   description:
-    'Tori convierte los mensajes de WhatsApp de tus clientes en pedidos ordenados. Dashboard, formulario público y control logístico para negocios peruanos.',
+    'Comparte tu formulario por WhatsApp y recibe los pedidos de tus clientes organizados en un solo panel. Con Plus, también controla ventas, inventario y gastos.',
   keywords: [
     'gestión de envíos',
     'organizar pedidos WhatsApp',
@@ -80,7 +80,7 @@ const jsonLd = {
   operatingSystem: 'Web',
   applicationCategory: 'BusinessApplication',
   description:
-    'Sistema que convierte los datos que tus clientes te envían por WhatsApp en pedidos organizados automáticamente.',
+    'Sistema para compartir un formulario por WhatsApp y recibir los pedidos de tus clientes organizados en un solo panel.',
   offers: [
     {
       '@type': 'Offer',

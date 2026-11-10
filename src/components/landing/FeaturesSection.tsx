@@ -1,9 +1,9 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight, Check, Minus, Plus } from 'lucide-react'
+import { Check, Minus, Plus } from 'lucide-react'
 import { useState } from 'react'
-import { CountUp, Reveal, Resaltado, SectionHead } from './ui'
+import { CountUp, Reveal, SectionHead } from './ui'
 
 const ventana = 'w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-tori-900/10'
 
@@ -221,19 +221,15 @@ export default function FeaturesSection() {
   const s = soluciones[idx]
 
   return (
-    <section id="funciones" className="relative py-24 sm:py-32">
+    <section id="funciones" className="relative py-14 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <SectionHead
           eyebrow="Tres grandes soluciones"
-          title={
-            <>
-              No te mostramos siete funciones. <Resaltado>Te mostramos tres cambios en tu día.</Resaltado>
-            </>
-          }
-          sub="Cada bloque responde a un problema real de un emprendedor."
+          title="Empieza con tus pedidos. Conecta el resto con Plus."
+          sub="Cuando quieras dar el siguiente paso, reúne ventas, dinero e inventario en un solo lugar."
         />
 
-        <Reveal delay={0.1} className="mt-12">
+        <Reveal delay={0.1} className="mt-8">
           <div className="flex flex-wrap gap-2" role="tablist">
             {soluciones.map((x, i) => (
               <button
@@ -267,7 +263,7 @@ export default function FeaturesSection() {
                 transition={{ duration: 0.3 }}
                 className="relative grid lg:grid-cols-2"
               >
-                <div className="flex flex-col justify-center p-7 sm:p-12">
+                <div className="flex flex-col justify-center p-6 sm:p-8">
                   <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${s.badgeClass}`}>{s.badge}</span>
                   <h3 className="mt-4 text-3xl font-black leading-tight text-tori-900">{s.title}</h3>
                   <p className="mt-4 leading-relaxed text-slate-600">{s.text}</p>
@@ -279,7 +275,7 @@ export default function FeaturesSection() {
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center p-5 sm:p-10">
+                <div className="flex items-center p-5 sm:p-7">
                   <s.Visual />
                 </div>
               </motion.article>
@@ -287,16 +283,7 @@ export default function FeaturesSection() {
           </div>
         </Reveal>
 
-        <Reveal className="mt-12 text-center">
-          <p className="text-lg text-slate-600">¿Quieres ver todas las soluciones que Tori ya tiene?</p>
-          <a
-            href="#precios"
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-tori-600 px-6 py-3.5 font-extrabold text-white shadow-xl shadow-tori-600/25 transition hover:bg-tori-700"
-          >
-            Probar Tori gratis
-            <ArrowRight size={16} />
-          </a>
-        </Reveal>
+
       </div>
     </section>
   )

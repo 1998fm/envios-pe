@@ -7,28 +7,24 @@ import { Reveal, SectionHead } from './ui'
 
 const faqs = [
   {
-    q: '¿Necesito conocimientos técnicos para usar Tori?',
-    a: 'No. Tori está diseñado para ser sencillo y guiarte durante el uso.',
+    q: '¿Tori se conecta a mi WhatsApp?',
+    a: 'No. Tú compartes el enlace de tu formulario por WhatsApp o en tus redes. Tu cliente lo completa y el pedido llega organizado a tu dashboard.',
   },
   {
-    q: '¿Tengo que cambiar la forma en que vendo?',
-    a: 'No. Puedes seguir utilizando tus canales habituales, como WhatsApp, TikTok e Instagram.',
+    q: '¿Qué puedo hacer con el plan Básico?',
+    a: 'Recibir solicitudes sin límite mensual, buscar y revisar tus pedidos y gestionarlos individualmente. Copiar datos, etiquetas, Shalom Pro, acciones masivas, inventario, ventas, compras, gastos y reportes están incluidos en Plus.',
   },
   {
-    q: '¿Tori reemplaza WhatsApp?',
-    a: 'No. Tori organiza la información que genera tu negocio para que puedas gestionarla mejor.',
+    q: '¿Qué pasa después de los 14 días de prueba?',
+    a: 'Puedes contratar Plus o continuar en Básico gratis. La prueba no te cobra automáticamente y no necesitas registrar una tarjeta para empezar.',
   },
   {
-    q: '¿Tengo que dejar Excel inmediatamente?',
-    a: 'No. Puedes comenzar utilizando Tori y hacer la transición a tu propio ritmo.',
+    q: '¿Tengo que cargar productos para recibir pedidos?',
+    a: 'No. Puedes empezar configurando tu negocio y compartiendo tu formulario. El inventario y las herramientas de ventas están disponibles con Plus cuando quieras usarlos.',
   },
   {
-    q: '¿Tori es solo para empresas grandes?',
-    a: 'No. Tori está pensado para emprendedores que necesitan organizar mejor su negocio a medida que crecen.',
-  },
-  {
-    q: '¿Cuánto cuesta probar Tori?',
-    a: 'Puedes probar Tori durante 14 días gratis, sin tarjeta.',
+    q: '¿Necesito dejar WhatsApp o Excel?',
+    a: 'Puedes seguir vendiendo por tus canales habituales y empezar con Tori a tu ritmo. Primero organiza tus pedidos; luego incorpora las herramientas que necesites.',
   },
 ]
 
@@ -36,14 +32,14 @@ export default function FAQ() {
   const [abierta, setAbierta] = useState<number | null>(0)
 
   return (
-    <section className="relative py-24 sm:py-32">
+    <section className="relative py-14 sm:py-20">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <SectionHead
           center
           eyebrow="Preguntas frecuentes"
-          title="Antes de empezar, quizá quieras saber esto."
+          title="Lo que necesitas saber antes de empezar."
         />
-        <Reveal delay={0.1} className="mt-12 space-y-3">
+        <Reveal delay={0.1} className="mt-7 space-y-3">
           {faqs.map((f, i) => {
             const open = abierta === i
             return (
