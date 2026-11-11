@@ -1,3 +1,4 @@
+import { normalizarIdentificador, patronIdentificador } from '@/lib/identidadCliente'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { sincronizarArchivoPorStock } from '@/lib/sincronizarArchivoStock'
@@ -367,7 +368,7 @@ export async function POST(request: Request) {
       persona_id,
       persona_nombre,
       persona_dni: persona_dni || null,
-      persona_telefono: persona_telefono || null,
+      persona_telefono: normalizarIdentificador(persona_telefono) || null,
       total,
       estado,
       metodo_pago: pago,
@@ -432,7 +433,7 @@ export async function POST(request: Request) {
 }
 
 async function normalizar(valor: string | null | undefined) {
-  return String(valor || '').replace(/\s+/g, '')
+  return normalizarIdentificador(valor)
 }
 
 async function matchEnvioCliente(envio: any, dni: string | null | undefined, telefono: string | null | undefined) {
@@ -457,6 +458,7 @@ async function buscarEnvioPendiente(userId: string, dni: string | null | undefin
     .select('id, dni, telefono, nombre, estado')
     .eq('user_id', userId)
     .in('estado', ['NO_EMPACADO', 'EN_OBSERVACION'])
+    .or([dniN ? `dni.ilike.${patronIdentificador(dniN)}` : '', telN ? `telefono.ilike.${patronIdentificador(telN)}` : ''].filter(Boolean).join(','))
     .order('fecha_registro', { ascending: false })
     .limit(50)
 

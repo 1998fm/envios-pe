@@ -1,3 +1,4 @@
+import { normalizarIdentificador, patronIdentificador } from '@/lib/identidadCliente'
 import { distritoExcluido } from '@/lib/coberturaMoto'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
@@ -126,6 +127,7 @@ function envioPublico(e: { id?: unknown; fecha_programada?: unknown } | null) {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
+    if (body.telefono != null) body.telefono = normalizarIdentificador(body.telefono)
 
     const {
       user_id,
@@ -472,7 +474,7 @@ export async function POST(req: Request) {
       const { data: personasPorDni } = await supabaseAdmin
         .from('personas')
         .select('id, dni, nombre, telefono')
-        .ilike('dni', `%${String(dni).replace(/\s+/g, '').replace(/[;,]/g, '')}%`)
+        .ilike('dni', patronIdentificador(dni))
         .limit(50)
       const porDni = (personasPorDni || []).find(
         (p: any) => String(p.dni || '').replace(/\s+/g, '') === String(dni).replace(/\s+/g, '')
@@ -485,7 +487,7 @@ export async function POST(req: Request) {
       const { data: personasTel } = await supabaseAdmin
         .from('personas')
         .select('id, nombre, dni, telefono')
-        .ilike('telefono', `%${String(telefono).replace(/\s+/g, '').replace(/[;,]/g, '')}%`)
+        .ilike('telefono', patronIdentificador(telefono))
         .limit(50)
 
       const coincidencias = (personasTel || []).filter(
@@ -543,7 +545,7 @@ export async function POST(req: Request) {
     // clienta puede tener personas duplicadas y la venta puede estar ligada a
     // otra persona distinta de la que creó este envío.
     const dniN = String(dni || '').replace(/\s+/g, '')
-    const telN = String(telefono || '').replace(/\s+/g, '')
+    const telN = normalizarIdentificador(telefono)
 
     if (dniN || telN) {
       const { data: ventasCliente } = await supabaseAdmin
@@ -553,8 +555,8 @@ export async function POST(req: Request) {
         .neq('estado', 'ANULADA')
         .or(
           [
-            dniN ? `persona_dni.ilike.%${dniN}%` : '',
-            telN ? `persona_telefono.ilike.%${telN}%` : '',
+            dniN ? `persona_dni.ilike.${patronIdentificador(dniN)}` : '',
+            telN ? `persona_telefono.ilike.${patronIdentificador(telN)}` : '',
           ]
             .filter(Boolean)
             .join(',')

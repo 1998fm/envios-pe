@@ -1,10 +1,11 @@
+import { normalizarIdentificador, patronIdentificador } from '@/lib/identidadCliente'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
 import { mensajeDb } from '@/lib/erroresEs'
 
 function norm(v: string | null | undefined): string {
-  return (v || '').replace(/\s+/g, '').toUpperCase()
+  return normalizarIdentificador(v)
 }
 
 // La búsqueda se hace en el servidor (filtrando por DNI o teléfono),
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
   // normaliza: sin espacios, mayúsculas, y se hace en el servidor. Solo se
   // traen las filas candidatas (un select sin límite se trunca en 1000 y
   // dejaría afuera a los clientes recién registrados).
-  const terminoSeguro = qNorm.replace(/[,;]/g, '')
+  const terminoSeguro = patronIdentificador(qNorm)
   const personas = await supabaseAdmin
     .from('personas')
     .select('*')
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
     const { data: personasDni } = await supabaseAdmin
       .from('personas')
       .select('id, dni, telefono, nombre')
-      .ilike('dni', `%${dni.replace(/[;,]/g, '')}%`)
+      .ilike('dni', patronIdentificador(dni))
       .limit(50)
     existing = (personasDni || []).find((p: any) => norm(p.dni) === norm(dni)) || null
   }
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
     const { data: personasTel } = await supabaseAdmin
       .from('personas')
       .select('id, dni, telefono, nombre')
-      .ilike('telefono', `%${telefono.replace(/[;,]/g, '')}%`)
+      .ilike('telefono', patronIdentificador(telefono))
       .limit(50)
 
     const coincidencias = (personasTel || []).filter((p: any) => norm(p.telefono) === norm(telefono))

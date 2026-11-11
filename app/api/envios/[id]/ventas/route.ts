@@ -1,3 +1,4 @@
+import { normalizarIdentificador, patronIdentificador } from '@/lib/identidadCliente'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -11,6 +12,8 @@ type VentaFila = {
   estado_envio?: string | null
   total: number
   persona_nombre: string
+  persona_dni?: string | null
+  persona_telefono?: string | null
   envio_id?: string | null
 }
 
@@ -22,7 +25,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const { data: envio } = await supabaseAdmin
     .from('envios')
-    .select('id, dni, telefono')
+    .select('id, dni, telefono, estado')
     .eq('id', id)
     .eq('user_id', auth.ownerId)
     .maybeSingle()
@@ -40,15 +43,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   let ventas: VentaFila[] = (porEnvio ?? []) as VentaFila[]
 
-  // 2) Respaldo para datos sin ligar: ventas del cliente por DNI o teléfono que
+  // 2) Completar con ventas pendientes sin ligar, incluso si ya hay otras vinculadas.
+  //    Coinciden por DNI o teléfono normalizado y
   //    aún no pertenezcan a otro pedido.
-  if (ventas.length === 0) {
-    const limpio = (v: string | null) => (v ?? '').trim().replace(/[,().*%\\]/g, ' ').trim()
-    const dni = limpio(envio.dni)
-    const tel = limpio(envio.telefono)
+  if (envio.estado !== 'ENVIADO') {
+    const dni = normalizarIdentificador(envio.dni)
+    const tel = normalizarIdentificador(envio.telefono)
     const condiciones: string[] = []
-    if (dni) condiciones.push(`persona_dni.ilike.%${dni}%`)
-    if (tel) condiciones.push(`persona_telefono.ilike.%${tel}%`)
+    if (dni) condiciones.push(`persona_dni.ilike.${patronIdentificador(dni)}`)
+    if (tel) condiciones.push(`persona_telefono.ilike.${patronIdentificador(tel)}`)
     if (condiciones.length > 0) {
       const { data } = await supabaseAdmin
         .from('ventas')
@@ -59,7 +62,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         .not('estado_envio', 'eq', 'COMPLETADO')
         .order('created_at', { ascending: false })
         .limit(100)
-      ventas = ((data ?? []) as VentaFila[]).filter((v) => !v.envio_id || v.envio_id === id)
+      const pendientes = ((data ?? []) as VentaFila[]).filter((v) =>
+        (!v.envio_id || v.envio_id === id) &&
+        ((dni && normalizarIdentificador(v.persona_dni) === dni) ||
+          (tel && normalizarIdentificador(v.persona_telefono) === tel))
+      )
+      ventas = [...new Map([...ventas, ...pendientes].map(v => [v.id, v])).values()]
     }
   }
 
