@@ -1090,7 +1090,7 @@ for (
 
   return (
   <main id="dashboard-content"
-    className="min-h-screen bg-slate-50 p-3 pb-28 sm:p-6 md:pb-6 lg:p-8 lg:pl-[18.5rem]"
+    className="min-h-screen bg-slate-50 p-3 pb-28 sm:p-6 md:pb-6 lg:p-8"
   >
     <DashboardTopBar
       logoUrl={config.logoUrl}

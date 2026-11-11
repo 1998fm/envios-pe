@@ -21,7 +21,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import TourHelpButton from '@/components/TourHelpButton'
-import { useEsEscritorio, useEsMovil } from '@/hooks/useEsMovil'
+import { useEsMovil } from '@/hooks/useEsMovil'
 import LogoTori from '@/components/LogoTori'
 import LockedFeature from '@/components/LockedFeature'
 import { openUpgrade } from '@/lib/planGating'
@@ -79,10 +79,9 @@ export default function DashboardMenu({
   // En celular no existe "pasar el mouse": el menú se abre solo al tocar "Más" y
   // las secciones principales quedan en una barra inferior, a un toque.
   const esMovil = useEsMovil()
-  // En escritorio el menú es una barra lateral siempre visible: se ve de un vistazo
-  // dónde estás y a dónde puedes ir, sin tener que adivinar una pestaña escondida.
-  const escritorio = useEsEscritorio()
-  const abierto = escritorio || (esMovil ? fijado : hover || fijado)
+  // En pantallas con mouse se despliega al pasar por el borde; solo queda
+  // abierto si el usuario lo fija de forma explícita.
+  const abierto = esMovil ? fijado : hover || fijado
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -208,7 +207,7 @@ export default function DashboardMenu({
         data-tour="actions"
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
-        className="fixed left-0 top-0 z-50 flex h-screen flex-col overflow-hidden border-r border-slate-200 bg-white shadow-2xl shadow-slate-900/10 lg:shadow-none transition-all duration-300 ease-in-out supports-[height:100dvh]:h-dvh"
+        className="fixed left-0 top-0 z-50 flex h-screen flex-col overflow-hidden border-r border-slate-200 bg-white shadow-2xl shadow-slate-900/10 transition-all duration-300 ease-in-out supports-[height:100dvh]:h-dvh"
         style={{ width: abierto ? (esMovil ? 'min(20rem, 88vw)' : '16rem') : '0rem' }}
       >
         {/* Header */}
@@ -220,7 +219,7 @@ export default function DashboardMenu({
             </span>
           )}
           <div className="flex items-center gap-1">
-            {abierto && !escritorio && (
+            {abierto && (
               <button
                 onClick={() => setFijado((v) => !v)}
                 title={fijado ? 'Desfijar menú' : 'Fijar menú abierto'}
@@ -231,7 +230,7 @@ export default function DashboardMenu({
                 <Pin size={16} />
               </button>
             )}
-            {abierto && !escritorio && (
+            {abierto && (
               <button
                 onClick={() => {
                   setHover(false)
