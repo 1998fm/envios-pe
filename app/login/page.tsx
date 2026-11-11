@@ -32,7 +32,9 @@ export default function LoginPage() {
     }
 
     setLoading(false)
-    router.push('/dashboard')
+    // Solo destinos internos explícitos: conservar la entrada al superadmin.
+    const volverAdmin = new URLSearchParams(window.location.search).get('next') === '/admin'
+    router.push(volverAdmin ? '/admin' : '/dashboard')
   }
 
   async function handleResetPassword(e: React.FormEvent) {

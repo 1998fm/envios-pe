@@ -1,0 +1,51 @@
+import { test, expect } from './support/test'
+import { appApi, createUser, supabase } from './support/stack'
+
+test('verifica rol real y bloqueo en la API de acceso', async () => {
+  const u = await createUser()
+  const anon = await appApi(null)
+  expect((await anon.get('/api/admin/session')).status()).toBe(401)
+  const api = await appApi(null)
+  await api.post('/api/auth/login', { data: { email: u.email, password: u.password } })
+  expect((await api.get('/api/admin/session')).status()).toBe(403)
+  const db = await supabase('service')
+  await db.patch(`/rest/v1/profiles?id=eq.${u.id}`, { data: { role: 'super_admin' } })
+  expect((await api.get('/api/admin/session')).status()).toBe(200)
+  await db.patch(`/rest/v1/profiles?id=eq.${u.id}`, { data: { disabled: true } })
+  expect((await api.get('/api/admin/session')).status()).toBe(403)
+  await db.dispose(); await api.dispose(); await anon.dispose()
+})
+
+test('cuenta incorrecta muestra error y permite cambiar a la cuenta superadmin', async ({ page }) => {
+  test.setTimeout(120000)
+  const normal = await createUser()
+  const admin = await createUser()
+  const db = await supabase('service')
+  await db.patch(`/rest/v1/profiles?id=eq.${admin.id}`, { data: { role: 'super_admin' } })
+  await db.dispose()
+  await page.request.post('/api/auth/login', { data: { email: normal.email, password: normal.password } })
+  await page.goto('/admin')
+  await expect(page.getByRole('alert').filter({ hasText: 'no tiene acceso al superadmin' })).toBeVisible()
+  await expect(page).toHaveURL(/\/admin$/)
+  await page.getByRole('button', { name: 'Ingresar con otra cuenta' }).click()
+  await expect(page).toHaveURL(/\/login\?next=/)
+  await page.getByPlaceholder('correo@ejemplo.com').fill(admin.email)
+  await page.getByPlaceholder('••••••').fill(admin.password)
+  // La disponibilidad de roles de negocio no debe decidir el acceso de plataforma.
+  await page.route('**/api/session', route => route.fulfill({ status: 500, body: '{}' }))
+  await page.getByRole('button', { name: 'Ingresar', exact: true }).click()
+  await expect(page).toHaveURL(/\/admin$/)
+  await expect(page.getByText('Tori Control', { exact: true })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Administración', exact: true })).toBeVisible()
+})
+
+test('entrada sin sesión vuelve al admin tras iniciar sesión y no permite redirecciones externas', async ({ page }) => {
+  await page.goto('/admin')
+  await expect(page).toHaveURL(/\/login\?next=/)
+  const u = await createUser()
+  await page.goto('/login?next=https://example.com')
+  await page.getByPlaceholder('correo@ejemplo.com').fill(u.email)
+  await page.getByPlaceholder('••••••').fill(u.password)
+  await page.getByRole('button', { name: 'Ingresar', exact: true }).click()
+  await expect(page).toHaveURL(/\/dashboard/)
+})

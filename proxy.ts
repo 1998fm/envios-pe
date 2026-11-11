@@ -35,7 +35,9 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   if (!user && (path.startsWith('/dashboard') || path.startsWith('/admin'))) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const login = new URL('/login', request.url)
+    if (path.startsWith('/admin')) login.searchParams.set('next', '/admin')
+    return NextResponse.redirect(login)
   }
 
   if (!user && path.startsWith('/onboarding')) {
@@ -43,7 +45,9 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && ['/login', '/register'].includes(path)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    const destino = path === '/login' && request.nextUrl.searchParams.get('next') === '/admin'
+      ? '/admin' : '/dashboard'
+    return NextResponse.redirect(new URL(destino, request.url))
   }
 
   return response

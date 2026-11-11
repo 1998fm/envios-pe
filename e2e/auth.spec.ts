@@ -128,7 +128,7 @@ test.describe('Inicio y cierre de sesión', () => {
     await page.goto('/dashboard')
     await expect(page).toHaveURL(/\/login$/)
     await page.goto('/admin')
-    await expect(page).toHaveURL(/\/login$/)
+    await expect(page).toHaveURL(/\/login\?next=/)
     await page.goto('/onboarding')
     await expect(page).toHaveURL(/\/register$/)
   })
@@ -153,12 +153,14 @@ test.describe('Inicio y cierre de sesión', () => {
     await expect(page).toHaveURL(/\/login$/)
   })
 
-  test('un usuario normal no ve el panel /admin: lo devuelve al dashboard y la API responde 403', async ({ page }) => {
+  test('un usuario normal ve un error de acceso en /admin y la API responde 403', async ({ page }) => {
     const u = await createUser()
     await entrar(page, u.email, u.password)
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 })
     await page.goto('/admin')
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
+    await expect(page).toHaveURL(/\/admin$/)
+    await expect(page.getByRole('alert').filter({ hasText: 'no tiene acceso al superadmin' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Ingresar con otra cuenta' })).toBeVisible()
     await expect(page.getByText('Panel Super Admin')).toBeHidden()
     // con la cookie de sesión del navegador (así llama el panel real)
     const r = await page.request.get('/api/admin/overview')

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { cerrarSesion, obtenerSesion } from '@/lib/clienteApi'
+import { cerrarSesion } from '@/lib/clienteApi'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Select from '@/components/ui/Select'
@@ -284,19 +284,26 @@ export default function AdminPage() {
   // Verificar sesión y rol
   useEffect(() => {
     async function check() {
-      const sesion = await obtenerSesion().catch(() => null)
-      if (!sesion) {
-        router.replace('/login')
-        return
+      try {
+        const respuesta = await fetch('/api/admin/session', { cache: 'no-store' })
+        if (respuesta.status === 401) {
+          router.replace('/login?next=/admin')
+          return
+        }
+        if (!respuesta.ok) {
+          const datos = await respuesta.json().catch(() => ({}))
+          setError(respuesta.status === 403
+            ? 'La cuenta con la que ingresaste no tiene acceso al superadmin o está desactivada. Ingresa con tu cuenta de superadministrador.'
+            : datos.error || 'No se pudo verificar el acceso. Intenta de nuevo.')
+          setChequeando(false)
+          return
+        }
+        setSesion(true)
+        setChequeando(false)
+      } catch {
+        setError('No se pudo verificar el acceso. Revisa tu conexión e intenta de nuevo.')
+        setChequeando(false)
       }
-      // Solo un super admin ve este panel (los datos ya los protege la API, pero
-      // tampoco se muestra la pantalla a quien no corresponde).
-      if (!sesion.negocio.esSuperAdmin) {
-        router.replace('/dashboard')
-        return
-      }
-      setSesion(true)
-      setChequeando(false)
     }
     check()
   }, [router])
@@ -454,7 +461,7 @@ export default function AdminPage() {
 
   const logout = async () => {
     await cerrarSesion()
-    router.replace('/login')
+    router.replace('/login?next=/admin')
   }
 
   // Acción: bloquear/desbloquear
@@ -610,6 +617,22 @@ export default function AdminPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="animate-spin rounded-full h-10 w-10 border-4 border-sky-600 border-t-transparent" />
       </div>
+    )
+  }
+
+  if (!sesion) {
+    return (
+      <main className="min-h-screen bg-slate-50 p-6 flex items-center justify-center">
+        <div className="max-w-lg rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <h1 className="text-xl font-bold text-slate-900">Acceso al superadmin</h1>
+          <p role="alert" className="mt-3 text-sm text-slate-600">{error}</p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button onClick={logout}>Ingresar con otra cuenta</Button>
+            <Button onClick={() => window.location.reload()}>Reintentar</Button>
+            <Button onClick={() => router.push('/dashboard')}>Ir al dashboard</Button>
+          </div>
+        </div>
+      </main>
     )
   }
 
