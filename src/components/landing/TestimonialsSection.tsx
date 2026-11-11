@@ -1,5 +1,7 @@
 'use client'
 
+import { LandingValue } from '@/components/landing/editor/LandingEditable'
+
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import ToriMascot from '@/components/ToriMascot'
@@ -30,8 +32,7 @@ export default function TestimonialsSection() {
           center
           eyebrow="Historias reales"
           title={
-            <>
-              Tori ya forma parte del día a día de <Resaltado>otros emprendedores.</Resaltado>
+            <><LandingValue value={"Tori ya forma parte del día a día de "} /><Resaltado><LandingValue value={"otros emprendedores."} /></Resaltado>
             </>
           }
           sub="No queremos decirte que Tori funciona. Preferimos que lo cuenten quienes ya lo están usando."
@@ -43,9 +44,7 @@ export default function TestimonialsSection() {
             onMouseLeave={() => setPausa(false)}
             className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm sm:p-14"
           >
-            <span className="pointer-events-none absolute -left-2 -top-10 select-none text-[12rem] font-black leading-none text-tori-100">
-              &ldquo;
-            </span>
+            <span className="pointer-events-none absolute -left-2 -top-10 select-none text-[12rem] font-black leading-none text-tori-100"><LandingValue value={"“"} /></span>
             <div className="relative min-h-[150px]">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -55,14 +54,12 @@ export default function TestimonialsSection() {
                   exit={{ opacity: 0, y: -14, filter: 'blur(6px)' }}
                   transition={{ duration: 0.4 }}
                 >
-                  <p className="text-3xl font-black leading-tight text-tori-900 sm:text-5xl">{t.quote}</p>
+                  <p className="text-3xl font-black leading-tight text-tori-900 sm:text-5xl"><LandingValue value={t.quote} /></p>
                   <div className="mt-8 flex items-center gap-3">
-                    <span className="grid h-10 w-10 place-items-center rounded-full bg-tori-600 text-sm font-black text-white">
-                      T
-                    </span>
+                    <span className="grid h-10 w-10 place-items-center rounded-full bg-tori-600 text-sm font-black text-white"><LandingValue value={"T"} /></span>
                     <div>
-                      <p className="font-bold text-tori-900">Emprendedor usuario de Tori</p>
-                      <p className="text-sm text-slate-500">{t.sub}</p>
+                      <p className="font-bold text-tori-900"><LandingValue value={"Emprendedor usuario de Tori"} /></p>
+                      <p className="text-sm text-slate-500"><LandingValue value={t.sub} /></p>
                     </div>
                   </div>
                 </motion.div>
@@ -78,7 +75,7 @@ export default function TestimonialsSection() {
                   className="group relative h-6 flex-1 cursor-pointer"
                 >
                   <span className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 overflow-hidden rounded-full bg-slate-200">
-                    {k === i && (
+                    <LandingValue value={k === i && (
                       <motion.span
                         key={`${i}-${pausa}`}
                         className="block h-full rounded-full bg-tori-600"
@@ -86,8 +83,8 @@ export default function TestimonialsSection() {
                         animate={{ width: '100%' }}
                         transition={{ duration: pausa ? 0 : 5, ease: 'linear' }}
                       />
-                    )}
-                    {k < i && <span className="block h-full w-full rounded-full bg-tori-300" />}
+                    )} />
+                    <LandingValue value={k < i && <span className="block h-full w-full rounded-full bg-tori-300" />} />
                   </span>
                 </button>
               ))}
@@ -98,10 +95,8 @@ export default function TestimonialsSection() {
         <Reveal delay={0.1} className="mt-6">
           <div className="grid items-center gap-6 rounded-3xl bg-gradient-to-br from-tori-700 to-tori-500 p-7 text-white shadow-xl shadow-tori-600/20 sm:p-9 md:grid-cols-[1fr_auto]">
             <div>
-              <p className="text-sm font-bold text-tori-100">Una transformación que resume todo</p>
-              <p className="mt-2 text-2xl font-black leading-snug sm:text-3xl">
-                &ldquo;Antes me frustraba de tanto trabajo. Ahora puedo usar mi tiempo para vender más.&rdquo;
-              </p>
+              <p className="text-sm font-bold text-tori-100"><LandingValue value={"Una transformación que resume todo"} /></p>
+              <p className="mt-2 text-2xl font-black leading-snug sm:text-3xl"><LandingValue value={"“Antes me frustraba de tanto trabajo. Ahora puedo usar mi tiempo para vender más.”"} /></p>
             </div>
             <div className="flex justify-center">
               <ToriMascot variant="happy" size={88} />

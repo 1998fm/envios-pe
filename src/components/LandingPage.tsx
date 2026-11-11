@@ -1,10 +1,12 @@
 'use client'
 
+import { LandingValue, LandingAnchor, LandingSection, LandingSections } from '@/components/landing/editor/LandingEditable'
+
 import { AnimatePresence, motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion'
 import { ArrowRight, Check, Menu, X } from 'lucide-react'
-import Link from 'next/link'
+import { LandingLink as Link } from '@/components/landing/editor/LandingEditable'
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
-import LogoTori from '@/components/LogoTori'
+import { LandingLogo as LogoTori } from '@/components/landing/editor/LandingEditable'
 import ToriMascot from '@/components/ToriMascot'
 import AntesDespues from '@/components/landing/AntesDespues'
 import DashboardDemo from '@/components/landing/DashboardDemo'
@@ -48,7 +50,7 @@ function BotonMagnetico({ href, children, className }: { href: string; children:
     <div onMouseMove={mover} onMouseLeave={soltar} className="inline-block p-3">
       <motion.div style={{ x: sx, y: sy }}>
         <Link href={href} className={className}>
-          {children}
+          <LandingValue value={children} />
         </Link>
       </motion.div>
     </div>
@@ -59,7 +61,7 @@ export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [showSticky, setShowSticky] = useState(false)
   const [seccion, setSeccion] = useState('')
-  const heroRef = useRef<HTMLElement>(null)
+  const heroRef = useRef<HTMLDivElement>(null)
 
   // Barra de progreso de lectura
   const { scrollYProgress } = useScroll()
@@ -124,34 +126,32 @@ export default function LandingPage() {
         className="pointer-events-none fixed left-0 top-0 z-0 hidden h-[500px] w-[500px] rounded-full bg-tori-300/20 blur-3xl lg:block"
       />
 
-      <div className="relative z-10">
+      <div className="relative z-10"><LandingSections>
         {/* ============ NAV ============ */}
-        <header className="fixed inset-x-0 top-0 z-50">
+        <LandingSection id="navegacion"><header className="fixed inset-x-0 top-0 z-50">
           <div className="mx-auto max-w-7xl px-4 pt-3 sm:px-6">
             <nav className="relative flex h-16 items-center justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white/85 px-4 shadow-md shadow-tori-900/5 backdrop-blur-xl sm:px-6">
               <Link href="#inicio" className="flex items-center gap-2 text-xl font-black text-tori-700">
-                <LogoTori size={36} />
-                Tori
-              </Link>
+                <LogoTori size={36} /><LandingValue value={"Tori"} /></Link>
 
               <div className="hidden items-center gap-1 md:flex">
                 {navLinks.map((l) => (
-                  <a
+                  <LandingAnchor
                     key={l.href}
                     href={l.href}
                     className={`relative rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                       seccion === l.id ? 'text-tori-700' : 'text-slate-500 hover:text-tori-700'
                     }`}
                   >
-                    {seccion === l.id && (
+                    <LandingValue value={seccion === l.id && (
                       <motion.span
                         layoutId="nav-activo"
                         className="absolute inset-0 rounded-full bg-tori-50"
                         transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                       />
-                    )}
-                    <span className="relative">{l.label}</span>
-                  </a>
+                    )} />
+                    <span className="relative"><LandingValue value={l.label} /></span>
+                  </LandingAnchor>
                 ))}
               </div>
 
@@ -159,21 +159,17 @@ export default function LandingPage() {
                 <Link
                   href="/login"
                   className="hidden px-3 text-sm font-semibold text-slate-500 transition-colors hover:text-tori-700 lg:inline-flex"
-                >
-                  Iniciar sesión
-                </Link>
+                ><LandingValue value={"Iniciar sesión"} /></Link>
                 <Link
                   href="/register"
                   className="hidden items-center justify-center rounded-xl bg-tori-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-tori-600/25 transition hover:bg-tori-700 sm:inline-flex"
-                >
-                  Probar Tori
-                </Link>
+                ><LandingValue value={"Probar Tori"} /></Link>
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
                   className="rounded-xl p-2 text-slate-600 transition-colors hover:bg-slate-100 md:hidden"
                   aria-label="Menú"
                 >
-                  {menuOpen ? <X size={20} /> : <Menu size={20} />}
+                  <LandingValue value={menuOpen ? <X size={20} /> : <Menu size={20} />} />
                 </button>
               </div>
 
@@ -193,38 +189,34 @@ export default function LandingPage() {
                 >
                   <div className="flex flex-col">
                     {navLinks.map((l) => (
-                      <a
+                      <LandingAnchor
                         key={l.href}
                         href={l.href}
                         onClick={() => setMenuOpen(false)}
                         className="px-2 py-2.5 text-sm font-semibold text-slate-700 hover:text-tori-700"
                       >
-                        {l.label}
-                      </a>
+                        <LandingValue value={l.label} />
+                      </LandingAnchor>
                     ))}
                     <Link
                       href="/login"
                       onClick={() => setMenuOpen(false)}
                       className="px-2 py-2.5 text-sm font-semibold text-slate-700 hover:text-tori-700"
-                    >
-                      Iniciar sesión
-                    </Link>
+                    ><LandingValue value={"Iniciar sesión"} /></Link>
                     <Link
                       href="/register"
                       onClick={() => setMenuOpen(false)}
                       className="mt-2 flex items-center justify-center rounded-xl bg-tori-600 px-5 py-2.5 text-sm font-bold text-white"
-                    >
-                      Probar Tori
-                    </Link>
+                    ><LandingValue value={"Probar Tori"} /></Link>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
-        </header>
+        </header></LandingSection>
 
         {/* ============ HERO ============ */}
-        <section ref={heroRef} id="inicio" className="relative overflow-hidden pb-24 pt-32 sm:pb-32 sm:pt-40">
+        <LandingSection id="inicio" elementRef={heroRef}><section id="inicio" className="relative overflow-hidden pb-24 pt-32 sm:pb-32 sm:pt-40">
           <motion.div
             style={{ y: heroY }}
             className="relative mx-auto grid max-w-7xl items-center gap-16 px-4 sm:px-6 lg:grid-cols-[1.05fr_1fr]"
@@ -238,28 +230,23 @@ export default function LandingPage() {
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                </span>
-                Para emprendedores que venden por WhatsApp
-              </motion.div>
+                </span><LandingValue value={"Para emprendedores que venden por WhatsApp"} /></motion.div>
 
               <motion.h1
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
                 className="text-4xl font-black leading-[1.12] tracking-tight text-tori-900 sm:text-5xl lg:text-6xl"
-              >
-                Vender por WhatsApp debería darte <Resaltado>más ventas</Resaltado>, no más{' '}
-                <Tachado nota="¡adiós!">desorden</Tachado>.
-              </motion.h1>
+              ><LandingValue value={"Vender por WhatsApp debería darte "} /><Resaltado><LandingValue value={"más ventas"} /></Resaltado><LandingValue value={", no más"} /><LandingValue value={' '} />
+                <Tachado nota="¡adiós!"><LandingValue value={"desorden"} /></Tachado><LandingValue value={"."} /></motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
                 className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl"
-              >
-                Cada venta trae un cliente, un pedido, un pago, un producto y un envío.{' '}
-                <strong className="text-tori-900">Tori conecta todo para que tú no tengas que recordarlo todo.</strong>
+              ><LandingValue value={"Cada venta trae un cliente, un pedido, un pago, un producto y un envío."} /><LandingValue value={' '} />
+                <strong className="text-tori-900"><LandingValue value={"Tori conecta todo para que tú no tengas que recordarlo todo."} /></strong>
               </motion.p>
 
               <motion.div
@@ -271,16 +258,12 @@ export default function LandingPage() {
                 <Link
                   href="/register"
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-tori-600 px-6 py-3.5 font-extrabold text-white shadow-xl shadow-tori-600/25 transition hover:scale-[1.03] hover:bg-tori-700 active:scale-95"
-                >
-                  Quiero ordenar mi negocio
-                  <ArrowRight size={16} />
+                ><LandingValue value={"Quiero ordenar mi negocio"} /><ArrowRight size={16} />
                 </Link>
-                <a
+                <LandingAnchor
                   href="#diagnostico"
                   className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3.5 font-bold text-tori-900 transition hover:border-tori-400 hover:bg-tori-50"
-                >
-                  Quiero saber si Tori es para mí
-                </a>
+                ><LandingValue value={"Quiero saber si Tori es para mí"} /></LandingAnchor>
               </motion.div>
 
               <motion.div
@@ -292,14 +275,12 @@ export default function LandingPage() {
                 {['14 días gratis', 'Sin tarjeta', 'Cancela cuando quieras'].map((b) => (
                   <span key={b} className="flex items-center gap-1.5">
                     <Check size={14} className="text-emerald-500" />
-                    {b}
+                    <LandingValue value={b} />
                   </span>
                 ))}
               </motion.div>
 
-              <p className="mt-5 max-w-md text-sm text-slate-500">
-                Tori no se conecta a tu WhatsApp: tu cliente llena un formulario y sus datos llegan ordenados.
-              </p>
+              <p className="mt-5 max-w-md text-sm text-slate-500"><LandingValue value={"Tori no se conecta a tu WhatsApp: tu cliente llena un formulario y sus datos llegan ordenados."} /></p>
             </div>
 
             <motion.div
@@ -311,16 +292,16 @@ export default function LandingPage() {
               <HeroConversacion />
             </motion.div>
           </motion.div>
-        </section>
+        </section></LandingSection>
 
-        <Diagnostico />
-        <ProblemaFlujo />
-        <AntesDespues />
-        <DashboardDemo />
-        <FeaturesSection />
+        <LandingSection id="diagnostico"><Diagnostico /></LandingSection>
+        <LandingSection id="problema"><ProblemaFlujo /></LandingSection>
+        <LandingSection id="comparacion"><AntesDespues /></LandingSection>
+        <LandingSection id="demo"><DashboardDemo /></LandingSection>
+        <LandingSection id="funciones"><FeaturesSection /></LandingSection>
 
         {/* ============ FACILIDAD ============ */}
-        <section className="relative py-24 sm:py-32">
+        <LandingSection id="facilidad"><section className="relative py-24 sm:py-32">
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
             <Reveal>
               <div className="relative overflow-hidden rounded-[2rem] border border-tori-200 bg-gradient-to-br from-tori-50 to-white p-8 text-center shadow-sm sm:p-14">
@@ -329,54 +310,44 @@ export default function LandingPage() {
                   <div className="flex justify-center">
                     <ToriMascot variant="guide" size={72} />
                   </div>
-                  <span className="mt-4 inline-block text-xs font-black uppercase tracking-[.18em] text-tori-600">
-                    ¿Te preocupa que sea complicado?
-                  </span>
-                  <h2 className="mt-3 text-3xl font-black text-tori-900 sm:text-4xl">A nuestro primer emprendedor también.</h2>
-                  <p className="mx-auto mt-5 max-w-2xl text-slate-600">
-                    Antes de probar Tori pensaba que podía ser complicado y que no entendería cómo usarlo.
-                  </p>
-                  <blockquote className="mt-8 text-2xl font-black text-tori-900 sm:text-4xl">
-                    &ldquo;<Resaltado>Es como mi Excel, pero en orden.</Resaltado>&rdquo;
-                  </blockquote>
-                  <p className="mt-4 text-sm text-slate-500">
-                    La mejor explicación de Tori puede venir de alguien que ya lo usa.
-                  </p>
+                  <span className="mt-4 inline-block text-xs font-black uppercase tracking-[.18em] text-tori-600"><LandingValue value={"¿Te preocupa que sea complicado?"} /></span>
+                  <h2 className="mt-3 text-3xl font-black text-tori-900 sm:text-4xl"><LandingValue value={"A nuestro primer emprendedor también."} /></h2>
+                  <p className="mx-auto mt-5 max-w-2xl text-slate-600"><LandingValue value={"Antes de probar Tori pensaba que podía ser complicado y que no entendería cómo usarlo."} /></p>
+                  <blockquote className="mt-8 text-2xl font-black text-tori-900 sm:text-4xl"><LandingValue value={"“"} /><Resaltado><LandingValue value={"Es como mi Excel, pero en orden."} /></Resaltado><LandingValue value={"”"} /></blockquote>
+                  <p className="mt-4 text-sm text-slate-500"><LandingValue value={"La mejor explicación de Tori puede venir de alguien que ya lo usa."} /></p>
                 </div>
               </div>
             </Reveal>
           </div>
-        </section>
+        </section></LandingSection>
 
         {/* ============ MOMENTO TORI ============ */}
-        <section className="py-16 sm:py-20">
+        <LandingSection id="momento"><section className="py-16 sm:py-20">
           <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
             <Reveal>
               <div className="flex justify-center">
                 <ToriMascot variant="happy" size={64} />
               </div>
-              <h2 className="mt-4 text-2xl font-black text-tori-900 sm:text-3xl">Tori no viene a decirte cómo emprender.</h2>
-              <p className="mt-2 text-xl text-slate-500 sm:text-2xl">Viene a ayudarte a que sea un poco más fácil.</p>
+              <h2 className="mt-4 text-2xl font-black text-tori-900 sm:text-3xl"><LandingValue value={"Tori no viene a decirte cómo emprender."} /></h2>
+              <p className="mt-2 text-xl text-slate-500 sm:text-2xl"><LandingValue value={"Viene a ayudarte a que sea un poco más fácil."} /></p>
               <motion.div
                 whileHover={{ scale: 1.03, rotate: -0.5 }}
                 className="mt-6 inline-block rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm"
               >
-                <p className="font-black text-tori-900">
-                  &ldquo;Tú encárgate de vender. Yo ayudo con que no se te pierda todo lo demás.&rdquo;
-                </p>
+                <p className="font-black text-tori-900"><LandingValue value={"“Tú encárgate de vender. Yo ayudo con que no se te pierda todo lo demás.”"} /></p>
               </motion.div>
             </Reveal>
           </div>
-        </section>
+        </section></LandingSection>
 
-        <TestimonialsSection />
-        <ParaQuien />
-        <Pasos />
-        <Precios />
-        <FAQ />
+        <LandingSection id="historias"><TestimonialsSection /></LandingSection>
+        <LandingSection id="paraquien"><ParaQuien /></LandingSection>
+        <LandingSection id="pasos"><Pasos /></LandingSection>
+        <LandingSection id="precios"><Precios /></LandingSection>
+        <LandingSection id="faq"><FAQ /></LandingSection>
 
         {/* ============ CTA FINAL ============ */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
+        <LandingSection id="cierre"><section className="relative overflow-hidden py-24 sm:py-32">
           <div className="absolute inset-0 bg-gradient-to-br from-tori-700 via-tori-600 to-tori-500" />
           <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-white/15 blur-3xl" />
           <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-tori-300/30 blur-3xl" />
@@ -385,61 +356,53 @@ export default function LandingPage() {
               <div className="flex justify-center">
                 <ToriMascot variant="happy" size={88} />
               </div>
-              <h2 className="mt-5 text-3xl font-black tracking-tight sm:text-5xl">Tu negocio ya está creciendo.</h2>
-              <p className="mt-4 text-xl text-white/90 sm:text-2xl">
-                Ahora haz que organizarlo no te quite el tiempo para hacerlo crecer.
-              </p>
+              <h2 className="mt-5 text-3xl font-black tracking-tight sm:text-5xl"><LandingValue value={"Tu negocio ya está creciendo."} /></h2>
+              <p className="mt-4 text-xl text-white/90 sm:text-2xl"><LandingValue value={"Ahora haz que organizarlo no te quite el tiempo para hacerlo crecer."} /></p>
               <div className="mt-6">
                 <BotonMagnetico
                   href="/register"
                   className="inline-flex items-center justify-center rounded-xl bg-white px-8 py-4 font-black text-tori-700 shadow-2xl transition hover:bg-tori-50"
-                >
-                  Empezar a usar Tori
-                  <ArrowRight size={16} className="ml-2" />
+                ><LandingValue value={"Empezar a usar Tori"} /><ArrowRight size={16} className="ml-2" />
                 </BotonMagnetico>
               </div>
-              <p className="text-sm text-white/80">Menos tiempo buscando y ordenando. Más tiempo para vender.</p>
+              <p className="text-sm text-white/80"><LandingValue value={"Menos tiempo buscando y ordenando. Más tiempo para vender."} /></p>
             </Reveal>
           </div>
-        </section>
+        </section></LandingSection>
 
         {/* ============ FOOTER ============ */}
-        <footer className="border-t border-slate-200 bg-slate-50 py-10 text-slate-500">
+        <LandingSection id="pie"><footer className="border-t border-slate-200 bg-slate-50 py-10 text-slate-500">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
               <div>
                 <div className="flex items-center gap-2 font-black text-tori-700">
-                  <LogoTori size={28} />
-                  Tori
-                </div>
-                <p className="mt-2 max-w-xs text-sm">
-                  Tu compañero de negocio para trabajar con más orden y tranquilidad.
-                </p>
+                  <LogoTori size={28} /><LandingValue value={"Tori"} /></div>
+                <p className="mt-2 max-w-xs text-sm"><LandingValue value={"Tu compañero de negocio para trabajar con más orden y tranquilidad."} /></p>
               </div>
               <div className="flex gap-8 text-sm">
                 <ul className="space-y-2">
-                  <li className="text-xs font-bold uppercase tracking-wider text-tori-900">Producto</li>
-                  <li><a href="#solucion" className="transition-colors hover:text-tori-700">Cómo funciona</a></li>
-                  <li><a href="#funciones" className="transition-colors hover:text-tori-700">Soluciones</a></li>
-                  <li><a href="#historias" className="transition-colors hover:text-tori-700">Historias</a></li>
-                  <li><a href="#precios" className="transition-colors hover:text-tori-700">Precios</a></li>
+                  <li className="text-xs font-bold uppercase tracking-wider text-tori-900"><LandingValue value={"Producto"} /></li>
+                  <li><LandingAnchor href="#solucion" className="transition-colors hover:text-tori-700"><LandingValue value={"Cómo funciona"} /></LandingAnchor></li>
+                  <li><LandingAnchor href="#funciones" className="transition-colors hover:text-tori-700"><LandingValue value={"Soluciones"} /></LandingAnchor></li>
+                  <li><LandingAnchor href="#historias" className="transition-colors hover:text-tori-700"><LandingValue value={"Historias"} /></LandingAnchor></li>
+                  <li><LandingAnchor href="#precios" className="transition-colors hover:text-tori-700"><LandingValue value={"Precios"} /></LandingAnchor></li>
                 </ul>
                 <ul className="space-y-2">
-                  <li className="text-xs font-bold uppercase tracking-wider text-tori-900">Acceso</li>
-                  <li><Link href="/login" className="transition-colors hover:text-tori-700">Iniciar sesión</Link></li>
-                  <li><Link href="/register" className="transition-colors hover:text-tori-700">Comenzar gratis</Link></li>
+                  <li className="text-xs font-bold uppercase tracking-wider text-tori-900"><LandingValue value={"Acceso"} /></li>
+                  <li><Link href="/login" className="transition-colors hover:text-tori-700"><LandingValue value={"Iniciar sesión"} /></Link></li>
+                  <li><Link href="/register" className="transition-colors hover:text-tori-700"><LandingValue value={"Comenzar gratis"} /></Link></li>
                 </ul>
               </div>
             </div>
             <div className="mt-8 flex flex-col items-center justify-between gap-2 border-t border-slate-200 pt-6 sm:flex-row">
-              <p className="text-xs">© {new Date().getFullYear()} Tori</p>
-              <a href="#inicio" className="text-xs transition-colors hover:text-tori-700">Ir arriba</a>
+              <p className="text-xs"><LandingValue value={"© "} /><LandingValue value={new Date().getFullYear()} /><LandingValue value={" Tori"} /></p>
+              <LandingAnchor href="#inicio" className="text-xs transition-colors hover:text-tori-700"><LandingValue value={"Ir arriba"} /></LandingAnchor>
             </div>
           </div>
-        </footer>
+        </footer></LandingSection>
 
         {/* ============ CTA FIJA (móvil) ============ */}
-        <AnimatePresence>
+        <LandingSection id="movil"><AnimatePresence>
           {showSticky && (
             <motion.div
               initial={{ y: 80 }}
@@ -451,13 +414,11 @@ export default function LandingPage() {
               <Link
                 href="/register"
                 className="flex items-center justify-center rounded-2xl bg-tori-600 py-3.5 font-black text-white shadow-2xl shadow-tori-900/30"
-              >
-                Probar Tori gratis
-              </Link>
+              ><LandingValue value={"Probar Tori gratis"} /></Link>
             </motion.div>
           )}
-        </AnimatePresence>
-      </div>
+        </AnimatePresence></LandingSection>
+      </LandingSections></div>
     </div>
   )
 }

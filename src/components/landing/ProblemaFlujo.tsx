@@ -1,5 +1,7 @@
 'use client'
 
+import { LandingValue } from '@/components/landing/editor/LandingEditable'
+
 import { motion, useInView } from 'framer-motion'
 import { AlertTriangle, Pause, Play, RotateCcw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -56,9 +58,7 @@ export default function ProblemaFlujo() {
           eyebrow="El problema real"
           title="El problema no es que tengas muchas ventas."
           sub={
-            <>
-              Es todo lo que tienes que hacer <strong className="text-tori-900">después</strong> de cada venta.
-            </>
+            <><LandingValue value={"Es todo lo que tienes que hacer "} /><strong className="text-tori-900"><LandingValue value={"después"} /></strong><LandingValue value={" de cada venta."} /></>
           }
         />
 
@@ -66,13 +66,13 @@ export default function ProblemaFlujo() {
           <div ref={ref} className="mt-14">
           <Reveal delay={0.1}>
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-500">Así recorre una venta tu día</p>
+              <p className="text-sm font-semibold text-slate-500"><LandingValue value={"Así recorre una venta tu día"} /></p>
               <button
                 onClick={reproducir}
                 className="flex cursor-pointer items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-1.5 text-xs font-bold text-tori-900 shadow-sm transition hover:border-tori-400 hover:text-tori-700"
               >
-                {auto ? <Pause size={13} /> : terminado ? <RotateCcw size={13} /> : <Play size={13} />}
-                {auto ? 'Pausar' : terminado ? 'Repetir' : 'Reproducir'}
+                <LandingValue value={auto ? <Pause size={13} /> : terminado ? <RotateCcw size={13} /> : <Play size={13} />} />
+                <LandingValue value={auto ? 'Pausar' : terminado ? 'Repetir' : 'Reproducir'} />
               </button>
             </div>
 
@@ -109,14 +109,14 @@ export default function ProblemaFlujo() {
                             : 'border-slate-300 bg-white text-slate-400 group-hover:border-tori-400'
                         }`}
                       >
-                        {i + 1}
+                        <LandingValue value={i + 1} />
                       </motion.span>
                       <span
                         className={`text-xs font-bold transition-colors ${
                           hecho ? (riesgo ? 'text-amber-700' : 'text-tori-900') : 'text-slate-400'
                         }`}
                       >
-                        {paso}
+                        <LandingValue value={paso} />
                       </span>
                     </button>
                   )
@@ -133,14 +133,12 @@ export default function ProblemaFlujo() {
                   <AlertTriangle size={22} className="text-amber-500" />
                 </div>
                 <div>
-                  <p className="text-lg font-black text-tori-900">Cuando todo termina en un lugar diferente...</p>
-                  <p className="mt-1 text-sm text-slate-500">tu negocio empieza a depender de tu memoria.</p>
+                  <p className="text-lg font-black text-tori-900"><LandingValue value={"Cuando todo termina en un lugar diferente..."} /></p>
+                  <p className="mt-1 text-sm text-slate-500"><LandingValue value={"tu negocio empieza a depender de tu memoria."} /></p>
                   <motion.p
                     animate={{ opacity: enRiesgo ? 1 : 0.3 }}
                     className="mt-5 text-3xl font-black leading-tight text-tori-900"
-                  >
-                    Y ahí comienzan los errores.
-                  </motion.p>
+                  ><LandingValue value={"Y ahí comienzan los errores."} /></motion.p>
                 </div>
               </div>
 
@@ -157,7 +155,7 @@ export default function ProblemaFlujo() {
                           : 'border-slate-200 bg-slate-50 text-slate-400'
                       }`}
                     >
-                      {e}
+                      <LandingValue value={e} />
                     </motion.div>
                   )
                 })}

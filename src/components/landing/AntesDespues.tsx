@@ -1,5 +1,7 @@
 'use client'
 
+import { LandingValue } from '@/components/landing/editor/LandingEditable'
+
 import { motion } from 'framer-motion'
 import { BarChart3, ClipboardList, Coins, MessageCircle, Package, ShoppingCart, Truck } from 'lucide-react'
 import { useState } from 'react'
@@ -30,8 +32,7 @@ export default function AntesDespues() {
           center
           eyebrow="Aquí entra Tori"
           title={
-            <>
-              Todo lo que hoy tienes separado, <Resaltado>conectado.</Resaltado>
+            <><LandingValue value={"Todo lo que hoy tienes separado, "} /><Resaltado><LandingValue value={"conectado."} /></Resaltado>
             </>
           }
           sub="No necesitas otra herramienta para complicarte. Necesitas que pedidos, ventas, inventario, dinero y envíos puedan trabajar juntos."
@@ -51,14 +52,10 @@ export default function AntesDespues() {
                 conectado ? 'right-1 bg-tori-600' : 'left-1 bg-slate-500'
               }`}
             />
-            <span className={`relative z-10 px-6 py-2 transition-colors ${!conectado ? 'text-white' : 'text-slate-500'}`}>
-              Hoy
-            </span>
-            <span className={`relative z-10 px-6 py-2 transition-colors ${conectado ? 'text-white' : 'text-slate-500'}`}>
-              Con Tori
-            </span>
+            <span className={`relative z-10 px-6 py-2 transition-colors ${!conectado ? 'text-white' : 'text-slate-500'}`}><LandingValue value={"Hoy"} /></span>
+            <span className={`relative z-10 px-6 py-2 transition-colors ${conectado ? 'text-white' : 'text-slate-500'}`}><LandingValue value={"Con Tori"} /></span>
           </button>
-          <p className="text-xs text-slate-400">{conectado ? 'Todo trabaja junto' : 'Toca el interruptor'}</p>
+          <p className="text-xs text-slate-400"><LandingValue value={conectado ? 'Todo trabaja junto' : 'Toca el interruptor'} /></p>
         </Reveal>
 
         <div className="mt-12 grid items-center gap-6 lg:grid-cols-[1fr_72px_auto_72px_1fr]">
@@ -78,8 +75,8 @@ export default function AntesDespues() {
                 }`}
               >
                 <g.icon size={24} className={conectado ? 'text-tori-600' : 'text-slate-400'} />
-                <p className="mt-3 font-black text-tori-900">{g.title}</p>
-                <p className="mt-1 text-xs text-slate-500">{g.sub}</p>
+                <p className="mt-3 font-black text-tori-900"><LandingValue value={g.title} /></p>
+                <p className="mt-1 text-xs text-slate-500"><LandingValue value={g.sub} /></p>
               </motion.div>
             ))}
           </div>
@@ -89,7 +86,7 @@ export default function AntesDespues() {
           {/* centro */}
           <div className="flex flex-col items-center gap-3">
             <div className="relative grid h-32 w-32 place-items-center">
-              {conectado &&
+              <LandingValue value={conectado &&
                 [0, 1].map((i) => (
                   <motion.span
                     key={i}
@@ -98,7 +95,7 @@ export default function AntesDespues() {
                     animate={{ scale: 1.7, opacity: 0 }}
                     transition={{ duration: 2, repeat: Infinity, delay: i * 1, ease: 'easeOut' }}
                   />
-                ))}
+                ))} />
               <motion.div
                 animate={{ scale: conectado ? 1.08 : 1, filter: conectado ? 'grayscale(0)' : 'grayscale(0.9)' }}
                 className={`grid h-28 w-28 place-items-center rounded-[2rem] border bg-white transition-shadow ${
@@ -107,13 +104,11 @@ export default function AntesDespues() {
               >
                 <div className="text-center">
                   <ToriMascot variant="logo" size={52} />
-                  <p className="mt-1 text-sm font-black text-tori-700">TORI</p>
+                  <p className="mt-1 text-sm font-black text-tori-700"><LandingValue value={"TORI"} /></p>
                 </div>
               </motion.div>
             </div>
-            <span className={`text-xs font-bold transition-colors ${conectado ? 'text-tori-600' : 'text-slate-400'}`}>
-              Conecta
-            </span>
+            <span className={`text-xs font-bold transition-colors ${conectado ? 'text-tori-600' : 'text-slate-400'}`}><LandingValue value={"Conecta"} /></span>
           </div>
 
           <Conector activo={conectado} />
@@ -132,16 +127,16 @@ export default function AntesDespues() {
                 className="rounded-2xl border border-tori-200 bg-white p-5 shadow-md shadow-tori-600/10"
               >
                 <g.icon size={24} className="text-tori-600" />
-                <p className="mt-3 font-black text-tori-900">{g.title}</p>
-                <p className="mt-1 text-xs text-slate-500">{g.sub}</p>
+                <p className="mt-3 font-black text-tori-900"><LandingValue value={g.title} /></p>
+                <p className="mt-1 text-xs text-slate-500"><LandingValue value={g.sub} /></p>
               </motion.div>
             ))}
           </div>
         </div>
 
         <Reveal delay={0.1} className="mt-14 text-center">
-          <p className="text-xl font-black text-tori-900 sm:text-2xl">El resultado no es trabajar más.</p>
-          <p className="mt-2 text-lg text-slate-500">Es tener claridad para dedicar más tiempo a vender.</p>
+          <p className="text-xl font-black text-tori-900 sm:text-2xl"><LandingValue value={"El resultado no es trabajar más."} /></p>
+          <p className="mt-2 text-lg text-slate-500"><LandingValue value={"Es tener claridad para dedicar más tiempo a vender."} /></p>
         </Reveal>
       </div>
     </section>
@@ -157,14 +152,14 @@ function Conector({ activo }: { activo: boolean }) {
         animate={{ width: activo ? '100%' : '0%' }}
         transition={{ duration: 0.7, ease: 'easeOut' }}
       />
-      {activo && (
+      <LandingValue value={activo && (
         <motion.span
           className="absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-tori-600 shadow-[0_0_8px_2px_rgba(8,123,192,0.6)]"
           initial={{ left: '0%' }}
           animate={{ left: '100%' }}
           transition={{ duration: 1.4, repeat: Infinity, ease: 'linear' }}
         />
-      )}
+      )} />
     </div>
   )
 }

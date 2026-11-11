@@ -1,5 +1,7 @@
 'use client'
 
+import { LandingValue, LandingAnchor } from '@/components/landing/editor/LandingEditable'
+
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import ToriMascot from '@/components/ToriMascot'
@@ -62,7 +64,7 @@ export default function Diagnostico() {
 
         <div className="mt-14 grid items-start gap-6 lg:grid-cols-[1fr_320px]">
           <Reveal>
-            <p className="mb-4 text-sm font-semibold text-slate-500">Marca las que te hayan pasado</p>
+            <p className="mb-4 text-sm font-semibold text-slate-500"><LandingValue value={"Marca las que te hayan pasado"} /></p>
             <div className="grid gap-3 sm:grid-cols-2">
               {items.map((item, i) => {
                 const on = marcados.includes(i)
@@ -83,11 +85,9 @@ export default function Diagnostico() {
                       className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 text-xs font-black transition ${
                         on ? 'border-tori-600 bg-tori-600 text-white' : 'border-slate-300 text-transparent'
                       }`}
-                    >
-                      ✓
-                    </span>
+                    ><LandingValue value={"✓"} /></span>
                     <span className={`text-sm font-semibold leading-snug sm:text-base ${on ? 'text-tori-900' : 'text-slate-700'}`}>
-                      {item}
+                      <LandingValue value={item} />
                     </span>
                   </motion.button>
                 )
@@ -111,10 +111,9 @@ export default function Diagnostico() {
                   transition={{ type: 'spring', stiffness: 80, damping: 18 }}
                 />
                 <text x="110" y="92" textAnchor="middle" className="fill-tori-900 text-[34px] font-black">
-                  {count}
+                  <LandingValue value={count} />
                 </text>
-                <text x="110" y="112" textAnchor="middle" className="fill-slate-400 text-[11px] font-semibold">
-                  de {items.length}
+                <text x="110" y="112" textAnchor="middle" className="fill-slate-400 text-[11px] font-semibold">de <LandingValue value={items.length} />
                 </text>
               </svg>
 
@@ -130,19 +129,15 @@ export default function Diagnostico() {
                     <div className="flex justify-center">
                       <ToriMascot variant="happy" size={52} />
                     </div>
-                    <p className="mt-3 text-lg font-black leading-snug text-tori-900">{res.title}</p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-500">{res.text}</p>
-                    <a
+                    <p className="mt-3 text-lg font-black leading-snug text-tori-900"><LandingValue value={res.title} /></p>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-500"><LandingValue value={res.text} /></p>
+                    <LandingAnchor
                       href="#solucion"
                       className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-tori-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-tori-600/25 transition hover:bg-tori-700"
-                    >
-                      Quiero tener más control
-                    </a>
+                    ><LandingValue value={"Quiero tener más control"} /></LandingAnchor>
                   </motion.div>
                 ) : (
-                  <motion.p key="vacio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 text-sm text-slate-400">
-                    Marca una para empezar.
-                  </motion.p>
+                  <motion.p key="vacio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 text-sm text-slate-400"><LandingValue value={"Marca una para empezar."} /></motion.p>
                 )}
               </AnimatePresence>
             </div>

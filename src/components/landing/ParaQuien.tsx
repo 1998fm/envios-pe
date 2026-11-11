@@ -1,5 +1,7 @@
 'use client'
 
+import { LandingValue } from '@/components/landing/editor/LandingEditable'
+
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, X } from 'lucide-react'
 import { useState } from 'react'
@@ -47,14 +49,14 @@ export default function ParaQuien() {
                   encaja === o.v ? 'text-white' : 'text-slate-500 hover:text-tori-700'
                 }`}
               >
-                {encaja === o.v && (
+                <LandingValue value={encaja === o.v && (
                   <motion.span
                     layoutId="paraquien-pill"
                     className={`absolute inset-0 rounded-full ${o.v ? 'bg-tori-600' : 'bg-slate-500'}`}
                     transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                   />
-                )}
-                <span className="relative">{o.label}</span>
+                )} />
+                <span className="relative"><LandingValue value={o.label} /></span>
               </button>
             ))}
           </div>
@@ -84,18 +86,16 @@ export default function ParaQuien() {
                         encaja ? 'bg-tori-600 text-white' : 'bg-slate-300 text-white'
                       }`}
                     >
-                      {encaja ? <Check size={12} /> : <X size={12} />}
+                      <LandingValue value={encaja ? <Check size={12} /> : <X size={12} />} />
                     </span>
-                    {item}
+                    <LandingValue value={item} />
                   </motion.li>
                 ))}
               </motion.ul>
             </AnimatePresence>
 
             {!encaja && (
-              <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-bold text-slate-700">
-                Tori está pensado para emprendedores que quieren ordenar su negocio sin complicarse.
-              </div>
+              <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-bold text-slate-700"><LandingValue value={"Tori está pensado para emprendedores que quieren ordenar su negocio sin complicarse."} /></div>
             )}
           </div>
         </Reveal>

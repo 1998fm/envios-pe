@@ -1,5 +1,7 @@
 'use client'
 
+import { LandingValue } from '@/components/landing/editor/LandingEditable'
+
 import { motion, useScroll, useSpring } from 'framer-motion'
 import { useRef } from 'react'
 import { Reveal, Spotlight } from './ui'
@@ -20,12 +22,8 @@ export default function Pasos() {
       <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_1.2fr]">
         <Reveal className="lg:sticky lg:top-32 lg:self-start">
           <span className="inline-flex items-center gap-2 rounded-full border border-tori-200 bg-tori-50 px-3 py-1 text-[11px] font-black uppercase tracking-[.18em] text-tori-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-tori-500" />
-            Así de simple
-          </span>
-          <h2 className="mt-4 text-3xl font-black leading-[1.1] tracking-tight text-tori-900 sm:text-5xl">
-            Empieza a ordenar tu negocio en pocos pasos.
-          </h2>
+            <span className="h-1.5 w-1.5 rounded-full bg-tori-500" /><LandingValue value={"Así de simple"} /></span>
+          <h2 className="mt-4 text-3xl font-black leading-[1.1] tracking-tight text-tori-900 sm:text-5xl"><LandingValue value={"Empieza a ordenar tu negocio en pocos pasos."} /></h2>
         </Reveal>
 
         <div ref={ref} className="relative pl-14">
@@ -51,11 +49,11 @@ export default function Pasos() {
                   transition={{ type: 'spring', stiffness: 300, damping: 15 }}
                   className="absolute -left-14 top-6 grid h-10 w-10 place-items-center rounded-xl bg-tori-600 font-black text-white shadow-lg shadow-tori-600/30"
                 >
-                  {p.num}
+                  <LandingValue value={p.num} />
                 </motion.span>
                 <Spotlight className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition-transform hover:-translate-y-1">
-                  <h3 className="text-xl font-black text-tori-900">{p.title}</h3>
-                  <p className="mt-2 text-slate-600">{p.desc}</p>
+                  <h3 className="text-xl font-black text-tori-900"><LandingValue value={p.title} /></h3>
+                  <p className="mt-2 text-slate-600"><LandingValue value={p.desc} /></p>
                 </Spotlight>
               </motion.div>
             ))}

@@ -1,5 +1,7 @@
 'use client'
 
+import { LandingValue } from '@/components/landing/editor/LandingEditable'
+
 import { AnimatePresence, motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
@@ -58,7 +60,7 @@ export default function FAQ() {
                   aria-expanded={open}
                   className="flex w-full cursor-pointer items-center justify-between gap-4 p-5 text-left"
                 >
-                  <span className="font-black text-tori-900">{f.q}</span>
+                  <span className="font-black text-tori-900"><LandingValue value={f.q} /></span>
                   <motion.span
                     animate={{ rotate: open ? 135 : 0 }}
                     className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-tori-50 text-tori-600"
@@ -74,7 +76,7 @@ export default function FAQ() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.25, ease: 'easeOut' }}
                     >
-                      <p className="px-5 pb-5 leading-relaxed text-slate-600">{f.a}</p>
+                      <p className="px-5 pb-5 leading-relaxed text-slate-600"><LandingValue value={f.a} /></p>
                     </motion.div>
                   )}
                 </AnimatePresence>

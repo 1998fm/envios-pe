@@ -1,5 +1,7 @@
 'use client'
 
+import { LandingValue } from '@/components/landing/editor/LandingEditable'
+
 import { motion, useMotionValue, useSpring } from 'framer-motion'
 import { Caveat } from 'next/font/google'
 import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react'
@@ -27,7 +29,7 @@ export function Reveal({
       transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
-      {children}
+      <LandingValue value={children} />
     </motion.div>
   )
 }
@@ -59,7 +61,7 @@ export function Spotlight({
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{ background: `radial-gradient(420px circle at var(--mx,50%) var(--my,50%), ${glow}, transparent 45%)` }}
       />
-      <div className="relative">{children}</div>
+      <div className="relative"><LandingValue value={children} /></div>
     </div>
   )
 }
@@ -124,7 +126,7 @@ export function Resaltado({ children, className = '' }: { children: ReactNode; c
         boxDecorationBreak: 'clone',
       }}
     >
-      {children}
+      <LandingValue value={children} />
     </motion.span>
   )
 }
@@ -136,7 +138,7 @@ export function Resaltado({ children, className = '' }: { children: ReactNode; c
 export function Tachado({ children, nota }: { children: ReactNode; nota?: string }) {
   return (
     <span className="relative inline-block">
-      <span className="text-slate-400">{children}</span>
+      <span className="text-slate-400"><LandingValue value={children} /></span>
       <svg
         aria-hidden
         viewBox="0 0 200 40"
@@ -175,7 +177,7 @@ export function Tachado({ children, nota }: { children: ReactNode; nota?: string
           transition={{ duration: 0.5, delay: 1.9 }}
           className={`${mano.className} pointer-events-none absolute -top-[0.55em] left-[8%] whitespace-nowrap text-[0.62em] font-bold leading-none text-tori-600`}
         >
-          {nota}
+          <LandingValue value={nota} />
         </motion.span>
       )}
     </span>
@@ -198,10 +200,10 @@ export function SectionHead({
     <Reveal className={center ? 'mx-auto max-w-3xl text-center' : 'max-w-3xl'}>
       <span className="inline-flex items-center gap-2 rounded-full border border-tori-200 bg-tori-50 px-3 py-1 text-[11px] font-black uppercase tracking-[.18em] text-tori-700">
         <span className="h-1.5 w-1.5 rounded-full bg-tori-500" />
-        {eyebrow}
+        <LandingValue value={eyebrow} />
       </span>
-      <h2 className="mt-4 text-3xl font-black leading-[1.1] tracking-tight text-tori-900 sm:text-5xl">{title}</h2>
-      {sub && <p className="mt-5 text-lg leading-relaxed text-slate-600">{sub}</p>}
+      <h2 className="mt-4 text-3xl font-black leading-[1.1] tracking-tight text-tori-900 sm:text-5xl"><LandingValue value={title} /></h2>
+      {sub && <p className="mt-5 text-lg leading-relaxed text-slate-600"><LandingValue value={sub} /></p>}
     </Reveal>
   )
 }

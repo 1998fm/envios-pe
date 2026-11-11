@@ -1,12 +1,21 @@
-import LandingPage from '@/components/LandingPage'
-import type { Metadata } from 'next'
+import LandingPage from "@/components/LandingPage";
+import { LandingProvider } from "@/components/landing/editor/LandingEditable";
+import { landingPublicada } from "@/lib/landing/storage";
+import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: 'Vender por WhatsApp debería darte más ventas, no más desorden — Tori',
-  description:
-    'Tori es el compañero de negocio de los emprendedores que venden por WhatsApp. Organiza tus pedidos, ventas, inventario y envíos para perder menos tiempo ordenando y tener más tiempo para vender. 14 días gratis, sin tarjeta.',
+export const dynamic = "force-dynamic";
+export async function generateMetadata(): Promise<Metadata> {
+  const documento = await landingPublicada();
+  return {
+    title: documento.seo.titulo,
+    description: documento.seo.descripcion,
+  };
 }
-
-export default function Home() {
-  return <LandingPage />
+export default async function Home() {
+  const documento = await landingPublicada();
+  return (
+    <LandingProvider documento={documento}>
+      <LandingPage />
+    </LandingProvider>
+  );
 }

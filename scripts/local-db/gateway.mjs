@@ -47,6 +47,7 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
   const mailbox = []
   const otps = new Map() // token -> { userId, type, redirectTo, challenge?, method? }
   const authCodes = new Map() // code PKCE -> { userId, challenge, method, type }
+  const buckets = new Map([['logos', { id: 'logos', name: 'logos', public: true }], ['productos', { id: 'productos', name: 'productos', public: true }]])
   const files = new Map() // "bucket/path" -> { buffer, type }
 
   // ---------- JWT ----------
@@ -389,10 +390,37 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
   async function handleStorage(req, res, url) {
     const route = url.pathname.replace(/^\/storage\/v1/, '')
     const claims = await verifyBearer(req)
+    const service = claims?.role === 'service_role'
+    const bucketGet = route.match(/^\/bucket\/([^/]+)$/)
+    if (bucketGet && req.method === 'GET') {
+      if (!service) return fail(res, 403, 'forbidden', 'Not authorized')
+      const bucket = buckets.get(bucketGet[1])
+      return bucket ? send(res, 200, bucket) : fail(res, 404, 'not_found', 'Bucket not found')
+    }
+    if (route === '/bucket' && req.method === 'POST') {
+      if (!service) return fail(res, 403, 'forbidden', 'Not authorized')
+      const b = await readJson(req)
+      if (buckets.has(b.id ?? b.name)) return fail(res, 409, 'Duplicate', 'Bucket already exists')
+      buckets.set(b.id ?? b.name, { ...b, id: b.id ?? b.name })
+      return send(res, 200, { name: b.name })
+    }
+    const listing = route.match(/^\/object\/list\/([^/]+)$/)
+    if (listing && req.method === 'POST') {
+      const bucket = buckets.get(listing[1])
+      if (!bucket) return fail(res, 404, 'not_found', 'Bucket not found')
+      if (!bucket.public && !service) return fail(res, 403, 'forbidden', 'Not authorized')
+      const b = await readJson(req)
+      const prefix = `${listing[1]}/${b.prefix ? b.prefix + '/' : ''}`
+      const result = [...files.entries()].filter(([key]) => key.startsWith(prefix) && !key.slice(prefix.length).includes('/')).map(([key, f]) => ({ name: key.slice(prefix.length), id: key, created_at: f.created_at, updated_at: f.created_at, metadata: { size: f.buffer.length } }))
+      result.sort((a, b) => a.name.localeCompare(b.name))
+      if (b.sortBy?.order === 'desc') result.reverse()
+      return send(res, 200, result.slice(b.offset || 0, (b.offset || 0) + (b.limit || 100)))
+    }
     const objectMatch = route.match(/^\/object\/(?:(public|authenticated)\/)?([^/]+)\/(.+)$/)
 
     if (objectMatch && req.method === 'GET') {
       const [, kind, bucket, path] = objectMatch
+      if (buckets.get(bucket)?.public === false && !service) return fail(res, 403, 'forbidden', 'Not authorized')
       const f = files.get(`${bucket}/${decodeURIComponent(path)}`)
       if (!f) return fail(res, 404, 'not_found', 'Object not found')
       res.writeHead(200, { 'content-type': f.type, ...CORS })
@@ -402,17 +430,19 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
 
     if (objectMatch && (req.method === 'POST' || req.method === 'PUT')) {
       const [, , bucket, path] = objectMatch
+      if (buckets.get(bucket)?.public === false && !service) return fail(res, 403, 'forbidden', 'Not authorized')
       const chunks = []
       for await (const c of req) chunks.push(c)
       const key = `${bucket}/${decodeURIComponent(path)}`
       if (files.has(key) && req.method === 'POST' && req.headers['x-upsert'] !== 'true') {
         return fail(res, 400, 'Duplicate', 'The resource already exists')
       }
-      files.set(key, { buffer: Buffer.concat(chunks), type: req.headers['content-type'] || 'application/octet-stream' })
+      files.set(key, { buffer: Buffer.concat(chunks), type: req.headers['content-type'] || 'application/octet-stream', created_at: new Date().toISOString() })
       return send(res, 200, { Key: key, Id: crypto.randomUUID() })
     }
     if (route.match(/^\/object\/([^/]+)$/) && req.method === 'DELETE') {
       const bucket = route.split('/')[2]
+      if (buckets.get(bucket)?.public === false && !service) return fail(res, 403, 'forbidden', 'Not authorized')
       const b = await readJson(req)
       for (const p of b.prefixes || []) files.delete(`${bucket}/${p}`)
       return send(res, 200, (b.prefixes || []).map((name) => ({ name })))

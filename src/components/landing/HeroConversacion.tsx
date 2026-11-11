@@ -1,5 +1,7 @@
 'use client'
 
+import { LandingValue } from '@/components/landing/editor/LandingEditable'
+
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion'
 import { CheckCheck, Link2, Paperclip, RotateCcw, Smile } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -139,14 +141,14 @@ export default function HeroConversacion() {
                 escena === e ? 'text-white' : 'text-slate-500 hover:text-tori-700'
               }`}
             >
-              {escena === e && (
+              <LandingValue value={escena === e && (
                 <motion.span
                   layoutId="hero-escena"
                   className={`absolute inset-0 rounded-full ${e === 'antes' ? 'bg-slate-500' : 'bg-tori-600'}`}
                   transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                 />
-              )}
-              <span className="relative">{e === 'antes' ? 'Antes' : 'Con Tori'}</span>
+              )} />
+              <span className="relative"><LandingValue value={e === 'antes' ? 'Antes' : 'Con Tori'} /></span>
             </button>
           ))}
         </div>
@@ -154,21 +156,20 @@ export default function HeroConversacion() {
           onClick={repetir}
           className="flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:bg-white hover:text-tori-700"
         >
-          <RotateCcw size={13} /> Repetir
-        </button>
+          <RotateCcw size={13} /><LandingValue value={" Repetir"} /></button>
       </div>
 
       {/* teléfono */}
       <div className="relative isolate transform-gpu overflow-hidden rounded-[2.2rem] border-[9px] border-slate-800 bg-[#efeae2] shadow-2xl shadow-tori-900/20">
         {/* cabecera del chat */}
         <div className="flex items-center gap-3 bg-[#008069] px-4 py-3 text-white">
-          <div className="grid h-9 w-9 place-items-center rounded-full bg-white/25 text-sm font-black">M</div>
+          <div className="grid h-9 w-9 place-items-center rounded-full bg-white/25 text-sm font-black"><LandingValue value={"M"} /></div>
           <div className="leading-tight">
-            <p className="text-sm font-bold">María López</p>
-            <p className="text-[11px] text-white/80">{escribiendo ? 'escribiendo…' : 'en línea'}</p>
+            <p className="text-sm font-bold"><LandingValue value={"María López"} /></p>
+            <p className="text-[11px] text-white/80"><LandingValue value={escribiendo ? 'escribiendo…' : 'en línea'} /></p>
           </div>
           <span className="ml-auto rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">
-            {escena === 'antes' ? 'Así es hoy' : 'Con Tori'}
+            <LandingValue value={escena === 'antes' ? 'Así es hoy' : 'Con Tori'} />
           </span>
         </div>
 
@@ -201,20 +202,19 @@ export default function HeroConversacion() {
                       <div className="flex items-center gap-2 bg-tori-50 px-2.5 py-2">
                         <LogoTori size={28} />
                         <div className="leading-tight">
-                          <p className="text-[12px] font-bold text-tori-900">Formulario de envíos</p>
-                          <p className="text-[10px] text-slate-500">Mi Tienda</p>
+                          <p className="text-[12px] font-bold text-tori-900"><LandingValue value={"Formulario de envíos"} /></p>
+                          <p className="text-[10px] text-slate-500"><LandingValue value={"Mi Tienda"} /></p>
                         </div>
                       </div>
                       <p className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-tori-700 underline">
-                        <Link2 size={11} /> {m.texto}
+                        <Link2 size={11} /> <LandingValue value={m.texto} />
                       </p>
                     </div>
                   ) : (
                     m.texto
                   )}
-                  <span className="mt-0.5 flex items-center justify-end gap-1 text-[9px] text-slate-400">
-                    10:{String(20 + i).padStart(2, '0')}
-                    {m.de === 'negocio' && <CheckCheck size={11} className="text-sky-500" />}
+                  <span className="mt-0.5 flex items-center justify-end gap-1 text-[9px] text-slate-400"><LandingValue value={"10:"} /><LandingValue value={String(20 + i).padStart(2, '0')} />
+                    <LandingValue value={m.de === 'negocio' && <CheckCheck size={11} className="text-sky-500" />} />
                   </span>
                 </div>
               </motion.div>
@@ -225,7 +225,7 @@ export default function HeroConversacion() {
         {/* barra de escribir (decorativa) */}
         <div className="flex items-center gap-2 bg-[#f0f2f5] px-3 py-2">
           <Smile size={18} className="text-slate-400" />
-          <div className="flex-1 rounded-full bg-white px-3 py-1.5 text-[12px] text-slate-400">Mensaje</div>
+          <div className="flex-1 rounded-full bg-white px-3 py-1.5 text-[12px] text-slate-400"><LandingValue value={"Mensaje"} /></div>
           <Paperclip size={17} className="text-slate-400" />
         </div>
 
@@ -244,8 +244,7 @@ export default function HeroConversacion() {
                   initial={{ opacity: 0, y: 10, scale: 0.9 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-800 shadow-md"
-                >
-                  ⚠ {p}
+                ><LandingValue value={"⚠ "} /><LandingValue value={p} />
                 </motion.span>
               ))}
             </motion.div>
@@ -266,23 +265,23 @@ export default function HeroConversacion() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <LogoTori size={24} />
-                <p className="text-sm font-black text-tori-900">Nuevo pedido</p>
+                <p className="text-sm font-black text-tori-900"><LandingValue value={"Nuevo pedido"} /></p>
               </div>
-              <span className="rounded-full bg-tori-50 px-2 py-0.5 text-[10px] font-bold text-tori-700">Tori</span>
+              <span className="rounded-full bg-tori-50 px-2 py-0.5 text-[10px] font-bold text-tori-700"><LandingValue value={"Tori"} /></span>
             </div>
             <div className="mt-3 space-y-1.5">
               {CAMPOS.map(([etiqueta, valor], i) => {
                 const lleno = panel > i
                 return (
                   <div key={etiqueta} className="flex min-h-8 items-center justify-between gap-3 rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px]">
-                    <span className="text-slate-400">{etiqueta}</span>
+                    <span className="text-slate-400"><LandingValue value={etiqueta} /></span>
                     {lleno ? (
                       <motion.span
                         initial={{ opacity: 0, x: 8 }}
                         animate={{ opacity: 1, x: 0 }}
                         className="text-right font-bold text-tori-900"
                       >
-                        {valor}
+                        <LandingValue value={valor} />
                       </motion.span>
                     ) : (
                       <span className="h-1.5 w-12 rounded-full bg-slate-200" />
@@ -299,10 +298,8 @@ export default function HeroConversacion() {
                   className="overflow-hidden"
                 >
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-700">No empacado</span>
-                    <span className={`${mano.className} text-[17px] font-bold leading-none text-tori-600`}>
-                      ¡sin copiar nada!
-                    </span>
+                    <span className="rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-700"><LandingValue value={"No empacado"} /></span>
+                    <span className={`${mano.className} text-[17px] font-bold leading-none text-tori-600`}><LandingValue value={"¡sin copiar nada!"} /></span>
                   </div>
                 </motion.div>
               )}
