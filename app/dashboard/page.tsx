@@ -1398,6 +1398,7 @@ for (
 />
 
 <ModalUpgrade
+  puedeGestionar={esOwner}
   abierto={mostrarUpgrade}
   onCerrar={() => setMostrarUpgrade(false)}
   planActual={plan}

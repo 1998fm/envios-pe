@@ -4,10 +4,12 @@ import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { sincronizarPagosMP } from '@/lib/facturacion'
 
+export const maxDuration = 300
+
 export const dynamic = 'force-dynamic'
 
 // GET: invocado por el cron diario de Vercel (Authorization: Bearer $CRON_SECRET).
-// 1) Reconcilia pagos con MercadoPago (recupera suscripciones autorizadas que
+// 1) Reconcilia pagos con MercadoPago (recupera cobros aprobados que
 //    el webhook pudiera haber perdido). 2) Degrada a basic los perfiles cuyo
 //    trial/pro pagado ya venció, para que la columna plan no quede desactualizada.
 export async function GET(request: Request) {
@@ -16,10 +18,12 @@ export async function GET(request: Request) {
   }
 
   let pagos = { revisadas: 0, sincronizadas: 0, errores: 0 }
+  let falloPagos = false
   try {
     pagos = await sincronizarPagosMP()
-  } catch (e) {
-    console.error('[cron] error reconciliando pagos:', e)
+  } catch {
+    falloPagos = true
+    console.error('[cron] No se pudo conciliar Mercado Pago.')
   }
 
   const { data: perfiles } = await supabaseAdmin
@@ -42,5 +46,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, revisados, degradados, pagos })
+  return NextResponse.json({ ok: !falloPagos && pagos.errores === 0, revisados, degradados, pagos }, { status: falloPagos || pagos.errores ? 503 : 200 })
 }

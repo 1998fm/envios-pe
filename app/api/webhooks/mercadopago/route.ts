@@ -1,90 +1,59 @@
-import { obtenerSuscripcion, planDesdeMonto } from '@/lib/mercadopago'
-import { registrarPago } from '@/lib/pagos'
-import { WebhookSignatureValidator } from 'mercadopago'
-
+import { WebhookSignatureValidator } from "mercadopago";
+import { obtenerSuscripcionMP } from "@/lib/billing/mp";
+import {
+  procesarFacturaPorId,
+  sincronizarPago,
+  sincronizarSuscripcion,
+} from "@/lib/billing/payments";
 export async function POST(request: Request) {
+  if (!process.env.MP_WEBHOOK_SECRET)
+    return new Response("Webhook no configurado", { status: 503 });
+  const signature = request.headers.get("x-signature"),
+    requestId = request.headers.get("x-request-id");
+  if (!signature || !requestId)
+    return new Response("Falta la firma", { status: 401 });
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== "object")
+    return new Response("Solicitud no válida", { status: 400 });
+  const url = new URL(request.url);
+  const signed = url.searchParams.get("data.id") || body.data?.id;
+  if (!signed || !/^[\w-]{1,100}$/.test(String(signed)))
+    return new Response("Falta el identificador", { status: 400 });
+  const id = String(signed).toLowerCase();
   try {
-    const body = await request.json()
-    const url = new URL(request.url)
-
-    // La firma es OBLIGATORIA: sin cabecera o sin secreto configurado se
-    // rechaza (falla cerrado). Antes la verificación se saltaba si faltaba.
-    const xSignature = request.headers.get('x-signature')
-    const xRequestId = request.headers.get('x-request-id')
-    const dataId = url.searchParams.get('data.id') || body.data?.id
-
-    if (!process.env.MP_WEBHOOK_SECRET) {
-      console.error('[mp-webhook] MP_WEBHOOK_SECRET no configurado')
-      return new Response('Webhook no configurado', { status: 500 })
-    }
-    if (!xSignature) {
-      return new Response('Falta la firma', { status: 401 })
-    }
-    try {
-      WebhookSignatureValidator.validate({
-        xSignature,
-        xRequestId,
-        dataId: dataId || '',
-        secret: process.env.MP_WEBHOOK_SECRET,
-        toleranceSeconds: 600,
-      })
-    } catch {
-      return new Response('Firma no válida', { status: 401 })
-    }
-
-    // Determinar tópico e ID (soporta formato ?topic=… y body.type/action).
-    const action = body.action || body.type || ''
-    const topic = (url.searchParams.get('topic') || action || '').toLowerCase()
-    const id = url.searchParams.get('id') || body.data?.id || body.id
-
-    if (!id) {
-      return new Response('Falta el id', { status: 400 })
-    }
-
-    // Solo las notificaciones de suscripción (preapproval) modifican planes.
-    if (topic.includes('preapproval')) {
-      const preapproval = await obtenerSuscripcion(id)
-      const [userId, planRef] = String(preapproval.external_reference ?? '').split('__')
-      const status = preapproval.status
-
-      if (!userId || (planRef !== 'pro' && planRef !== 'business_plus')) {
-        return new Response('Falta la referencia externa', { status: 400 })
-      }
-
-      if (status === 'authorized') {
-        const monto = Number(preapproval.auto_recurring?.transaction_amount ?? 0)
-        const { meses } = planDesdeMonto(monto)
-
-        // Preferimos next_payment_date (fin del período pagado) como vencimiento.
-        const ahora = new Date()
-        const proUntil = preapproval.next_payment_date
-          ? new Date(preapproval.next_payment_date)
-          : new Date(ahora.getTime() + meses * 30 * 864e5)
-
-        await registrarPago({
-          userId,
-          preapprovalId: id,
-          plan: planRef,
-          monto,
-          meses,
-          proUntil,
-          origen: 'webhook',
-        })
-      }
-
-      // En 'cancelled' NO se toca pro_until: el usuario conserva el período
-      // ya pagado y checkTrialStatus/cron lo degradan a 'basic' al expirar.
-      return new Response('OK', { status: 200 })
-    }
-
-    return new Response('OK', { status: 200 })
-  } catch (err) {
-    console.error('[mp-webhook] error procesando notificación:', err)
-    // No tragar el error: devolvemos 500 para que MercadoPago reintente.
-    return new Response('Error al procesar la notificación', { status: 500 })
+    WebhookSignatureValidator.validate({
+      xSignature: signature,
+      xRequestId: requestId,
+      dataId: id,
+      secret: process.env.MP_WEBHOOK_SECRET,
+      toleranceSeconds: 600,
+    });
+  } catch {
+    return new Response("Firma no válida", { status: 401 });
+  }
+  // Nunca usar body.id: identifica la notificación, no el recurso firmado.
+  const otros = [url.searchParams.get("id"), body.data?.id].filter(
+    (v) => v !== null && v !== undefined,
+  );
+  if (otros.some((v) => String(v).toLowerCase() !== id))
+    return new Response("Identificadores no coincidentes", { status: 400 });
+  const topic = String(
+    body.type || url.searchParams.get("topic") || "",
+  ).toLowerCase();
+  try {
+    if (topic === "subscription_preapproval" || topic === "preapproval")
+      await sincronizarSuscripcion(await obtenerSuscripcionMP(id), "webhook");
+    else if (topic === "subscription_authorized_payment")
+      await procesarFacturaPorId(id);
+    else if (topic === "payment") await sincronizarPago(id);
+    return new Response("OK", { status: 200 });
+  } catch {
+    console.error(
+      "[mp-webhook] No se pudo verificar o registrar el cobro; se solicita reintento.",
+    );
+    return new Response("No se pudo procesar la notificación", { status: 503 });
   }
 }
-
 export async function GET() {
-  return new Response('OK', { status: 200 })
+  return new Response("OK", { status: 200 });
 }

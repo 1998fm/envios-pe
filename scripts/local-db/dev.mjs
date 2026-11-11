@@ -52,8 +52,9 @@ const env = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: '',
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: '',
   ...TEST_SECRETS,
-  MP_ACCESS_TOKEN: '',
-  NEXT_DIST_DIR: '.next-local',
+  MP_ACCESS_TOKEN: 'local-mp-token',
+  LOCAL_MP_API_URL: `${stack.env.SUPABASE_URL}/mp-api`,
+  NEXT_DIST_DIR: process.env.NEXT_DIST_DIR || '.next-local',
 }
 const next = (...a) => spawn(process.execPath, [path.join(root, 'node_modules', 'next', 'dist', 'bin', 'next'), ...a], { cwd: root, env, stdio: 'inherit' })
 

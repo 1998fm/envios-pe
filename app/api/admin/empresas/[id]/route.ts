@@ -1,3 +1,4 @@
+import { registrarCambioManual } from '@/lib/billing/payments'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
@@ -75,6 +76,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if (!data) {
     return NextResponse.json({ error: 'Empresa no encontrada' }, { status: 404 })
+  }
+
+  if (typeof update.plan === 'string' || update.pro_until !== undefined) {
+    const { data: perfil } = await supabaseAdmin.from('profiles').select('plan, pro_until').eq('id',id).single()
+    if (perfil) await registrarCambioManual(id, perfil.plan, perfil.pro_until)
   }
 
   await registrarAuditoria(auth, 'editar_empresa', { empresaId: id, cambios: update })

@@ -50,6 +50,38 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
   const buckets = new Map([['logos', { id: 'logos', name: 'logos', public: true }], ['productos', { id: 'productos', name: 'productos', public: true }]])
   const files = new Map() // "bucket/path" -> { buffer, type }
 
+  const mpFixtures = { subscriptions: new Map(), invoices: new Map(), payments: new Map(), creates: 0, updates: 0, failCreate: 0, failReceipt: 0 }
+  async function handleMP(req,res,url) {
+    if(url.pathname==='/__dev/mp') {
+      const claims=await verifyBearer(req)
+      if(claims?.role!=='service_role')return fail(res,403,'forbidden','Not authorized')
+      if(req.method==='GET')return send(res,200,{ subscriptions:[...mpFixtures.subscriptions.values()],creates:mpFixtures.creates,updates:mpFixtures.updates })
+      const b=await readJson(req)
+      for(const type of ['subscriptions','invoices','payments'])for(const x of b[type]??[])mpFixtures[type].set(String(x.id),x)
+      if(b.failCreate!==undefined)mpFixtures.failCreate=b.failCreate
+      if(b.failReceipt!==undefined)mpFixtures.failReceipt=b.failReceipt
+      return send(res,200,{ok:true})
+    }
+    if(req.headers.authorization!=='Bearer local-mp-token')return fail(res,401,'unauthorized','Invalid MP token')
+    const route=url.pathname.replace('/mp-api','')
+    if(route==='/preapproval'&&req.method==='POST'){
+      if(mpFixtures.failCreate){const code=mpFixtures.failCreate;mpFixtures.failCreate=0;return fail(res,code,'mp_failure','Test failure')}
+      const b=await readJson(req);const id=crypto.randomUUID().replaceAll('-','')
+      const value={...b,id,init_point:`https://www.mercadopago.com.pe/subscriptions/checkout?preapproval_id=${id}`}
+      mpFixtures.creates++;mpFixtures.subscriptions.set(id,value);return send(res,201,value)
+    }
+    if(route==='/preapproval/search'||route==='/authorized_payments/search'){
+      let items=[...(route.startsWith('/preapproval')?mpFixtures.subscriptions:mpFixtures.invoices).values()]
+      for(const f of ['external_reference','preapproval_id'])if(url.searchParams.has(f))items=items.filter(v=>String(v[f])===url.searchParams.get(f))
+      if(url.searchParams.has('payment_id'))items=items.filter(v=>String(v.payment?.id)===url.searchParams.get('payment_id'))
+      const offset=Number(url.searchParams.get('offset')||0),limit=Number(url.searchParams.get('limit')||100)
+      return send(res,200,{paging:{total:items.length},results:items.slice(offset,offset+limit)})
+    }
+    const match=route.match(/^\/(preapproval|authorized_payments|v1\/payments)\/([\w-]+)$/)
+    if(match){const table=match[1]==='preapproval'?'subscriptions':match[1]==='authorized_payments'?'invoices':'payments';const value=mpFixtures[table].get(match[2]);if(!value)return fail(res,404,'not_found','Resource not found');if(req.method==='PUT'){Object.assign(value,await readJson(req));mpFixtures.updates++}return send(res,200,value)}
+    return fail(res,404,'not_found','MP endpoint not found')
+  }
+
   // ---------- JWT ----------
   const signKey = (role) => signApiKey(jwtSecret, role)
 
@@ -452,6 +484,8 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
 
   // ---------- proxy a PostgREST ----------
   function proxyRest(req, res, url) {
+    if(url.pathname==='/rest/v1/pagos' && ['POST','PATCH'].includes(req.method) && mpFixtures.failReceipt>0){mpFixtures.failReceipt--;return fail(res,503,'test_failure','Receipt storage unavailable')}
+
     const path = url.pathname.replace(/^\/rest\/v1/, '') || '/'
     const headers = { ...req.headers, host: `127.0.0.1:${postgrestPort}` }
     delete headers.connection
@@ -474,6 +508,7 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
         res.writeHead(204, { ...CORS, 'access-control-allow-headers': req.headers['access-control-request-headers'] || '*', 'access-control-max-age': '86400' })
         return res.end()
       }
+      if (url.pathname.startsWith('/mp-api') || url.pathname==='/__dev/mp') return await handleMP(req,res,url)
       if (url.pathname.startsWith('/auth/v1')) return await handleAuth(req, res, url)
       if (url.pathname.startsWith('/rest/v1')) return proxyRest(req, res, url)
       if (url.pathname.startsWith('/storage/v1')) return await handleStorage(req, res, url)

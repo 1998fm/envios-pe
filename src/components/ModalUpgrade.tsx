@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import Modal from '@/components/ui/Modal'
+import SubscriptionManager from '@/components/SubscriptionManager'
 import { FEATURES, PRECIOS_PLUS } from '@/lib/planGating'
 
 type Props = {
@@ -12,11 +13,13 @@ type Props = {
   planActual: string
   nombreEmpresa?: string
   userId?: string | null
+  puedeGestionar?: boolean
 }
 
-export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpresa, userId }: Props) {
+export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpresa, userId, puedeGestionar = true }: Props) {
   const [periodo, setPeriodo] = useState<'mensual' | 'trimestral'>('mensual')
   const [loading, setLoading] = useState(false)
+  const [suscripcionActiva, setSuscripcionActiva] = useState(true)
 
   async function pagar() {
     if (!userId) return toast.error('Debes iniciar sesión para continuar')
@@ -42,6 +45,9 @@ export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpr
           <div><h2 className="text-2xl font-bold text-slate-900">Planes</h2><p className="text-sm text-slate-500">{nombreEmpresa}</p></div>
           <button onClick={onCerrar} aria-label="Cerrar planes" className="rounded-lg p-2 hover:bg-slate-100"><X size={20} /></button>
         </div>
+        {puedeGestionar && abierto && <SubscriptionManager onEstado={setSuscripcionActiva} />}
+        {!puedeGestionar && <p className="my-4 text-sm text-slate-600">Solo el dueño puede contratar o cancelar la suscripción.</p>}
+        {puedeGestionar && <p className="mb-4 text-xs text-slate-500">Si tienes prueba o acceso pagado vigente, el nuevo cobro se programa al finalizar esa vigencia.</p>}
         <div data-tour="upgrade-periodo" className="my-5 flex gap-2" aria-label="Periodo de pago">
           {(['mensual', 'trimestral'] as const).map((p) => (
             <button key={p} onClick={() => setPeriodo(p)} aria-pressed={periodo === p} className={`rounded-xl px-4 py-2 text-sm font-semibold ${periodo === p ? 'bg-tori-600 text-white' : 'bg-slate-100 text-slate-700'}`}>
@@ -64,7 +70,7 @@ export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpr
                   </li>
                 ))}
               </ul>
-              {plan === 'business_plus' && <button data-tour="upgrade-pagar" onClick={pagar} disabled={loading} className="mt-5 rounded-xl bg-tori-600 px-4 py-3 font-bold text-white disabled:opacity-50">{loading ? 'Redirigiendo a MercadoPago...' : `Contratar Plus · S/ ${PRECIOS_PLUS[periodo].valor.toFixed(2)}`}</button>}
+              {plan === 'business_plus' && <button data-tour="upgrade-pagar" onClick={pagar} disabled={loading || suscripcionActiva || !puedeGestionar} className="mt-5 rounded-xl bg-tori-600 px-4 py-3 font-bold text-white disabled:opacity-50">{loading ? 'Redirigiendo a MercadoPago...' : !puedeGestionar ? 'Solo el dueño puede contratar' : suscripcionActiva ? 'Gestiona tu suscripción arriba' : `Contratar Plus · S/ ${PRECIOS_PLUS[periodo].valor.toFixed(2)}`}</button>}
             </div>
           ))}
         </div>

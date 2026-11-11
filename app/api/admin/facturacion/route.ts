@@ -66,6 +66,8 @@ export async function GET(request: Request) {
     const perfilesPorId = new Map((profiles ?? []).map((p) => [p.id, p]))
 
     recibos = (comprobantes ?? []).map((c) => {
+      let meta: { tipo?: string; estado?: string; aprobado?: string; canal?: string } = {}
+      try { meta = JSON.parse(c.origen) } catch {}
       const perfil = perfilesPorId.get(c.user_id)
       return {
         id: c.id,
@@ -77,8 +79,9 @@ export async function GET(request: Request) {
         monto: Number(c.monto),
         periodo_meses: c.periodo_meses,
         pro_until: c.pro_until,
-        origen: c.origen,
-        pagado_en: c.created_at,
+        origen: meta.tipo === 'mp-payment' ? `${meta.canal === 'reconciliacion' ? 'Conciliación' : 'Notificación'} · ${({ approved: 'aprobado', partially_refunded: 'reembolso parcial', refunded: 'reembolsado', charged_back: 'contracargo', rejected: 'rechazado', pending: 'pendiente' } as Record<string,string>)[meta.estado ?? ''] ?? meta.estado}` : c.origen,
+        estado_pago: meta.estado ?? 'historico',
+        pagado_en: meta.tipo === 'mp-payment' ? meta.aprobado || null : c.created_at,
       }
     })
   } catch (e) {

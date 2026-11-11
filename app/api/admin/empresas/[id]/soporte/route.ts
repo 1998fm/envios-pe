@@ -1,3 +1,4 @@
+import { registrarCambioManual } from '@/lib/billing/payments'
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "app/f/[slug]/lib/supabase/admin";
 import { requireSuperAdmin } from "@/lib/adminAuth";
@@ -440,6 +441,9 @@ export async function POST(
       "La información se modificó durante la operación. Actualiza la ficha.",
       409,
     );
+  if (body.accion === 'pasar_basico' || body.accion === 'extender_plus') {
+    await registrarCambioManual(id, String(changes.plan), changes.pro_until as string | undefined)
+  }
   if (body.accion === "bloquear_cuenta") {
     const res = await supabaseAdmin.auth.admin.updateUserById(id, {
       ban_duration: changes.disabled ? "876000h" : "none",

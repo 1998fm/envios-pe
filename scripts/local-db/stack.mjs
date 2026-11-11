@@ -91,7 +91,7 @@ function freePort() {
   })
 }
 
-const pidFile = path.join(root, '.local-db', 'stack.pids.json')
+const pidFile = path.join(root, '.local-db', process.env.LOCAL_DB_PORT && process.env.LOCAL_DB_PORT !== '54321' ? `stack-${process.env.LOCAL_DB_PORT}.pids.json` : 'stack.pids.json')
 
 /** Mata procesos que quedaron de una ejecución anterior que murió sin limpiar. */
 function killStale() {

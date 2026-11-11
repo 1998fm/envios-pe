@@ -73,6 +73,7 @@ test('Básico mantiene formulario y configuración, y redirige las vistas Plus',
   await expect(page).toHaveURL(/v=envios/)
   await expect(page.getByRole('button', { name: 'Nuevo producto', exact: true })).toHaveCount(0)
   await page.goto('/dashboard?v=formulario')
+  await page.getByTitle('Abrir menú', { exact: true }).hover()
   await expect(page.locator('[data-tour="configuracion"]')).toBeVisible()
   await page.locator('[data-tour="topbar"]').getByRole('button', { name: 'Ver planes', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Básico · Plan actual', exact: true })).toBeVisible()

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { expect, test } from "./support/test";
 import {
   appApi,
+  APP_URL,
   createUser,
   dbInsert,
   dbSelect,
@@ -362,7 +363,7 @@ test("el acceso de soporte genera un enlace propio y no registra el token", asyn
   expect(response.status()).toBe(200);
   const { link } = await response.json();
   const parsed = new URL(link);
-  expect(parsed.origin).toBe("http://localhost:3000");
+  expect(parsed.origin).toBe(new URL(APP_URL).origin);
   expect(parsed.pathname).toBe("/auth/impersonar");
   const token = parsed.searchParams.get("token_hash");
   expect(token).toBeTruthy();

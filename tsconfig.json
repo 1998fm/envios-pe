@@ -37,7 +37,9 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     ".next-local/types/**/*.ts",
-    ".next-local/dev/types/**/*.ts"
+    ".next-local/dev/types/**/*.ts",
+    ".next-billing-local/types/**/*.ts",
+    ".next-billing-local/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

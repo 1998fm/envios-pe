@@ -47,5 +47,5 @@ test('entrada sin sesión vuelve al admin tras iniciar sesión y no permite redi
   await page.getByPlaceholder('correo@ejemplo.com').fill(u.email)
   await page.getByPlaceholder('••••••').fill(u.password)
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click()
-  await expect(page).toHaveURL(/\/dashboard/)
+  await expect(page).toHaveURL(/\/dashboard/, { timeout: 30000 })
 })

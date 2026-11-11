@@ -1,4 +1,5 @@
 "use client";
+import SubscriptionManager from "@/components/SubscriptionManager";
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -1018,6 +1019,7 @@ export default function AdminSupportCenter({
                         >
                           Pasar a Básico conservando datos y recibos
                         </button>
+                        <SubscriptionManager key={data.profile.id} endpoint={`/api/admin/empresas/${data.profile.id}/suscripcion`} requiereMotivo />
                         <p className="text-xs leading-relaxed text-slate-500">
                           Cambiar el acceso no cancela la suscripción ni los
                           cobros de MercadoPago.
