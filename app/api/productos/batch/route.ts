@@ -1,3 +1,4 @@
+import { imagenEnUso } from '@/lib/productos/imagenes'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -72,7 +73,9 @@ export async function DELETE(request: Request) {
     .filter((r): r is string => !!r)
   if (rutas.length > 0) {
     try {
-      await supabaseAdmin.storage.from('productos').remove(rutas)
+      const libres = await Promise.all([...new Set(rutas)].map(async ruta => ({ ruta, usada: await imagenEnUso(actuales.find(p => p.imagen_url && rutaDesdeUrlProducto(p.imagen_url) === ruta)!.imagen_url) })))
+      const borrar = libres.filter(x => !x.usada).map(x => x.ruta)
+      if (borrar.length) await supabaseAdmin.storage.from('productos').remove(borrar)
     } catch (err) {
       console.error('No se pudieron borrar archivos del bucket:', err)
     }

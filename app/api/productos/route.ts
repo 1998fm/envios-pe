@@ -36,9 +36,11 @@ export async function GET(request: Request) {
 
   let query = supabaseAdmin
     .from('productos')
-    .select('*', { count: 'exact' })
+    .select(searchParams.get('catalogo') === '1' ? '*,producto_variantes!left()' : '*', { count: 'exact' })
     .eq('profile_id', userId)
     .eq('archivado', archivado === 'true')
+
+  if (searchParams.get('catalogo') === '1') query = query.is('producto_variantes', null)
 
   if (busqueda.trim()) {
     // PostgREST no puede hacer un Y de "ilike" sobre la misma columna, así que
@@ -84,7 +86,7 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({
-    data: (data ?? []).map((p) => salida(p, verCosto)),
+    data: (data ?? []).map((p) => salida(p as unknown as Record<string, unknown>, verCosto)),
     total: count ?? 0,
     offset,
     limit,

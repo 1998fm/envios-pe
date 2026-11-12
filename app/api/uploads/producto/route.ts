@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
 import { subirImagen } from '@/lib/configuracionNegocio'
+import { imagenEnUso } from '@/lib/productos/imagenes'
 import { aProxy } from '@/lib/mediaUrl'
 
 // Foto de producto (el navegador ya la comprimió). Va al servidor, que valida
@@ -41,6 +42,8 @@ export async function DELETE(request: Request) {
   if (!ruta.startsWith(`${auth.ownerId}/`) || ruta.includes('..')) {
     return NextResponse.json({ error: 'Ruta no válida' }, { status: 403 })
   }
+  const {data} = supabaseAdmin.storage.from('productos').getPublicUrl(ruta)
+  if(await imagenEnUso(data.publicUrl)) return NextResponse.json({error:'Esta imagen está siendo utilizada por un producto'}, {status:409})
   await supabaseAdmin.storage.from('productos').remove([ruta])
   return NextResponse.json({ ok: true })
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useEsMovil } from '@/hooks/useEsMovil'
 import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera, Archive, ArchiveRestore, CheckSquare, Package, History, Boxes, Tag, Info } from 'lucide-react'
 import { fmtSoles } from '@/lib/format'
@@ -14,6 +14,8 @@ import { tourDone, trayectoDone } from '@/lib/tours'
 import TourHelpButton from '@/components/TourHelpButton'
 import { openUpgrade, planNivel } from '@/lib/planGating'
 import EtiquetasProducto, { COPIAS_A4_OPCIONES, TAMANOS_ETIQUETA_PRODUCTO, type TamanoEtiquetaProducto } from '@/components/EtiquetasProducto'
+import { api } from '@/lib/clienteApi'
+import CatalogoVariantes from './CatalogoVariantes'
 import { comprimirImagen, rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 
 type Props = {
@@ -171,6 +173,17 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   const confirmar = useConfirm()
   const esMovil = useEsMovil()
   const { startTour } = useOnboarding()
+  const [familiasDisponibles, setFamiliasDisponibles] = useState(false)
+  const [mostrarCatalogo, setMostrarCatalogo] = useState(true)
+  const [crearFamiliaInicial, setCrearFamiliaInicial] = useState(false)
+  const consumirCreacion = useCallback(() => setCrearFamiliaInicial(false), [])
+  useEffect(() => {
+    let vivo = true
+    api<{ habilitado: boolean }>('/api/productos/familias')
+      .then(r => { if (vivo) setFamiliasDisponibles(r.habilitado) })
+      .catch(() => {})
+    return () => { vivo = false }
+  }, [])
   const [productos, setProductos] = useState<Producto[]>([])
   const [busqueda, setBusqueda] = useState('')
   const [busquedaAplicada, setBusquedaAplicada] = useState('')
@@ -671,6 +684,25 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
     )
   }
 
+  if (familiasDisponibles && mostrarCatalogo) {
+    return <CatalogoVariantes
+      verCosto={puedeVerGanancias}
+      onIndividual={() => { setMostrarCatalogo(false); cargarProductosYConteos() }}
+      onEditar={p => {
+        setProductos(prev => [p, ...prev.filter(x => x.id !== p.id)])
+        iniciarEdicion(p)
+        setMostrarCatalogo(false)
+      }}
+      onNuevoIndividual={() => {
+        setMostrarCatalogo(false)
+        setTipoCreacion('individual')
+        setShowNuevo(true)
+      }}
+      iniciarCreacion={crearFamiliaInicial}
+      onConsumirCreacion={consumirCreacion}
+    />
+  }
+
   if (loading) return <div className="text-center py-12 text-slate-400">Cargando productos...</div>
 
   // Valor del catálogo: qué dinero representa el stock que tienes parado.
@@ -680,6 +712,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
 
   return (
     <div className="space-y-4">
+      {familiasDisponibles && <button className="text-sm font-semibold text-sky-700" onClick={() => setMostrarCatalogo(true)}>← Volver al catálogo agrupado</button>}
       {/* Cabecera: mismo lenguaje que la página de ventas */}
       <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-tori-700 via-tori-600 to-tori-700 shadow-lg shadow-tori-700/20">
         <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" aria-hidden />
@@ -1563,7 +1596,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTipoCreacion('variantes')}
+                    onClick={() => { if(familiasDisponibles) {setShowNuevo(false);setCrearFamiliaInicial(true);setMostrarCatalogo(true)} else setTipoCreacion('variantes') }}
                     className={`rounded-[15px] border p-3.5 text-left transition-all ${
                       tipoCreacion === 'variantes'
                         ? 'border-tori-400 bg-tori-50 ring-2 ring-tori-400/20'

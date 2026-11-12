@@ -591,9 +591,11 @@ test.describe('Fotos de producto', () => {
     const prod = await crearProducto(apiA, { imagen_url: url })
     expect(prod.imagen_url).toBe(url)
 
-    // otro negocio no puede borrarla; el dueño sí
+    // Otro negocio no puede borrarla; tampoco se borra una imagen en uso.
     expect((await (await appApi(b.token)).delete(`/api/uploads/producto?ruta=${encodeURIComponent(ruta)}`)).status()).toBe(403)
     expect((await apiA.delete(`/api/uploads/producto?ruta=${encodeURIComponent('../otro/x.png')}`)).status()).toBe(403)
+    expect((await apiA.delete(`/api/uploads/producto?ruta=${encodeURIComponent(ruta)}`)).status()).toBe(409)
+    expect((await apiA.delete(`/api/productos/${prod.id}`)).status()).toBe(200)
     expect((await apiA.delete(`/api/uploads/producto?ruta=${encodeURIComponent(ruta)}`)).status()).toBe(200)
   })
 

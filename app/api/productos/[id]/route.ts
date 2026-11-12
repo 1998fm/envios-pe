@@ -1,3 +1,4 @@
+import { imagenEnUso } from '@/lib/productos/imagenes'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -17,7 +18,7 @@ function validarImagenUrl(valor: unknown): string | null {
 }
 
 async function borrarArchivoProducto(imagenUrl: string | null | undefined) {
-  if (!imagenUrl) return
+  if (!imagenUrl || await imagenEnUso(imagenUrl)) return
   const ruta = rutaDesdeUrlProducto(imagenUrl)
   if (!ruta) return
   try {
