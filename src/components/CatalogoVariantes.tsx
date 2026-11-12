@@ -48,33 +48,6 @@ const OPCIONES_VARIANTE = [
   "Presentación",
   "Variante",
 ];
-const VALORES_SUGERIDOS: Record<string, string[]> = {
-  Color: [
-    "Negro",
-    "Blanco",
-    "Azul",
-    "Rojo",
-    "Verde",
-    "Amarillo",
-    "Rosado",
-    "Morado",
-    "Gris",
-    "Beige",
-    "Marrón",
-  ],
-  Talla: ["XS", "S", "M", "L", "XL", "XXL"],
-  Tamaño: ["Pequeño", "Mediano", "Grande"],
-  Material: ["Algodón", "Poliéster", "Cuero", "Acero", "Plástico", "Madera"],
-  Presentación: ["100 ml", "250 ml", "500 ml", "1 L"],
-};
-const valoresElegidos = (texto: string) => [
-  ...new Set(
-    texto
-      .split(",")
-      .map((v) => v.trim())
-      .filter(Boolean),
-  ),
-];
 function SelectorOpcion({
   valor,
   indice,
@@ -1024,54 +997,8 @@ export default function CatalogoVariantes({
                           </div>
                           {modo === "crear" && (
                             <div className="mt-3 space-y-2">
-                              <p className="font-semibold text-slate-500">
-                                Elige los valores que vendes
-                              </p>
-                              {Object.hasOwn(VALORES_SUGERIDOS, o) &&
-                                !!VALORES_SUGERIDOS[o]?.length && (
-                                  <div
-                                    className="flex flex-wrap gap-1.5"
-                                    role="group"
-                                    aria-label={`Valores sugeridos de ${o}`}
-                                  >
-                                    {VALORES_SUGERIDOS[o].map((v) => {
-                                      const elegidos = valoresElegidos(
-                                        valores[o] ?? "",
-                                      );
-                                      const seleccionado = elegidos.some(
-                                        (x) =>
-                                          x.toLowerCase() === v.toLowerCase(),
-                                      );
-                                      return (
-                                        <button
-                                          type="button"
-                                          key={v}
-                                          aria-pressed={seleccionado}
-                                          className={`rounded-lg border px-3 py-2 text-xs font-bold transition-colors ${seleccionado ? "border-tori-400 bg-tori-50 text-tori-700" : "border-slate-200 bg-white text-slate-600 hover:border-tori-300"}`}
-                                          onClick={() => {
-                                            const nuevos = seleccionado
-                                              ? elegidos.filter(
-                                                  (x) =>
-                                                    x.toLowerCase() !==
-                                                    v.toLowerCase(),
-                                                )
-                                              : [...elegidos, v];
-                                            setValores((prev) => ({
-                                              ...prev,
-                                              [o]: nuevos.join(", "),
-                                            }));
-                                            setDirty(true);
-                                          }}
-                                        >
-                                          {seleccionado ? "✓ " : "+ "}
-                                          {v}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                )}
                               <label className="block font-semibold text-slate-500">
-                                Valores seleccionados o personalizados
+                                Valores de la variante
                                 <input
                                   aria-label={`Valores ${i + 1}`}
                                   className={`${campos} mt-1`}
@@ -1093,8 +1020,7 @@ export default function CatalogoVariantes({
                                 />
                               </label>
                               <p className="text-[11px] leading-relaxed text-slate-400">
-                                Puedes marcar varios valores. Para añadir los
-                                tuyos, escríbelos separados por comas.
+                                Escribe los valores separados por comas.
                               </p>
                             </div>
                           )}

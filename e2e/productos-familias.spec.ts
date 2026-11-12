@@ -295,25 +295,18 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
   await page
     .getByRole("combobox", { name: "Nombre de opción 1", exact: true })
     .selectOption("Color");
-  const colores = page.getByRole("group", {
-    name: "Valores sugeridos de Color",
-    exact: true,
-  });
-  await colores.getByRole("button", { name: "+ Rojo", exact: true }).click();
-  await colores.getByRole("button", { name: "+ Azul", exact: true }).click();
-  await colores.getByRole("button", { name: "+ Negro", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Valores 1", exact: true })
+    .fill("Rojo, Azul, Negro");
   await page
     .getByRole("button", { name: "Añadir opción", exact: true })
     .click();
   await page
     .getByRole("combobox", { name: "Nombre de opción 2", exact: true })
     .selectOption("Talla");
-  const tallas = page.getByRole("group", {
-    name: "Valores sugeridos de Talla",
-    exact: true,
-  });
-  await tallas.getByRole("button", { name: "+ S", exact: true }).click();
-  await tallas.getByRole("button", { name: "+ M", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Valores 2", exact: true })
+    .fill("S, M");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
