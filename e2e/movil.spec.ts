@@ -61,7 +61,6 @@ for (const vp of [{ w: 390, h: 844 }, { w: 360, h: 740 }]) {
 
       // productos: las acciones están al alcance (antes quedaban fuera de la pantalla)
       await page.goto('/dashboard?v=productos')
-      await page.getByRole('button', { name: 'Vista individual y etiquetas', exact: true }).click()
       const editar = page.getByRole('button', { name: 'Editar' }).first()
       await editar.scrollIntoViewIfNeeded({ timeout: 15_000 })
       await expect(editar).toBeInViewport()

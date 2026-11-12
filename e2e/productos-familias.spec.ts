@@ -272,9 +272,16 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
 }) => {
   const u = await createUser();
   await abrirDashboard(page, u, "productos");
+  await expect(page.getByText("Tu catálogo", { exact: true })).toBeVisible();
+  await expect(page.getByText("Valor de venta", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Seleccionar", exact: true }),
+  ).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Nuevo producto con variantes", exact: true })
+    .getByRole("button", { name: "Nuevo producto", exact: true })
+    .first()
     .click();
+  await page.getByRole("button", { name: /Serie con variantes/ }).click();
   await page
     .getByRole("textbox", { name: "Nombre general", exact: true })
     .fill("Polo visual");
@@ -297,8 +304,12 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
     }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Cerrar ficha", exact: true }).click();
+  await expect(page.getByText("Tu catálogo", { exact: true })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /Polo visual.*3 variantes/ }),
+    page.getByRole("button", { name: "Seleccionar", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Editar", exact: true }).first(),
   ).toBeVisible();
   await page.setViewportSize({ width: 360, height: 740 });
   expect(
@@ -306,6 +317,7 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+  await page.getByRole("button", { name: "Variantes", exact: true }).click();
   await page.getByRole("button", { name: /Polo visual.*3 variantes/ }).click();
   await page
     .getByRole("textbox", { name: "Precio general", exact: true })

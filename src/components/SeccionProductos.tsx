@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useEsMovil } from '@/hooks/useEsMovil'
 import { Plus, Search, Pencil, Trash2, Check, X, Printer, Lock, Camera, Archive, ArchiveRestore, CheckSquare, Package, History, Boxes, Tag, Info } from 'lucide-react'
 import { fmtSoles } from '@/lib/format'
@@ -174,9 +174,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   const esMovil = useEsMovil()
   const { startTour } = useOnboarding()
   const [familiasDisponibles, setFamiliasDisponibles] = useState(false)
-  const [mostrarCatalogo, setMostrarCatalogo] = useState(true)
-  const [crearFamiliaInicial, setCrearFamiliaInicial] = useState(false)
-  const consumirCreacion = useCallback(() => setCrearFamiliaInicial(false), [])
+  const [editorVariantes, setEditorVariantes] = useState<'crear' | 'gestionar' | null>(null)
   useEffect(() => {
     let vivo = true
     api<{ habilitado: boolean }>('/api/productos/familias')
@@ -684,25 +682,6 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
     )
   }
 
-  if (familiasDisponibles && mostrarCatalogo) {
-    return <CatalogoVariantes
-      verCosto={puedeVerGanancias}
-      onIndividual={() => { setMostrarCatalogo(false); cargarProductosYConteos() }}
-      onEditar={p => {
-        setProductos(prev => [p, ...prev.filter(x => x.id !== p.id)])
-        iniciarEdicion(p)
-        setMostrarCatalogo(false)
-      }}
-      onNuevoIndividual={() => {
-        setMostrarCatalogo(false)
-        setTipoCreacion('individual')
-        setShowNuevo(true)
-      }}
-      iniciarCreacion={crearFamiliaInicial}
-      onConsumirCreacion={consumirCreacion}
-    />
-  }
-
   if (loading) return <div className="text-center py-12 text-slate-400">Cargando productos...</div>
 
   // Valor del catálogo: qué dinero representa el stock que tienes parado.
@@ -712,7 +691,6 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
 
   return (
     <div className="space-y-4">
-      {familiasDisponibles && <button className="text-sm font-semibold text-sky-700" onClick={() => setMostrarCatalogo(true)}>← Volver al catálogo agrupado</button>}
       {/* Cabecera: mismo lenguaje que la página de ventas */}
       <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-tori-700 via-tori-600 to-tori-700 shadow-lg shadow-tori-700/20">
         <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" aria-hidden />
@@ -742,6 +720,14 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                   className="flex items-center gap-2 rounded-2xl bg-white/15 px-3 py-2.5 sm:px-4 text-sm font-bold text-white transition-all hover:bg-white/25"
                 >
                   <CheckSquare size={15} /> Seleccionar
+                </button>
+              )}
+              {familiasDisponibles && (
+                <button
+                  onClick={() => setEditorVariantes('gestionar')}
+                  className="flex items-center gap-2 rounded-2xl bg-white/15 px-3 py-2.5 sm:px-4 text-sm font-bold text-white transition-all hover:bg-white/25"
+                >
+                  <Boxes size={15} /> Variantes
                 </button>
               )}
               <button
@@ -1596,7 +1582,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                   </button>
                   <button
                     type="button"
-                    onClick={() => { if(familiasDisponibles) {setShowNuevo(false);setCrearFamiliaInicial(true);setMostrarCatalogo(true)} else setTipoCreacion('variantes') }}
+                    onClick={() => { if(familiasDisponibles) {setShowNuevo(false);setEditorVariantes('crear')} else setTipoCreacion('variantes') }}
                     className={`rounded-[15px] border p-3.5 text-left transition-all ${
                       tipoCreacion === 'variantes'
                         ? 'border-tori-400 bg-tori-50 ring-2 ring-tori-400/20'
@@ -2093,6 +2079,18 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
             </div>
           </div>
         </div>
+      )}
+
+      {familiasDisponibles && editorVariantes && (
+        <CatalogoVariantes
+          enModal
+          verCosto={puedeVerGanancias}
+          iniciarCreacion={editorVariantes === 'crear'}
+          onConsumirCreacion={() => {}}
+          onIndividual={() => { setEditorVariantes(null); cargarProductosYConteos() }}
+          onEditar={p => { setProductos(prev => [p, ...prev.filter(x => x.id !== p.id)]); setEditorVariantes(null); iniciarEdicion(p) }}
+          onNuevoIndividual={() => { setEditorVariantes(null); setTipoCreacion('individual'); setShowNuevo(true) }}
+        />
       )}
 
       {imprimirProducto && (
