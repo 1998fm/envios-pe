@@ -11,6 +11,7 @@ Hasta instalarlo, la pantalla y la creación de series anteriores continúan dis
 ## Uso
 
 - **Nuevo producto → Serie con variantes**: nombre, descripción, precio e imagen generales; hasta tres opciones y 200 combinaciones. Cada variante tiene SKU, costo (según permisos), stock, stock mínimo y excepciones. La creación y el stock inicial se guardan en una sola transacción.
+- **Creación guiada**: elige la unidad de medida de la lista y tipos como Color, Talla o Material. Marca los valores sugeridos antes de generar combinaciones; también puedes elegir «Otra opción…» o escribir valores propios separados por comas.
 - **Variantes → Agrupar existentes**: selección voluntaria; solo añade vínculos y valores de opciones. Conserva absolutamente todos los campos de los productos e históricos. Al agrupar, los campos individuales son excepciones: para compartirlos después hay que activar su herencia explícitamente o usar «Aplicar precio a todas» / «Unificar información general».
 - **Editar ficha**: el precio general afecta a quienes lo heredan. Las excepciones conservan sus valores. Un cambio individual en la vista anterior marca el campo correspondiente como excepción.
 - **Separar** y **Deshacer agrupación** eliminan vínculos; los productos siguen existiendo con sus datos e históricos.

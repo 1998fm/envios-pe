@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/clienteApi";
 import PrecioInput from "./PrecioInput";
 import { comprimirImagen } from "@/lib/comprimirImagen";
+import { UNIDADES_MEDIDA } from "@/types/inventario";
 import type { Producto } from "@/types/inventario";
 import type { FichaFamilia, ResumenFamilia } from "@/types/productosFamilias";
 import { Plus, X, Boxes, ImagePlus, Layers, Search } from "lucide-react";
@@ -38,6 +39,100 @@ const campos =
   "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition-all focus:border-tori-400 focus:ring-2 focus:ring-tori-400/20 disabled:bg-slate-50 disabled:text-slate-400";
 const boton =
   "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-40";
+const OPCIONES_VARIANTE = [
+  "Color",
+  "Talla",
+  "Tamaño",
+  "Modelo",
+  "Material",
+  "Presentación",
+  "Variante",
+];
+const VALORES_SUGERIDOS: Record<string, string[]> = {
+  Color: [
+    "Negro",
+    "Blanco",
+    "Azul",
+    "Rojo",
+    "Verde",
+    "Amarillo",
+    "Rosado",
+    "Morado",
+    "Gris",
+    "Beige",
+    "Marrón",
+  ],
+  Talla: ["XS", "S", "M", "L", "XL", "XXL"],
+  Tamaño: ["Pequeño", "Mediano", "Grande"],
+  Material: ["Algodón", "Poliéster", "Cuero", "Acero", "Plástico", "Madera"],
+  Presentación: ["100 ml", "250 ml", "500 ml", "1 L"],
+};
+const valoresElegidos = (texto: string) => [
+  ...new Set(
+    texto
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean),
+  ),
+];
+function SelectorOpcion({
+  valor,
+  indice,
+  disabled,
+  usadas,
+  cambiar,
+}: {
+  valor: string;
+  indice: number;
+  disabled: boolean;
+  usadas: string[];
+  cambiar: (nombre: string) => void;
+}) {
+  const [personalizada, setPersonalizada] = useState(
+    !OPCIONES_VARIANTE.includes(valor),
+  );
+  return (
+    <>
+      <select
+        aria-label={`Nombre de opción ${indice + 1}`}
+        className={`${campos} mt-1`}
+        disabled={disabled}
+        value={personalizada ? "__otra__" : valor}
+        onChange={(e) => {
+          if (e.target.value === "__otra__") {
+            setPersonalizada(true);
+            cambiar("");
+          } else {
+            setPersonalizada(false);
+            cambiar(e.target.value);
+          }
+        }}
+      >
+        {OPCIONES_VARIANTE.map((o) => (
+          <option
+            key={o}
+            value={o}
+            disabled={o !== valor && usadas.includes(o)}
+          >
+            {o}
+          </option>
+        ))}
+        <option value="__otra__">Otra opción…</option>
+      </select>
+      {personalizada && (
+        <input
+          aria-label={`Nombre personalizado de opción ${indice + 1}`}
+          className={`${campos} mt-2`}
+          value={valor}
+          disabled={disabled}
+          maxLength={40}
+          placeholder="Ej.: Sabor, capacidad o acabado"
+          onChange={(e) => cambiar(e.target.value)}
+        />
+      )}
+    </>
+  );
+}
 const fondoModal =
   "fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 backdrop-blur-sm sm:items-center sm:p-4";
 const panelModal =
@@ -382,7 +477,7 @@ export default function CatalogoVariantes({
         ),
       ];
       if (!list.length) {
-        setError(`Escribe los valores de ${o}, separados por comas`);
+        setError(`Selecciona o añade al menos un valor de ${o}`);
         return;
       }
       combos = combos.flatMap((c) =>
@@ -853,14 +948,27 @@ export default function CatalogoVariantes({
                     </label>
                     <label className="text-xs font-semibold text-slate-500">
                       Unidad
-                      <input
+                      <select
+                        aria-label="Unidad de medida"
                         className={`${campos} mt-1`}
                         value={datos.unidad}
                         disabled={modo === "editar"}
                         onChange={(e) =>
                           cambiarDatos({ unidad: e.target.value })
                         }
-                      />
+                      >
+                        {!UNIDADES_MEDIDA.some((u) => u === datos.unidad) && (
+                          <option value={datos.unidad}>{datos.unidad}</option>
+                        )}
+                        {UNIDADES_MEDIDA.map((u) => (
+                          <option key={u} value={u}>
+                            {u}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="mt-1 block text-[11px] font-normal text-slate-400">
+                        Cómo vendes el producto: por unidad, par, caja, kg, etc.
+                      </span>
                     </label>
                     <label className={`${boton} self-end cursor-pointer`}>
                       <ImagePlus size={16} />
@@ -882,51 +990,115 @@ export default function CatalogoVariantes({
                     />
                     <div className="flex flex-wrap gap-3">
                       {datos.opciones.map((o, i) => (
-                        <label key={i} className="min-w-40 flex-1 text-xs">
-                          Opción {i + 1}
-                          <input
-                            aria-label={`Nombre de opción ${i + 1}`}
-                            className={`${campos} mt-1`}
-                            value={o}
-                            disabled={
-                              modo === "editar" ||
-                              (modo === "agrupar" && filas.length > 0)
-                            }
-                            onChange={(e) => {
-                              const name = e.target.value;
-                              const opciones = datos.opciones.map((s, k) =>
-                                k === i ? name : s,
-                              );
-                              cambiarDatos({ opciones });
-                              setFilas((v) =>
-                                v.map((f) => {
-                                  const opt = { ...f.opciones };
-                                  const value = opt[o];
-                                  delete opt[o];
-                                  opt[name] = value;
-                                  return { ...f, opciones: opt };
-                                }),
-                              );
-                              setValores((v) => ({ ...v, [name]: v[o] ?? "" }));
-                            }}
-                          />
-                          {modo === "crear" && (
-                            <input
-                              aria-label={`Valores ${i + 1}`}
-                              className={`${campos} mt-1`}
-                              placeholder={
-                                i === 0 ? "Amarillo, Verde, Negro" : "S, M, L"
+                        <div key={i} className="min-w-40 flex-1 text-xs">
+                          <div className="font-semibold text-slate-500">
+                            Tipo de variante {i + 1}
+                            <SelectorOpcion
+                              valor={o}
+                              indice={i}
+                              usadas={datos.opciones}
+                              disabled={
+                                modo === "editar" ||
+                                (modo === "agrupar" && filas.length > 0)
                               }
-                              value={valores[o] ?? ""}
-                              onChange={(e) =>
+                              cambiar={(name) => {
+                                const opciones = datos.opciones.map((s, k) =>
+                                  k === i ? name : s,
+                                );
+                                cambiarDatos({ opciones });
+                                setFilas((v) =>
+                                  v.map((f) => {
+                                    const opt = { ...f.opciones };
+                                    const value = opt[o];
+                                    delete opt[o];
+                                    opt[name] = value;
+                                    return { ...f, opciones: opt };
+                                  }),
+                                );
                                 setValores((v) => ({
                                   ...v,
-                                  [o]: e.target.value,
-                                }))
-                              }
+                                  [name]: v[name] ?? "",
+                                }));
+                              }}
                             />
+                          </div>
+                          {modo === "crear" && (
+                            <div className="mt-3 space-y-2">
+                              <p className="font-semibold text-slate-500">
+                                Elige los valores que vendes
+                              </p>
+                              {Object.hasOwn(VALORES_SUGERIDOS, o) &&
+                                !!VALORES_SUGERIDOS[o]?.length && (
+                                  <div
+                                    className="flex flex-wrap gap-1.5"
+                                    role="group"
+                                    aria-label={`Valores sugeridos de ${o}`}
+                                  >
+                                    {VALORES_SUGERIDOS[o].map((v) => {
+                                      const elegidos = valoresElegidos(
+                                        valores[o] ?? "",
+                                      );
+                                      const seleccionado = elegidos.some(
+                                        (x) =>
+                                          x.toLowerCase() === v.toLowerCase(),
+                                      );
+                                      return (
+                                        <button
+                                          type="button"
+                                          key={v}
+                                          aria-pressed={seleccionado}
+                                          className={`rounded-lg border px-3 py-2 text-xs font-bold transition-colors ${seleccionado ? "border-tori-400 bg-tori-50 text-tori-700" : "border-slate-200 bg-white text-slate-600 hover:border-tori-300"}`}
+                                          onClick={() => {
+                                            const nuevos = seleccionado
+                                              ? elegidos.filter(
+                                                  (x) =>
+                                                    x.toLowerCase() !==
+                                                    v.toLowerCase(),
+                                                )
+                                              : [...elegidos, v];
+                                            setValores((prev) => ({
+                                              ...prev,
+                                              [o]: nuevos.join(", "),
+                                            }));
+                                            setDirty(true);
+                                          }}
+                                        >
+                                          {seleccionado ? "✓ " : "+ "}
+                                          {v}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              <label className="block font-semibold text-slate-500">
+                                Valores seleccionados o personalizados
+                                <input
+                                  aria-label={`Valores ${i + 1}`}
+                                  className={`${campos} mt-1`}
+                                  placeholder={
+                                    o === "Talla"
+                                      ? "Ej.: S, M, L"
+                                      : o === "Color"
+                                        ? "Ej.: Negro, Blanco, Azul"
+                                        : "Ej.: Clásico, Deportivo"
+                                  }
+                                  value={valores[o] ?? ""}
+                                  onChange={(e) => {
+                                    setValores((v) => ({
+                                      ...v,
+                                      [o]: e.target.value,
+                                    }));
+                                    setDirty(true);
+                                  }}
+                                />
+                              </label>
+                              <p className="text-[11px] leading-relaxed text-slate-400">
+                                Puedes marcar varios valores. Para añadir los
+                                tuyos, escríbelos separados por comas.
+                              </p>
+                            </div>
                           )}
-                        </label>
+                        </div>
                       ))}
                     </div>
                     {modo === "crear" && (
@@ -935,8 +1107,14 @@ export default function CatalogoVariantes({
                           className={boton}
                           disabled={datos.opciones.length >= 3}
                           onClick={() => {
-                            const o =
-                              datos.opciones.length === 1 ? "Talla" : "Modelo";
+                            const o = [
+                              "Talla",
+                              "Color",
+                              "Modelo",
+                              ...OPCIONES_VARIANTE,
+                            ].find(
+                              (nombre) => !datos.opciones.includes(nombre),
+                            )!;
                             cambiarDatos({ opciones: [...datos.opciones, o] });
                             setFilas((v) =>
                               v.map((f) => ({

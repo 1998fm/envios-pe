@@ -272,6 +272,7 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
 }) => {
   const u = await createUser();
   await abrirDashboard(page, u, "productos");
+  await page.setViewportSize({ width: 360, height: 740 });
   await expect(page.getByText("Tu catálogo", { exact: true })).toBeVisible();
   await expect(page.getByText("Valor de venta", { exact: true })).toBeVisible();
   await expect(
@@ -289,8 +290,35 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
     .getByRole("textbox", { name: "Precio general", exact: true })
     .fill("25.50");
   await page
-    .getByRole("textbox", { name: "Valores 1", exact: true })
-    .fill("Rojo, Azul, Negro");
+    .getByRole("combobox", { name: "Unidad de medida", exact: true })
+    .selectOption("par");
+  await page
+    .getByRole("combobox", { name: "Nombre de opción 1", exact: true })
+    .selectOption("Color");
+  const colores = page.getByRole("group", {
+    name: "Valores sugeridos de Color",
+    exact: true,
+  });
+  await colores.getByRole("button", { name: "+ Rojo", exact: true }).click();
+  await colores.getByRole("button", { name: "+ Azul", exact: true }).click();
+  await colores.getByRole("button", { name: "+ Negro", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Añadir opción", exact: true })
+    .click();
+  await page
+    .getByRole("combobox", { name: "Nombre de opción 2", exact: true })
+    .selectOption("Talla");
+  const tallas = page.getByRole("group", {
+    name: "Valores sugeridos de Talla",
+    exact: true,
+  });
+  await tallas.getByRole("button", { name: "+ S", exact: true }).click();
+  await tallas.getByRole("button", { name: "+ M", exact: true }).click();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
   await page
     .getByRole("button", { name: "Generar combinaciones", exact: true })
     .click();
@@ -318,7 +346,7 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
     ),
   ).toBe(true);
   await page.getByRole("button", { name: "Variantes", exact: true }).click();
-  await page.getByRole("button", { name: /Polo visual.*3 variantes/ }).click();
+  await page.getByRole("button", { name: /Polo visual.*6 variantes/ }).click();
   await page
     .getByRole("textbox", { name: "Precio general", exact: true })
     .fill("32.90");
@@ -328,7 +356,10 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
   await expect(page.getByRole("status")).toContainText("guardados");
   const api = await appApi(u.token);
   const productos = (await (await api.get("/api/productos")).json()).data;
-  expect(productos).toHaveLength(3);
+  expect(productos).toHaveLength(6);
+  expect(productos.every((p: { unidad: string }) => p.unidad === "par")).toBe(
+    true,
+  );
   expect(
     productos.every((p: { precio_venta: number }) => p.precio_venta === 32.9),
   ).toBe(true);
