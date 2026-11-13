@@ -1,65 +1,230 @@
 {
-  "duration": 76.521,
+  "duration": 371.758,
   "marks": [
     {
       "start": 0,
-      "title": "Configuración, paso a paso",
-      "detail": "Empresa · Métodos · Logística · Tarifas."
+      "title": "INICIO · Configuración con ejemplos",
+      "detail": "Primero los datos básicos. Después, Logística y Tarifas, opción por opción."
     },
     {
-      "start": 4.066,
-      "title": "1. Abre Configuración",
-      "detail": "Abre el menú lateral y elige Configuración."
+      "start": 7.991,
+      "title": "Empresa y métodos de envío",
+      "detail": "Completa tus datos. Si usas Shalom, selecciona una agencia de origen válida."
     },
     {
-      "start": 9.455,
-      "title": "2. Completa los datos de Empresa",
-      "detail": "Escribe el nombre del negocio y su teléfono. La dirección es opcional."
+      "start": 25.325,
+      "title": "LOGÍSTICA · Para qué sirve",
+      "detail": "Estas reglas ayudan a calcular las fechas disponibles para tus pedidos.",
+      "explicacion": {
+        "titulo": "Logística = cuándo atiendes",
+        "filas": [
+          "Motorizado Organiza tus fechas de reparto local.",
+          "Agencias Organiza tus días de despacho por Shalom, Olva y otros métodos de agencia."
+        ],
+        "nota": "Los días de una agencia no indican cuánto demora el transporte hasta el destino."
+      }
     },
     {
-      "start": 17.007,
-      "title": "Si usas Shalom, elige una agencia de origen",
-      "detail": "Busca tu agencia y selecciónala de la lista de resultados."
+      "start": 39.769,
+      "title": "Días de atención",
+      "detail": "Marca únicamente los días en que realmente repartes. Ejemplo: lunes a viernes.",
+      "explicacion": {
+        "titulo": "Tus días de atención",
+        "filas": [
+          "L · M · X · J · V · S · D Lunes, martes, miércoles, jueves, viernes, sábado y domingo.",
+          "Ejemplo: lunes a viernes Si una fecha cae en sábado o domingo, se busca el próximo día que atiendes."
+        ],
+        "nota": "No marques un día si no puedes hacer entregas ese día. Marca al menos un día; sin días, Motorizado no aparece en el formulario."
+      }
     },
     {
-      "start": 24.958,
-      "title": "3. Activa tus métodos de envío",
-      "detail": "En Métodos, marca solamente los servicios que ofreces a tus clientes."
+      "start": 65.081,
+      "title": "Anticipación mínima",
+      "detail": "Es el tiempo de preparación que necesitas antes de atender un pedido.",
+      "explicacion": {
+        "titulo": "Anticipación de 2 días",
+        "filas": [
+          "Ejemplo: recibes el lunes Con 2 días de anticipación, la fecha base es el miércoles.",
+          "Si la fecha cae en un día que no atiendes Se mueve al siguiente día de atención."
+        ],
+        "nota": "Este ejemplo supone atención de lunes a viernes, antes del corte y con cupo disponible."
+      }
     },
     {
-      "start": 33.211,
-      "title": "4. Define tus días de atención",
-      "detail": "En Logística, elige los días para Motorizado. Ejemplo: lunes, miércoles y viernes."
+      "start": 82.969,
+      "title": "Aplicar solo a días hábiles",
+      "detail": "Aquí, hábiles significa los días de atención que tú marcaste.",
+      "explicacion": {
+        "titulo": "Viernes + 2 días: ¿lunes o martes?",
+        "filas": [
+          "Sin marcar la casilla Suma 2 días de calendario: llega al domingo y se ajusta al lunes.",
+          "Con la casilla marcada Cuenta solo atención de lunes a viernes: lunes = día 1; martes = día 2."
+        ],
+        "nota": "Resultado: lunes sin la casilla; martes con la casilla. Supone pedido antes del corte y cupo libre."
+      }
     },
     {
-      "start": 42.162,
-      "title": "Indica la anticipación de los pedidos",
-      "detail": "Ejemplo: 2 días de anticipación mínima. Ajusta esta regla a tu operación."
+      "start": 106.072,
+      "title": "Hora de corte",
+      "detail": "Actívala si necesitas cerrar la recepción operativa a una hora determinada.",
+      "explicacion": {
+        "titulo": "Corte a las 18:00: se suma un día",
+        "filas": [
+          "Lunes a las 17:00 Anticipación 2 días → miércoles.",
+          "Lunes desde las 18:00 Anticipación 2 + 1 día por el corte → jueves."
+        ],
+        "nota": "Hora de Perú. Atención de lunes a viernes, conteo de calendario y cupo libre. No significa cerrar el formulario."
+      }
     },
     {
-      "start": 46.573,
-      "title": "5. Configura las tarifas por distrito",
-      "detail": "En Tarifas, elige tu región. Este ejemplo corresponde a Lima."
+      "start": 126.439,
+      "title": "Limitar envíos por día",
+      "detail": "Activa esta opción solo si tienes un máximo de pedidos que puedes atender por fecha.",
+      "explicacion": {
+        "titulo": "Ejemplo: cupo máximo de 5",
+        "filas": [
+          "Miércoles con 5 pedidos programados La fecha ya alcanzó el cupo de este ejemplo.",
+          "El siguiente pedido Se busca el próximo día de atención con disponibilidad: jueves, si está libre."
+        ],
+        "nota": "Usa un cupo mayor que cero. Si no quieres limitar, deja la casilla desactivada."
+      }
     },
     {
-      "start": 54.902,
-      "title": "Asigna el precio de entrega",
-      "detail": "Busca el distrito y escribe la tarifa. Ejemplo: Miraflores, S/ 8.50."
+      "start": 145.855,
+      "title": "Mostrar Escoger día de entrega",
+      "detail": "Decide si el cliente puede elegir su fecha o si se asigna automáticamente.",
+      "explicacion": {
+        "titulo": "¿Quién elige la fecha?",
+        "filas": [
+          "Activado El cliente puede elegir entre las fechas que ofrece el formulario.",
+          "Desactivado El sistema asigna la fecha más cercana según las reglas configuradas."
+        ],
+        "nota": "Revisa siempre el resultado en tu formulario público."
+      }
     },
     {
-      "start": 59.248,
-      "title": "Retira los distritos donde no entregas",
-      "detail": "Usa el ícono de papelera para quitar un distrito de tu cobertura."
+      "start": 158.408,
+      "title": "Agencias: configura tus días de despacho",
+      "detail": "Configura este bloque por separado si trabajas con Shalom, Olva u otra agencia.",
+      "explicacion": {
+        "titulo": "Agencias no es tiempo de transporte",
+        "filas": [
+          "Ejemplo: despachas martes y jueves Marca esos días en Agencias y ajusta su anticipación y corte.",
+          "La llegada al destino Depende de la empresa de transporte. Estos controles no configuran su tiempo de traslado."
+        ],
+        "nota": "Los bloques de Motorizado y Agencias permiten configurar calendarios diferentes."
+      }
     },
     {
-      "start": 67.677,
-      "title": "6. Guarda tu configuración",
-      "detail": "Pulsa Guardar para aplicar los cambios de todos los apartados."
+      "start": 181.113,
+      "title": "TARIFAS · Para qué sirven",
+      "detail": "Las tarifas de esta pantalla son para el reparto motorizado por distrito.",
+      "explicacion": {
+        "titulo": "Tarifas = cobertura y precio de motorizado",
+        "filas": [
+          "Cobertura Define en qué distritos haces entregas.",
+          "Precio Es el importe que se mostrará al cliente para el distrito. No configura el flete de Shalom u otras agencias."
+        ],
+        "nota": "Escoge Lima o Provincia según la zona donde haces tu reparto local."
+      }
     },
     {
-      "start": 72.016,
-      "title": "Listo: tu negocio está configurado",
-      "detail": "Después, comparte el formulario con tus clientes. Las opciones disponibles dependen de tu plan."
+      "start": 201.728,
+      "title": "Lima: precio único para todos",
+      "detail": "Úsalo solo si cobras el mismo importe en todos los distritos activos.",
+      "explicacion": {
+        "titulo": "Aplicar a todos reemplaza los precios",
+        "filas": [
+          "Ejemplo: S/ 8.00 Coloca S/ 8.00 en todos los distritos que siguen activos.",
+          "Si cobras distinto por zona Edita cada distrito después. No vuelvas a aplicar un precio único si quieres conservar esas diferencias."
+        ],
+        "nota": "El precio único no restaura los distritos que ya eliminaste."
+      }
+    },
+    {
+      "start": 224.609,
+      "title": "Lima: editar una tarifa individual",
+      "detail": "Busca el distrito y cambia solo su precio. Ejemplo: Miraflores, S/ 8.50."
+    },
+    {
+      "start": 231.657,
+      "title": "Quitar un distrito sin cobertura",
+      "detail": "No basta con borrar el precio: usa la papelera del distrito donde no entregas.",
+      "explicacion": {
+        "titulo": "Eliminar no es dejar el precio vacío",
+        "filas": [
+          "Si no atiendes Lince La papelera lo retira de tu cobertura. Guarda para aplicar el cambio.",
+          "Si solo borras el precio No estás eliminando el distrito. Todavía puede seguir apareciendo como una zona atendida."
+        ],
+        "nota": "Después de guardar, el cliente no debe poder elegir un distrito eliminado."
+      }
+    },
+    {
+      "start": 255.64,
+      "title": "Restaurar un distrito de Lima",
+      "detail": "Si vuelves a atenderlo, selecciónalo en Restaurar distrito eliminado.",
+      "explicacion": {
+        "titulo": "Restaurar también requiere revisar el precio",
+        "filas": [
+          "1. Restaura el distrito Vuelve a quedar dentro de tu cobertura.",
+          "2. Asigna su tarifa y guarda Ejemplo: Lince, S/ 8.00. No des por hecho que conserva el precio anterior."
+        ],
+        "nota": "Guarda los cambios y vuelve a comprobar tu formulario."
+      }
+    },
+    {
+      "start": 284.347,
+      "title": "PROVINCIA · Ejemplo independiente",
+      "detail": "Ahora veremos otra tienda, que empieza con sus tarifas vacías en Provincia.",
+      "explicacion": {
+        "titulo": "Provincia: agrega tus propios distritos",
+        "filas": [
+          "Este es otro ejemplo, desde cero Una tienda distinta configurará Cajamarca y Baños del Inca.",
+          "Si cambias de Lima a Provincia en tu tienda Revisa la lista existente. Cambiar la región no elimina automáticamente tus tarifas guardadas."
+        ],
+        "nota": "En Provincia no se carga una lista oficial para tu reparto: tú defines las zonas."
+      }
+    },
+    {
+      "start": 311.683,
+      "title": "Provincia: agregar el primer distrito",
+      "detail": "Escribe el nombre y su precio. Después pulsa Agregar para incluirlo en la lista."
+    },
+    {
+      "start": 319.769,
+      "title": "Provincia: agrega todas las zonas donde entregas",
+      "detail": "Repite el proceso para cada distrito. Ejemplo: Baños del Inca, S/ 7.50.",
+      "explicacion": {
+        "titulo": "En Provincia, solo se ofrecen tus distritos",
+        "filas": [
+          "Agregar Incluye un distrito y una tarifa. Revisa que ambos aparezcan en la lista.",
+          "Editar o eliminar Cambia el importe en su fila o usa la papelera si dejas de atenderlo."
+        ],
+        "nota": "Agregar una fila no guarda toda la configuración: al terminar debes pulsar Guardar."
+      }
+    },
+    {
+      "start": 344.569,
+      "title": "Provincia: editar y retirar una zona",
+      "detail": "Puedes corregir el precio o quitar un distrito que ya no atiendes."
+    },
+    {
+      "start": 350.243,
+      "title": "Guardar y revisar el formulario",
+      "detail": "Guarda al terminar. Luego revisa el resultado que verá tu cliente."
+    },
+    {
+      "start": 353.163,
+      "title": "Lista final de comprobación",
+      "detail": "Días, anticipación, corte, cupo, región, cobertura, precios y Guardar.",
+      "explicacion": {
+        "titulo": "Antes de compartir tu formulario",
+        "filas": [
+          "Logística ¿Los días y las reglas coinciden con tu operación real?",
+          "Tarifas ¿Solo atiendes los distritos de la lista y sus precios están completos?"
+        ],
+        "nota": "Guarda y abre tu formulario público para comprobarlo. Las opciones disponibles dependen de tu plan."
+      }
     }
   ]
 }

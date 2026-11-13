@@ -1,6 +1,6 @@
 'use client'
 
-import TutorialEnVideo from '@/components/TutorialEnVideo'
+import TutorialConfiguracion from '@/components/TutorialConfiguracion'
 import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
 import AyudaLogistica from '@/components/AyudaLogistica'
@@ -70,15 +70,7 @@ function ModalConfiguracionContenido({
             Configuración
           </h2>
           <div className="flex items-center gap-1.5">
-            <TutorialEnVideo
-              titulo="Cómo configurar tu negocio"
-              etiquetaBoton="Ver tutorial de configuración"
-              video="/recursos/configuracion/configuracion.mp4"
-              portada="/recursos/configuracion/portada.jpg"
-              guia="/recursos/configuracion/index.html"
-              duracion="77 segundos"
-              tono="oscuro"
-            />
+            <TutorialConfiguracion vista={config.vistaConfig} region={config.motoRegion} />
             <TourHelpButton tourId="modal-configuracion" />
           </div>
         </div>

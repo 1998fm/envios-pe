@@ -13,6 +13,8 @@ type Props = {
   guia: string;
   duracion?: string;
   tono?: "claro" | "oscuro";
+  capitulos?: readonly { titulo: string; segundos: number }[];
+  inicio?: number;
 };
 export default function TutorialEnVideo({
   titulo,
@@ -22,12 +24,16 @@ export default function TutorialEnVideo({
   guia,
   duracion,
   tono = "claro",
+  capitulos,
+  inicio = 0,
 }: Props) {
   const tituloId = useId();
   const [abierto, setAbierto] = useState(false);
   const boton = useRef<HTMLButtonElement>(null);
   const cerrar = useRef<HTMLButtonElement>(null);
   const dialogo = useRef<HTMLDivElement>(null);
+  const reproductor = useRef<HTMLVideoElement>(null);
+  const destino = useRef(inicio);
 
   useEffect(() => {
     if (!abierto) return;
@@ -58,7 +64,10 @@ export default function TutorialEnVideo({
         aria-label={etiquetaBoton}
         aria-haspopup="dialog"
         title={titulo}
-        onClick={() => setAbierto(true)}
+        onClick={() => {
+          destino.current = inicio;
+          setAbierto(true);
+        }}
         className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${tono === "claro" ? "border-white/25 bg-white/10 text-white hover:bg-white/20 focus-visible:outline-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 focus-visible:outline-tori-600"}`}
       >
         <Info size={18} />
@@ -130,7 +139,35 @@ export default function TutorialEnVideo({
                 </div>
               </header>
               <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+                {!!capitulos?.length && (
+                  <nav
+                    aria-label="Capítulos del tutorial"
+                    className="mb-3 flex flex-wrap gap-2"
+                  >
+                    {capitulos.map((capitulo) => (
+                      <button
+                        type="button"
+                        key={capitulo.titulo}
+                        aria-label={`Ver capítulo ${capitulo.titulo}`}
+                        className="rounded-lg border border-tori-200 bg-tori-50 px-3 py-2 text-xs font-bold text-tori-700 transition-colors hover:bg-tori-100"
+                        onClick={() => {
+                          destino.current = capitulo.segundos;
+                          if (reproductor.current) {
+                            reproductor.current.currentTime = capitulo.segundos;
+                            void reproductor.current.play().catch(() => {});
+                          }
+                        }}
+                      >
+                        {capitulo.titulo}
+                      </button>
+                    ))}
+                  </nav>
+                )}
                 <video
+                  ref={reproductor}
+                  onLoadedMetadata={(e) => {
+                    e.currentTarget.currentTime = destino.current;
+                  }}
                   controls
                   autoPlay
                   playsInline

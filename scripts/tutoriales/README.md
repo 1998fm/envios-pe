@@ -29,3 +29,11 @@ APP_PORT=3100 LOCAL_DB_PORT=54322 node scripts/tutoriales/configuracion.mjs
 La salida temporal usa `tori-configuracion`. Se publica en `public/recursos/configuracion/` con `configuracion.mp4`, `portada.jpg` y los capítulos en `pasos.json`. `TUTORIAL_FAST=1` permite comprobar los controles rápidamente y limpia su perfil de ensayo local; esa versión acelerada no es el video que se publica. Inicia un stack local nuevo para evitar que el nombre del negocio del ejemplo ya esté registrado.
 
 Ambas ayudas usan `TutorialEnVideo`: el botón abre un reproductor sin desmontar el formulario, permite cerrar con Escape y devuelve el foco al botón. El de Configuración usa el tono oscuro para su cabecera blanca.
+
+### Guía ampliada de Logística y Tarifas
+
+La guía de Configuración dedica una explicación con ejemplos a cada opción. Los ejemplos de fechas suponen lunes a viernes y cupo libre, salvo donde se indica lo contrario: lunes antes del corte +2 → miércoles; desde el corte +3 → jueves; viernes +2 de calendario → lunes; viernes +2 de atención → martes.
+
+El ejemplo de Lima demuestra precio único, cambio individual, exclusión, guardado y restauración con nueva tarifa. Provincia se graba con otra cuenta local que empieza sin tarifas: cambiar de región no limpia automáticamente una lista existente. Ambos perfiles de demostración se eliminan al finalizar el generador, también si ocurre un error.
+
+El tiempo de cada explicación se calcula para permitir su lectura (aprox. 187 palabras por minuto). Los capítulos se leen desde `pasos.json`; el botón de ayuda abre el tema correspondiente a la pestaña actual, con accesos a Inicio, Logística, Tarifas Lima y Tarifas Provincia. La transcripción incluye los ejemplos, además de las instrucciones cortas.

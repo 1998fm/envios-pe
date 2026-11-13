@@ -31,6 +31,7 @@ let r = await admin.post("/auth/v1/admin/users", {
 });
 if (!r.ok()) throw Error(`Usuario local: ${r.status()}`);
 const id = (await r.json()).id;
+const perfilesDemo = [id];
 r = await admin.post("/rest/v1/profiles", {
   data: {
     id,
@@ -51,7 +52,11 @@ const browser = await chromium.launch({
     process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || "/usr/bin/chromium",
 });
 try {
-  const auth = await browser.newContext({ baseURL: base });
+  const ipDemo = `10.77.${Math.floor(Math.random() * 240)}.${Math.floor(Math.random() * 240)}`;
+  const auth = await browser.newContext({
+    baseURL: base,
+    extraHTTPHeaders: { "x-forwarded-for": ipDemo },
+  });
   r = await auth.request.post("/api/auth/login", { data: { email, password } });
   if (!r.ok()) throw Error(`Sesión local: ${r.status()}`);
   const state = await auth.storageState();
@@ -60,6 +65,7 @@ try {
     baseURL: base,
     viewport: { width: 1280, height: 800 },
     storageState: state,
+    extraHTTPHeaders: { "x-forwarded-for": ipDemo },
     recordVideo: { dir: salida, size: { width: 1280, height: 800 } },
   });
   await ctx.addInitScript(() => {
@@ -74,19 +80,22 @@ try {
   await page.goto("/dashboard?v=envios");
   await page.getByTitle("Abrir menú", { exact: true }).waitFor();
   await page.evaluate(() => document.fonts.ready);
-  await page.addStyleTag({
-    content: `nextjs-portal{display:none!important}#tutorial-cursor{position:fixed;z-index:2147483647;width:30px;height:38px;pointer-events:none;left:1160px;top:700px;transition:left .5s ease,top .5s ease;filter:drop-shadow(0 2px 3px #001b3d60)}#tutorial-highlight{position:fixed;z-index:2147483646;border:3px solid #f6b800;border-radius:10px;pointer-events:none;box-shadow:0 0 0 4px #f6b80025;transition:opacity .2s;display:none}#tutorial-cover{position:fixed;inset:0;z-index:2147483647;background:linear-gradient(135deg,#075b8d,#1397df);display:flex;align-items:center;justify-content:center;color:white;font-family:Arial,sans-serif;text-align:center;padding:60px}#tutorial-cover h1{font-size:54px;line-height:1.15;max-width:1000px;margin:18px auto}#tutorial-cover p{font-size:27px;line-height:1.5;color:#e2f5ff}#tutorial-cover small{font-size:19px;font-weight:800;letter-spacing:3px}`,
-  });
-  await page.evaluate(() => {
-    const cursor = document.createElement("div");
-    cursor.id = "tutorial-cursor";
-    cursor.innerHTML =
-      '<svg viewBox="0 0 30 38"><path d="M3 2 L3 30 L10 23 L16 35 L23 31 L17 20 L28 20 Z" fill="#087bb8" stroke="white" stroke-width="2.5" stroke-linejoin="round"/></svg>';
-    document.body.append(cursor);
-    const h = document.createElement("div");
-    h.id = "tutorial-highlight";
-    document.body.append(h);
-  });
+  async function decorar() {
+    await page.addStyleTag({
+      content: `nextjs-portal{display:none!important}#tutorial-cursor{position:fixed;z-index:2147483647;width:30px;height:38px;pointer-events:none;left:1160px;top:700px;transition:left .5s ease,top .5s ease;filter:drop-shadow(0 2px 3px #001b3d60)}#tutorial-highlight{position:fixed;z-index:2147483646;border:3px solid #f6b800;border-radius:10px;pointer-events:none;box-shadow:0 0 0 4px #f6b80025;transition:opacity .2s;display:none}#tutorial-cover{position:fixed;inset:0;z-index:2147483647;background:linear-gradient(135deg,#075b8d,#1397df);display:flex;align-items:center;justify-content:center;color:white;font-family:Arial,sans-serif;text-align:center;padding:60px}#tutorial-cover h1{font-size:54px;line-height:1.15;max-width:1000px;margin:18px auto}#tutorial-cover p{font-size:27px;line-height:1.5;color:#e2f5ff}#tutorial-cover small{font-size:19px;font-weight:800;letter-spacing:3px}`,
+    });
+    await page.evaluate(() => {
+      const cursor = document.createElement("div");
+      cursor.id = "tutorial-cursor";
+      cursor.innerHTML =
+        '<svg viewBox="0 0 30 38"><path d="M3 2 L3 30 L10 23 L16 35 L23 31 L17 20 L28 20 Z" fill="#087bb8" stroke="white" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+      document.body.append(cursor);
+      const h = document.createElement("div");
+      h.id = "tutorial-highlight";
+      document.body.append(h);
+    });
+  }
+  await decorar();
   const lead = (Date.now() - started) / 1000,
     epoch = Date.now(),
     marks = [];
@@ -152,34 +161,66 @@ try {
       });
     await pause(450);
   }
+  async function explicar(titulo, filas, nota = "", tiempo = 6500) {
+    const texto = valor => valor.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    marks.at(-1).explicacion = { titulo, filas: filas.map(texto), nota };
+    await page.evaluate(
+      ({ titulo, filas, nota }) => {
+        document.querySelector("#tutorial-cover")?.remove();
+        const c = document.createElement("div");
+        c.id = "tutorial-cover";
+        c.innerHTML = `<div style="width:100%;max-width:1120px"><small>TORI · EXPLICACIÓN PASO A PASO</small><h1 style="font-size:44px">${titulo}</h1><div style="display:grid;grid-template-columns:${filas.length === 2 ? "1fr 1fr" : "1fr"};gap:16px">${filas.map((f) => `<div style="background:white;color:#183b56;border-radius:22px;padding:24px;font-size:27px;line-height:1.45;text-align:left">${f}</div>`).join("")}</div><p style="font-size:21px;margin-bottom:0">${nota}</p></div>`;
+        document.body.append(c);
+      },
+      { titulo, filas, nota },
+    );
+    const palabras = (titulo + " " + filas.join(" ") + " " + nota)
+      .replace(/<[^>]*>/g, " ")
+      .split(/\s+/).length;
+    await pause(Math.max(tiempo, palabras * 320));
+    await page.evaluate(() =>
+      document.querySelector("#tutorial-cover").remove(),
+    );
+  }
+  async function abrirConfig() {
+    await point(page.getByTitle("Abrir menú", { exact: true }));
+    await page.getByTitle("Abrir menú", { exact: true }).hover();
+    await pause(400);
+    await click(page.locator('[data-tour="configuracion"]'));
+  }
+  async function guardar() {
+    const solicitud = page.waitForResponse(
+      (r) =>
+        r.url().includes("/api/configuracion") &&
+        r.request().method() === "POST",
+    );
+    await click(page.getByRole("button", { name: "Guardar", exact: true }));
+    const r = await solicitud;
+    if (!r.ok()) throw Error(await r.text());
+    await page.getByText("Configuración guardada", { exact: true }).waitFor();
+    await pause(900);
+    return (await ctx.request.get("/api/session")).json();
+  }
   step(
-    "Configuración, paso a paso",
-    "Empresa · Métodos · Logística · Tarifas.",
+    "INICIO · Configuración con ejemplos",
+    "Primero los datos básicos. Después, Logística y Tarifas, opción por opción.",
   );
   await cover(
-    "Configura tu negocio.<br>Recibe pedidos a tu manera.",
-    "Un ejemplo con motorizado en Lima y Shalom.<br>Algunas opciones requieren el plan Plus.",
+    "Logística y Tarifas.<br>Entiende cada opción.",
+    "Demostración con Plan Plus y datos de ejemplo.<br>Puedes pausar o ir directamente a un capítulo.",
   );
-  await pause(4000);
+  await pause(4500);
   await page.evaluate(() => document.querySelector("#tutorial-cover").remove());
-  step("1. Abre Configuración", "Abre el menú lateral y elige Configuración.");
-  await click(page.getByTitle("Abrir menú", { exact: true }));
-  await click(page.locator('[data-tour="configuracion"]'));
-  await pause(1300);
+  await abrirConfig();
   step(
-    "2. Completa los datos de Empresa",
-    "Escribe el nombre del negocio y su teléfono. La dirección es opcional.",
+    "Empresa y métodos de envío",
+    "Completa tus datos. Si usas Shalom, selecciona una agencia de origen válida.",
   );
   await type(
     page.getByPlaceholder("Nombre del negocio", { exact: true }),
-    "Mi tienda de ropa",
+    "Mi tienda didáctica",
   );
   await type(page.getByPlaceholder("Teléfono", { exact: true }), "999888777");
-  await pause(1500);
-  step(
-    "Si usas Shalom, elige una agencia de origen",
-    "Busca tu agencia y selecciónala de la lista de resultados.",
-  );
   await type(
     page.getByPlaceholder("Buscar agencia Shalom", { exact: true }),
     "LIMA / LIMA / LA VICTORIA",
@@ -187,54 +228,197 @@ try {
   await click(
     page.getByRole("button", { name: /LIMA \/ LIMA \/ LA VICTORIA/ }).first(),
   );
-  await pause(1500);
-  step(
-    "3. Activa tus métodos de envío",
-    "En Métodos, marca solamente los servicios que ofreces a tus clientes.",
-  );
   await click(page.getByRole("button", { name: "Métodos", exact: true }));
-  await point(page.getByRole("checkbox", { name: /Motorizado Reparto local/ }));
-  await pause(1300);
   await click(page.getByRole("checkbox", { name: /Shalom Envíos nacionales/ }));
-  await pause(1700);
+  await pause(1500);
+
   step(
-    "4. Define tus días de atención",
-    "En Logística, elige los días para Motorizado. Ejemplo: lunes, miércoles y viernes.",
+    "LOGÍSTICA · Para qué sirve",
+    "Estas reglas ayudan a calcular las fechas disponibles para tus pedidos.",
   );
   await click(page.getByRole("button", { name: "Logística", exact: true }));
+  await explicar(
+    "Logística = cuándo atiendes",
+    [
+      "<b>Motorizado</b><br>Organiza tus fechas de reparto local.",
+      "<b>Agencias</b><br>Organiza tus días de despacho por Shalom, Olva y otros métodos de agencia.",
+    ],
+    "Los días de una agencia no indican cuánto demora el transporte hasta el destino.",
+    7500,
+  );
   const moto = page
     .getByRole("heading", { name: "Motorizado", exact: true })
     .locator("../..");
-  await click(moto.getByRole("button", { name: "X", exact: true }));
-  await click(moto.getByRole("button", { name: "V", exact: true }));
-  await pause(1500);
   step(
-    "Indica la anticipación de los pedidos",
-    "Ejemplo: 2 días de anticipación mínima. Ajusta esta regla a tu operación.",
+    "Días de atención",
+    "Marca únicamente los días en que realmente repartes. Ejemplo: lunes a viernes.",
+  );
+  for (const dia of ["M", "X", "J", "V"])
+    await click(moto.getByRole("button", { name: dia, exact: true }));
+  await explicar(
+    "Tus días de atención",
+    [
+      "<b>L · M · X · J · V · S · D</b><br>Lunes, martes, miércoles, jueves, viernes, sábado y domingo.",
+      "<b>Ejemplo: lunes a viernes</b><br>Si una fecha cae en sábado o domingo, se busca el próximo día que atiendes.",
+    ],
+    "No marques un día si no puedes hacer entregas ese día.",
+    7500,
+  );
+  step(
+    "Anticipación mínima",
+    "Es el tiempo de preparación que necesitas antes de atender un pedido.",
   );
   await type(moto.locator('input[inputmode="numeric"]').first(), "2");
-  await pause(2200);
-  step(
-    "5. Configura las tarifas por distrito",
-    "En Tarifas, elige tu región. Este ejemplo corresponde a Lima.",
+  await explicar(
+    "Anticipación de 2 días",
+    [
+      "<b>Ejemplo: recibes el lunes</b><br>Con 2 días de anticipación, la fecha base es el miércoles.",
+      "<b>Si la fecha cae en un día que no atiendes</b><br>Se mueve al siguiente día de atención.",
+    ],
+    "Este ejemplo supone atención de lunes a viernes, antes del corte y con cupo disponible.",
+    7500,
   );
+  step(
+    "Aplicar solo a días hábiles",
+    "Aquí, hábiles significa los días de atención que tú marcaste.",
+  );
+  await click(
+    moto.getByRole("checkbox", { name: /Aplicar solo a días hábiles/ }),
+  );
+  await explicar(
+    "Viernes + 2 días: ¿lunes o martes?",
+    [
+      "<b>Sin marcar la casilla</b><br>Suma 2 días de calendario: llega al domingo y se ajusta al lunes.",
+      "<b>Con la casilla marcada</b><br>Cuenta solo atención de lunes a viernes: lunes = día 1; martes = día 2.",
+    ],
+    "Resultado: lunes sin la casilla; martes con la casilla. Supone pedido antes del corte y cupo libre.",
+    10000,
+  );
+  // Volvemos al conteo de calendario para explicar la hora de corte sin mezclar reglas.
+  await click(
+    moto.getByRole("checkbox", { name: /Aplicar solo a días hábiles/ }),
+  );
+  step(
+    "Hora de corte",
+    "Actívala si necesitas cerrar la recepción operativa a una hora determinada.",
+  );
+  await click(moto.getByRole("checkbox", { name: /Tengo hora de corte/ }));
+  await point(moto.locator('input[type="time"]'));
+  await moto.locator('input[type="time"]').fill("18:00");
+  await pause(1400);
+  await explicar(
+    "Corte a las 18:00: se suma un día",
+    [
+      "<b>Lunes a las 17:00</b><br>Anticipación 2 días → miércoles.",
+      "<b>Lunes desde las 18:00</b><br>Anticipación 2 + 1 día por el corte → jueves.",
+    ],
+    "Hora de Perú. Atención de lunes a viernes, conteo de calendario y cupo libre. No significa cerrar el formulario.",
+    10000,
+  );
+  step(
+    "Limitar envíos por día",
+    "Activa esta opción solo si tienes un máximo de pedidos que puedes atender por fecha.",
+  );
+  await click(moto.getByRole("checkbox", { name: /Limitar envíos por día/ }));
+  await type(moto.locator('input[inputmode="numeric"]').nth(1), "5");
+  await explicar(
+    "Ejemplo: cupo máximo de 5",
+    [
+      "<b>Miércoles con 5 pedidos programados</b><br>La fecha ya alcanzó el cupo de este ejemplo.",
+      "<b>El siguiente pedido</b><br>Se busca el próximo día de atención con disponibilidad: jueves, si está libre.",
+    ],
+    "Usa un cupo mayor que cero. Si no quieres limitar, deja la casilla desactivada.",
+    8500,
+  );
+  step(
+    "Mostrar Escoger día de entrega",
+    "Decide si el cliente puede elegir su fecha o si se asigna automáticamente.",
+  );
+  await point(
+    moto.getByRole("checkbox", { name: /Mostrar.*Escoger día de entrega/ }),
+  );
+  await explicar(
+    "¿Quién elige la fecha?",
+    [
+      "<b>Activado</b><br>El cliente puede elegir entre las fechas que ofrece el formulario.",
+      "<b>Desactivado</b><br>El sistema asigna la fecha más cercana según las reglas configuradas.",
+    ],
+    "Revisa siempre el resultado en tu formulario público.",
+    7500,
+  );
+  step(
+    "Agencias: configura tus días de despacho",
+    "Configura este bloque por separado si trabajas con Shalom, Olva u otra agencia.",
+  );
+  const agencias = page
+    .getByRole("heading", { name: "Agencias", exact: true })
+    .locator("../..");
+  await point(agencias.getByText("¿Qué días atiendes?", { exact: true }));
+  await pause(2500);
+  await explicar(
+    "Agencias no es tiempo de transporte",
+    [
+      "<b>Ejemplo: despachas martes y jueves</b><br>Marca esos días en Agencias y ajusta su anticipación y corte.",
+      "<b>La llegada al destino</b><br>Depende de la empresa de transporte. Estos controles no configuran su tiempo de traslado.",
+    ],
+    "Los bloques de Motorizado y Agencias permiten configurar calendarios diferentes.",
+    8500,
+  );
+  await guardar();
+
+  step(
+    "TARIFAS · Para qué sirven",
+    "Las tarifas de esta pantalla son para el reparto motorizado por distrito.",
+  );
+  await abrirConfig();
   await click(page.getByRole("button", { name: "Tarifas", exact: true }));
+  await explicar(
+    "Tarifas = cobertura y precio de motorizado",
+    [
+      "<b>Cobertura</b><br>Define en qué distritos haces entregas.",
+      "<b>Precio</b><br>Es el importe que se mostrará al cliente para el distrito. No configura el flete de Shalom u otras agencias.",
+    ],
+    "Escoge Lima o Provincia según la zona donde haces tu reparto local.",
+    8500,
+  );
+  step(
+    "Lima: precio único para todos",
+    "Úsalo solo si cobras el mismo importe en todos los distritos activos.",
+  );
   await point(page.getByRole("button", { name: "Lima", exact: true }));
-  await pause(1700);
+  await type(page.getByPlaceholder("S/ 10.00", { exact: true }), "8.00");
+  await click(
+    page.getByRole("button", { name: "Aplicar a todos", exact: true }),
+  );
+  await pause(2300);
+  await explicar(
+    "Aplicar a todos reemplaza los precios",
+    [
+      "<b>Ejemplo: S/ 8.00</b><br>Coloca S/ 8.00 en todos los distritos que siguen activos.",
+      "<b>Si cobras distinto por zona</b><br>Edita cada distrito después. No vuelvas a aplicar un precio único si quieres conservar esas diferencias.",
+    ],
+    "El precio único no restaura los distritos que ya eliminaste.",
+    8500,
+  );
+  step(
+    "Lima: editar una tarifa individual",
+    "Busca el distrito y cambia solo su precio. Ejemplo: Miraflores, S/ 8.50.",
+  );
   await type(
     page.getByPlaceholder("Buscar distrito...", { exact: true }),
     "Miraflores",
   );
-  const fila = page.getByText("MIRAFLORES", { exact: true }).locator("..");
-  step(
-    "Asigna el precio de entrega",
-    "Busca el distrito y escribe la tarifa. Ejemplo: Miraflores, S/ 8.50.",
+  await type(
+    page
+      .getByText("MIRAFLORES", { exact: true })
+      .locator("..")
+      .getByRole("spinbutton"),
+    "8.50",
   );
-  await type(fila.getByRole("spinbutton"), "8.50");
-  await pause(2300);
+  await pause(2800);
   step(
-    "Retira los distritos donde no entregas",
-    "Usa el ícono de papelera para quitar un distrito de tu cobertura.",
+    "Quitar un distrito sin cobertura",
+    "No basta con borrar el precio: usa la papelera del distrito donde no entregas.",
   );
   await type(
     page.getByPlaceholder("Buscar distrito...", { exact: true }),
@@ -243,41 +427,204 @@ try {
   await click(
     page.getByRole("button", { name: "Eliminar LINCE", exact: true }),
   );
-  await pause(1800);
+  await explicar(
+    "Eliminar no es dejar el precio vacío",
+    [
+      "<b>Si no atiendes Lince</b><br>La papelera lo retira de tu cobertura. Guarda para aplicar el cambio.",
+      "<b>Si solo borras el precio</b><br>No estás eliminando el distrito. Todavía puede seguir apareciendo como una zona atendida.",
+    ],
+    "Después de guardar, el cliente no debe poder elegir un distrito eliminado.",
+    9000,
+  );
+  let s = await guardar();
+  if (Number(s.tarifas.MIRAFLORES) !== 8.5 || String(s.tarifas.LINCE) !== "-1")
+    throw Error("No se verificó la exclusión de Lima");
+  step(
+    "Restaurar un distrito de Lima",
+    "Si vuelves a atenderlo, selecciónalo en Restaurar distrito eliminado.",
+  );
+  await abrirConfig();
+  await click(page.getByRole("button", { name: "Tarifas", exact: true }));
+  await point(page.getByLabel("Restaurar distrito eliminado", { exact: true }));
+  await page
+    .getByLabel("Restaurar distrito eliminado", { exact: true })
+    .selectOption("LINCE");
+  await page.evaluate(
+    () =>
+      (document.querySelector("#tutorial-highlight").style.display = "none"),
+  );
+  await pause(1200);
   await type(
     page.getByPlaceholder("Buscar distrito...", { exact: true }),
-    "Miraflores",
+    "Lince",
   );
-  step(
-    "6. Guarda tu configuración",
-    "Pulsa Guardar para aplicar los cambios de todos los apartados.",
+  await type(
+    page
+      .getByText("LINCE", { exact: true })
+      .locator("..")
+      .getByRole("spinbutton"),
+    "8.00",
   );
-  const solicitud = page.waitForResponse(
-    (r) =>
-      r.url().includes("/api/configuracion") && r.request().method() === "POST",
+  await explicar(
+    "Restaurar también requiere revisar el precio",
+    [
+      "<b>1. Restaura el distrito</b><br>Vuelve a quedar dentro de tu cobertura.",
+      "<b>2. Asigna su tarifa y guarda</b><br>Ejemplo: Lince, S/ 8.00. No des por hecho que conserva el precio anterior.",
+    ],
+    "Guarda los cambios y vuelve a comprobar tu formulario.",
+    8500,
   );
-  await click(page.getByRole("button", { name: "Guardar", exact: true }));
-  const respuesta = await solicitud;
-  if (!respuesta.ok()) throw Error(await respuesta.text());
-  await page.getByText("Configuración guardada", { exact: true }).waitFor();
-  await pause(2200);
-  const sesion = await (await ctx.request.get("/api/session")).json();
+  s = await guardar();
   if (
-    sesion.profile.empresa !== "Mi tienda de ropa" ||
-    sesion.profile.telefono !== "999888777" ||
-    !sesion.profile.metodo_shalom ||
-    sesion.profile.logistica_moto_anticipacion !== 2 ||
-    Number(sesion.tarifas.MIRAFLORES) !== 8.5 ||
-    String(sesion.tarifas.LINCE) !== "-1"
+    Number(s.tarifas.LINCE) !== 8 ||
+    s.profile.logistica_moto_anticipacion !== 2 ||
+    s.profile.logistica_moto_cupo !== 5 ||
+    String(s.profile.logistica_moto_hora_corte).slice(0, 5) !== "18:00"
   )
-    throw Error("No se verificó el guardado de la configuración");
+    throw Error("No se verificó la restauración o la logística");
+
   step(
-    "Listo: tu negocio está configurado",
-    "Después, comparte el formulario con tus clientes. Las opciones disponibles dependen de tu plan.",
+    "PROVINCIA · Ejemplo independiente",
+    "Ahora veremos otra tienda, que empieza con sus tarifas vacías en Provincia.",
+  );
+  await explicar(
+    "Provincia: agrega tus propios distritos",
+    [
+      "<b>Este es otro ejemplo, desde cero</b><br>Una tienda distinta configurará Cajamarca y Baños del Inca.",
+      "<b>Si cambias de Lima a Provincia en tu tienda</b><br>Revisa la lista existente. Cambiar la región no elimina automáticamente tus tarifas guardadas.",
+    ],
+    "En Provincia no se carga una lista oficial para tu reparto: tú defines las zonas.",
+    10000,
+  );
+  const emailProvincia = `tutorial-provincia-${Date.now()}@tori.local`;
+  const headers = {
+    apikey: k.anonKey,
+    Authorization: `Bearer ${k.serviceKey}`,
+    "Content-Type": "application/json",
+    Prefer: "return=representation",
+  };
+  let req = await fetch(`${k.url}/auth/v1/admin/users`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      email: emailProvincia,
+      password,
+      email_confirm: true,
+    }),
+  });
+  if (!req.ok) throw Error("No se creó el ejemplo local de Provincia");
+  const provinciaId = (await req.json()).id;
+  perfilesDemo.push(provinciaId);
+  req = await fetch(`${k.url}/rest/v1/profiles`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      id: provinciaId,
+      empresa: "Mi tienda de provincia",
+      slug: `provincia-${Date.now()}`,
+      plan: "business_plus",
+      trial_end: new Date(Date.now() + 86400000).toISOString(),
+      metodo_motorizado: true,
+      logistica_moto_dias: [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+      ],
+    }),
+  });
+  if (!req.ok) throw Error("No se creó la configuración de Provincia");
+  req = await ctx.request.post("/api/auth/login", {
+    data: { email: emailProvincia, password },
+  });
+  if (!req.ok()) throw Error("No se inició la sesión local de Provincia");
+  await page.goto("/dashboard?v=envios");
+  await page.getByTitle("Abrir menú", { exact: true }).waitFor();
+  await decorar();
+  await abrirConfig();
+  await click(page.getByRole("button", { name: "Tarifas", exact: true }));
+  await click(page.getByRole("button", { name: "Provincia", exact: true }));
+  step(
+    "Provincia: agregar el primer distrito",
+    "Escribe el nombre y su precio. Después pulsa Agregar para incluirlo en la lista.",
+  );
+  await type(
+    page.getByPlaceholder("Nombre del distrito (ej: Cajamarca, El Porvenir)", {
+      exact: true,
+    }),
+    "Cajamarca",
+  );
+  await type(page.getByPlaceholder("Precio", { exact: true }), "6.00");
+  await click(page.getByRole("button", { name: "Agregar", exact: true }));
+  await pause(2200);
+  step(
+    "Provincia: agrega todas las zonas donde entregas",
+    "Repite el proceso para cada distrito. Ejemplo: Baños del Inca, S/ 7.50.",
+  );
+  await type(
+    page.getByPlaceholder("Nombre del distrito (ej: Cajamarca, El Porvenir)", {
+      exact: true,
+    }),
+    "Baños del Inca",
+  );
+  await type(page.getByPlaceholder("Precio", { exact: true }), "7.50");
+  await click(page.getByRole("button", { name: "Agregar", exact: true }));
+  await pause(2200);
+  await explicar(
+    "En Provincia, solo se ofrecen tus distritos",
+    [
+      "<b>Agregar</b><br>Incluye un distrito y una tarifa. Revisa que ambos aparezcan en la lista.",
+      "<b>Editar o eliminar</b><br>Cambia el importe en su fila o usa la papelera si dejas de atenderlo.",
+    ],
+    "Agregar una fila no guarda toda la configuración: al terminar debes pulsar Guardar.",
+    9500,
+  );
+  step(
+    "Provincia: editar y retirar una zona",
+    "Puedes corregir el precio o quitar un distrito que ya no atiendes.",
+  );
+  await type(
+    page
+      .getByText("Cajamarca", { exact: true })
+      .locator("..")
+      .getByRole("spinbutton"),
+    "6.50",
+  );
+  await click(
+    page
+      .getByText("Baños del Inca", { exact: true })
+      .locator("..")
+      .getByTitle("Eliminar distrito", { exact: true }),
+  );
+  await pause(2000);
+  step(
+    "Guardar y revisar el formulario",
+    "Guarda al terminar. Luego revisa el resultado que verá tu cliente.",
+  );
+  s = await guardar();
+  if (
+    s.profile.moto_region !== "provincia" ||
+    Number(s.tarifas.Cajamarca) !== 6.5 ||
+    Object.keys(s.tarifas).length !== 1
+  )
+    throw Error("No se verificó el ejemplo de Provincia");
+  step(
+    "Lista final de comprobación",
+    "Días, anticipación, corte, cupo, región, cobertura, precios y Guardar.",
+  );
+  await explicar(
+    "Antes de compartir tu formulario",
+    [
+      "<b>Logística</b><br>¿Los días y las reglas coinciden con tu operación real?",
+      "<b>Tarifas</b><br>¿Solo atiendes los distritos de la lista y sus precios están completos?",
+    ],
+    "Guarda y abre tu formulario público para comprobarlo. Las opciones disponibles dependen de tu plan.",
+    10000,
   );
   await cover(
-    "Datos, métodos y tarifas.<br>Todo listo para tus pedidos.",
-    "Guarda siempre tus cambios.<br>Después, comparte tu formulario con tus clientes.",
+    "Ahora sí:<br>fechas y tarifas claras.",
+    "Puedes repetir un capítulo cuando lo necesites.",
   );
   await pause(4500);
   const duration = (Date.now() - epoch) / 1000;
@@ -305,56 +652,58 @@ try {
     ass += `Dialogue: 0,${time(m.start)},${time(end)},Title,,0,0,0,,{\\pos(36,25)\\fad(120,80)}${clean(m.title)}\nDialogue: 0,${time(m.start)},${time(end)},Detail,,0,0,0,,{\\pos(640,938)\\fad(120,80)}${clean(m.detail)}\n`;
   }
   await writeFile(path.join(salida, "instrucciones.ass"), ass);
-  execFileSync(
-    "ffmpeg",
-    [
-      "-y",
-      "-ss",
-      String(lead),
-      "-i",
-      source,
-      "-t",
-      String(duration),
-      "-vf",
-      `pad=1280:960:0:88:color=0xf5f9ff,ass=${path.join(salida, "instrucciones.ass")}`,
-      "-c:v",
-      "libx264",
-      "-preset",
-      "medium",
-      "-crf",
-      "21",
-      "-pix_fmt",
-      "yuv420p",
-      "-an",
-      "-movflags",
-      "+faststart",
-      path.join(salida, "configuracion.mp4"),
-    ],
-    { stdio: ["ignore", "ignore", "pipe"] },
-  );
-  execFileSync(
-    "ffmpeg",
-    [
-      "-y",
-      "-ss",
-      "1",
-      "-i",
-      path.join(salida, "configuracion.mp4"),
-      "-frames:v",
-      "1",
-      "-q:v",
-      "3",
-      path.join(salida, "portada.jpg"),
-    ],
-    { stdio: ["ignore", "ignore", "pipe"] },
-  );
+  if (!process.env.TUTORIAL_FAST) {
+    execFileSync(
+      "ffmpeg",
+      [
+        "-y",
+        "-ss",
+        String(lead),
+        "-i",
+        source,
+        "-t",
+        String(duration),
+        "-vf",
+        `pad=1280:960:0:88:color=0xf5f9ff,ass=${path.join(salida, "instrucciones.ass")}`,
+        "-c:v",
+        "libx264",
+        "-preset",
+        "medium",
+        "-crf",
+        "21",
+        "-pix_fmt",
+        "yuv420p",
+        "-an",
+        "-movflags",
+        "+faststart",
+        path.join(salida, "configuracion.mp4"),
+      ],
+      { stdio: ["ignore", "ignore", "pipe"] },
+    );
+    execFileSync(
+      "ffmpeg",
+      [
+        "-y",
+        "-ss",
+        "1",
+        "-i",
+        path.join(salida, "configuracion.mp4"),
+        "-frames:v",
+        "1",
+        "-q:v",
+        "3",
+        path.join(salida, "portada.jpg"),
+      ],
+      { stdio: ["ignore", "ignore", "pipe"] },
+    );
+  }
   console.log(
-    `Tutorial generado: ${duration.toFixed(1)} s. Configuración guardada y verificada en la base local.`,
+    `${process.env.TUTORIAL_FAST ? "Ensayo verificado" : "Tutorial generado"}: ${duration.toFixed(1)} s. Configuración guardada y verificada en la base local.`,
   );
 } finally {
   await browser.close();
-  if (process.env.TUTORIAL_FAST)
-    await fetch(`${k.url}/rest/v1/profiles?id=eq.${id}`, {
+  for (const demoId of perfilesDemo)
+    await fetch(`${k.url}/rest/v1/profiles?id=eq.${demoId}`, {
       method: "DELETE",
       headers: { apikey: k.anonKey, Authorization: `Bearer ${k.serviceKey}` },
     });

@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from './support/test'
-import { createUser, dbSelect, randomIp } from './support/stack'
+import { createUser, dbSelect, randomIp, uniq } from './support/stack'
 import { abrirDashboard } from './support/ui'
 
 async function abrirConfiguracion(page: Page) {
@@ -19,7 +19,7 @@ test.beforeEach(async ({ context }) => {
 test('Configuración: Guardar persiste en la base y se ve al recargar', async ({ page }) => {
   const errores: string[] = []
   page.on('pageerror', (e) => errores.push(e.message))
-  const u = await createUser({ empresa: 'Negocio Config SAC' })
+  const u = await createUser({ empresa: `Negocio Config ${uniq('sac')}` })
   await abrirDashboard(page, u)
 
   await abrirConfiguracion(page)
@@ -34,6 +34,13 @@ test('Configuración: Guardar persiste en la base y se ve al recargar', async ({
   await expect(ayuda).toBeVisible()
   await expect(ayuda.locator('video source')).toHaveAttribute('src', '/recursos/configuracion/configuracion.mp4')
   await expect.poll(() => ayuda.locator('video').evaluate(v => (v as HTMLVideoElement).currentTime)).toBeGreaterThan(0)
+  const guia = await (await page.request.get('/recursos/configuracion/pasos.json')).json()
+  const inicioLogistica = guia.marks.find((p: {title:string}) => p.title.startsWith('LOGÍSTICA')).start
+  const inicioProvincia = guia.marks.find((p: {title:string}) => p.title.startsWith('PROVINCIA')).start
+  await ayuda.getByRole('button', {name:'Ver capítulo Logística',exact:true}).click()
+  await expect.poll(() => ayuda.locator('video').evaluate(v => (v as HTMLVideoElement).currentTime)).toBeGreaterThanOrEqual(inicioLogistica)
+  await ayuda.getByRole('button', {name:'Ver capítulo Tarifas Provincia',exact:true}).click()
+  await expect.poll(() => ayuda.locator('video').evaluate(v => (v as HTMLVideoElement).currentTime)).toBeGreaterThanOrEqual(inicioProvincia)
   await page.setViewportSize({ width: 360, height: 740 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.keyboard.press('Escape')
@@ -44,6 +51,10 @@ test('Configuración: Guardar persiste en la base y se ve al recargar', async ({
 
   // Logística: anticipación de 3 días
   await page.getByRole('button', { name: 'Logística' }).click()
+  // Desde Logística, la ayuda debe abrir directamente el capítulo correspondiente.
+  await page.getByRole('button', {name:'Ver tutorial de configuración',exact:true}).click()
+  await expect.poll(() => page.getByRole('dialog',{name:'Cómo configurar tu negocio',exact:true}).locator('video').evaluate(v => (v as HTMLVideoElement).currentTime)).toBeGreaterThanOrEqual(inicioLogistica)
+  await page.getByRole('button',{name:'Volver',exact:true}).click()
   const antic = page.locator('input[inputmode="numeric"]').first()
   await antic.fill('3')
 
