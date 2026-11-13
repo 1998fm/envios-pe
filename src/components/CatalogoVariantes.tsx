@@ -235,6 +235,7 @@ export default function CatalogoVariantes({
     [datos, setDatos] = useState<Datos>(inicial),
     [filas, setFilas] = useState<Fila[]>([]),
     [original, setOriginal] = useState<FichaFamilia | null>(null);
+  const nombreGeneral = useRef<HTMLInputElement>(null);
   const [costoGeneral, setCostoGeneral] = useState(0);
   const [ocupado, setOcupado] = useState(false),
     [error, setError] = useState(""),
@@ -342,6 +343,7 @@ export default function CatalogoVariantes({
     setOriginal(null);
     setValores({});
     setError("");
+    setAviso("");
     setDirty(false);
   }
   async function abrir(id: string) {
@@ -554,6 +556,21 @@ export default function CatalogoVariantes({
   }
   async function guardar() {
     if (guardando.current) return;
+    if (!datos.nombre.trim()) {
+      setError(
+        "Escribe el nombre del producto general en el primer campo de la ficha.",
+      );
+      nombreGeneral.current?.focus();
+      nombreGeneral.current?.scrollIntoView({
+        block: "center",
+        behavior: "smooth",
+      });
+      return;
+    }
+    if (modo === "agrupar" && !filas.length) {
+      setError("Selecciona al menos un producto para agrupar.");
+      return;
+    }
     guardando.current = true;
     setOcupado(true);
     setError("");
@@ -884,82 +901,26 @@ Esta acción no se puede deshacer. Si solo quieres ocultarlos, usa Archivar.`)
                       {error}
                     </p>
                   )}
+                  <TituloSeccion
+                    titulo={
+                      modo === "agrupar"
+                        ? "1. Datos del producto general"
+                        : "Información general"
+                    }
+                  />
                   {modo === "agrupar" && (
-                    <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                      <p className="text-xs font-semibold text-slate-500">
-                        Selecciona voluntariamente los productos. Agrupar no
-                        cambia nombres, precios, stock, costos, fotos ni
-                        históricos.
-                      </p>
-                      <input
-                        className={campos}
-                        aria-label="Buscar productos para agrupar"
-                        placeholder="Buscar productos existentes…"
-                        value={buscarExistentes}
-                        onChange={(e) => {
-                          setBuscarExistentes(e.target.value);
-                          setPaginaExistentes(0);
-                        }}
-                      />
-                      <label className="flex items-center gap-2 text-xs">
-                        <input
-                          type="checkbox"
-                          checked={archivados}
-                          onChange={(e) => {
-                            setArchivados(e.target.checked);
-                            setPaginaExistentes(0);
-                          }}
-                        />
-                        Mostrar archivados
-                      </label>
-                      <div className="max-h-52 overflow-auto rounded-lg bg-white">
-                        {candidatos.map((p) => (
-                          <label
-                            key={p.id}
-                            className="flex cursor-pointer items-center gap-3 border-b border-slate-100 p-3 text-sm"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={filas.some(
-                                (f) => f.producto_id === p.id,
-                              )}
-                              onChange={() => elegir(p)}
-                            />
-                            <span>
-                              {p.nombre} · {precio(p.precio_venta)} · Stock{" "}
-                              {p.stock_actual}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                      <div className="flex justify-between">
-                        <button
-                          className={boton}
-                          disabled={!paginaExistentes}
-                          onClick={() => setPaginaExistentes((v) => v - 1)}
-                        >
-                          Anterior
-                        </button>
-                        <span className="self-center text-xs">
-                          {filas.length} seleccionados
-                        </span>
-                        <button
-                          className={boton}
-                          disabled={
-                            (paginaExistentes + 1) * 20 >= totalExistentes
-                          }
-                          onClick={() => setPaginaExistentes((v) => v + 1)}
-                        >
-                          Siguiente
-                        </button>
-                      </div>
-                    </div>
+                    <p className="text-xs text-slate-500">
+                      Primero da un nombre a la ficha que reunirá tus productos.
+                      El precio general es una referencia: agrupar conserva el
+                      precio y los demás datos de cada producto.
+                    </p>
                   )}
-                  <TituloSeccion titulo="Información general" />
                   <div className="grid gap-4 md:grid-cols-2">
                     <label className="text-xs font-semibold text-slate-500">
                       Nombre general
                       <input
+                        ref={nombreGeneral}
+                        placeholder="Ej.: Biker denim"
                         aria-label="Nombre general"
                         className={`${campos} mt-1`}
                         value={datos.nombre}
@@ -1047,7 +1008,11 @@ Esta acción no se puede deshacer. Si solo quieres ocultarlos, usa Archivar.`)
                   </div>
                   <section className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                     <TituloSeccion
-                      titulo="Opciones de las variantes"
+                      titulo={
+                        modo === "agrupar"
+                          ? "2. Tipo de variante"
+                          : "Opciones de las variantes"
+                      }
                       opciones
                     />
                     <div className="flex flex-wrap gap-3">
@@ -1151,6 +1116,77 @@ Esta acción no se puede deshacer. Si solo quieres ocultarlos, usa Archivar.`)
                       ventas, compras y etiquetas.
                     </p>
                   </section>
+                  {modo === "agrupar" && (
+                    <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-xs font-semibold text-slate-500">
+                        3. Selecciona los productos que quieres agrupar. Agrupar
+                        no cambia nombres, precios, stock, costos, fotos ni
+                        históricos.
+                      </p>
+                      <input
+                        className={campos}
+                        aria-label="Buscar productos para agrupar"
+                        placeholder="Buscar productos existentes…"
+                        value={buscarExistentes}
+                        onChange={(e) => {
+                          setBuscarExistentes(e.target.value);
+                          setPaginaExistentes(0);
+                        }}
+                      />
+                      <label className="flex items-center gap-2 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={archivados}
+                          onChange={(e) => {
+                            setArchivados(e.target.checked);
+                            setPaginaExistentes(0);
+                          }}
+                        />
+                        Mostrar archivados
+                      </label>
+                      <div className="max-h-52 overflow-auto rounded-lg bg-white">
+                        {candidatos.map((p) => (
+                          <label
+                            key={p.id}
+                            className="flex cursor-pointer items-center gap-3 border-b border-slate-100 p-3 text-sm"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={filas.some(
+                                (f) => f.producto_id === p.id,
+                              )}
+                              onChange={() => elegir(p)}
+                            />
+                            <span>
+                              {p.nombre} · {precio(p.precio_venta)} · Stock{" "}
+                              {p.stock_actual}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      <div className="flex justify-between">
+                        <button
+                          className={boton}
+                          disabled={!paginaExistentes}
+                          onClick={() => setPaginaExistentes((v) => v - 1)}
+                        >
+                          Anterior
+                        </button>
+                        <span className="self-center text-xs">
+                          {filas.length} seleccionados
+                        </span>
+                        <button
+                          className={boton}
+                          disabled={
+                            (paginaExistentes + 1) * 20 >= totalExistentes
+                          }
+                          onClick={() => setPaginaExistentes((v) => v + 1)}
+                        >
+                          Siguiente
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {modo !== "agrupar" && (
                     <div className="flex flex-wrap gap-2">
                       <button
