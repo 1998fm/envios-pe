@@ -1,0 +1,60 @@
+{
+  "duration": 74.82,
+  "marks": [
+    {
+      "start": 0,
+      "title": "Serie con variantes",
+      "detail": "Un ejemplo completo: dos colores y dos tallas."
+    },
+    {
+      "start": 3.531,
+      "title": "1. Abre Serie con variantes",
+      "detail": "Productos → Nuevo producto → Serie con variantes."
+    },
+    {
+      "start": 9.492,
+      "title": "2. Completa los datos generales",
+      "detail": "Nombre, precio y unidad. Estos datos se comparten entre variantes."
+    },
+    {
+      "start": 17.683,
+      "title": "3. Define los colores",
+      "detail": "Elige Color y escribe sus valores separados por comas."
+    },
+    {
+      "start": 23.76,
+      "title": "4. Añade las tallas",
+      "detail": "Pulsa Añadir opción, elige Talla y escribe S, M."
+    },
+    {
+      "start": 31.322,
+      "title": "5. Genera las combinaciones",
+      "detail": "Dos colores × dos tallas = cuatro variantes."
+    },
+    {
+      "start": 37.612,
+      "title": "6. Revisa el stock de cada variante",
+      "detail": "Cada combinación tiene su propio stock. El precio general ya está aplicado."
+    },
+    {
+      "start": 46.426,
+      "title": "7. Guarda el producto y sus variantes",
+      "detail": "Revisa los datos y pulsa Guardar producto y variantes."
+    },
+    {
+      "start": 54.204,
+      "title": "Para editar el conjunto: abre Variantes",
+      "detail": "Entra en Variantes y selecciona la ficha Polo algodón."
+    },
+    {
+      "start": 59.554,
+      "title": "Cambia el precio general y guarda",
+      "detail": "Se actualizan las variantes que tienen marcado Usar precio general."
+    },
+    {
+      "start": 70.315,
+      "title": "Listo: cuatro variantes, una sola ficha",
+      "detail": "En ventas y compras eliges cada variante por separado."
+    }
+  ]
+}
