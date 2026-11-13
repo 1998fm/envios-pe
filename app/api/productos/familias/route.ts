@@ -1,3 +1,5 @@
+import { imagenEnUso } from "@/lib/productos/imagenes";
+import { rutaDesdeUrlProducto } from "@/lib/comprimirImagen";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "app/f/[slug]/lib/supabase/admin";
 import { requirePlus } from "@/lib/negocioAuth";
@@ -150,4 +152,68 @@ export async function POST(request: Request) {
     );
   }
   return NextResponse.json({ id: r.data });
+}
+
+export async function DELETE(request: Request) {
+  const auth = await requirePlus("ver_productos");
+  if (!auth.ok) return auth.response;
+  const body = await request.json().catch(() => null);
+  if (
+    !body ||
+    typeof body.id !== "string" ||
+    !UUID.test(body.id) ||
+    typeof body.esperado !== "string" ||
+    !Number.isFinite(Date.parse(body.esperado)) ||
+    body.confirmar !== true
+  ) {
+    return NextResponse.json(
+      { error: "Confirma la eliminación desde una ficha actualizada" },
+      { status: 400 },
+    );
+  }
+  const actual = await supabaseAdmin
+    .from("productos_familias")
+    .select("id")
+    .eq("id", body.id)
+    .eq("profile_id", auth.ownerId)
+    .maybeSingle();
+  if (actual.error)
+    return NextResponse.json(
+      { error: mensajeDb(actual.error) },
+      { status: 500 },
+    );
+  if (!actual.data)
+    return NextResponse.json(
+      { error: "Producto principal no encontrado" },
+      { status: 404 },
+    );
+  const r = await supabaseAdmin.rpc("eliminar_producto_familia", {
+    p_owner: auth.ownerId,
+    p_familia: body.id,
+    p_esperado: body.esperado,
+  });
+  if (r.error)
+    return NextResponse.json(
+      {
+        error: falta(r.error)
+          ? "Falta instalar la eliminación completa de productos con variantes. Contacta al administrador."
+          : mensajeDb(r.error),
+      },
+      { status: falta(r.error) ? 503 : r.error.code === "40001" ? 409 : 400 },
+    );
+  // Las imágenes compartidas por otros productos nunca se borran.
+  const resultado = r.data as { eliminados: number; imagenes: string[] };
+  try {
+    const rutas = await Promise.all(
+      (resultado.imagenes ?? []).map(async (url) =>
+        (await imagenEnUso(url)) ? null : rutaDesdeUrlProducto(url),
+      ),
+    );
+    const libres = [...new Set(rutas.filter((ruta): ruta is string => !!ruta))];
+    if (libres.length)
+      await supabaseAdmin.storage.from("productos").remove(libres);
+  } catch (e) {
+    console.error("No se pudieron limpiar las fotos del producto eliminado", e);
+  }
+  return NextResponse.json({ success: true, eliminados: resultado.eliminados });
 }

@@ -78,6 +78,7 @@ export const SCHEMA_ORDER = [
   'plan-basico-plus.sql',
   'acceso-solo-servidor.sql',
   'productos-familias.sql',
+  'eliminar-producto-familia.sql',
 ]
 
 /** Puerto libre elegido por el sistema (evita choques con restos de ejecuciones anteriores). */

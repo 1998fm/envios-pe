@@ -592,6 +592,39 @@ export default function CatalogoVariantes({
       guardando.current = false;
     }
   }
+  async function eliminarCompleto() {
+    if (!original || ocupado || dirty) return;
+    if (
+      !window.confirm(`¿Eliminar definitivamente "${original.familia.nombre}" y sus ${original.variantes.length} variantes?
+
+Se borrarán la ficha general, sus productos, existencias y kardex. Las compras y ventas anteriores conservarán sus nombres e importes.
+
+Esta acción no se puede deshacer. Si solo quieres ocultarlos, usa Archivar.`)
+    )
+      return;
+    setOcupado(true);
+    setError("");
+    try {
+      await api("/api/productos/familias", {
+        method: "DELETE",
+        json: {
+          id: original.familia.id,
+          esperado: original.familia.updated_at,
+          confirmar: true,
+        },
+      });
+      setModo(null);
+      setOriginal(null);
+      setFilas([]);
+      setDirty(false);
+      setAviso("Producto general y todas sus variantes eliminados.");
+      refrescar();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setOcupado(false);
+    }
+  }
   async function separar(id?: string) {
     if (
       !original ||
@@ -1483,7 +1516,21 @@ export default function CatalogoVariantes({
                 </fieldset>
               </div>
               <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/80 px-6 py-4">
-                <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  {modo === "editar" && (
+                    <button
+                      className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700 hover:bg-red-100 disabled:opacity-40"
+                      disabled={ocupado || dirty}
+                      title={
+                        dirty
+                          ? "Guarda o descarta los cambios antes de eliminar"
+                          : undefined
+                      }
+                      onClick={() => void eliminarCompleto()}
+                    >
+                      Eliminar producto y todas sus variantes
+                    </button>
+                  )}
                   {modo === "editar" && (
                     <button
                       className="text-sm font-semibold text-red-600 disabled:opacity-40"
