@@ -17,3 +17,15 @@ La grabación utiliza Chromium y la interfaz real de la aplicación. No simula f
 Página para ver, descargar y navegar por capítulos: `/recursos/serie-variantes/index.html`. Las instrucciones están integradas en el MP4; se entiende sin audio. En móvil se recomienda pantalla completa en horizontal.
 
 El generador solo admite el stack local y no utiliza datos ni cuentas de producción. Si cambian los campos o botones del producto, actualiza los selectores y vuelve a grabar.
+
+## Configuración
+
+`scripts/tutoriales/configuracion.mjs` graba Empresa, agencia de origen Shalom, Métodos, Logística, Tarifas de Lima y Guardar. El ejemplo usa Plus, verifica la persistencia del teléfono, Shalom, anticipación, tarifa y exclusión de un distrito. Los datos son de una cuenta local de demostración.
+
+```sh
+APP_PORT=3100 LOCAL_DB_PORT=54322 node scripts/tutoriales/configuracion.mjs
+```
+
+La salida temporal usa `tori-configuracion`. Se publica en `public/recursos/configuracion/` con `configuracion.mp4`, `portada.jpg` y los capítulos en `pasos.json`. `TUTORIAL_FAST=1` permite comprobar los controles rápidamente y limpia su perfil de ensayo local; esa versión acelerada no es el video que se publica. Inicia un stack local nuevo para evitar que el nombre del negocio del ejemplo ya esté registrado.
+
+Ambas ayudas usan `TutorialEnVideo`: el botón abre un reproductor sin desmontar el formulario, permite cerrar con Escape y devuelve el foco al botón. El de Configuración usa el tono oscuro para su cabecera blanca.

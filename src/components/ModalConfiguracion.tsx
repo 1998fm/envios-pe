@@ -1,5 +1,6 @@
 'use client'
 
+import TutorialEnVideo from '@/components/TutorialEnVideo'
 import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
 import AyudaLogistica from '@/components/AyudaLogistica'
@@ -63,12 +64,23 @@ function ModalConfiguracionContenido({
 
   return (
     <Modal open={abierto} maxWidth="max-w-4xl">
-      <div className="flex flex-col h-[90vh]">
+      <div className="flex flex-col h-[90vh]" role="dialog" aria-modal="true" aria-label="Configuración">
         <div className="p-6 border-b border-slate-100  shrink-0 bg-white flex items-center justify-between">
           <h2 className="text-2xl font-bold text-slate-900 ">
             Configuración
           </h2>
-          <TourHelpButton tourId="modal-configuracion" />
+          <div className="flex items-center gap-1.5">
+            <TutorialEnVideo
+              titulo="Cómo configurar tu negocio"
+              etiquetaBoton="Ver tutorial de configuración"
+              video="/recursos/configuracion/configuracion.mp4"
+              portada="/recursos/configuracion/portada.jpg"
+              guia="/recursos/configuracion/index.html"
+              duracion="77 segundos"
+              tono="oscuro"
+            />
+            <TourHelpButton tourId="modal-configuracion" />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-white ">
@@ -379,7 +391,7 @@ function ModalConfiguracionContenido({
                           className="accent-sky-600 w-4 h-4"
                         />
                         <div>
-                          <p className="text-sm font-semibold text-slate-700">Mostrar "Escoger día de entrega"</p>
+                          <p className="text-sm font-semibold text-slate-700">Mostrar &quot;Escoger día de entrega&quot;</p>
                           <p className="text-xs text-slate-500">Deja que el cliente elija la fecha. Si está oculta, se asigna la más cercana automáticamente</p>
                         </div>
                       </label>

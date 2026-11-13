@@ -1,0 +1,65 @@
+{
+  "duration": 76.521,
+  "marks": [
+    {
+      "start": 0,
+      "title": "Configuración, paso a paso",
+      "detail": "Empresa · Métodos · Logística · Tarifas."
+    },
+    {
+      "start": 4.066,
+      "title": "1. Abre Configuración",
+      "detail": "Abre el menú lateral y elige Configuración."
+    },
+    {
+      "start": 9.455,
+      "title": "2. Completa los datos de Empresa",
+      "detail": "Escribe el nombre del negocio y su teléfono. La dirección es opcional."
+    },
+    {
+      "start": 17.007,
+      "title": "Si usas Shalom, elige una agencia de origen",
+      "detail": "Busca tu agencia y selecciónala de la lista de resultados."
+    },
+    {
+      "start": 24.958,
+      "title": "3. Activa tus métodos de envío",
+      "detail": "En Métodos, marca solamente los servicios que ofreces a tus clientes."
+    },
+    {
+      "start": 33.211,
+      "title": "4. Define tus días de atención",
+      "detail": "En Logística, elige los días para Motorizado. Ejemplo: lunes, miércoles y viernes."
+    },
+    {
+      "start": 42.162,
+      "title": "Indica la anticipación de los pedidos",
+      "detail": "Ejemplo: 2 días de anticipación mínima. Ajusta esta regla a tu operación."
+    },
+    {
+      "start": 46.573,
+      "title": "5. Configura las tarifas por distrito",
+      "detail": "En Tarifas, elige tu región. Este ejemplo corresponde a Lima."
+    },
+    {
+      "start": 54.902,
+      "title": "Asigna el precio de entrega",
+      "detail": "Busca el distrito y escribe la tarifa. Ejemplo: Miraflores, S/ 8.50."
+    },
+    {
+      "start": 59.248,
+      "title": "Retira los distritos donde no entregas",
+      "detail": "Usa el ícono de papelera para quitar un distrito de tu cobertura."
+    },
+    {
+      "start": 67.677,
+      "title": "6. Guarda tu configuración",
+      "detail": "Pulsa Guardar para aplicar los cambios de todos los apartados."
+    },
+    {
+      "start": 72.016,
+      "title": "Listo: tu negocio está configurado",
+      "detail": "Después, comparte el formulario con tus clientes. Las opciones disponibles dependen de tu plan."
+    }
+  ]
+}
