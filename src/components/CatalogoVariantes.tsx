@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/clienteApi";
 import PrecioInput from "./PrecioInput";
+import TutorialSerieVariantes from "./TutorialSerieVariantes";
 import { comprimirImagen } from "@/lib/comprimirImagen";
 import { UNIDADES_MEDIDA } from "@/types/inventario";
 import type { Producto } from "@/types/inventario";
@@ -143,14 +144,17 @@ function CabeceraVariantes({
             {descripcion}
           </p>
         </div>
-        <button
-          aria-label={etiquetaCerrar}
-          disabled={ocupado}
-          onClick={cerrar}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/70 transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40"
-        >
-          <X size={18} />
-        </button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <TutorialSerieVariantes />
+          <button
+            aria-label={etiquetaCerrar}
+            disabled={ocupado}
+            onClick={cerrar}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/70 transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
     </header>
   );

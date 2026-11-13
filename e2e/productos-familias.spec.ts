@@ -287,6 +287,45 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
     .getByRole("textbox", { name: "Nombre general", exact: true })
     .fill("Polo visual");
   await page
+    .getByRole("button", {
+      name: "Ver tutorial de serie con variantes",
+      exact: true,
+    })
+    .click();
+  const ayuda = page.getByRole("dialog", {
+    name: "Cómo crear una serie con variantes",
+    exact: true,
+  });
+  await expect(ayuda).toBeVisible();
+  await expect(ayuda.locator("video source")).toHaveAttribute(
+    "src",
+    "/recursos/serie-variantes/serie-con-variantes.mp4",
+  );
+  await expect
+    .poll(() =>
+      ayuda
+        .locator("video")
+        .evaluate((v) => (v as HTMLVideoElement).currentTime),
+    )
+    .toBeGreaterThan(0);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(ayuda).toHaveCount(0);
+  await expect(
+    page.getByRole("textbox", { name: "Nombre general", exact: true }),
+  ).toHaveValue("Polo visual");
+  await expect(
+    page.getByRole("button", {
+      name: "Ver tutorial de serie con variantes",
+      exact: true,
+    }),
+  ).toBeFocused();
+
+  await page
     .getByRole("textbox", { name: "Precio general", exact: true })
     .fill("25.50");
   await page
@@ -339,6 +378,25 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
     ),
   ).toBe(true);
   await page.getByRole("button", { name: "Variantes", exact: true }).click();
+  await page
+    .getByRole("button", {
+      name: "Ver tutorial de serie con variantes",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByRole("dialog", {
+      name: "Cómo crear una serie con variantes",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Cerrar tutorial", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Variantes de productos", exact: true }),
+  ).toBeVisible();
+
   await page.getByRole("button", { name: /Polo visual.*6 variantes/ }).click();
   await page
     .getByRole("textbox", { name: "Precio general", exact: true })
