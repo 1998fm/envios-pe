@@ -17,6 +17,7 @@ type Fila = {
   descripcion: string;
   precio_venta: number;
   precio_compra?: number;
+  costo_especial: boolean;
   stock_actual: number;
   stock_original?: number;
   stock_minimo: number;
@@ -110,7 +111,7 @@ function SelectorOpcion({
 const fondoModal =
   "fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 backdrop-blur-sm sm:items-center sm:p-4";
 const panelModal =
-  "flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]";
+  "flex max-h-[92vh] w-full max-w-[1500px] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]";
 const botonPrincipal =
   "flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-tori-600 to-tori-700 px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-tori-600/30 transition-all hover:shadow-xl disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none";
 function CabeceraVariantes({
@@ -192,6 +193,7 @@ const fila = (opciones: string[]): Fila => ({
   descripcion: "",
   precio_venta: 0,
   precio_compra: 0,
+  costo_especial: false,
   stock_actual: 0,
   stock_minimo: 0,
   imagen_url: null,
@@ -233,6 +235,7 @@ export default function CatalogoVariantes({
     [datos, setDatos] = useState<Datos>(inicial),
     [filas, setFilas] = useState<Fila[]>([]),
     [original, setOriginal] = useState<FichaFamilia | null>(null);
+  const [costoGeneral, setCostoGeneral] = useState(0);
   const [ocupado, setOcupado] = useState(false),
     [error, setError] = useState(""),
     [aviso, setAviso] = useState(""),
@@ -334,6 +337,7 @@ export default function CatalogoVariantes({
   function nuevo(tipo: "crear" | "agrupar") {
     setModo(tipo);
     setDatos(inicial());
+    setCostoGeneral(0);
     setFilas([]);
     setOriginal(null);
     setValores({});
@@ -345,11 +349,20 @@ export default function CatalogoVariantes({
     setError("");
     try {
       const f = await api<FichaFamilia>(`/api/productos/familias?id=${id}`);
+      // Reconstruye el costo compartido sin modificar registros existentes.
+      const costos = verCosto
+        ? f.variantes.map((v) => Number(v.producto.precio_compra ?? 0))
+        : [];
+      const frecuencias = new Map<number, number>();
+      costos.forEach((c) => frecuencias.set(c, (frecuencias.get(c) ?? 0) + 1));
+      const comun = [...frecuencias].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0;
+      setCostoGeneral(comun);
       setOriginal(f);
       setDatos({ ...f.familia, descripcion: f.familia.descripcion ?? "" });
       setFilas(
         f.variantes.map((v) => ({
           ...v,
+          costo_especial: Number(v.producto.precio_compra ?? 0) !== comun,
           sku: v.producto.sku ?? "",
           nombre: v.producto.nombre,
           descripcion: v.producto.descripcion ?? "",
@@ -428,6 +441,7 @@ export default function CatalogoVariantes({
         descripcion: p.descripcion ?? "",
         precio_venta: Number(p.precio_venta),
         ...(verCosto ? { precio_compra: p.precio_compra } : {}),
+        costo_especial: true,
         sku: p.sku ?? "",
         stock_actual: p.stock_actual,
         stock_original: p.stock_actual,
@@ -518,9 +532,10 @@ export default function CatalogoVariantes({
         stock_minimo: f.stock_minimo,
         archivado: f.archivado,
       };
+      const costo = f.costo_especial ? (f.precio_compra ?? 0) : costoGeneral;
       if (!f.producto_id) {
         r.stock_actual = f.stock_actual;
-        if (verCosto) r.precio_compra = f.precio_compra ?? 0;
+        if (verCosto) r.precio_compra = costo;
         if (f.imagen_especial) r.imagen_url = f.imagen_url;
         return r;
       }
@@ -529,8 +544,8 @@ export default function CatalogoVariantes({
         r.stock_esperado = f.stock_original;
         r.motivo = f.motivo;
       }
-      if (verCosto && Number(prev?.producto.precio_compra) !== f.precio_compra)
-        r.precio_compra = f.precio_compra;
+      if (verCosto && Number(prev?.producto.precio_compra) !== costo)
+        r.precio_compra = costo;
       if (f.nombre_especial) r.nombre = f.nombre;
       if (f.descripcion_especial) r.descripcion = f.descripcion;
       if (f.imagen_especial) r.imagen_url = f.imagen_url;
@@ -931,6 +946,24 @@ export default function CatalogoVariantes({
                         }
                       />
                     </label>
+                    {verCosto && modo !== "agrupar" && (
+                      <label className="text-xs font-semibold text-slate-500">
+                        Costo general
+                        <PrecioInput
+                          aria-label="Costo general"
+                          className={`${campos} mt-1`}
+                          value={costoGeneral}
+                          onChange={(n) => {
+                            setCostoGeneral(n);
+                            setDirty(true);
+                          }}
+                        />
+                        <span className="mt-1 block font-normal">
+                          Costo por unidad. Se aplica a las variantes que usan
+                          el costo general.
+                        </span>
+                      </label>
+                    )}
                     <label className="text-xs font-semibold text-slate-500 md:col-span-2">
                       Descripción general
                       <textarea
@@ -1115,6 +1148,25 @@ export default function CatalogoVariantes({
                       >
                         Aplicar precio a todas
                       </button>
+                      {verCosto && (
+                        <button
+                          className={boton}
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `¿Aplicar el costo general ${precio(costoGeneral)} a TODAS las variantes, quitando los costos especiales?`,
+                              )
+                            ) {
+                              setFilas((v) =>
+                                v.map((f) => ({ ...f, costo_especial: false })),
+                              );
+                              setDirty(true);
+                            }
+                          }}
+                        >
+                          Aplicar costo a todas
+                        </button>
+                      )}
                       <button
                         className={boton}
                         onClick={() => {
@@ -1140,6 +1192,10 @@ export default function CatalogoVariantes({
                     </div>
                   )}
                   <TituloSeccion titulo="Detalle de variantes" />
+                  <p className="text-xs text-slate-500 lg:hidden">
+                    Desliza la tabla hacia los lados para ver todos los campos
+                    de cada variante.
+                  </p>
                   <div className="overflow-auto rounded-2xl border border-slate-200">
                     <table className="w-full min-w-[950px] text-sm">
                       <thead className="bg-slate-100 text-left text-xs">
@@ -1192,7 +1248,7 @@ export default function CatalogoVariantes({
                               />
                               {f.producto_id && (
                                 <>
-                                  <p className="mt-1 text-xs text-slate-500">
+                                  <p className="mt-1 whitespace-normal break-words text-xs text-slate-500">
                                     {f.nombre}
                                   </p>
                                   <label className="mt-2 flex gap-2 text-xs">
@@ -1263,12 +1319,35 @@ export default function CatalogoVariantes({
                                 <PrecioInput
                                   aria-label={`Costo variante ${i + 1}`}
                                   className={campos}
-                                  value={f.precio_compra ?? 0}
-                                  disabled={modo === "agrupar"}
+                                  value={
+                                    f.costo_especial
+                                      ? (f.precio_compra ?? 0)
+                                      : costoGeneral
+                                  }
+                                  disabled={
+                                    modo === "agrupar" || !f.costo_especial
+                                  }
                                   onChange={(n) =>
                                     cambiarFila(i, { precio_compra: n })
                                   }
                                 />
+                                <label className="mt-2 flex gap-2 text-xs">
+                                  <input
+                                    type="checkbox"
+                                    aria-label={`Usar costo general variante ${i + 1}`}
+                                    checked={!f.costo_especial}
+                                    disabled={modo === "agrupar"}
+                                    onChange={(e) =>
+                                      cambiarFila(i, {
+                                        costo_especial: !e.target.checked,
+                                        precio_compra: f.costo_especial
+                                          ? f.precio_compra
+                                          : costoGeneral,
+                                      })
+                                    }
+                                  />
+                                  Usar costo general
+                                </label>
                               </td>
                             )}
                             <td className="min-w-40 p-2">

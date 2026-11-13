@@ -354,6 +354,21 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
   await page
     .getByRole("button", { name: "Generar combinaciones", exact: true })
     .click();
+  await page
+    .getByRole("textbox", { name: "Costo general", exact: true })
+    .fill("12.50");
+  await expect(
+    page.getByRole("textbox", { name: "Costo variante 2", exact: true }),
+  ).toHaveValue(/^12\.50?$/);
+  await page
+    .getByRole("checkbox", {
+      name: "Usar costo general variante 1",
+      exact: true,
+    })
+    .uncheck();
+  await page
+    .getByRole("textbox", { name: "Costo variante 1", exact: true })
+    .fill("14.75");
   const skuGenerados = await page
     .getByRole("textbox", { name: /^SKU variante / })
     .evaluateAll((inputs) =>
@@ -383,6 +398,21 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
       exact: true,
     }),
   ).toBeVisible();
+  await page.setViewportSize({ width: 1600, height: 950 });
+  const panel = page
+    .getByRole("dialog", {
+      name: "Ficha de producto con variantes",
+      exact: true,
+    })
+    .locator("div")
+    .first();
+  expect((await panel.boundingBox())!.width).toBeGreaterThan(1200);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.setViewportSize({ width: 360, height: 740 });
   await page.getByRole("button", { name: "Cerrar ficha", exact: true }).click();
   await expect(page.getByText("Tu catálogo", { exact: true })).toBeVisible();
   await expect(
@@ -421,6 +451,12 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
   await page
     .getByRole("textbox", { name: "Precio general", exact: true })
     .fill("32.90");
+  await expect(
+    page.getByRole("textbox", { name: "Costo general", exact: true }),
+  ).toHaveValue(/^12\.50?$/);
+  await page
+    .getByRole("textbox", { name: "Costo general", exact: true })
+    .fill("13.25");
   await page
     .getByRole("button", { name: "Guardar producto y variantes", exact: true })
     .click();
@@ -428,6 +464,15 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
   const api = await appApi(u.token);
   const productos = (await (await api.get("/api/productos")).json()).data;
   expect(productos).toHaveLength(6);
+  expect(
+    productos.filter(
+      (p: { precio_compra: number }) => p.precio_compra === 13.25,
+    ),
+  ).toHaveLength(5);
+  expect(
+    productos.find((p: { sku: string }) => p.sku === "MI-SKU-ROJO-S")
+      .precio_compra,
+  ).toBe(14.75);
   expect(
     productos.some((p: { sku: string }) => p.sku === "MI-SKU-ROJO-S"),
   ).toBe(true);
@@ -438,5 +483,21 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
   expect(
     productos.every((p: { precio_venta: number }) => p.precio_venta === 32.9),
   ).toBe(true);
+  page.once("dialog", (d) => d.accept());
+  await page
+    .getByRole("button", { name: "Aplicar costo a todas", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Guardar producto y variantes", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText("guardados");
+  await expect
+    .poll(async () => {
+      const lista = (await (await api.get("/api/productos")).json()).data;
+      return lista.every(
+        (p: { precio_compra: number }) => p.precio_compra === 13.25,
+      );
+    })
+    .toBe(true);
   await api.dispose();
 });
