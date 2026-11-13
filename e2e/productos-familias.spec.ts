@@ -354,6 +354,26 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
   await page
     .getByRole("button", { name: "Generar combinaciones", exact: true })
     .click();
+  const skuGenerados = await page
+    .getByRole("textbox", { name: /^SKU variante / })
+    .evaluateAll((inputs) =>
+      inputs.map((input) => (input as HTMLInputElement).value),
+    );
+  expect(skuGenerados).toHaveLength(6);
+  expect(skuGenerados.every((sku) => sku.startsWith("POLO-VISUAL-"))).toBe(
+    true,
+  );
+  expect(new Set(skuGenerados).size).toBe(6);
+  // Un código personalizado se mantiene al añadir más combinaciones.
+  await page
+    .getByRole("textbox", { name: "SKU variante 1", exact: true })
+    .fill("MI-SKU-ROJO-S");
+  await page
+    .getByRole("button", { name: "Generar combinaciones", exact: true })
+    .click();
+  await expect(
+    page.getByRole("textbox", { name: "SKU variante 1", exact: true }),
+  ).toHaveValue("MI-SKU-ROJO-S");
   await page
     .getByRole("button", { name: "Guardar producto y variantes", exact: true })
     .click();
@@ -408,6 +428,10 @@ test("interfaz crea una ficha con variantes y permite editar el precio general e
   const api = await appApi(u.token);
   const productos = (await (await api.get("/api/productos")).json()).data;
   expect(productos).toHaveLength(6);
+  expect(
+    productos.some((p: { sku: string }) => p.sku === "MI-SKU-ROJO-S"),
+  ).toBe(true);
+  expect(new Set(productos.map((p: { sku: string }) => p.sku)).size).toBe(6);
   expect(productos.every((p: { unidad: string }) => p.unidad === "par")).toBe(
     true,
   );

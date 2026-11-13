@@ -22,9 +22,11 @@ test.describe('Productos e inventario', () => {
     expect((await (await api.get('/api/productos?busqueda=zapato')).json()).data).toHaveLength(0)
 
     // editar datos
-    const ed = await api.put(`/api/productos/${p.id}`, { data: { nombre: 'Vestido Luna Rojo', precio_venta: 95, precio_compra: 40, stock_minimo: 1, unidad: 'unidad' } })
+    const ed = await api.put(`/api/productos/${p.id}`, { data: { nombre: 'Vestido Luna Rojo', precio_venta: 95.5, precio_compra: 40.25, stock_actual: 8, stock_minimo: 1, unidad: 'unidad' } })
     expect(ed.status()).toBe(200)
-    expect((await ed.json()).data.nombre).toBe('Vestido Luna Rojo')
+    expect((await ed.json()).data).toMatchObject({ nombre: 'Vestido Luna Rojo', precio_venta: 95.5, precio_compra: 40.25, stock_actual: 8 })
+    const sinAjuste = await (await api.get(`/api/productos/${p.id}/movimientos`)).json()
+    expect(sinAjuste.data).toHaveLength(1)
 
     // el stock no se cambia sin motivo, y con motivo queda en el kardex
     const sinMotivo = await api.put(`/api/productos/${p.id}`, { data: { nombre: 'Vestido Luna Rojo', stock_actual: 20 } })

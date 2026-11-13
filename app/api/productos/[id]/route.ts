@@ -58,15 +58,15 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         { status: 400 }
       )
     }
-    const motivo = typeof body.motivo === 'string' ? body.motivo.trim() : ''
-    if (!motivo) {
-      return NextResponse.json(
-        { error: 'Para ajustar el stock se requiere un motivo (ajuste de inventario).' },
-        { status: 400 }
-      )
-    }
-    const stockActualPrevio = Number(actual?.stock_actual ?? 0)
+    const stockActualPrevio = Number(actual.stock_actual ?? 0)
     if (stockNuevo !== stockActualPrevio) {
+      const motivo = typeof body.motivo === 'string' ? body.motivo.trim() : ''
+      if (!motivo) {
+        return NextResponse.json(
+          { error: 'Para ajustar el stock se requiere un motivo (ajuste de inventario).' },
+          { status: 400 }
+        )
+      }
       const res = await ajustarStock(id, stockNuevo, motivo)
       if (!res.ok) {
         return NextResponse.json({ error: res.error }, { status: 409 })

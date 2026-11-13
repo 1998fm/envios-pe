@@ -50,7 +50,7 @@ test("compras operan por variante; la edición individual marca excepción y con
       ...rojo,
       precio_venta: 55.75,
       precio_compra: 12.75,
-      stock_actual: undefined,
+      stock_actual: 13, // La ficha envía el stock actual aunque solo cambie precios.
     },
   });
   expect(r.status(), await r.text()).toBe(200);

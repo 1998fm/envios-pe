@@ -397,6 +397,8 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...editForm,
+        // No enviar existencias sin cambios: otra venta puede haberlas actualizado.
+        stock_actual: stockCambio ? stockNuevo : undefined,
         ...(imagen_url ? { imagen_url } : {}),
         ...(stockCambio ? { motivo: motivoStock.trim() } : {}),
       }),
@@ -408,7 +410,8 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
       setEditandoId(null)
       cargarProductosYConteos()
     } else {
-      toast.error('Error al guardar')
+      const detalle = await res.json().catch(() => null)
+      toast.error(detalle?.error || 'Error al guardar el producto')
     }
   }
 

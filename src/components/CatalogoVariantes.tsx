@@ -473,10 +473,29 @@ export default function CatalogoVariantes({
       setError("Máximo 200 variantes");
       return;
     }
-    setFilas((v) => [
-      ...v,
-      ...nuevos.map((c) => ({ ...fila(datos.opciones), opciones: c })),
-    ]);
+    // Solo las combinaciones nuevas reciben un código; conserva los SKU ya editados.
+    const usados = new Set(
+      filas.map((f) => f.sku.trim().toUpperCase()).filter(Boolean),
+    );
+    const parte = (texto: string) =>
+      texto
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+    const base = parte(datos.nombre).slice(0, 40) || "PRODUCTO";
+    const generadas = nuevos.map((c) => {
+      const codigo = [base, ...datos.opciones.map((o) => parte(c[o]) || "VAR")]
+        .join("-")
+        .slice(0, 90);
+      let sku = codigo;
+      let sufijo = 2;
+      while (usados.has(sku)) sku = `${codigo}-${sufijo++}`;
+      usados.add(sku);
+      return { ...fila(datos.opciones), opciones: c, sku };
+    });
+    setFilas((v) => [...v, ...generadas]);
     setDirty(true);
     setError("");
   }
