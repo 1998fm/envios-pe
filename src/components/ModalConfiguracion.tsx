@@ -12,7 +12,6 @@ import AutocompleteInput from '@/components/AutocompleteInput'
 import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
 import { ConfigModalProps } from '@/types/config'
 import { Bike, Building2, Truck, Ship, Flower2, Package, Plus, Store, Building, Phone, MapPin, Image, MessageCircle, Globe, Clock, DollarSign, Camera, Music, ExternalLink, Lock } from 'lucide-react'
-import TourHelpButton from '@/components/TourHelpButton'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { comprimirImagenWebP } from '@/lib/comprimirImagen'
@@ -71,7 +70,6 @@ function ModalConfiguracionContenido({
           </h2>
           <div className="flex items-center gap-1.5">
             <TutorialConfiguracion vista={config.vistaConfig} region={config.motoRegion} />
-            <TourHelpButton tourId="modal-configuracion" />
           </div>
         </div>
 
