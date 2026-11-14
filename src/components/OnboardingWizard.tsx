@@ -6,7 +6,6 @@ import { ArrowLeft, ArrowRight, Check, Copy, ExternalLink } from "lucide-react";
 import { obtenerSesion } from "@/lib/clienteApi";
 import { guardarPasoServidor } from "@/lib/configuracionCliente";
 import {
-  claveInicio,
   clavePaso,
   configInicialDesdeSesion,
   pasosIniciales,
@@ -96,7 +95,6 @@ export default function OnboardingWizard() {
   }
   function entrar() {
     markTrayectoDone();
-    localStorage.setItem(claveInicio(userId), "abierto");
     router.push("/dashboard?v=envios");
   }
   async function siguiente() {

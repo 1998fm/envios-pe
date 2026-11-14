@@ -28,12 +28,7 @@ export default function PrimerosPasos({
   onConfigurar,
   onEnvios,
 }: Props) {
-  const [abierto, setAbierto] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      (new URLSearchParams(window.location.search).get("tour") === "start" ||
-        localStorage.getItem(claveInicio(userId)) === "abierto"),
-  );
+  const [abierto, setAbierto] = useState(false);
   const [probado, setProbado] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -45,7 +40,6 @@ export default function PrimerosPasos({
   function alternar() {
     const next = !abierto;
     setAbierto(next);
-    localStorage.setItem(claveInicio(userId), next ? "abierto" : "cerrado");
     const url = new URL(window.location.href);
     url.searchParams.delete("tour");
     window.history.replaceState({}, "", url.pathname + url.search);

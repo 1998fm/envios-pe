@@ -23,11 +23,11 @@ Con solo recojo se completan dos pasos; con agencias, tres; con Motorizado, hast
 
 ## Ayuda sin interrupciones
 
-El dashboard incluye **Primeros pasos y guías**, desplegable y minimizable. Se abre al salir del asistente; las cuentas existentes lo ven cerrado. Su estado y la declaración manual de haber revisado el formulario se guardan por usuario en ese navegador. No representan ventas, solicitudes ni actividad real inventada.
+El dashboard incluye **Primeros pasos y guías**, desplegable y minimizable. Siempre inicia cerrado, incluso al salir del asistente, recargar o cambiar de sección; solo se despliega al pulsar su encabezado. La declaración manual de haber revisado el formulario se guarda por usuario en ese navegador. No representan ventas, solicitudes ni actividad real inventada.
 
 El dueño puede continuar el asistente o abrir Configuración. Los enlaces de inventario se muestran con Plus y con las secciones permitidas para ese usuario. Los miembros no ven acciones para configurar el negocio. El acceso a las guías no concede permisos para usar herramientas.
 
-Los recorridos con globos dejaron de arrancar automáticamente. `OnboardingContext.startTour` requiere `manual=true`; `TourHelpButton` lo establece al pulsarlo. Se conservan las ayudas manuales donde siguen siendo útiles. El antiguo enlace `?tour=start` abre la lista de primeros pasos sin navegar por las pestañas.
+Los recorridos con globos dejaron de arrancar automáticamente. `OnboardingContext.startTour` requiere `manual=true`; `TourHelpButton` lo establece al pulsarlo. Se conservan las ayudas manuales donde siguen siendo útiles. El antiguo enlace `?tour=start` conserva la lista cerrada hasta que el usuario la despliegue.
 
 Logística y Tarifas reutilizan el video de Configuración. Etiquetas, Copiar datos, Cambio Masivo y Shalom Pro abren el capítulo correspondiente de la guía de Envíos. Las ventanas conservan sus opciones al cerrar el video. Productos, Compras y Ventas mantienen sus guías; la lista explica el orden del inventario y las funciones de variantes, SKU y costo general.
 

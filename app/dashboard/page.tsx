@@ -1111,7 +1111,7 @@ for (
       esOwner={esOwner}
     />
 
-    {usuarioActualId && <PrimerosPasos key={usuarioActualId} userId={usuarioActualId} config={config} slug={slugEmpresa} plan={plan} puedeConfigurar={esOwner} visibles={pestanasPermitidas} onConfigurar={() => setMostrarConfig(true)} onEnvios={() => cambiarPestaña('envios')} />}
+    {usuarioActualId && <PrimerosPasos key={`${usuarioActualId}:${pestañaActiva}`} userId={usuarioActualId} config={config} slug={slugEmpresa} plan={plan} puedeConfigurar={esOwner} visibles={pestanasPermitidas} onConfigurar={() => setMostrarConfig(true)} onEnvios={() => cambiarPestaña('envios')} />}
 
     {userId && pestañaActiva === 'resumen' && puedeUsarSeccion(plan, 'resumen') && (
       <PanelResumen

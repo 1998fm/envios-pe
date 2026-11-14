@@ -63,14 +63,13 @@ test("Registro: nombre precargado, solo recojo omite horarios y tarifas, sin rec
   });
   await expect(
     inicio.getByRole("button", { name: "Primeros pasos y guías", exact: true }),
-  ).toHaveAttribute("aria-expanded", "true");
+  ).toHaveAttribute("aria-expanded", "false");
+  await inicio.getByRole("button", { name: "Primeros pasos y guías", exact: true }).click();
+  await expect(inicio.getByRole("button", { name: "Primeros pasos y guías", exact: true })).toHaveAttribute("aria-expanded", "true");
   // Espera superior a los antiguos temporizadores de 400/600 ms.
   await page.waitForTimeout(1200);
   await expect(page).toHaveURL(/dashboard\?v=envios/);
   await expect(page.locator(".tour-highlight")).toHaveCount(0);
-  await inicio
-    .getByRole("button", { name: "Minimizar primeros pasos", exact: true })
-    .click();
   await page.reload();
   await expect(
     inicio.getByRole("button", { name: "Primeros pasos y guías", exact: true }),
