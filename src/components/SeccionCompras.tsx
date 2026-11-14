@@ -12,7 +12,7 @@ import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import { buscar } from '@/lib/buscar'
-import TourHelpButton from '@/components/TourHelpButton'
+import TutorialSeccion from '@/components/TutorialSeccion'
 
 type Props = { userId: string }
 
@@ -208,6 +208,7 @@ export default function SeccionCompras({ userId }: Props) {
         >
           <Plus size={16} /> Nueva compra
         </button>
+        <TutorialSeccion seccion="compras" tono="oscuro" />
         <div data-tour="compras-filtros" className="flex gap-1">
           {ESTADOS.map((e) => (
             <button
@@ -344,10 +345,10 @@ export default function SeccionCompras({ userId }: Props) {
 
       {showNueva && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={cerrarNueva}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-label="Nueva compra" className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="shrink-0 p-6 pb-4 border-b border-slate-200 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Nueva compra</h3>
-              <TourHelpButton tourId="modal-nueva-compra" />
+              <TutorialSeccion seccion="compras" tono="oscuro" />
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-5">

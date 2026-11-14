@@ -37,3 +37,27 @@ La guía de Configuración dedica una explicación con ejemplos a cada opción. 
 El ejemplo de Lima demuestra precio único, cambio individual, exclusión, guardado y restauración con nueva tarifa. Provincia se graba con otra cuenta local que empieza sin tarifas: cambiar de región no limpia automáticamente una lista existente. Ambos perfiles de demostración se eliminan al finalizar el generador, también si ocurre un error.
 
 El tiempo de cada explicación se calcula para permitir su lectura (aprox. 187 palabras por minuto). Los capítulos se leen desde `pasos.json`; el botón de ayuda abre el tema correspondiente a la pestaña actual, con accesos a Inicio, Logística, Tarifas Lima y Tarifas Provincia. La transcripción incluye los ejemplos, además de las instrucciones cortas.
+
+## Productos, Compras y Ventas
+
+El generador compartido graba las pantallas reales y verifica en la API local el resultado de cada operación. `flujos-secciones.mjs` contiene el guion y los selectores. Ejecuta cada sección con el stack local iniciado:
+
+```sh
+APP_PORT=3100 LOCAL_DB_PORT=54322 node scripts/tutoriales/guia-seccion.mjs productos
+APP_PORT=3100 LOCAL_DB_PORT=54322 node scripts/tutoriales/guia-seccion.mjs compras
+APP_PORT=3100 LOCAL_DB_PORT=54322 node scripts/tutoriales/guia-seccion.mjs ventas
+```
+
+`TUTORIAL_FAST=1` ensaya el flujo sin exportar MP4. Cada ejecución crea su propia cuenta de demostración y elimina su perfil al terminar. No modifica cuentas reales. La grabación muestra el stock inicial, los precios unitarios y las consecuencias de guardar. Ventas verifica un pago parcial y el cobro posterior sin volver a descontar stock; Compras verifica una entrada de diez unidades; Productos verifica creación, archivo y restauración.
+
+Copia el MP4 y la portada a `public/recursos/<seccion>/`; publica `duration` y `marks` de `timeline.json` como `pasos.json`, omitiendo `lead`. Las páginas completas permiten descargar el video y consultar cada paso por escrito. El índice para compartir con clientes nuevos es `/recursos/guias/index.html`.
+
+### Serie con variantes actualizada
+
+Para grabar la guía actual con SKU automático, costo general, excepción de costo y cambio posterior del precio/costo del conjunto, usa el generador compartido:
+
+```sh
+APP_PORT=3100 LOCAL_DB_PORT=54322 node scripts/tutoriales/guia-seccion.mjs variantes
+```
+
+Publica `variantes.mp4` como `public/recursos/serie-variantes/serie-con-variantes.mp4` y actualiza portada y capítulos con su `timeline.json`. Verifica cuatro SKU distintos, stocks 10/8/6/4, precio general S/ 29.90, tres costos S/ 13.25 y una excepción S/ 14.75. El guion anterior `serie-variantes.mjs` se conserva como referencia de la primera grabación.

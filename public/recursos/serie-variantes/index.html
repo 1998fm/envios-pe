@@ -8,20 +8,20 @@
 </style>
 </head>
 <body><main>
-<nav><span class="marca">Tori</span><a href="/dashboard?v=productos">Ir a Productos ↗</a></nav>
-<header><span class="etiqueta">GUÍA VISUAL</span><h1>Serie con variantes,<br>paso a paso.</h1><p class="intro">Crea un polo con dos colores y dos tallas. Después, aprende a cambiar su precio general desde una sola ficha.</p></header>
+<nav><span class="marca">Tori</span><a href="/recursos/guias/index.html">Todas las guías ↗</a></nav>
+<header><span class="etiqueta">GUÍA VISUAL</span><h1>Serie con variantes,<br>paso a paso.</h1><p class="intro">Crea dos colores y dos tallas con SKU automático, stock independiente y costo general. Aprende a cambiar el precio y el costo del conjunto, conservando una variante con costo distinto. Demostración con Plan Plus y permisos de dueño.</p></header>
 <section class="reproductor" aria-label="Tutorial en video">
-<video id="guia" controls playsinline preload="metadata" poster="portada.jpg" aria-label="Cómo crear y editar una serie con variantes"><source src="serie-con-variantes.mp4" type="video/mp4">Tu navegador no puede reproducir el video. Puedes descargarlo con el botón de abajo.</video>
+<video id="guia" controls playsinline preload="metadata" poster="portada.jpg" aria-label="Cómo crear una serie con variantes"><source src="serie-con-variantes.mp4" type="video/mp4">Tu navegador no puede reproducir el video. Puedes descargarlo con el botón de abajo.</video>
 <div class="acciones"><button class="boton principal" id="repetir">Ver desde el inicio</button><a class="boton" href="serie-con-variantes.mp4" download="tori-serie-con-variantes.mp4">Descargar MP4</a></div>
 </section>
 <p class="nota">Instrucciones en pantalla · No necesita audio. En celular, gira la pantalla y usa pantalla completa para ver mejor los campos.</p>
 <section aria-labelledby="titulo-pasos"><h2 id="titulo-pasos">Ir a un paso</h2><ol class="pasos" id="pasos"></ol></section>
-<details><summary>Leer las instrucciones</summary><ol id="transcripcion"></ol></details>
+<details><summary>Leer las explicaciones y los ejemplos</summary><ol id="transcripcion"></ol></details>
 <footer>Demostración grabada con las pantallas reales de Tori y datos de ejemplo.</footer>
 </main>
 <script>
 const video=document.getElementById('guia');let pasos=[];
 document.getElementById('repetir').addEventListener('click',()=>{video.currentTime=0;video.play().catch(()=>{})});
-fetch('pasos.json').then(r=>{if(!r.ok)throw Error('No se pudieron cargar los pasos');return r.json()}).then(data=>{pasos=data.marks;const lista=document.getElementById('pasos'),texto=document.getElementById('transcripcion');pasos.forEach((p,i)=>{const li=document.createElement('li'),b=document.createElement('button'),t=document.createElement('span'),label=document.createElement('span');t.className='tiempo';t.textContent=Math.floor(p.start/60)+':'+String(Math.floor(p.start%60)).padStart(2,'0');label.textContent=p.title;b.append(t,label);b.addEventListener('click',()=>{video.currentTime=p.start;video.play().catch(()=>{});video.scrollIntoView({behavior:'smooth',block:'center'})});b.dataset.paso=String(i);li.append(b);lista.append(li);const frase=document.createElement('li');frase.textContent=p.title+'. '+p.detail;texto.append(frase)})}).catch(()=>{document.getElementById('pasos').textContent='Usa los controles del video para pausar o repetir.'});
+fetch('pasos.json').then(r=>{if(!r.ok)throw Error('No se pudieron cargar los pasos');return r.json()}).then(data=>{pasos=data.marks;const lista=document.getElementById('pasos'),texto=document.getElementById('transcripcion');pasos.forEach((p,i)=>{const li=document.createElement('li'),b=document.createElement('button'),t=document.createElement('span'),label=document.createElement('span');t.className='tiempo';t.textContent=Math.floor(p.start/60)+':'+String(Math.floor(p.start%60)).padStart(2,'0');label.textContent=p.title;b.append(t,label);b.addEventListener('click',()=>{video.currentTime=p.start;video.play().catch(()=>{});video.scrollIntoView({behavior:'smooth',block:'center'})});b.dataset.paso=String(i);li.append(b);lista.append(li);const frase=document.createElement('li');frase.textContent=p.title+'. '+p.detail;if(p.explicacion){const lista=document.createElement('ul');p.explicacion.filas.forEach(f=>{const item=document.createElement('li');item.textContent=f;lista.append(item)});frase.append(lista);const nota=document.createElement('p');nota.textContent=p.explicacion.nota;frase.append(nota)}texto.append(frase)})}).catch(()=>{document.getElementById('pasos').textContent='Usa los controles del video para pausar o repetir.'});
 video.addEventListener('timeupdate',()=>{let actual=0;for(let i=0;i<pasos.length;i++)if(video.currentTime>=pasos[i].start)actual=i;document.querySelectorAll('[data-paso]').forEach(b=>{if(Number(b.dataset.paso)===actual)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')})});
 </script></body></html>

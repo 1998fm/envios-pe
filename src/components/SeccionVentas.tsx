@@ -1,4 +1,5 @@
 'use client'
+import TutorialSeccion from '@/components/TutorialSeccion'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -262,13 +263,16 @@ export default function SeccionVentas({
               )}
             </div>
 
-            <button
-              data-tour="ventas-nueva"
-              onClick={() => setShowNueva(true)}
-              className="btn-shine flex shrink-0 items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-extrabold text-tori-700 shadow-lg shadow-black/10 transition-all hover:shadow-xl hover:shadow-black/15 active:scale-[0.98]"
-            >
-              <Plus size={17} /> Nueva venta
-            </button>
+            <div className="flex items-center gap-2">
+              <TutorialSeccion seccion="ventas" />
+              <button
+                data-tour="ventas-nueva"
+                onClick={() => setShowNueva(true)}
+                className="btn-shine flex shrink-0 items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-extrabold text-tori-700 shadow-lg shadow-black/10 transition-all hover:shadow-xl hover:shadow-black/15 active:scale-[0.98]"
+              >
+                <Plus size={17} /> Nueva venta
+              </button>
+            </div>
           </div>
 
           {muestraKpis && (

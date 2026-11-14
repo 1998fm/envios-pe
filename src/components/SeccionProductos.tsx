@@ -11,7 +11,7 @@ import { UNIDADES_MEDIDA } from '@/types/inventario'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, trayectoDone } from '@/lib/tours'
-import TourHelpButton from '@/components/TourHelpButton'
+import TutorialSeccion from '@/components/TutorialSeccion'
 import { openUpgrade, planNivel } from '@/lib/planGating'
 import EtiquetasProducto, { COPIAS_A4_OPCIONES, TAMANOS_ETIQUETA_PRODUCTO, type TamanoEtiquetaProducto } from '@/components/EtiquetasProducto'
 import { api } from '@/lib/clienteApi'
@@ -733,6 +733,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                   <Boxes size={15} /> Variantes
                 </button>
               )}
+              <TutorialSeccion seccion="productos" />
               <button
                 data-tour="productos-nuevo"
                 onClick={() => setShowNuevo(true)}
@@ -1547,10 +1548,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                     </h3>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <TourHelpButton
-                      tourId="modal-nuevo-producto"
-                      className="border-white/25 bg-white/10 text-white hover:bg-white/20"
-                    />
+                    <TutorialSeccion seccion="productos" />
                     <button
                       onClick={() => { setShowNuevo(false); quitarFoto('nuevo') }}
                       aria-label="Cerrar"

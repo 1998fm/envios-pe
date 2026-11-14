@@ -1,0 +1,93 @@
+{
+  "duration": 150.415,
+  "marks": [
+    {
+      "start": 0,
+      "title": "INICIO · Para qué sirve Productos",
+      "detail": "Primero crea el catálogo. Después registra compras y ventas sobre esos productos.",
+      "explicacion": {
+        "titulo": "Producto, compra y venta son cosas distintas",
+        "filas": [
+          "Productos Define qué vendes y sus datos: nombre, precio, costo y existencias.",
+          "Compras y Ventas Registran las entradas y salidas de mercadería. No necesitas volver a crear el producto."
+        ],
+        "nota": "Usa un registro para cada producto o variante. Evita duplicados."
+      }
+    },
+    {
+      "start": 18.297,
+      "title": "CREAR · Nuevo producto",
+      "detail": "Abre Nuevo producto. Un solo producto sirve para una única versión.",
+      "explicacion": {
+        "titulo": "Nombre y SKU",
+        "filas": [
+          "Nombre claro Ejemplo: Polo algodón. Incluye la versión si necesitas distinguirla.",
+          "SKU Es tu código para identificar el producto. Se propone automáticamente y puedes editarlo."
+        ],
+        "nota": "La foto es opcional. Usa Serie con variantes para colores o tallas; tiene su propio tutorial."
+      }
+    },
+    {
+      "start": 42.71,
+      "title": "STOCK · Existencias iniciales y alerta",
+      "detail": "Stock: unidades que ya tienes. Stock mínimo: referencia para la alerta de stock bajo.",
+      "explicacion": {
+        "titulo": "Stock inicial no es una compra nueva",
+        "filas": [
+          "Stock inicial: 20 Son las unidades que ya tienes al empezar a usar Tori.",
+          "Stock mínimo: 3 Sirve de referencia para avisarte cuando las existencias bajan por debajo del mínimo."
+        ],
+        "nota": "Si ya contaste esas unidades como stock inicial, no registres otra compra por las mismas unidades."
+      }
+    },
+    {
+      "start": 63.566,
+      "title": "PRECIOS · Venta y compra por unidad",
+      "detail": "Precio de venta: S/ 25.50. Precio de compra: S/ 12.50 por unidad.",
+      "explicacion": {
+        "titulo": "No confundas los dos precios",
+        "filas": [
+          "Venta: S/ 25.50 Lo que cobras al cliente por una unidad.",
+          "Compra: S/ 12.50 Tu costo de referencia por unidad. La diferencia es S/ 13.00, antes de otros gastos."
+        ],
+        "nota": "La diferencia entre precios no es la ganancia neta después de gastos y otros costos."
+      }
+    },
+    {
+      "start": 87.309,
+      "title": "Guardar el producto",
+      "detail": "Revisa la unidad de medida y pulsa Crear producto."
+    },
+    {
+      "start": 92.512,
+      "title": "HISTORIAL · Cómo revisar los movimientos",
+      "detail": "Abre Historial de movimientos para saber por qué cambió el stock.",
+      "explicacion": {
+        "titulo": "El kardex explica tus existencias",
+        "filas": [
+          "Entradas y salidas Muestra compras, ventas, ajustes y sus saldos.",
+          "Corregir un conteo En Editar puedes ajustar stock con un motivo. Para reponer mercadería habitual, usa Compras."
+        ],
+        "nota": "Conserva el historial para entender los cambios."
+      }
+    },
+    {
+      "start": 112.224,
+      "title": "ARCHIVAR · Ocultar sin borrar",
+      "detail": "Archivar retira el producto de la venta, pero conserva su registro.",
+      "explicacion": {
+        "titulo": "Archivar, restaurar y variantes",
+        "filas": [
+          "Archivados Busca el producto y usa Restaurar para volver a ofrecerlo si tiene stock.",
+          "Variantes Agrupa colores o tallas bajo una ficha. Cada variante conserva su propio stock."
+        ],
+        "nota": "La guía específica de Serie con variantes está en su botón ⓘ."
+      }
+    },
+    {
+      "start": 146.411,
+      "title": "Listo · Continúa con Compras o Ventas",
+      "detail": "El catálogo ya tiene el producto. Las operaciones se registran en sus secciones."
+    }
+  ]
+}

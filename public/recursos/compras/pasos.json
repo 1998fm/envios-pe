@@ -1,0 +1,77 @@
+{
+  "duration": 97.827,
+  "marks": [
+    {
+      "start": 0.002,
+      "title": "INICIO · Para qué sirve Compras",
+      "detail": "Usa Compras cuando ingresa mercadería que adquiriste de un proveedor.",
+      "explicacion": {
+        "titulo": "Antes de registrar una compra",
+        "filas": [
+          "El producto debe existir Créalo primero en Productos. Aquí eliges ese mismo registro.",
+          "Stock inicial del ejemplo: 5 Compraremos 10 unidades nuevas. Al guardar, el stock será 15."
+        ],
+        "nota": "No registres dos veces la misma entrada de mercadería."
+      }
+    },
+    {
+      "start": 16.994,
+      "title": "CREAR · Nueva compra y proveedor",
+      "detail": "Abre Nueva compra y escribe el proveedor de esta operación."
+    },
+    {
+      "start": 22.645,
+      "title": "PRODUCTOS · Busca y agrega el producto",
+      "detail": "Busca por nombre y selecciona la versión exacta que estás comprando."
+    },
+    {
+      "start": 27.484,
+      "title": "CANTIDAD Y COSTO · Revisa los importes",
+      "detail": "Cantidad: 10. Precio de compra por unidad: S/ 12.50. Total: S/ 125.00.",
+      "explicacion": {
+        "titulo": "Cantidad × costo unitario",
+        "filas": [
+          "10 unidades × S/ 12.50 El total de esta compra es S/ 125.00.",
+          "El precio es por unidad No escribas S/ 125.00 en el campo unitario. Ese sería el costo de una sola unidad."
+        ],
+        "nota": "Este costo corresponde a la compra, no es el precio de venta al cliente."
+      }
+    },
+    {
+      "start": 47.896,
+      "title": "GUARDAR · Registrar compra",
+      "detail": "Revisa los productos, las cantidades y el total. Después pulsa Registrar compra.",
+      "explicacion": {
+        "titulo": "Qué cambia al guardar",
+        "filas": [
+          "Stock: 5 + 10 = 15 La mercadería comprada se suma al producto que seleccionaste.",
+          "Registro de la operación Quedan el proveedor, los productos, la cantidad y el total de S/ 125.00."
+        ],
+        "nota": "Registrar una compra no transfiere dinero al proveedor ni cambia el precio de venta del catálogo."
+      }
+    },
+    {
+      "start": 68.435,
+      "title": "CONSULTAR · Abre el detalle",
+      "detail": "Usa Ver detalle para revisar el proveedor, el total y los productos registrados."
+    },
+    {
+      "start": 76.933,
+      "title": "CORREGIR · Qué significa anular",
+      "detail": "Si te equivocaste, revisa la operación antes de anularla. No registres un duplicado para corregirla.",
+      "explicacion": {
+        "titulo": "Anular no es ocultar",
+        "filas": [
+          "Anular una compra revierte su entrada de stock Hazlo solo cuando corresponda corregir esa operación.",
+          "Si esa mercadería ya se vendió La anulación puede rechazarse para no dejar stock negativo."
+        ],
+        "nota": "En este ejemplo no anulamos: la compra es válida y el stock queda en 15."
+      }
+    },
+    {
+      "start": 93.714,
+      "title": "Listo · Compra registrada y stock actualizado",
+      "detail": "Consulta tus movimientos en Productos → Historial de movimientos."
+    }
+  ]
+}

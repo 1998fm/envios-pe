@@ -1,0 +1,93 @@
+{
+  "duration": 163.024,
+  "marks": [
+    {
+      "start": 0.001,
+      "title": "INICIO · Para qué sirve Ventas",
+      "detail": "Registra quién compra, qué producto se lleva y cuánto te ha pagado.",
+      "explicacion": {
+        "titulo": "Antes de vender",
+        "filas": [
+          "Revisa el catálogo y el stock El producto o variante debe existir y tener unidades disponibles.",
+          "Ejemplo: 10 polos disponibles Venderemos 2. Al registrar la venta quedarán 8."
+        ],
+        "nota": "Cada variante se selecciona por separado."
+      }
+    },
+    {
+      "start": 15.52,
+      "title": "CLIENTE · Buscar antes de registrar",
+      "detail": "Abre Nueva venta y busca por DNI o teléfono para reutilizar el cliente si ya existe.",
+      "explicacion": {
+        "titulo": "Usa el cliente correcto",
+        "filas": [
+          "Si ya existe, reutilízalo Busca por DNI o celular antes de crear otra ficha.",
+          "Si es nuevo, regístralo Completa su nombre y contacto real. El celular ayuda a relacionar la venta con su solicitud de envío."
+        ],
+        "nota": "En esta demostración usamos datos de ejemplo, no los de una persona real."
+      }
+    },
+    {
+      "start": 48.288,
+      "title": "PRODUCTOS · Agrega la versión correcta",
+      "detail": "Busca el producto por nombre o SKU y selecciónalo.",
+      "explicacion": {
+        "titulo": "Revisa cantidad y precio unitario",
+        "filas": [
+          "2 polos × S/ 25.50 Total de la venta: S/ 51.00.",
+          "Precio por unidad No escribas el total de S/ 51.00 en el precio de una sola unidad."
+        ],
+        "nota": "Verifica el nombre de la variante antes de guardar."
+      }
+    },
+    {
+      "start": 72.494,
+      "title": "PAGO · Elige cómo y cuánto te pagó",
+      "detail": "Selecciona el método de pago y registra el estado real del cobro.",
+      "explicacion": {
+        "titulo": "Pago completo, pendiente o parcial",
+        "filas": [
+          "Si recibiste todo Usa Sí, ya pagó. Si todavía no cobraste, usa Pendiente.",
+          "Ejemplo: solo recibiste S/ 20.00 Marca Me pagó solo una parte. De S/ 51.00, queda por cobrar S/ 31.00."
+        ],
+        "nota": "Con tarjeta, la venta queda pendiente hasta que confirmes el cobro."
+      }
+    },
+    {
+      "start": 99.813,
+      "title": "GUARDAR · Crear venta",
+      "detail": "Comprueba cliente, productos, total y pago antes de crear la venta.",
+      "explicacion": {
+        "titulo": "La venta descuenta stock aunque el cobro siga pendiente",
+        "filas": [
+          "Stock: 10 − 2 = 8 Las 2 unidades ya forman parte de la venta registrada.",
+          "Pago y envío son distintos Cobrar no marca un pedido como enviado ni crea automáticamente su solicitud de envío."
+        ],
+        "nota": "No registres otra venta cuando recibas el saldo: actualiza el cobro de la misma venta."
+      }
+    },
+    {
+      "start": 126.218,
+      "title": "CONSULTAR · Revisa el detalle",
+      "detail": "Abre Ver detalle para comprobar los datos y productos de la operación."
+    },
+    {
+      "start": 134.128,
+      "title": "COBRAR · Completar el pago pendiente",
+      "detail": "Solo cuando recibas el saldo, usa Marcar como cobrada y confirma.",
+      "explicacion": {
+        "titulo": "Un solo registro de venta",
+        "filas": [
+          "Venta completada: S/ 51.00 cobrados Se completa el saldo de esa misma operación.",
+          "Stock final: 8 Confirmar el cobro no vuelve a descontar las 2 unidades."
+        ],
+        "nota": "Anular es una corrección distinta: revierte la venta y devuelve stock. No lo uses para indicar un cobro."
+      }
+    },
+    {
+      "start": 158.937,
+      "title": "Listo · Venta y cobro registrados",
+      "detail": "Continúa con la gestión del envío cuando corresponda."
+    }
+  ]
+}

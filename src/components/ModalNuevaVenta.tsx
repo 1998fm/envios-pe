@@ -22,7 +22,7 @@ import { toast } from 'sonner'
 import { usePolling } from '@/hooks/usePolling'
 import type { Producto } from '@/types/inventario'
 import EscannerVentas from '@/components/EscannerVentas'
-import TourHelpButton from '@/components/TourHelpButton'
+import TutorialSeccion from '@/components/TutorialSeccion'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { openUpgrade, planNivel } from '@/lib/planGating'
 import { buscar } from '@/lib/buscar'
@@ -366,7 +366,7 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
                   <h3 className="mt-1 text-2xl font-extrabold tracking-tight text-white">Nueva venta</h3>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <TourHelpButton tourId="modal-nueva-venta" className="border-white/25 bg-white/10 text-white hover:bg-white/20" />
+                  <TutorialSeccion seccion="ventas" />
                   <button
                     onClick={cerrar}
                     aria-label="Cerrar"
