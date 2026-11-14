@@ -21,6 +21,7 @@ import ModalConfiguracion from '@/components/ModalConfiguracion'
 import DashboardTopBar from '@/components/DashboardTopBar'
 import DashboardMenu from '@/components/DashboardMenu'
 import FilterBar from '@/components/FilterBar'
+import TutorialEnvios from '@/components/TutorialEnvios'
 import EnvioGroupedList from '@/components/EnvioGroupedList'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
@@ -1190,6 +1191,7 @@ for (
     {pestañaActiva === 'envios' && (
       <div className="space-y-4 mb-8">
         <FilterBar
+          ayuda={<TutorialEnvios />}
           busqueda={busqueda}
           onBusquedaChange={setBusqueda}
           filtrosEstado={filtrosEstado}

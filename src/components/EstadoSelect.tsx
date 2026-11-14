@@ -31,7 +31,13 @@ function badge(value: string) {
 }
 
 export default function EstadoSelect({ envioId, estadoActual }: Props) {
-  const [estado, setEstado] = useState(estadoActual)
+  const [seleccion, setSeleccion] = useState({ recibido: estadoActual, valor: estadoActual })
+  // Un cambio masivo o de otra sesión debe reflejarse también en el selector.
+  if (seleccion.recibido !== estadoActual) {
+    setSeleccion({ recibido: estadoActual, valor: estadoActual })
+  }
+  const estado = seleccion.recibido === estadoActual ? seleccion.valor : estadoActual
+  const setEstado = (valor: string) => setSeleccion({ recibido: estadoActual, valor })
 
   async function cambiarEstado(nuevoEstado: string) {
     const anterior = estado

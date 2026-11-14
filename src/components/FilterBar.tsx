@@ -1,7 +1,7 @@
 'use client'
 
 import { Search, Calendar, X, ChevronDown } from 'lucide-react'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type ReactNode } from 'react'
 import MultiSelect from '@/components/ui/MultiSelect'
 
 type Metodo = { value: string; label: string }
@@ -14,6 +14,7 @@ const estadoOptions = [
 ]
 
 type Props = {
+  ayuda?: ReactNode
   busqueda: string
   onBusquedaChange: (v: string) => void
   filtrosEstado: string[]
@@ -28,7 +29,7 @@ type Props = {
 }
 
 export default function FilterBar({
-  busqueda, onBusquedaChange,
+  ayuda, busqueda, onBusquedaChange,
   filtrosEstado, onFiltrosEstadoChange,
   filtrosMetodo, onFiltrosMetodoChange,
   metodosDisponibles,
@@ -130,6 +131,7 @@ export default function FilterBar({
           </div>
         </div>
 
+       {ayuda}
        <div data-tour="filtro-estado" className="flex gap-3 flex-wrap">
         <MultiSelect
           label="Estado"

@@ -1,0 +1,283 @@
+{
+  "duration": 589.584,
+  "marks": [
+    {
+      "start": 0,
+      "title": "INICIO · Tu mesa de preparación y despacho",
+      "detail": "Un recorrido completo: recibir, revisar, validar, preparar y despachar.",
+      "explicacion": {
+        "titulo": "Tres cosas que debes distinguir",
+        "filas": [
+          "Venta Registra productos, cantidades y cobro. Una venta puede seguir pendiente de pago.",
+          "Solicitud de envío Tu cliente indica sus datos y el destino. Aquí organizas la preparación y el despacho."
+        ],
+        "nota": "Registrar un envío no crea una venta ni confirma automáticamente un cobro."
+      }
+    },
+    {
+      "start": 20.452,
+      "title": "FORMULARIO · Cómo llegan los pedidos",
+      "detail": "Comparte tu formulario. Las solicitudes recibidas aparecen en esta sección.",
+      "explicacion": {
+        "titulo": "Lo que ve tu cliente",
+        "filas": [
+          "Formulario del negocio Ofrece los métodos habilitados y solicita sus datos. No es la pantalla de compras de inventario.",
+          "Antes de compartir Prueba tu cobertura, tus días de entrega y tus tarifas. Una solicitud no significa que ya despachaste."
+        ],
+        "nota": "En este ejemplo ya recibimos dos solicitudes para mostrar el trabajo del dashboard."
+      }
+    },
+    {
+      "start": 64.678,
+      "title": "LISTA · Entender cada tarjeta",
+      "detail": "Nombre, código del pedido, DNI, celular, destino, método, tamaño y estado.",
+      "explicacion": {
+        "titulo": "Lee la tarjeta antes de actuar",
+        "filas": [
+          "Identificación Nombre, DNI, celular y código distinguen al cliente y a esta solicitud concreta.",
+          "Entrega y preparación El método y destino dicen dónde va. El tamaño clasifica el paquete y el estado indica en qué parte de tu operación está."
+        ],
+        "nota": "La cantidad de prendas puede ser declarada en el formulario: contrástala con el contenido real de las ventas."
+      }
+    },
+    {
+      "start": 88.792,
+      "title": "FILTROS · Por qué no aparece un pedido",
+      "detail": "La vista inicial muestra pendientes, empacados y observados. Los enviados pueden estar ocultos.",
+      "explicacion": {
+        "titulo": "Buscar no elimina los demás filtros",
+        "filas": [
+          "Estado y método Un pedido debe coincidir con todos los filtros activos. Puedes incluir varios estados o métodos.",
+          "Si no aparece Revisa Enviado, el método, las fechas y el texto de búsqueda antes de pensar que se perdió."
+        ],
+        "nota": "Los filtros solo cambian la lista que ves. No cambian estados ni borran pedidos."
+      }
+    },
+    {
+      "start": 112.783,
+      "title": "BUSCAR · Nombre, DNI o teléfono",
+      "detail": "Busca al cliente. Borra el texto al terminar para recuperar los demás pedidos."
+    },
+    {
+      "start": 118.317,
+      "title": "FECHAS · Registro y programación son distintos",
+      "detail": "El filtro por fecha consulta el registro de la solicitud; Programada organiza el trabajo de entrega.",
+      "explicacion": {
+        "titulo": "Cómo interpretar las fechas",
+        "filas": [
+          "Filtro Desde / Hasta Consulta cuándo se registró la solicitud, usando los días del negocio en Perú. Solo Desde busca ese día; ambos definen un rango.",
+          "Programada / Registro Cambia cómo se agrupan las tarjetas. No reprograma los pedidos ni cambia por sí solo el filtro de fecha."
+        ],
+        "nota": "Solo Hasta incluye los registros hasta el final de ese día. Si una lista queda vacía, revisa el rango."
+      }
+    },
+    {
+      "start": 151.513,
+      "title": "DETALLE · Abrir y revisar al destinatario",
+      "detail": "En computadora: doble clic en la tarjeta. En celular: un toque.",
+      "explicacion": {
+        "titulo": "Comprueba quién recibe y a dónde va",
+        "filas": [
+          "Motorizado o domicilio Verifica distrito, dirección, referencia, teléfono y fecha. Una dirección incompleta debe resolverse antes del despacho.",
+          "Recojo en agencia Comprueba la agencia exacta. Una ciudad puede tener varias agencias; no basta con decir Arequipa."
+        ],
+        "nota": "Si encuentras un dato incorrecto, confírmalo con tu cliente antes de continuar."
+      }
+    },
+    {
+      "start": 172.008,
+      "title": "REPROGRAMAR · Cambiar la fecha del pedido",
+      "detail": "Elige la nueva fecha y pulsa Guardar. Cerrar sin guardar no confirma el cambio.",
+      "explicacion": {
+        "titulo": "Reprogramar es una decisión de tu operación",
+        "filas": [
+          "Confirma la nueva fecha Coordina con el cliente y revisa que tu operación pueda atenderla.",
+          "Guarda y comprueba La fecha cambia para este pedido. No modifica por sí sola tus reglas generales de Logística."
+        ],
+        "nota": "La programación del pedido y la fecha en que el cliente lo registró son datos distintos."
+      }
+    },
+    {
+      "start": 194.211,
+      "title": "CONTENIDO · Relacionar el envío con las ventas",
+      "detail": "Revisa cada venta, producto y cantidad que aparecen en Contenido del pedido.",
+      "explicacion": {
+        "titulo": "Si faltan las compras de un cliente",
+        "filas": [
+          "Primero debe existir la venta En esta sección se muestran los productos vendidos al cliente. Compras registra lo que tú adquiriste de proveedores.",
+          "Revisa DNI y celular La relación usa las ventas del mismo negocio, ya vinculadas o disponibles para ese cliente. Los espacios del celular se normalizan."
+        ],
+        "nota": "Una venta anulada, ya completada para otro envío o vinculada a otra solicitud no debe reutilizarse como contenido nuevo."
+      }
+    },
+    {
+      "start": 220.817,
+      "title": "VALIDAR · Confirmar lo que realmente empacaste",
+      "detail": "Compara prendas, variantes y cantidades con el paquete antes de validar.",
+      "explicacion": {
+        "titulo": "Validar contenido no es cobrar ni despachar",
+        "filas": [
+          "Ejemplo: 2 polos azules M Confirma físicamente que el paquete contiene esa versión y esa cantidad.",
+          "Validar contenido del pedido Vincula esas ventas a esta solicitud y marca su preparación como empacada. No vuelve a descontar stock."
+        ],
+        "nota": "El estado de la tarjeta se gestiona aparte. Tampoco convierte una venta pendiente en una venta pagada."
+      }
+    },
+    {
+      "start": 245.174,
+      "title": "OBSERVACIONES · Dejar una incidencia útil",
+      "detail": "Describe qué falta resolver. Guarda la observación para que el equipo pueda verla.",
+      "explicacion": {
+        "titulo": "Una nota no cambia automáticamente el estado",
+        "filas": [
+          "Escribe algo concreto Ejemplo: Confirmar horario con portería. Evita notas que no indiquen qué hacer.",
+          "Guarda, actualiza o quita Guardar conserva la nota. Quitar pide confirmación. Marcar En Observación es una acción aparte."
+        ],
+        "nota": "No despaches mientras quede una incidencia que impida entregar correctamente."
+      }
+    },
+    {
+      "start": 271.025,
+      "title": "ESTADOS · No empacado, observado, empacado y enviado",
+      "detail": "El estado debe reflejar lo que ocurrió realmente con el paquete.",
+      "explicacion": {
+        "titulo": "Cómo usar los cuatro estados",
+        "filas": [
+          "No Empacado / En Observación Pendiente de preparar, o con una incidencia que debes resolver. Una nota ayuda al equipo a saber cuál.",
+          "Empacado / Enviado Preparación terminada, o despacho realizado según tu operación. Enviado no es una confirmación automática de entrega del courier."
+        ],
+        "nota": "El estado se guarda al seleccionarlo. Corrige un clic equivocado, pero no uses Enviado solo para ocultar un pedido."
+      }
+    },
+    {
+      "start": 301.485,
+      "title": "TAMAÑO · Clasificar el paquete",
+      "detail": "XS, S, M o L ayudan a identificar el tamaño. No reemplazan el contenido validado.",
+      "explicacion": {
+        "titulo": "Tamaño y tarifa son datos diferentes",
+        "filas": [
+          "Clasificación de preparación Elige un tamaño que represente el paquete armado.",
+          "No recalcula el cobro Cambiar M por L no determina automáticamente el peso, las dimensiones ni el precio del courier."
+        ],
+        "nota": "Revisa las condiciones reales de tu servicio de entrega por separado."
+      }
+    },
+    {
+      "start": 322.208,
+      "title": "SELECCIÓN · Elegir pedidos para una herramienta",
+      "detail": "Las casillas seleccionan pedidos; abrir la tarjeta muestra su detalle.",
+      "explicacion": {
+        "titulo": "Revisa siempre cuántos seleccionaste",
+        "filas": [
+          "Casilla de una tarjeta Incluye o retira ese pedido del conjunto seleccionado.",
+          "Seleccionar todos Actúa sobre los pedidos visibles y cargados. Si hay Cargar más, la lista todavía puede estar incompleta."
+        ],
+        "nota": "Antes de una acción masiva, revisa los filtros, la cantidad seleccionada y el alcance que indica su modal."
+      }
+    },
+    {
+      "start": 343.547,
+      "title": "ETIQUETAS · Preparar la identificación del paquete",
+      "detail": "Selecciona pedidos y abre Generar etiquetas en el menú lateral.",
+      "explicacion": {
+        "titulo": "Elige el formato antes de imprimir",
+        "filas": [
+          "4 etiquetas por hoja Distribución 2 por 2 para una hoja A4. Etiqueta individual usa una página por etiqueta.",
+          "Revisa los datos Confirma destinatario, método y contenido. La impresión se realiza desde el diálogo de tu navegador."
+        ],
+        "nota": "Generar o imprimir etiquetas no significa que el pedido ya fue entregado al transportista. No cambia el estado por sí solo."
+      }
+    },
+    {
+      "start": 370.26,
+      "title": "COPIAR DATOS · Lista para el motorizado",
+      "detail": "Selecciona pedidos de Motorizado y abre Copiar datos.",
+      "explicacion": {
+        "titulo": "Cobrar envío no es cobrar los productos",
+        "filas": [
+          "Revisa cada dirección La herramienta reúne datos para tu operación de Motorizado. Puedes copiar el texto o exportar Excel.",
+          "Cobrar envío Indica si corresponde cobrar la tarifa de reparto de ese pedido. No representa automáticamente el saldo de la venta."
+        ],
+        "nota": "Verifica las tarifas en Configuración. No confundas el costo del reparto con el importe de los productos."
+      }
+    },
+    {
+      "start": 405.918,
+      "title": "CAMBIO MASIVO · Preparar varios pedidos con cuidado",
+      "detail": "Ejemplo: marcar como Empacado solo el pedido seleccionado de Carlos.",
+      "explicacion": {
+        "titulo": "Seleccionados y método/estado no son el mismo alcance",
+        "filas": [
+          "Solo pedidos seleccionados Usa las casillas que elegiste. Revisa la cantidad antes de aplicar.",
+          "Sin esa opción La pantalla usa método y estado actual sobre la lista cargada. No supongas que procesa todos los registros históricos."
+        ],
+        "nota": "Nuevo estado modifica pedidos. Si eliges Enviado, también cambia la preparación de sus ventas vinculadas; no el cobro."
+      }
+    },
+    {
+      "start": 437.383,
+      "title": "SHALOM PRO · Preparar el archivo correcto",
+      "detail": "Solo entran pedidos Shalom empacados. Verifica la agencia de origen y el destino exacto.",
+      "explicacion": {
+        "titulo": "La casilla que cambia el estado",
+        "filas": [
+          "Marcar automáticamente como ENVIADO Si está activa, la exportación también actualiza los pedidos. No la dejes marcada si aún no corresponde despachar.",
+          "Ejemplo de esta guía La desmarcamos y solo descargamos el Excel. Carlos continúa Empacado para revisarlo antes de la entrega."
+        ],
+        "nota": "Exportar y enviar se refiere al estado en Tori; no significa que un courier haya recogido o entregado el paquete."
+      }
+    },
+    {
+      "start": 492.436,
+      "title": "DESPACHAR · Marcar como Enviado en el momento correcto",
+      "detail": "Ejemplo: María ya fue entregada al responsable del reparto. Ahora actualizamos su estado.",
+      "explicacion": {
+        "titulo": "Si desaparece de la lista, revisa el filtro",
+        "filas": [
+          "Vista inicial sin Enviado Un pedido despachado puede dejar de coincidir con los estados seleccionados.",
+          "Ventas vinculadas Su estado de envío pasa a completado. Esto no registra automáticamente un pago pendiente ni descuenta stock nuevamente."
+        ],
+        "nota": "No confundas Enviado en Tori con una constancia de entrega final del operador logístico."
+      }
+    },
+    {
+      "start": 522.184,
+      "title": "ELIMINAR · Solo para una solicitud que corresponde retirar",
+      "detail": "Eliminar el pedido es diferente de cambiar su estado o anular una venta.",
+      "explicacion": {
+        "titulo": "Antes de confirmar una eliminación",
+        "filas": [
+          "Se retira esta solicitud Las ventas vinculadas quedan libres de la relación con ese pedido. No es una anulación de venta.",
+          "No devuelve stock ni registra devoluciones Si hay un problema con productos o dinero, corrige la operación correspondiente en su sección."
+        ],
+        "nota": "En esta guía cancelamos la eliminación: María y Carlos seguirán registrados."
+      }
+    },
+    {
+      "start": 548.536,
+      "title": "PLAN Y PERMISOS · Qué puede ver cada usuario",
+      "detail": "La demostración usa Plus y permisos de dueño. Tu cuenta puede mostrar menos opciones.",
+      "explicacion": {
+        "titulo": "Básico, Plus y equipo",
+        "filas": [
+          "Básico Recibe solicitudes sin límite mensual y permite su gestión individual. Las herramientas operativas avanzadas requieren Plus.",
+          "Plus y permisos Contenido de ventas, Copiar datos, etiquetas, Shalom Pro y cambios masivos dependen del plan y del acceso del usuario."
+        ],
+        "nota": "Si falta una herramienta, revisa plan, permisos y métodos habilitados antes de registrar otra solicitud."
+      }
+    },
+    {
+      "start": 567.115,
+      "title": "LISTA FINAL · Tu rutina antes de despachar",
+      "detail": "Datos y destino → contenido real → incidencias → empaque → documentos → despacho.",
+      "explicacion": {
+        "titulo": "Una rutina simple y completa",
+        "filas": [
+          "Antes de preparar Busca al cliente, abre el detalle, revisa destino y fecha, y comprueba productos y cantidades.",
+          "Antes de despachar Resuelve incidencias, valida contenido, marca el empaque y prepara etiquetas o archivos. Actualiza Enviado solo cuando corresponda."
+        ],
+        "nota": "Puedes repetir cualquier capítulo. Configuración, Ventas y Productos tienen guías complementarias."
+      }
+    }
+  ]
+}

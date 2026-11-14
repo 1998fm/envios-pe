@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useConfirm } from '@/components/ConfirmDialog'
-import TourHelpButton from '@/components/TourHelpButton'
+import TutorialEnvios from '@/components/TutorialEnvios'
 
 type Props = {
   plan?: string
@@ -340,7 +340,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-2 backdrop-blur-sm sm:p-4">
-      <div className="flex max-h-[94vh] supports-[height:100dvh]:max-h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+      <div role="dialog" aria-modal="true" aria-label="Detalle del envío" className="flex max-h-[94vh] supports-[height:100dvh]:max-h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
         {/* Barra superior de color según el estado */}
         <div className={`h-1 w-full shrink-0 ${ESTADO_ENVIO_BAR[current.estado] || 'bg-slate-300'}`} />
 
@@ -383,7 +383,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan
             >
               {ESTADO_ENVIO_LABEL[envio.estado] || envio.estado}
             </span>
-            <TourHelpButton tourId="modal-detalle-envio" />
+            <TutorialEnvios detalle />
             <button
               onClick={onCerrar}
               className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"

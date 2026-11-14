@@ -61,3 +61,15 @@ APP_PORT=3100 LOCAL_DB_PORT=54322 node scripts/tutoriales/guia-seccion.mjs varia
 ```
 
 Publica `variantes.mp4` como `public/recursos/serie-variantes/serie-con-variantes.mp4` y actualiza portada y capítulos con su `timeline.json`. Verifica cuatro SKU distintos, stocks 10/8/6/4, precio general S/ 29.90, tres costos S/ 13.25 y una excepción S/ 14.75. El guion anterior `serie-variantes.mjs` se conserva como referencia de la primera grabación.
+
+## Envíos: guía completa
+
+```sh
+APP_PORT=3100 LOCAL_DB_PORT=54322 node scripts/tutoriales/guia-seccion.mjs envios
+```
+
+`flujo-envios.mjs` recorre formulario, tarjetas, filtros y fechas, detalle, reprogramación, coincidencia de ventas por DNI/celular, validación, observaciones, estados, tamaño, selección, etiquetas, Copiar datos/Excel, cambio masivo y Shalom Pro. Distingue explícitamente cobro, preparación y despacho. Explica el alcance de cada herramienta, la diferencia entre fecha de registro y programada, y las consecuencias de borrar una solicitud. No envía mensajes, no entrega paquetes ni registra operaciones en un courier externo.
+
+El ejemplo local usa María (Motorizado) con una venta de dos unidades y pago parcial; Carlos (Shalom) con otra solicitud; una tarifa de Miraflores S/ 10; y una agencia de origen del catálogo. El ensayo comprueba fecha y observación guardadas, validación y vínculo de la venta, archivo Excel de Motorizado y Shalom descargados, María enviada, Carlos empacado, pago aún pendiente y stock sin una segunda salida. La eliminación se muestra y se cancela.
+
+Publica `envios.mp4`, `portada.jpg` y `duration`/`marks` de `timeline.json` (sin `lead`) en `public/recursos/envios`. La guía se abre desde los filtros o desde el detalle; en este último caso empieza en el capítulo correspondiente. Cada explicación del video también figura en la transcripción de la página completa. `TUTORIAL_FAST=1` prueba todo el flujo sin exportar MP4.

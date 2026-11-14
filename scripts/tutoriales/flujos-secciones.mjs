@@ -1,3 +1,4 @@
+import { guiaEnvios } from "./flujo-envios.mjs";
 import assert from "node:assert/strict";
 
 async function producto(api, stock) {
@@ -32,6 +33,7 @@ async function registrar(page, click, nombre, url) {
 }
 
 export const guias = {
+  envios: guiaEnvios,
   productos: {
     titulo: "Productos: crea y organiza tu catálogo",
     preparar: async () => ({}),

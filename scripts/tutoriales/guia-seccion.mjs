@@ -6,13 +6,14 @@ import { guias } from "./flujos-secciones.mjs";
 import { chromium, request } from "playwright";
 import { localKeys } from "../local-db/keys.mjs";
 import { mkdir, writeFile } from "node:fs/promises";
+import { readFileSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { tmpdir } from "node:os";
 
 const seccion = process.argv[2];
 const guia = guias[seccion];
-if (!guia) throw Error("Indica productos, compras, ventas o variantes");
+if (!guia) throw Error("Indica envios, productos, compras, ventas o variantes");
 const base = `http://localhost:${process.env.APP_PORT || 3100}`;
 const salida =
   process.env.TUTORIAL_OUTPUT || path.join(tmpdir(), `tori-${seccion}`);
@@ -46,9 +47,16 @@ r = await admin.post("/rest/v1/profiles", {
     metodo_shalom: false,
     logistica_moto_dias: ["MONDAY"],
     trial_end: new Date(Date.now() + 86400000).toISOString(),
+    ...(guia.perfil ?? {}),
   },
 });
 if (!r.ok()) throw Error(`Perfil local: ${r.status()}`);
+if (guia.tarifas) {
+  const tarifas = await admin.post("/rest/v1/tarifas_moto", {
+    data: { profile_id: id, tarifas: guia.tarifas },
+  });
+  if (!tarifas.ok()) throw Error(`Tarifas locales: ${tarifas.status()}`);
+}
 await admin.dispose();
 const browser = await chromium.launch({
   headless: true,
@@ -73,20 +81,19 @@ try {
     extraHTTPHeaders: { "x-forwarded-for": ipDemo },
     recordVideo: { dir: salida, size: { width: 1280, height: 800 } },
   });
-  await ctx.addInitScript(() => {
+  // Usa los IDs reales para que ninguna ayuda automática tape la grabación.
+  const tours = [
+    ...new Set(
+      readFileSync(
+        new URL("../../src/lib/tours.ts", import.meta.url),
+        "utf8",
+      ).match(/(?:modal|tab)-[a-z-]+/g) ?? [],
+    ),
+  ];
+  await ctx.addInitScript((ids) => {
     localStorage.setItem("tori_trayecto_done", "true");
-    for (const id of [
-      "nuevo-producto",
-      "nueva-compra",
-      "nueva-venta",
-      "detalle-compra",
-      "detalle-venta",
-    ])
-      localStorage.setItem(`tori_tour_modal-${id}_done`, "true");
-    localStorage.setItem("tori_tour_modal-configuracion_done", "true");
-    for (const id of ["resumen", "envios", "productos", "compras", "ventas"])
-      localStorage.setItem(`tori_tour_tab-${id}_done`, "true");
-  });
+    for (const id of ids) localStorage.setItem(`tori_tour_${id}_done`, "true");
+  }, tours);
   const page = await ctx.newPage(),
     video = page.video(),
     started = Date.now();
@@ -118,6 +125,14 @@ try {
     page.waitForTimeout(process.env.TUTORIAL_FAST ? Math.min(ms, 80) : ms);
   function step(title, detail) {
     marks.push({ start: (Date.now() - epoch) / 1000, title, detail });
+    writeFileSync(
+      path.join(salida, "avance.json"),
+      JSON.stringify(
+        { lead, duration: (Date.now() - epoch) / 1000, marks },
+        null,
+        2,
+      ),
+    );
     console.log(title);
   }
   async function cover(title, detail) {
@@ -212,6 +227,7 @@ try {
     pause,
     explicar,
     cover,
+    decorar,
   });
   await guia.verificar(ctx.request, datos);
   const duration = (Date.now() - epoch) / 1000;
