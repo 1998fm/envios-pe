@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import FieldGroup from '@/components/ui/FieldGroup'
-import TourHelpButton from '@/components/TourHelpButton'
+import TutorialEnvios from '@/components/TutorialEnvios'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 
@@ -46,7 +46,7 @@ export default function ModalEtiquetas({
 
   return (
 
-    <div
+    <div role="dialog" aria-modal="true" aria-label="Generar etiquetas"
       className="
         fixed inset-0 bg-black/40 backdrop-blur-sm
         flex items-center justify-center p-4 z-50
@@ -81,7 +81,7 @@ export default function ModalEtiquetas({
             Generar etiquetas
           </h2>
 
-          <TourHelpButton tourId="modal-etiquetas" />
+          <TutorialEnvios tema="etiquetas" />
 
         </div>
 

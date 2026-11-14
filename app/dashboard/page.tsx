@@ -60,25 +60,14 @@ import SeccionGastos from '@/components/SeccionGastos'
 import SeccionClientes from '@/components/SeccionClientes'
 import ModalRoles from '@/components/ModalRoles'
 import { UPGRADE_EVENT, computeEffectivePlan, puedeUsarSeccion, openUpgrade } from '@/lib/planGating'
-import { useOnboarding } from '@/context/OnboardingContext'
-import {
-  tourDone,
-  clearAllTours,
-  getTrayectoIndex,
-  setTrayectoIndex,
-  trayectoDone,
-  markTrayectoDone,
-  TRAYECTO_INICIAL,
-  TOUR_TAB,
-  type TourId,
-} from '@/lib/tours'
+import PrimerosPasos from '@/components/PrimerosPasos'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { startTour, active } = useOnboarding()
 
   const [envios, setEnvios] = useState<Envio[]>([])
 const [userId, setUserId] = useState<string | null>(null)
+const [usuarioActualId, setUsuarioActualId] = useState('')
 const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -342,12 +331,6 @@ const [
 const [envioDetalle, setEnvioDetalle] =
   useState<Envio | null>(null)
 
-  useEffect(() => {
-    if (envioDetalle && trayectoDone() && !tourDone('modal-detalle-envio')) {
-      const t = setTimeout(() => startTour('modal-detalle-envio'), 400)
-      return () => clearTimeout(t)
-    }
-  }, [envioDetalle, startTour])
 
 const [
   mensajeExportar,
@@ -442,6 +425,7 @@ const copiarDatosLocked = plan === 'basic'
         return
       }
 
+      setUsuarioActualId(sesion.user.id)
       const ownerId = sesion.negocio.ownerId
       const profile = sesion.profile
       const tarifasData = { tarifas: sesion.tarifas }
@@ -546,58 +530,6 @@ setLoading(false)
   }, [router])
 
   // ========================================
-  // TRAYECTO GUIADO DE BIENVENIDA
-  // Inicia en Resumen (tab por defecto al cargar)
-  // y recorre las secciones en orden hasta completar.
-  // ========================================
-
-  const [trayectoIdx, setTrayectoIdx] = useState(() => getTrayectoIndex())
-  const trayectoProgramado = useRef(false)
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('tour') === 'start') {
-      clearAllTours()
-      setTrayectoIdx(0)
-      window.history.replaceState({}, '', window.location.pathname)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (loading || active || trayectoProgramado.current) return
-    if (trayectoDone()) return
-
-    const tourId = TRAYECTO_INICIAL[trayectoIdx]
-    if (!tourId) {
-      markTrayectoDone()
-      return
-    }
-
-    const tab = TOUR_TAB[tourId]
-    if (tab && !puedeUsarSeccion(plan, tab)) { markTrayectoDone(); return }
-    if (tab && tab !== pestañaActiva) {
-      setPestañaActiva(tab)
-      return
-    }
-
-    trayectoProgramado.current = true
-    const timer = setTimeout(() => {
-      trayectoProgramado.current = false
-      startTour(tourId, (mode) => {
-        if (mode === 'saltado') {
-          markTrayectoDone()
-          return
-        }
-        const next = trayectoIdx + 1
-        setTrayectoIndex(next)
-        setTrayectoIdx(next)
-        if (next >= TRAYECTO_INICIAL.length) markTrayectoDone()
-      })
-    }, 600)
-
-    return () => clearTimeout(timer)
-  }, [loading, active, pestañaActiva, trayectoIdx, startTour])
-
   // Abrir modal de upgrade desde cualquier componente
   useEffect(() => {
     function handleUpgrade() {
@@ -1178,6 +1110,8 @@ for (
       onVerRoles={() => setMostrarModalRoles(true)}
       esOwner={esOwner}
     />
+
+    {usuarioActualId && <PrimerosPasos key={usuarioActualId} userId={usuarioActualId} config={config} slug={slugEmpresa} plan={plan} puedeConfigurar={esOwner} visibles={pestanasPermitidas} onConfigurar={() => setMostrarConfig(true)} onEnvios={() => cambiarPestaña('envios')} />}
 
     {userId && pestañaActiva === 'resumen' && puedeUsarSeccion(plan, 'resumen') && (
       <PanelResumen

@@ -6,7 +6,7 @@ import { FileSpreadsheet } from 'lucide-react'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { MAX_ENVIOS_POR_ARCHIVO } from 'app/f/[slug]/lib/shalomExport'
-import AyudaShalomPro from '@/components/AyudaShalomPro'
+import TutorialEnvios from '@/components/TutorialEnvios'
 
 type Props = {
   abierto: boolean
@@ -59,7 +59,7 @@ export default function ModalExportShalom({
   const desmarcarTodos = () => setSeleccion(Array.from({ length: numeroArchivos }, () => false))
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div role="dialog" aria-modal="true" aria-label="Exportar Shalom" className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white  rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
         <div className="p-8 border-b border-slate-100  flex items-center justify-between">
           <div>
@@ -70,7 +70,7 @@ export default function ModalExportShalom({
               {mensaje}
             </p>
           </div>
-          <AyudaShalomPro />
+          <TutorialEnvios tema="shalom" />
         </div>
 
         <div className="p-8 space-y-6 overflow-y-auto">

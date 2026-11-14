@@ -16,7 +16,7 @@ export default function TourHelpButton({ tourId, className = '', label = 'Ver gu
   return (
     <button
       type="button"
-      onClick={() => startTour(tourId)}
+      onClick={() => startTour(tourId, undefined, true)}
       title={label}
       aria-label={label}
       className={`inline-flex items-center justify-center w-7 h-7 shrink-0 rounded-full border border-sky-200 bg-sky-50 text-sky-600 hover:bg-sky-100 hover:border-sky-300 hover:shadow-sm active:scale-95 transition-all ${className}`}

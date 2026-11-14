@@ -1,139 +1,175 @@
-import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { computeEffectivePlan } from '@/lib/planGating'
-import { obtenerConfiguracionLogistica } from '@/lib/logistica/guardarConfiguracionLogistica'
-import { urlHttpSegura } from '@/lib/urlSegura'
-import { aProxy, desdeProxy } from '@/lib/mediaUrl'
-import type { ConfigState } from '@/types/config'
-import { mensajeDb } from '@/lib/erroresEs'
+import { validarPasoInicial } from "@/lib/onboarding";
+import { supabaseAdmin } from "app/f/[slug]/lib/supabase/admin";
+import { computeEffectivePlan } from "@/lib/planGating";
+import { obtenerConfiguracionLogistica } from "@/lib/logistica/guardarConfiguracionLogistica";
+import { urlHttpSegura } from "@/lib/urlSegura";
+import { aProxy, desdeProxy } from "@/lib/mediaUrl";
+import type { ConfigState } from "@/types/config";
+import { mensajeDb } from "@/lib/erroresEs";
 
 // Guardado de la configuración del negocio, hecho en el servidor: ni los
 // archivos ni los datos del formulario van directo a la base desde el navegador.
 
-export type ConfigEntrada = Omit<ConfigState, 'logoFile' | 'redirectMessageImageFile'>
-export type ArchivosConfig = { logo?: File | null; mensajeImagen?: File | null }
+export type ConfigEntrada = Omit<
+  ConfigState,
+  "logoFile" | "redirectMessageImageFile"
+>;
+export type ArchivosConfig = {
+  logo?: File | null;
+  mensajeImagen?: File | null;
+};
 export type ResultadoConfig = {
-  error?: string
-  slug?: string
-  logoUrl?: string
-  redirectMessageImage?: string
-}
+  error?: string;
+  slug?: string;
+  logoUrl?: string;
+  redirectMessageImage?: string;
+};
 
 const TIPOS_IMAGEN: Record<string, string> = {
-  'image/png': 'png',
-  'image/jpeg': 'jpg',
-  'image/webp': 'webp',
-  'image/gif': 'gif',
-}
-const MAX_BYTES = 3 * 1024 * 1024
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+const MAX_BYTES = 3 * 1024 * 1024;
 
 export function generarSlug(empresa: string) {
   return empresa
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 /** Valida y sube una imagen al bucket; devuelve la URL pública canónica. */
 export async function subirImagen(
-  bucket: 'logos' | 'productos',
+  bucket: "logos" | "productos",
   ruta: (ext: string) => string,
   archivo: File,
-  maxBytes = MAX_BYTES
+  maxBytes = MAX_BYTES,
 ): Promise<{ url?: string; ruta?: string; error?: string }> {
-  const ext = TIPOS_IMAGEN[archivo.type]
-  if (!ext) return { error: 'Solo se aceptan imágenes PNG, JPG, WEBP o GIF.' }
+  const ext = TIPOS_IMAGEN[archivo.type];
+  if (!ext) return { error: "Solo se aceptan imágenes PNG, JPG, WEBP o GIF." };
   if (archivo.size > maxBytes) {
-    return { error: `La imagen pesa demasiado (máximo ${Math.round(maxBytes / 1024 / 1024)} MB).` }
+    return {
+      error: `La imagen pesa demasiado (máximo ${Math.round(maxBytes / 1024 / 1024)} MB).`,
+    };
   }
-  const path = ruta(ext)
+  const path = ruta(ext);
   const { error } = await supabaseAdmin.storage
     .from(bucket)
-    .upload(path, Buffer.from(await archivo.arrayBuffer()), { upsert: true, contentType: archivo.type })
-  if (error) return { error: 'No se pudo subir la imagen.' }
-  const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(path)
-  return { url: data.publicUrl, ruta: path }
+    .upload(path, Buffer.from(await archivo.arrayBuffer()), {
+      upsert: true,
+      contentType: archivo.type,
+    });
+  if (error) return { error: "No se pudo subir la imagen." };
+  const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(path);
+  return { url: data.publicUrl, ruta: path };
 }
 
 async function slugLibre(ownerId: string, slug: string): Promise<boolean> {
   const { data } = await supabaseAdmin
-    .from('profiles')
-    .select('id')
-    .eq('slug', slug)
-    .neq('id', ownerId)
-    .maybeSingle()
-  return !data
+    .from("profiles")
+    .select("id")
+    .eq("slug", slug)
+    .neq("id", ownerId)
+    .maybeSingle();
+  return !data;
 }
 
 const URLS: [keyof ConfigEntrada, string][] = [
-  ['redirectUrl', 'La URL de redirección'],
-  ['instagramUrl', 'El enlace de Instagram'],
-  ['facebookUrl', 'El enlace de Facebook'],
-  ['tiktokUrl', 'El enlace de TikTok'],
-  ['webUrl', 'El enlace del sitio web'],
-  ['whatsappUrl', 'El enlace de WhatsApp'],
-]
+  ["redirectUrl", "La URL de redirección"],
+  ["instagramUrl", "El enlace de Instagram"],
+  ["facebookUrl", "El enlace de Facebook"],
+  ["tiktokUrl", "El enlace de TikTok"],
+  ["webUrl", "El enlace del sitio web"],
+  ["whatsappUrl", "El enlace de WhatsApp"],
+];
 
 function validarUrls(config: ConfigEntrada): string | null {
   for (const [campo, nombre] of URLS) {
-    const v = config[campo]
-    if (typeof v === 'string' && v.trim() !== '' && !urlHttpSegura(v)) {
-      return `${nombre} no es válido: debe empezar con http:// o https://`
+    const v = config[campo];
+    if (typeof v === "string" && v.trim() !== "" && !urlHttpSegura(v)) {
+      return `${nombre} no es válido: debe empezar con http:// o https://`;
     }
   }
-  return null
+  return null;
 }
 
-async function subirImagenesNegocio(ownerId: string, config: ConfigEntrada, archivos: ArchivosConfig) {
-  let logoUrl = desdeProxy(config.logoUrl || '')
-  let mensajeImagen = desdeProxy(config.redirectMessageImage || '')
+async function subirImagenesNegocio(
+  ownerId: string,
+  config: ConfigEntrada,
+  archivos: ArchivosConfig,
+) {
+  let logoUrl = desdeProxy(config.logoUrl || "");
+  let mensajeImagen = desdeProxy(config.redirectMessageImage || "");
 
   if (archivos.logo) {
-    const r = await subirImagen('logos', (ext) => `${ownerId}/logo.${ext}`, archivos.logo)
-    if (r.error) return { error: r.error } as const
-    logoUrl = r.url!
+    const r = await subirImagen(
+      "logos",
+      (ext) => `${ownerId}/logo.${ext}`,
+      archivos.logo,
+    );
+    if (r.error) return { error: r.error } as const;
+    logoUrl = r.url!;
   }
   if (archivos.mensajeImagen) {
-    const r = await subirImagen('logos', (ext) => `${ownerId}/mensaje-exito.${ext}`, archivos.mensajeImagen)
-    if (r.error) return { error: r.error } as const
-    mensajeImagen = r.url!
+    const r = await subirImagen(
+      "logos",
+      (ext) => `${ownerId}/mensaje-exito.${ext}`,
+      archivos.mensajeImagen,
+    );
+    if (r.error) return { error: r.error } as const;
+    mensajeImagen = r.url!;
   }
-  return { logoUrl, mensajeImagen } as const
+  return { logoUrl, mensajeImagen } as const;
 }
 
 /** Guardado completo (modal de configuración del dashboard). */
 export async function guardarConfiguracion(
   ownerId: string,
   config: ConfigEntrada,
-  archivos: ArchivosConfig
+  archivos: ArchivosConfig,
 ): Promise<ResultadoConfig> {
-  if (!config.empresa || !config.empresa.trim()) return { error: 'Escribe el nombre de tu negocio.' }
-  const errorUrl = validarUrls(config)
-  if (errorUrl) return { error: errorUrl }
+  if (!config.empresa || !config.empresa.trim())
+    return { error: "Escribe el nombre de tu negocio." };
+  const errorUrl = validarUrls(config);
+  if (errorUrl) return { error: errorUrl };
 
   // El plan lo decide el servidor, no el navegador.
-  const { data: perfil } = await supabaseAdmin.from('profiles').select('plan, trial_end, pro_until').eq('id', ownerId).maybeSingle()
-  const basico = computeEffectivePlan(perfil ?? {}).plan === 'basic'
+  const { data: perfil } = await supabaseAdmin
+    .from("profiles")
+    .select("plan, trial_end, pro_until")
+    .eq("id", ownerId)
+    .maybeSingle();
+  const basico = computeEffectivePlan(perfil ?? {}).plan === "basic";
 
-  const slug = generarSlug(config.empresa)
-  if (!slug) return { error: 'El nombre del negocio no es válido.' }
+  const slug = generarSlug(config.empresa);
+  if (!slug) return { error: "El nombre del negocio no es válido." };
   if (!(await slugLibre(ownerId, slug))) {
-    return { error: 'Ya existe otro negocio con ese nombre. Elige un nombre diferente.' }
+    return {
+      error:
+        "Ya existe otro negocio con ese nombre. Elige un nombre diferente.",
+    };
   }
 
-  const img = await subirImagenesNegocio(ownerId, config, archivos)
-  if ('error' in img) return { error: img.error }
+  const img = await subirImagenesNegocio(ownerId, config, archivos);
+  if ("error" in img) return { error: img.error };
 
   const tarifas = Object.fromEntries(
     Object.entries(config.tarifas ?? {})
-      .filter(([, precio]) => precio !== '' && precio !== null && precio !== undefined)
+      .filter(
+        ([, precio]) =>
+          precio !== "" && precio !== null && precio !== undefined,
+      )
       .map(([distrito, precio]) => [distrito, Number(precio)])
-      .filter(([, precio]) => Number.isFinite(precio as number))
-  )
+      .filter(([, precio]) => Number.isFinite(precio as number)),
+  );
 
-  const solo = (anticipacion: number, valor: boolean) => (Number(anticipacion) >= 2 ? Boolean(valor) : false)
+  const solo = (anticipacion: number, valor: boolean) =>
+    Number(anticipacion) >= 2 ? Boolean(valor) : false;
 
-  const { data, error } = await supabaseAdmin.rpc('guardar_configuracion', {
+  const { data, error } = await supabaseAdmin.rpc("guardar_configuracion", {
     p_profile_id: ownerId,
     p_empresa: config.empresa,
     p_telefono: config.telefonoEmpresa,
@@ -159,39 +195,71 @@ export async function guardarConfiguracion(
     p_metodo_recojo: config.metodoRecojo,
     p_mensaje_recojo: config.mensajeRecojo,
     p_logistica_moto_dias: config.logisticaMotoDias,
-    p_logistica_moto_usa_hora_corte: basico ? false : config.logisticaMotoUsaHoraCorte,
-    p_logistica_moto_hora_corte: basico ? '18:00' : config.logisticaMotoHoraCorte,
-    p_logistica_moto_anticipacion: basico ? 1 : config.logisticaMotoAnticipacion,
-    p_logistica_moto_anticipacion_solo_habiles: basico ? false : solo(config.logisticaMotoAnticipacion, config.logisticaMotoAnticipacionSoloHabiles),
+    p_logistica_moto_usa_hora_corte: basico
+      ? false
+      : config.logisticaMotoUsaHoraCorte,
+    p_logistica_moto_hora_corte: basico
+      ? "18:00"
+      : config.logisticaMotoHoraCorte,
+    p_logistica_moto_anticipacion: basico
+      ? 1
+      : config.logisticaMotoAnticipacion,
+    p_logistica_moto_anticipacion_solo_habiles: basico
+      ? false
+      : solo(
+          config.logisticaMotoAnticipacion,
+          config.logisticaMotoAnticipacionSoloHabiles,
+        ),
     p_logistica_moto_limitar: basico ? false : config.logisticaMotoLimitar,
     p_logistica_moto_cupo: basico ? 0 : config.logisticaMotoCupo,
     p_logistica_agencias_dias: config.logisticaAgenciasDias,
-    p_logistica_agencias_usa_hora_corte: basico ? false : config.logisticaAgenciasUsaHoraCorte,
-    p_logistica_agencias_hora_corte: basico ? '18:00' : config.logisticaAgenciasHoraCorte,
-    p_logistica_agencias_anticipacion: basico ? 1 : config.logisticaAgenciasAnticipacion,
-    p_logistica_agencias_anticipacion_solo_habiles: basico ? false : solo(config.logisticaAgenciasAnticipacion, config.logisticaAgenciasAnticipacionSoloHabiles),
-    p_logistica_agencias_limitar: basico ? false : config.logisticaAgenciasLimitar,
+    p_logistica_agencias_usa_hora_corte: basico
+      ? false
+      : config.logisticaAgenciasUsaHoraCorte,
+    p_logistica_agencias_hora_corte: basico
+      ? "18:00"
+      : config.logisticaAgenciasHoraCorte,
+    p_logistica_agencias_anticipacion: basico
+      ? 1
+      : config.logisticaAgenciasAnticipacion,
+    p_logistica_agencias_anticipacion_solo_habiles: basico
+      ? false
+      : solo(
+          config.logisticaAgenciasAnticipacion,
+          config.logisticaAgenciasAnticipacionSoloHabiles,
+        ),
+    p_logistica_agencias_limitar: basico
+      ? false
+      : config.logisticaAgenciasLimitar,
     p_logistica_agencias_cupo: basico ? 0 : config.logisticaAgenciasCupo,
     p_solicitar_cantidad_productos: config.solicitarCantidadProductos,
     p_mostrar_escoger_fecha: config.mostrarEscogerFecha,
     p_mostrar_tracking: config.mostrarTracking,
     p_cerrar_formulario: config.cerrarFormulario,
-    p_cerrar_formulario_mensaje: config.cerradoFormularioMensaje ?? '',
+    p_cerrar_formulario_mensaje: config.cerradoFormularioMensaje ?? "",
     p_moto_region: config.motoRegion,
     p_cerrar_formulario_dias: config.cerrarFormularioDias ?? [],
-    p_color_formulario_primario: config.colorPrimario ?? '#0284c7',
-    p_color_formulario_secundario: config.colorSecundario ?? '#4f46e5',
+    p_color_formulario_primario: config.colorPrimario ?? "#0284c7",
+    p_color_formulario_secundario: config.colorSecundario ?? "#4f46e5",
     p_tarifas: tarifas,
-  })
+  });
 
   if (error) {
-    console.error('[configuracion] guardar_configuracion falló:', error.code, error.message)
-    return { error: mensajeDb(error) }
+    console.error(
+      "[configuracion] guardar_configuracion falló:",
+      error.code,
+      error.message,
+    );
+    return { error: mensajeDb(error) };
   }
-  const errorRpc = Array.isArray(data) ? data[0]?.error_text : null
-  if (errorRpc) return { error: errorRpc }
+  const errorRpc = Array.isArray(data) ? data[0]?.error_text : null;
+  if (errorRpc) return { error: errorRpc };
 
-  return { slug, logoUrl: aProxy(img.logoUrl) as string, redirectMessageImage: aProxy(img.mensajeImagen) as string }
+  return {
+    slug,
+    logoUrl: aProxy(img.logoUrl) as string,
+    redirectMessageImage: aProxy(img.mensajeImagen) as string,
+  };
 }
 
 /** Pasos del asistente de onboarding (1 empresa, 2 métodos, 3 horarios, 4 tarifas). */
@@ -199,21 +267,71 @@ export async function guardarPasoOnboarding(
   ownerId: string,
   paso: number,
   config: ConfigEntrada,
-  archivos: ArchivosConfig
+  archivos: ArchivosConfig,
 ): Promise<ResultadoConfig> {
-  if (paso === 1) {
-    if (!config.empresa || !config.empresa.trim()) return { error: 'Escribe el nombre de tu negocio.' }
-    const errorUrl = validarUrls(config)
-    if (errorUrl) return { error: errorUrl }
-    const slug = generarSlug(config.empresa)
-    if (!slug) return { error: 'El nombre del negocio no es válido.' }
-    if (!(await slugLibre(ownerId, slug))) return { error: 'Ya existe otro negocio con ese nombre.' }
+  if (!config || typeof config !== "object" || Array.isArray(config))
+    return { error: "Configuración no válida" };
+  // El asistente respeta las mismas restricciones de plan que Configuración.
+  if (paso === 2 || paso === 3) {
+    const perfil = await supabaseAdmin
+      .from("profiles")
+      .select("plan, trial_end, pro_until")
+      .eq("id", ownerId)
+      .maybeSingle();
+    if (perfil.error) return { error: mensajeDb(perfil.error) };
+    if (computeEffectivePlan(perfil.data ?? {}).plan === "basic") {
+      if (
+        paso === 2 &&
+        [
+          config?.metodoMotorizado,
+          config?.metodoShalom,
+          config?.metodoOlva,
+          config?.metodoMarvisur,
+          config?.metodoFlores,
+          config?.metodoOtro,
+          config?.metodoRecojo,
+        ].filter(Boolean).length > 2
+      )
+        return {
+          error:
+            "Básico permite hasta 2 métodos de entrega. Desmarca los que no usarás o revisa Plus.",
+        };
+      if (paso === 3)
+        config = {
+          ...config,
+          logisticaMotoUsaHoraCorte: false,
+          logisticaMotoHoraCorte: "18:00",
+          logisticaMotoAnticipacion: 1,
+          logisticaMotoAnticipacionSoloHabiles: false,
+          logisticaMotoLimitar: false,
+          logisticaMotoCupo: 0,
+          logisticaAgenciasUsaHoraCorte: false,
+          logisticaAgenciasHoraCorte: "18:00",
+          logisticaAgenciasAnticipacion: 1,
+          logisticaAgenciasAnticipacionSoloHabiles: false,
+          logisticaAgenciasLimitar: false,
+          logisticaAgenciasCupo: 0,
+        };
+    }
+  }
+  const validacion = validarPasoInicial(paso, config);
+  if (validacion) return { error: validacion };
 
-    const img = await subirImagenesNegocio(ownerId, config, archivos)
-    if ('error' in img) return { error: img.error }
+  if (paso === 1) {
+    if (!config.empresa || !config.empresa.trim())
+      return { error: "Escribe el nombre de tu negocio." };
+    const errorUrl = validarUrls(config);
+    if (errorUrl) return { error: errorUrl };
+    const slug = generarSlug(config.empresa);
+    if (!slug) return { error: "El nombre del negocio no es válido." };
+    if (!(await slugLibre(ownerId, slug)))
+      return { error: "Ya existe otro negocio con ese nombre." };
+
+    const img = await subirImagenesNegocio(ownerId, config, archivos);
+    if ("error" in img) return { error: img.error };
 
     const { error } = await supabaseAdmin
-      .from('profiles')
+      .from("profiles")
       .update({
         empresa: config.empresa,
         telefono: config.telefonoEmpresa,
@@ -230,14 +348,18 @@ export async function guardarPasoOnboarding(
         web_url: config.webUrl,
         whatsapp_url: config.whatsappUrl,
       })
-      .eq('id', ownerId)
-    if (error) return { error: mensajeDb(error) }
-    return { slug }
+      .eq("id", ownerId);
+    if (error) return { error: mensajeDb(error) };
+    return {
+      slug,
+      logoUrl: aProxy(img.logoUrl) as string,
+      redirectMessageImage: aProxy(img.mensajeImagen) as string,
+    };
   }
 
   if (paso === 2) {
     const { error } = await supabaseAdmin
-      .from('profiles')
+      .from("profiles")
       .update({
         metodo_motorizado: config.metodoMotorizado,
         metodo_shalom: config.metodoShalom,
@@ -250,47 +372,54 @@ export async function guardarPasoOnboarding(
         mensaje_recojo: config.mensajeRecojo,
         origen_shalom: config.nuevoOrigen,
       })
-      .eq('id', ownerId)
-    return error ? { error: mensajeDb(error) } : {}
+      .eq("id", ownerId);
+    return error ? { error: mensajeDb(error) } : {};
   }
 
   if (paso === 3) {
     const { error } = await supabaseAdmin
-      .from('profiles')
+      .from("profiles")
       .update(
         obtenerConfiguracionLogistica({
           logisticaMotoDias: config.logisticaMotoDias,
           logisticaMotoUsaHoraCorte: config.logisticaMotoUsaHoraCorte,
           logisticaMotoHoraCorte: config.logisticaMotoHoraCorte,
           logisticaMotoAnticipacion: config.logisticaMotoAnticipacion,
-          logisticaMotoAnticipacionSoloHabiles: config.logisticaMotoAnticipacionSoloHabiles,
+          logisticaMotoAnticipacionSoloHabiles:
+            config.logisticaMotoAnticipacionSoloHabiles,
           logisticaMotoLimitar: config.logisticaMotoLimitar,
           logisticaMotoCupo: config.logisticaMotoCupo,
           logisticaAgenciasDias: config.logisticaAgenciasDias,
           logisticaAgenciasUsaHoraCorte: config.logisticaAgenciasUsaHoraCorte,
           logisticaAgenciasHoraCorte: config.logisticaAgenciasHoraCorte,
           logisticaAgenciasAnticipacion: config.logisticaAgenciasAnticipacion,
-          logisticaAgenciasAnticipacionSoloHabiles: config.logisticaAgenciasAnticipacionSoloHabiles,
+          logisticaAgenciasAnticipacionSoloHabiles:
+            config.logisticaAgenciasAnticipacionSoloHabiles,
           logisticaAgenciasLimitar: config.logisticaAgenciasLimitar,
           logisticaAgenciasCupo: config.logisticaAgenciasCupo,
-        })
+        }),
       )
-      .eq('id', ownerId)
-    return error ? { error: mensajeDb(error) } : {}
+      .eq("id", ownerId);
+    return error ? { error: mensajeDb(error) } : {};
   }
 
   if (paso === 4) {
-    await supabaseAdmin.from('profiles').update({ moto_region: config.motoRegion }).eq('id', ownerId)
+    const region = await supabaseAdmin
+      .from("profiles")
+      .update({ moto_region: config.motoRegion })
+      .eq("id", ownerId);
+    if (region.error) return { error: mensajeDb(region.error) };
     const tarifas = Object.fromEntries(
       Object.entries(config.tarifas ?? {})
-        .filter(([, precio]) => precio !== '')
+        .filter(([, precio]) => precio !== "")
         .map(([distrito, precio]) => [distrito, Number(precio)])
-        .filter(([, precio]) => Number.isFinite(precio as number))
-    )
-    if (Object.keys(tarifas).length === 0) return {}
-    const { error } = await supabaseAdmin.from('tarifas_moto').upsert({ profile_id: ownerId, tarifas })
-    return error ? { error: mensajeDb(error) } : {}
+        .filter(([, precio]) => Number.isFinite(precio as number)),
+    );
+    const { error } = await supabaseAdmin
+      .from("tarifas_moto")
+      .upsert({ profile_id: ownerId, tarifas });
+    return error ? { error: mensajeDb(error) } : {};
   }
 
-  return { error: 'Paso no válido' }
+  return { error: "Paso no válido" };
 }

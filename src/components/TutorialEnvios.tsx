@@ -18,10 +18,18 @@ const capitulos = [
   { titulo: "Despacho y eliminación", segundos: inicio("DESPACHAR") },
 ];
 const segundos = Math.round(guia.duration);
+const temas = {
+  etiquetas: "ETIQUETAS",
+  copiar: "COPIAR",
+  masivo: "CAMBIO MASIVO",
+  shalom: "SHALOM",
+};
 export default function TutorialEnvios({
   detalle = false,
+  tema,
 }: {
   detalle?: boolean;
+  tema?: keyof typeof temas;
 }) {
   return (
     <TutorialEnVideo
@@ -33,7 +41,7 @@ export default function TutorialEnvios({
       duracion={`${Math.floor(segundos / 60)} min ${segundos % 60} s`}
       tono="oscuro"
       capitulos={capitulos}
-      inicio={detalle ? inicio("DETALLE") : 0}
+      inicio={tema ? inicio(temas[tema]) : detalle ? inicio("DETALLE") : 0}
     />
   );
 }

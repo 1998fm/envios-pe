@@ -1,60 +1,122 @@
-'use client'
+"use client";
 
-import AutocompleteInput from '@/components/AutocompleteInput'
-import type { ConfigState } from '@/types/config'
-import { useAgenciasShalom } from '@/lib/hooks/useAgenciasShalom'
-import { Bike, Truck, Package, Ship, Flower2, Plus, Store } from 'lucide-react'
+import TutorialConfiguracion from "./TutorialConfiguracion";
+import AutocompleteInput from "@/components/AutocompleteInput";
+import type { ConfigState } from "@/types/config";
+import { useAgenciasShalom } from "@/lib/hooks/useAgenciasShalom";
+import { Bike, Truck, Package, Ship, Flower2, Plus, Store } from "lucide-react";
 
 type Props = {
-  config: ConfigState
-  upd: <K extends keyof ConfigState>(key: K, value: ConfigState[K]) => void
-}
+  basico?: boolean;
+  config: ConfigState;
+  upd: <K extends keyof ConfigState>(key: K, value: ConfigState[K]) => void;
+};
 
 const metodos = [
-  { key: 'metodoMotorizado' as const, label: 'Motorizado', icon: Bike, desc: 'Reparto local en moto' },
-  { key: 'metodoShalom' as const, label: 'Shalom', icon: Truck, desc: 'Envíos nacionales vía Shalom' },
-  { key: 'metodoOlva' as const, label: 'Olva', icon: Package, desc: 'Envíos nacionales vía Olva' },
-  { key: 'metodoMarvisur' as const, label: 'Marvisur', icon: Ship, desc: 'Envíos nacionales vía Marvisur' },
-  { key: 'metodoFlores' as const, label: 'Flores', icon: Flower2, desc: 'Envíos nacionales vía Flores' },
-  { key: 'metodoOtro' as const, label: 'Otro método', icon: Plus, desc: 'Cualquier otra agencia que uses' },
-  { key: 'metodoRecojo' as const, label: 'Recojo en tienda', icon: Store, desc: 'Tus clientes recogen en tu local' },
-]
+  {
+    key: "metodoMotorizado" as const,
+    label: "Motorizado",
+    icon: Bike,
+    desc: "Reparto local en moto",
+  },
+  {
+    key: "metodoShalom" as const,
+    label: "Shalom",
+    icon: Truck,
+    desc: "Envíos nacionales vía Shalom",
+  },
+  {
+    key: "metodoOlva" as const,
+    label: "Olva",
+    icon: Package,
+    desc: "Envíos nacionales vía Olva",
+  },
+  {
+    key: "metodoMarvisur" as const,
+    label: "Marvisur",
+    icon: Ship,
+    desc: "Envíos nacionales vía Marvisur",
+  },
+  {
+    key: "metodoFlores" as const,
+    label: "Flores",
+    icon: Flower2,
+    desc: "Envíos nacionales vía Flores",
+  },
+  {
+    key: "metodoOtro" as const,
+    label: "Otro método",
+    icon: Plus,
+    desc: "Cualquier otra agencia que uses",
+  },
+  {
+    key: "metodoRecojo" as const,
+    label: "Recojo en tienda",
+    icon: Store,
+    desc: "Tus clientes recogen en tu local",
+  },
+];
 
-export default function OnboardingStep2Metodos({ config, upd }: Props) {
-  const { agencias: agenciasShalom } = useAgenciasShalom()
+export default function OnboardingStep2Metodos({
+  config,
+  upd,
+  basico = false,
+}: Props) {
+  const { agencias: agenciasShalom } = useAgenciasShalom();
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-bold text-slate-900 mb-1">Métodos de envío</h3>
-        <p className="text-sm text-slate-500">Activa los métodos que ofreces. Tus clientes elegirán el que prefieran.</p>
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-lg font-bold text-slate-900 mb-1">
+            Métodos de envío
+          </h3>
+          <TutorialConfiguracion vista="EMPRESA" region={config.motoRegion} />
+        </div>
+        <p className="text-sm text-slate-500">
+          Activa los métodos que ofreces. Tus clientes elegirán el que
+          prefieran.
+        </p>
       </div>
 
+      {basico && (
+        <p className="text-xs text-slate-500">
+          Básico permite hasta 2 métodos de entrega.
+        </p>
+      )}
       <div className="space-y-3">
         {metodos.map((item) => {
-          const Icon = item.icon
+          const Icon = item.icon;
           return (
             <label
               key={item.key}
               className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
                 config[item.key]
-                  ? 'border-sky-500 bg-sky-50'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
+                  ? "border-sky-500 bg-sky-50"
+                  : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
               <input
                 type="checkbox"
+                disabled={
+                  basico &&
+                  !config[item.key] &&
+                  metodos.filter((m) => config[m.key]).length >= 2
+                }
                 checked={config[item.key]}
                 onChange={(e) => upd(item.key, e.target.checked)}
                 className="accent-sky-600 w-4 h-4 shrink-0"
               />
-              <Icon size={22} className={`shrink-0 ${config[item.key] ? 'text-sky-600' : 'text-slate-400'}`} />
+              <Icon
+                size={22}
+                className={`shrink-0 ${config[item.key] ? "text-sky-600" : "text-slate-400"}`}
+              />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-slate-900">{item.label}</p>
                 <p className="text-xs text-slate-500">{item.desc}</p>
               </div>
             </label>
-          )
+          );
         })}
       </div>
 
@@ -66,7 +128,7 @@ export default function OnboardingStep2Metodos({ config, upd }: Props) {
           <input
             type="text"
             value={config.nombreMetodoOtro}
-            onChange={(e) => upd('nombreMetodoOtro', e.target.value)}
+            onChange={(e) => upd("nombreMetodoOtro", e.target.value)}
             placeholder="Ej: Cruz del Sur"
             className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
           />
@@ -80,7 +142,7 @@ export default function OnboardingStep2Metodos({ config, upd }: Props) {
           </label>
           <textarea
             value={config.mensajeRecojo}
-            onChange={(e) => upd('mensajeRecojo', e.target.value)}
+            onChange={(e) => upd("mensajeRecojo", e.target.value)}
             rows={3}
             className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
             placeholder="Recoge tu pedido en nuestra tienda. Te esperamos!"
@@ -93,10 +155,12 @@ export default function OnboardingStep2Metodos({ config, upd }: Props) {
           <label className="block font-semibold text-slate-900 mb-2 text-sm">
             Agencia Shalom de origen
           </label>
-          <p className="text-xs text-slate-500 mb-3">¿Desde qué agencia Shalom envías tus pedidos?</p>
+          <p className="text-xs text-slate-500 mb-3">
+            ¿Desde qué agencia Shalom envías tus pedidos?
+          </p>
           <AutocompleteInput
             value={config.nuevoOrigen}
-            onChange={(v) => upd('nuevoOrigen', v)}
+            onChange={(v) => upd("nuevoOrigen", v)}
             options={agenciasShalom}
             placeholder="Buscar agencia Shalom"
             requireSelection
@@ -105,5 +169,5 @@ export default function OnboardingStep2Metodos({ config, upd }: Props) {
         </div>
       )}
     </div>
-  )
+  );
 }

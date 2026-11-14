@@ -8,7 +8,7 @@ import { buscarTarifa } from '../utils/buscarTarifa'
 import { generarTextoMoto } from '../utils/generarTextoMoto'
 import { exportarExcelMoto } from '../utils/exportarExcelMoto'
 import type { ModalCopiarDatosProps } from '../types'
-import TourHelpButton from '@/components/TourHelpButton'
+import TutorialEnvios from '@/components/TutorialEnvios'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 
@@ -58,7 +58,7 @@ export default function ModalCopiarDatos({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 sm:p-6">
+    <div role="dialog" aria-modal="true" aria-label="Copiar datos para Motorizado" className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 sm:p-6">
       <div className="relative overflow-hidden bg-white  rounded-2xl border border-slate-200  shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col">
         <div className="shrink-0 px-6 sm:px-8 pt-8 sm:pt-10 pb-6 border-b border-slate-200  flex items-center justify-between">
           <div>
@@ -69,7 +69,7 @@ export default function ModalCopiarDatos({
               Revisa los envíos antes de copiar o exportar la información.
             </p>
           </div>
-          <TourHelpButton tourId="modal-copiar-datos" />
+          <TutorialEnvios tema="copiar" />
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">

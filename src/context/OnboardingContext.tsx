@@ -7,7 +7,7 @@ import OnboardingTooltip from '@/components/OnboardingTooltip'
 type FinishMode = 'completado' | 'saltado'
 
 type OnboardingContextValue = {
-  startTour: (id: TourId, onFinish?: (mode: FinishMode) => void) => void
+  startTour: (id: TourId, onFinish?: (mode: FinishMode) => void, manual?: boolean) => void
   stopTour: () => void
   isActive: (id: TourId) => boolean
   active: TourId | null
@@ -23,7 +23,10 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const onFinishRef = useRef<((mode: FinishMode) => void) | null>(null)
   const finishModeRef = useRef<FinishMode>('completado')
 
-  const startTour = useCallback((id: TourId, onFinish?: (mode: FinishMode) => void) => {
+  const startTour = useCallback((id: TourId, onFinish?: (mode: FinishMode) => void, manual = false) => {
+    // La ayuda se abre a petición del usuario; no interrumpe al entrar a una pantalla.
+    if (!manual) return
+    finishModeRef.current = 'completado'
     onFinishRef.current = onFinish ?? null
     setActive((prev) => (prev === id ? prev : id))
     setStep(0)

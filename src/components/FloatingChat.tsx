@@ -25,7 +25,7 @@ const FAQS: FAQ[] = [
   },
   {
     q: '¿Cómo cambio el estado de un pedido?',
-    a: 'Cada pedido tiene un menú desplegable en su tarjeta con tres opciones: No Empacado (borde rojo), Empacado (borde ámbar) y Enviado (borde verde). Solo selecciona el estado y se actualiza al instante. También puedes seleccionar varios y usar el Cambio Masivo (solo Plus).',
+    a: 'Cada pedido tiene un menú desplegable en su tarjeta con cuatro opciones: No Empacado (rojo), En Observación (morado), Empacado (ámbar) y Enviado (verde). Solo selecciona el estado y se actualiza al instante. También puedes seleccionar varios y usar el Cambio Masivo (solo Plus).',
   },
   {
     q: '¿Para qué sirve "Generar etiquetas"?',
@@ -41,7 +41,7 @@ const FAQS: FAQ[] = [
   },
   {
     q: '¿Cómo uso los filtros y estadísticas?',
-    a: 'En la parte superior del dashboard puedes buscar pedidos por nombre, DNI o teléfono. También puedes filtrar por estado (No Empacado, Empacado, Enviado) o por método de envío. Las estadísticas muestran gráficos de tus pedidos por día, por método y por estado —puedes ver los últimos 7, 15, 30 o 90 días, o elegir fechas personalizadas.',
+    a: 'En la parte superior del dashboard puedes buscar pedidos por nombre, DNI o teléfono. También puedes filtrar por estado (No Empacado, En Observación, Empacado, Enviado) o por método de envío. El filtro de fechas de Envíos usa el registro de la solicitud; Programada y Registro cambian la agrupación. Los reportes del negocio se consultan en Resumen con Plus.',
   },
   {
     q: '¿Puedo agregar o quitar métodos de envío?',
@@ -49,11 +49,11 @@ const FAQS: FAQ[] = [
   },
   {
     q: '¿Cómo se calcula la fecha de entrega?',
-    a: 'Tori revisa los días de atención que configuraste (ej: no atiendes domingos, un pedido del sábado se programa para el lunes). La hora de corte define el límite del día —si un cliente pide a las 6pm y tu corte es 5pm, pasa al siguiente día hábil. El cliente ve esa fecha estimada antes de confirmar su pedido. Si no configuras hora de corte, todos los pedidos se toman como "próximo día hábil".',
+    a: 'Tori revisa los días de atención que configuraste (ej: no atiendes domingos, un pedido del sábado se programa para el lunes). La hora de corte define el límite del día —si un cliente pide a las 6pm y tu corte es 5pm, pasa al siguiente día hábil. El cliente ve esa fecha estimada antes de confirmar su pedido. La fecha depende también de la anticipación y los días habilitados. En agencias se programa tu despacho; la llegada depende del courier.',
   },
   {
     q: '¿Puedo poner precio diferente por distrito?',
-    a: 'Sí. En la configuración de tarifas (plan Plus) puedes definir un precio distinto para cada distrito de Lima. También puedes usar "Precio único para todos" si prefieres simplificar. El cliente verá el costo exacto antes de confirmar su pedido.',
+    a: 'Sí. En Configuración > Tarifas puedes definir un precio distinto para cada distrito que atiendes en Lima o Provincia. Retira los distritos sin cobertura. También puedes usar "Precio único para todos" si prefieres simplificar. El cliente verá el costo exacto antes de confirmar su pedido.',
   },
   {
     q: '¿El plan Básico tiene límite de pedidos?',
@@ -119,7 +119,7 @@ export default function FloatingChat() {
                     }}
                     className="text-white font-semibold underline hover:no-underline"
                   >
-                    haz clic aquí para un tour guiado
+                    consulta tus primeros pasos y guías
                   </button>
                 </p>
               )}
@@ -181,7 +181,7 @@ export default function FloatingChat() {
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:text-sky-700 hover:border-sky-300 hover:shadow-sm transition-all duration-200"
               >
                 <MessageCircle size={14} />
-                Quiero un tour guiado por el dashboard
+                Ver primeros pasos y guías
               </button>
             </div>
           </motion.div>

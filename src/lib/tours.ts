@@ -33,6 +33,7 @@ export type Tour = {
   steps: TourStep[]
 }
 
+/** Legado: el alta usa PrimerosPasos; no se lanza esta navegación automáticamente. */
 export const TRAYECTO_INICIAL: TourId[] = [
   'tab-resumen',
   'tab-envios',
@@ -161,7 +162,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="envio-card"] [data-tour="estado"]',
-        text: 'Cambia el estado aquí: No empacado → Empacado → En Observación → Enviado. Es así de simple, un clic.',
+        text: 'Cambia el estado aquí: No Empacado, En Observación, Empacado o Enviado. Elige el que corresponda a lo que realmente ocurrió.',
       },
       {
         target: '[data-tour="envio-card"] [data-tour="checkbox"]',
@@ -183,7 +184,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="productos-nuevo"]',
-        text: 'Con "Nuevo" creas un producto: nombre, stock, precio de venta y de compra.',
+        text: 'Con "Nuevo producto" creas una ficha individual o una serie con variantes. Cada variante conserva su SKU y stock; puedes usar precio y costo generales con excepciones.',
       },
       {
         target: '[data-tour="productos-ejemplos"]',
@@ -434,7 +435,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="nuevo-producto-precios"]',
-        text: 'Precio de venta (a cuánto lo vendes) y precio de compra (cuánto te costó). Con eso Tori calcula tus ganancias.',
+        text: 'Precio de venta (a cuánto lo vendes) y precio de compra (cuánto te costó). La diferencia es una referencia antes de otros gastos; no equivale a ganancia neta.',
       },
       {
         target: '[data-tour="nuevo-producto-crear"]',
@@ -484,7 +485,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="detalle-envio-estado"]',
-        text: 'Aquí cambias el estado del pedido: No empacado → Empacado → En Observación → Enviado. Así llevas el control de cada entrega.',
+        text: 'Aquí cambias el estado del pedido: No Empacado, En Observación, Empacado o Enviado. Una observación indica una incidencia; Enviado no es una confirmación de entrega final del courier.',
       },
       {
         target: '[data-tour="detalle-envio-fecha"]',
@@ -538,7 +539,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="cambio-estados"]',
-        text: 'De qué estado a qué nuevo estado quieres pasar los pedidos. Por ejemplo: de "Empacado" a "En Observación" o a "Enviado".',
+        text: 'De qué estado a qué nuevo estado quieres pasar los pedidos. Revisa el nuevo estado y el alcance antes de aplicar. Marcar Enviado no confirma el cobro de una venta pendiente.',
       },
       {
         target: '[data-tour="cambio-seleccionados"]',
@@ -569,7 +570,7 @@ export const TOURS: Tour[] = [
       },
       {
         target: '[data-tour="export-confirmar"]',
-        text: 'Con "Exportar" descargas el archivo listo para tu agencia Shalom.',
+        text: 'Revisa la casilla de marcado automático: Descargar conserva el estado si está desactivada; Exportar y enviar también marca los pedidos como Enviado en Tori.',
       },
     ],
   },

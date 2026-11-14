@@ -7,7 +7,7 @@ import Select from '@/components/ui/Select'
 import FieldGroup from '@/components/ui/FieldGroup'
 import Field from '@/components/ui/Field'
 import type { Envio } from '@/types/envio'
-import TourHelpButton from '@/components/TourHelpButton'
+import TutorialEnvios from '@/components/TutorialEnvios'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import { useOnboarding } from '@/context/OnboardingContext'
 type Props = {
@@ -80,7 +80,7 @@ export default function ModalCambioMasivo({
     
     
      
-  <div
+  <div role="dialog" aria-modal="true" aria-label="Cambio Masivo"
   className="
     fixed inset-0 bg-black/40 backdrop-blur-sm
     flex items-center justify-center z-50 p-4
@@ -130,7 +130,7 @@ export default function ModalCambioMasivo({
 
       </div>
 
-      <TourHelpButton tourId="modal-cambio-masivo" />
+      <TutorialEnvios tema="masivo" />
 
     </div>
 
