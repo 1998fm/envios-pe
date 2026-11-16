@@ -437,7 +437,7 @@ export default function AdminPage() {
       await cargarFacturacion()
       setErroresSync(data.detalleErrores ?? [])
       setResultadoSync(`${data.revisadas ?? 0} contratos revisados · ${data.sincronizadas ?? 0} cobros verificados · ${data.renovacionesDetenidas ?? 0} contratos históricos con renovación incorrecta detenida.`)
-      if (!res.ok) throw new Error(data.error ?? 'Sincronización incompleta. Revisa los contratos pendientes de resolver.')
+      if (!res.ok) throw new Error(`${data.error ?? 'Sincronización incompleta.'} ${data.detalleErrores?.[0]?.error ?? ''}`)
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -709,7 +709,7 @@ export default function AdminPage() {
       </div>
 
       {error && (
-        <div className="mx-4 mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 flex items-center justify-between">
+        <div role="alert" className="mx-4 mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 flex items-center justify-between">
           <span>{error}</span>
           <button onClick={() => setError('')} className="text-red-500 font-bold px-2">
             ×
@@ -1143,6 +1143,9 @@ export default function AdminPage() {
               </div>
             </div>
 
+              {resultadoSync && <p role="status" className="px-4 py-3 text-sm text-sky-800">{resultadoSync}</p>}
+              {erroresSync.length > 0 && <div className="m-4 rounded-xl border border-amber-200 bg-amber-50 p-4"><h4 className="font-semibold text-amber-900">Contratos pendientes de resolver ({erroresSync.length})</h4><ul className="mt-2 max-h-72 space-y-3 overflow-y-auto text-xs text-amber-950">{erroresSync.map(e => <li key={e.suscripcion} className="break-all"><p className="font-mono">{e.suscripcion}</p><p>{e.error}</p></li>)}</ul><p className="mt-2 text-xs text-amber-900">Estos errores no confirman la cancelación ni la recuperación del acceso. Los pagos ya registrados no se duplican al reintentar.</p></div>}
+
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -1199,8 +1202,6 @@ export default function AdminPage() {
                 </p>
                 <div className="mt-2 flex items-center gap-3 text-xs"><button disabled={paginaRecibos <= 1} onClick={() => setPaginaRecibos(p => p - 1)}>Anterior</button><span>Página {paginaRecibos}</span><button disabled={paginaRecibos * 100 >= totalRecibos} onClick={() => setPaginaRecibos(p => p + 1)}>Siguiente</button></div>
               </div>
-              {resultadoSync && <p role="status" className="px-4 py-3 text-sm text-sky-800">{resultadoSync}</p>}
-              {erroresSync.length > 0 && <div className="m-4 rounded-xl border border-amber-200 bg-amber-50 p-4"><h4 className="font-semibold text-amber-900">Contratos pendientes de resolver ({erroresSync.length})</h4><ul className="mt-2 max-h-72 space-y-3 overflow-y-auto text-xs text-amber-950">{erroresSync.map(e => <li key={e.suscripcion} className="break-all"><p className="font-mono">{e.suscripcion}</p><p>{e.error}</p></li>)}</ul><p className="mt-2 text-xs text-amber-900">Estos errores no confirman la cancelación ni la recuperación del acceso. Los pagos ya registrados no se duplican al reintentar.</p></div>}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">

@@ -30,23 +30,27 @@ export async function mp<T>(
   const method = init?.method ?? "GET";
   const ruta = path.split("?")[0];
   const operacion =
-    ruta === "/authorized_payments/search"
-      ? "Buscar facturas"
-      : ruta.startsWith("/authorized_payments/")
-        ? "Consultar factura"
-        : ruta.startsWith("/v1/payments/")
-          ? "Consultar pago"
-          : ruta === "/preapproval/search"
-            ? "Buscar contratos"
-            : method === "PUT"
-              ? "Actualizar contrato"
-              : method === "POST"
-                ? "Crear contrato"
-                : "Consultar contrato";
+    ruta === "/v1/payments/search"
+      ? "Buscar pagos"
+      : ruta === "/authorized_payments/search"
+        ? "Buscar facturas"
+        : ruta.startsWith("/authorized_payments/")
+          ? "Consultar factura"
+          : ruta.startsWith("/v1/payments/")
+            ? "Consultar pago"
+            : ruta === "/preapproval/search"
+              ? "Buscar contratos"
+              : method === "PUT"
+                ? "Actualizar contrato"
+                : method === "POST"
+                  ? "Crear contrato"
+                  : "Consultar contrato";
   // Solo lecturas: nunca repetir automáticamente una creación o cancelación.
   for (let intento = 0; ; intento++) {
     let res: Response;
     try {
+      // Evitar ráfagas de consultas al recorrer varios contratos.
+      if (method === "GET") await new Promise((r) => setTimeout(r, 250));
       res = await fetch(`${baseMP()}${path}`, {
         method,
         headers: {

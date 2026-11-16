@@ -70,7 +70,7 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
     if(req.headers.authorization!=='Bearer local-mp-token')return fail(res,401,'unauthorized','Invalid MP token')
     const route=url.pathname.replace('/mp-api','')
     mpFixtures.requests.push({route,method:req.method,limit:url.searchParams.get('limit'),offset:url.searchParams.get('offset')})
-    const failure=mpFixtures.failures.find(f=>f.remaining>0&&f.route===route&&(!f.method||f.method===req.method))
+    const failure=mpFixtures.failures.find(f=>f.remaining>0&&f.route===route&&(!f.method||f.method===req.method)&&(!f.preapprovalOnly||url.searchParams.has('preapproval_id')))
     if(failure){failure.remaining--;return send(res,failure.status,{error:failure.code??'mp_failure',message:failure.message??'Test failure'})}
     if(route==='/preapproval'&&req.method==='POST'){
       if(mpFixtures.failCreate){const code=mpFixtures.failCreate;mpFixtures.failCreate=0;return fail(res,code,'mp_failure','Test failure')}
@@ -78,8 +78,8 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
       const value={...b,id,init_point:`https://www.mercadopago.com.pe/subscriptions/checkout?preapproval_id=${id}`}
       mpFixtures.creates++;mpFixtures.subscriptions.set(id,value);return send(res,201,value)
     }
-    if(route==='/preapproval/search'||route==='/authorized_payments/search'){
-      let items=[...(route.startsWith('/preapproval')?mpFixtures.subscriptions:mpFixtures.invoices).values()]
+    if(route==='/preapproval/search'||route==='/authorized_payments/search'||route==='/v1/payments/search'){
+      let items=[...(route.startsWith('/preapproval')?mpFixtures.subscriptions:route.startsWith('/v1/payments')?mpFixtures.payments:mpFixtures.invoices).values()]
       for(const f of ['external_reference','preapproval_id'])if(url.searchParams.has(f))items=items.filter(v=>String(v[f])===url.searchParams.get(f))
       if(url.searchParams.has('payment_id'))items=items.filter(v=>String(v.payment?.id)===url.searchParams.get('payment_id'))
       const offset=Number(url.searchParams.get('offset')||0),requested=Number(url.searchParams.get('limit')||20)

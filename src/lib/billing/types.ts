@@ -7,6 +7,7 @@ export type SuscripcionMP = {
   init_point?: string;
   date_created?: string;
   next_payment_date?: string;
+  summarized?: { charged_quantity?: number };
   payer_id?: number | string;
   collector_id?: number | string;
   auto_recurring?: {
@@ -25,6 +26,7 @@ export type FacturaMP = {
   payment?: { id?: number | string; status?: string };
 };
 export type PagoMP = {
+  external_reference?: string;
   id: number | string;
   status: string;
   date_approved?: string;

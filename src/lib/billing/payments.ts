@@ -12,6 +12,7 @@ import {
 import {
   ErrorBilling,
   type FacturaMP,
+  type PagoMP,
   type Recibo,
   type CuentaBilling,
   type SuscripcionMP,
@@ -350,16 +351,65 @@ async function guardarComprobante(owner: string, id: string, origen: string) {
 export async function sincronizarSuscripcion(
   sub: SuscripcionMP,
   origen = "reconciliacion",
+  onRenovacionDetenida?: () => void,
 ) {
   if (!referenciaMP(sub)) return 0;
-  await detenerTrimestreHistorico(sub);
+  if (await detenerTrimestreHistorico(sub)) onRenovacionDetenida?.();
   let procesadas = 0;
-  for await (const factura of paginasMP<FacturaMP>(
-    `/authorized_payments/search?preapproval_id=${encodeURIComponent(sub.id)}`,
-  ))
-    if (await procesarFactura(factura, origen)) procesadas++;
+  try {
+    for await (const factura of paginasMP<FacturaMP>(
+      `/authorized_payments/search?preapproval_id=${encodeURIComponent(sub.id)}`,
+    ))
+      if (await procesarFactura(factura, origen)) procesadas++;
+    return procesadas;
+  } catch (e) {
+    if (
+      !(e instanceof ErrorBilling) ||
+      e.providerStatus !== 400 ||
+      e.providerOperation !== "Buscar facturas"
+    )
+      throw e;
+  }
+  // Algunas cuentas rechazan la búsqueda de facturas por contrato. Buscar los
+  // pagos por referencia es una API documentada; cada pago debe volver a
+  // enlazarse a SU factura y SU contrato antes de acreditar acceso.
+  let vinculadas = 0;
+  for await (const pago of paginasMP<PagoMP>(
+    `/v1/payments/search?external_reference=${encodeURIComponent(sub.external_reference)}&sort=id&criteria=asc`,
+  )) {
+    if (String(pago.external_reference ?? "") !== sub.external_reference)
+      continue;
+    let encontroFactura = false;
+    for await (const factura of paginasMP<FacturaMP>(
+      `/authorized_payments/search?payment_id=${encodeURIComponent(String(pago.id))}`,
+    )) {
+      encontroFactura = true;
+      if (String(factura.preapproval_id) !== sub.id) continue;
+      if (await procesarFactura(factura, origen, String(pago.id))) {
+        vinculadas++;
+        procesadas++;
+      }
+    }
+    if (!encontroFactura)
+      throw new ErrorBilling(
+        "Se encontró un pago pero Mercado Pago no devolvió su factura. No se acredita sin verificar el vínculo.",
+      );
+  }
+  if (
+    vinculadas === 0 &&
+    sub.summarized?.charged_quantity !== 0 &&
+    sub.status !== "pending"
+  )
+    throw new ErrorBilling(
+      "La búsqueda por contrato fue rechazada y no se pudieron vincular sus pagos por transacción. El historial no se considera vacío ni confirmado.",
+    );
+  console.info(
+    "[mp-fallback]",
+    JSON.stringify({ operacion: "Facturas por pago", verificadas: vinculadas }),
+  );
   return procesadas;
 }
+
 export async function sincronizarPago(id: string) {
   for await (const factura of paginasMP<FacturaMP>(
     `/authorized_payments/search?payment_id=${encodeURIComponent(id)}`,

@@ -833,6 +833,47 @@ test("sincronización diagnostica operación y HTTP sin revelar el cuerpo privad
   expect(global.status()).toBe(503);
   expect((await global.json()).error).toContain("Buscar contratos:");
   await fixtures({ failures: [] });
+  await page.getByRole("button", { name: "Facturación", exact: true }).click();
+  await page.route("**/api/admin/facturacion/sync", (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: false,
+        revisadas: 1,
+        sincronizadas: 0,
+        renovacionesDetenidas: 0,
+        error:
+          "Sincronización parcial: revisa el detalle de contratos con error.",
+        detalleErrores: [
+          {
+            suscripcion: c.sub.id,
+            error: "Buscar facturas: parámetros rechazados (HTTP 400).",
+          },
+        ],
+      }),
+    }),
+  );
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Sincronizar pagos MP" }).click();
+  await expect(
+    page.getByRole("heading", { name: /Contratos pendientes de resolver/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "HTTP 400" }),
+  ).toBeVisible();
+  const diagnostico = await page
+    .getByRole("heading", { name: /Contratos pendientes de resolver/ })
+    .boundingBox();
+  const historial = await page
+    .getByText("Comprobantes de MercadoPago", { exact: false })
+    .boundingBox();
+  expect(diagnostico!.y).toBeLessThan(historial!.y);
+  await page.screenshot({
+    path: "/workspace/output/mp-diagnostico-visible.png",
+    fullPage: false,
+  });
+  await page.unroute("**/api/admin/facturacion/sync");
   await api.dispose();
   await svc.dispose();
 });
@@ -857,4 +898,93 @@ test("la paginación respeta páginas reducidas por Mercado Pago aunque no infor
   ).toBe(true);
   await fixtures({ clampLimit: 0, omitTotal: false });
   await svc.dispose();
+});
+
+test("MP rechaza buscar facturas por contrato: recupera pagos por transacción, sin perder devolución ni trimestre", async () => {
+  const c = await caso("approved", 3);
+  const ref = c.sub.external_reference;
+  const sub = {
+    ...c.sub,
+    date_created: "2026-10-15T12:00:00Z",
+    auto_recurring: { ...c.sub.auto_recurring, frequency: 1 },
+  };
+  const fecha = "2026-10-15T12:00:00Z",
+    fecha2 = "2026-11-15T12:00:00Z";
+  const p2 = String(Number(c.payment.id) + 1),
+    f2 = String(Number(c.invoice.id) + 1);
+  await fixtures({
+    subscriptions: [sub],
+    payments: [
+      {
+        ...c.payment,
+        external_reference: ref,
+        date_approved: fecha,
+        date_last_updated: fecha,
+      },
+      {
+        ...c.payment,
+        id: p2,
+        external_reference: ref,
+        status: "refunded",
+        transaction_amount_refunded: 129.9,
+        date_approved: fecha2,
+        date_last_updated: fecha2,
+      },
+    ],
+    invoices: [
+      { ...c.invoice, debit_date: fecha },
+      { ...c.invoice, id: f2, debit_date: fecha2, payment: { id: p2 } },
+    ],
+    failures: [
+      {
+        route: "/authorized_payments/search",
+        preapprovalOnly: true,
+        remaining: 100,
+        status: 400,
+      },
+    ],
+  });
+  for (let i = 0; i < 2; i++) {
+    expect((await webhook("subscription_preapproval", sub.id)).status()).toBe(
+      200,
+    );
+    const p = (await dbSelect("profiles", `id=eq.${c.user.id}`))[0];
+    expect(new Date(p.pro_until).toISOString()).toBe(
+      "2027-01-15T12:00:00.000Z",
+    );
+    expect(await dbSelect("pagos", `user_id=eq.${c.user.id}`)).toHaveLength(2);
+  }
+  const svc = await supabase("service");
+  const mp = await (await svc.get("/__dev/mp")).json();
+  expect(
+    mp.subscriptions.find((s: { id: string }) => s.id === sub.id).status,
+  ).toBe("cancelled");
+  expect(
+    mp.requests.some(
+      (r: { route: string }) => r.route === "/v1/payments/search",
+    ),
+  ).toBe(true);
+  await fixtures({ failures: [] });
+  await svc.dispose();
+});
+
+test("la ruta alternativa no convierte un historial desconocido en vacío ni asigna pagos de otro contrato", async () => {
+  const c = await caso();
+  await fixtures({
+    payments: [{ ...c.payment, external_reference: c.sub.external_reference }],
+    invoices: [{ ...c.invoice, preapproval_id: "otro-contrato" }],
+    failures: [
+      {
+        route: "/authorized_payments/search",
+        preapprovalOnly: true,
+        remaining: 100,
+        status: 400,
+      },
+    ],
+  });
+  expect((await webhook("subscription_preapproval", c.sub.id)).status()).toBe(
+    503,
+  );
+  expect(await dbSelect("pagos", `user_id=eq.${c.user.id}`)).toHaveLength(0);
+  await fixtures({ invoices: [c.invoice], failures: [] });
 });

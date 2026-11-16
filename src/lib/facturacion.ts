@@ -4,7 +4,6 @@ import {
   obtenerSuscripcionMP,
 } from "@/lib/billing/mp";
 import { sincronizarSuscripcion } from "@/lib/billing/payments";
-import { trimestreHistoricoIncorrecto } from "@/lib/billing/legacy";
 import { ErrorBilling, type SuscripcionMP } from "@/lib/billing/types";
 export async function conciliarContratos(
   contratos: AsyncIterable<SuscripcionMP> | Iterable<SuscripcionMP>,
@@ -29,8 +28,13 @@ export async function conciliarContratos(
       const actual = await obtenerSuscripcionMP(sub.id);
       if (referenciaMP(actual)?.owner !== ref.owner)
         throw new ErrorBilling("Referencia del contrato no coincidente.");
-      sincronizadas += await sincronizarSuscripcion(actual);
-      if (trimestreHistoricoIncorrecto(actual)) renovacionesDetenidas++;
+      sincronizadas += await sincronizarSuscripcion(
+        actual,
+        "reconciliacion",
+        () => {
+          renovacionesDetenidas++;
+        },
+      );
     } catch (e) {
       errores++;
       detalleErrores.push({
