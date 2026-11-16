@@ -4,6 +4,7 @@ import { requireOwner } from "@/lib/ownerAuth";
 import { PRECIOS_PLUS, computeEffectivePlan } from "@/lib/planGating";
 import { cambiarCuenta, leerCuenta } from "./store";
 import { mp, obtenerSuscripcionMP, paginasMP, referenciaMP } from "./mp";
+import { trimestreHistoricoIncorrecto } from "./legacy";
 import { inicializarCuenta } from "./payments";
 import {
   ErrorBilling,
@@ -49,7 +50,14 @@ export async function suscripcionesDe(owner: string) {
       throw new ErrorBilling("Referencia de suscripción no válida.");
     encontradas.set(id, sub);
   }
-  return [...encontradas.values()];
+  return Promise.all(
+    [...encontradas.keys()].map(async (id) => {
+      const sub = await obtenerSuscripcionMP(id);
+      if (referenciaMP(sub)?.owner !== owner)
+        throw new ErrorBilling("Referencia de suscripción no válida.");
+      return sub;
+    }),
+  );
 }
 function mismoPeriodo(sub: SuscripcionMP, periodo: Periodo) {
   const precio = PRECIOS_PLUS[periodo];
@@ -308,14 +316,19 @@ export async function verSuscripcion(owner: string) {
       estado: s.status,
       monto: s.auto_recurring?.transaction_amount,
       meses: s.auto_recurring?.frequency,
+      proximoCobro:
+        s.status === "cancelled" ? null : (s.next_payment_date ?? null),
+      creada: s.date_created ?? null,
+      incidencia: trimestreHistoricoIncorrecto(s),
       init_point: s.status === "pending" ? s.init_point : undefined,
     })),
     hasta: perfil.data?.pro_until ?? null,
     operacionPendiente:
       final.checkout &&
       ["creando", "desconocido", "cancelando"].includes(final.checkout.estado),
-    recibos: Object.values(cuenta.recibos)
-      .sort((a, b) => b.actualizado.localeCompare(a.actualizado))
-      .slice(0, 30),
+    incidencias: final.incidencias ?? {},
+    recibos: Object.values(cuenta.recibos).sort((a, b) =>
+      b.actualizado.localeCompare(a.actualizado),
+    ),
   };
 }

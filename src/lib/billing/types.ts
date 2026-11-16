@@ -5,6 +5,8 @@ export type SuscripcionMP = {
   status: string;
   external_reference: string;
   init_point?: string;
+  date_created?: string;
+  next_payment_date?: string;
   payer_id?: number | string;
   collector_id?: number | string;
   auto_recurring?: {
@@ -45,6 +47,9 @@ export type Recibo = {
   fin: string;
   aprobado: string;
   actualizado: string;
+  reembolsado?: number;
+  historicoCorregido?: boolean;
+  cobroInicio?: string;
 };
 export type Checkout = {
   token: string;
@@ -54,6 +59,10 @@ export type Checkout = {
   suscripcion?: string;
 };
 export type CuentaBilling = {
+  incidencias?: Record<
+    string,
+    { motivo: string; estado: "pendiente" | "cancelado"; actualizado: string }
+  >;
   suscripciones?: string[];
   revision: number;
   inicializada: boolean;

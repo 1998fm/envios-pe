@@ -486,3 +486,257 @@ test("Pro histórico sigue procesando cobros verificados con su importe anterior
     29.9,
   );
 });
+
+test("repara trimestre histórico, cancela renovación real y conserva solo el pago no devuelto; reintento idempotente", async ({
+  page,
+}) => {
+  const c = await caso("approved", 3);
+  const sub = {
+    ...c.sub,
+    date_created: "2026-10-15T12:00:00Z",
+    next_payment_date: "2026-12-15T12:00:00Z",
+    auto_recurring: { ...c.sub.auto_recurring, frequency: 1 },
+  };
+  const fecha = "2026-10-15T12:00:00Z",
+    fecha2 = "2026-11-15T12:00:00Z";
+  const pago2 = String(Number(c.payment.id) + 1),
+    factura2 = String(Number(c.invoice.id) + 1);
+  await fixtures({
+    subscriptions: [sub],
+    payments: [
+      { ...c.payment, date_approved: fecha, date_last_updated: fecha },
+      {
+        ...c.payment,
+        id: pago2,
+        date_approved: fecha2,
+        date_last_updated: fecha2,
+        status: "refunded",
+        transaction_amount_refunded: 129.9,
+      },
+    ],
+    invoices: [
+      { ...c.invoice, debit_date: fecha },
+      {
+        ...c.invoice,
+        id: factura2,
+        debit_date: fecha2,
+        payment: { id: pago2 },
+      },
+    ],
+  });
+  const admin = await createUser();
+  const svc = await supabase("service");
+  await svc.patch(`/rest/v1/profiles?id=eq.${admin.id}`, {
+    data: { role: "super_admin" },
+  });
+  const api = await appApi(null);
+  await api.post("/api/auth/login", {
+    data: { email: admin.email, password: admin.password },
+  });
+  const url = `/api/admin/empresas/${c.user.id}/suscripcion`;
+  const normal = await appApi(null);
+  await normal.post("/api/auth/login", {
+    data: { email: c.user.email, password: c.user.password },
+  });
+  expect((await normal.post(url)).status()).toBe(403);
+  for (let i = 0; i < 2; i++) {
+    const result = await api.post(url);
+    expect(result.status(), await result.text()).toBe(200);
+    const data = await (await api.get(url)).json();
+    expect(
+      data.suscripciones.find((s: { id: string }) => s.id === sub.id).estado,
+    ).toBe("cancelled");
+    expect(data.recibos).toHaveLength(2);
+    expect(new Date(data.hasta).toISOString()).toBe("2027-01-15T12:00:00.000Z");
+    expect(
+      data.recibos.find((r: { id: string }) => r.id === pago2).estado,
+    ).toBe("refunded");
+    expect(
+      data.recibos.find((r: { id: string }) => r.id === pago2).reembolsado,
+    ).toBe(129.9);
+  }
+  const pagos = await dbSelect("pagos", `user_id=eq.${c.user.id}`);
+  expect(pagos).toHaveLength(2);
+  expect(
+    pagos.every((p: { periodo_meses: number }) => p.periodo_meses === 3),
+  ).toBe(true);
+  const global = await (await api.get("/api/admin/facturacion")).json();
+  expect(
+    global.recibos.find((r: { payment_id: string }) => r.payment_id === pago2)
+      .reembolsado,
+  ).toBe(129.9);
+  await page
+    .context()
+    .addCookies(await api.storageState().then((s) => s.cookies));
+  await page.goto("/admin");
+  await page.getByPlaceholder("Nombre, correo o enlace").fill(c.user.email);
+  await page.getByRole("button").filter({ hasText: c.user.email }).click();
+  await page.getByRole("button", { name: "Acceso Plus", exact: true }).click();
+  await expect(
+    page.getByRole("button", {
+      name: "Sincronizar pagos y corregir contratos históricos",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Renovación cancelada", { exact: true }),
+  ).toBeVisible();
+  await page.getByText("Historial de cobros", { exact: true }).click();
+  await expect(page.getByText("Reembolsado", { exact: true })).toBeVisible();
+  await page.getByText("Ver detalle del pago", { exact: true }).first().click();
+  await expect(
+    page.getByText(new RegExp(`Pago MP: (${c.payment.id}|${pago2})`)).first(),
+  ).toBeVisible();
+  page.once("dialog", (d) => d.accept());
+  await page
+    .getByRole("button", {
+      name: "Sincronizar pagos y corregir contratos históricos",
+    })
+    .click();
+  await expect(page.getByRole("status")).toContainText(
+    "Sincronización completa",
+  );
+  await page.screenshot({
+    path: "/workspace/output/suscripcion-historica-reparada.png",
+    fullPage: true,
+  });
+  // La consulta devuelve contrato, próxima fecha y cada transacción con estado.
+  const detalle = await (await api.get(url)).json();
+  expect(detalle.suscripciones[0].proximoCobro).toBeNull();
+  await normal.dispose();
+  await api.dispose();
+  await svc.dispose();
+});
+
+test("una referencia nueva o fecha posterior no se reinterpreta como trimestre histórico", async () => {
+  for (const patch of [
+    { external_reference: `nuevo` },
+    { date_created: "2026-11-12T12:00:00Z" },
+    { date_created: undefined },
+  ]) {
+    const c = await caso("approved", 3);
+    const sub = {
+      ...c.sub,
+      date_created: "2026-10-15T12:00:00Z",
+      ...patch,
+      external_reference: patch.external_reference
+        ? `${c.user.id}__business_plus__nuevo`
+        : c.sub.external_reference,
+      auto_recurring: { ...c.sub.auto_recurring, frequency: 1 },
+    };
+    await fixtures({ subscriptions: [sub] });
+    expect(
+      (await webhook("subscription_authorized_payment", c.invoice.id)).status(),
+    ).toBe(503);
+    const svc = await supabase("service");
+    const real = (await (await svc.get("/__dev/mp")).json()).subscriptions.find(
+      (s: { id: string }) => s.id === sub.id,
+    );
+    expect(real.status).toBe("authorized");
+    expect(await dbSelect("pagos", `user_id=eq.${c.user.id}`)).toHaveLength(0);
+    await fixtures({ subscriptions: [c.sub] });
+    await svc.dispose();
+  }
+});
+
+test("si Mercado Pago falla al cancelar no declara corregido; el reintento recupera el trimestre Pro histórico", async () => {
+  const c = await caso("approved", 3);
+  const monto = 79.9;
+  const sub = {
+    ...c.sub,
+    external_reference: `${c.user.id}__pro`,
+    date_created: "2026-10-15T12:00:00Z",
+    auto_recurring: {
+      ...c.sub.auto_recurring,
+      transaction_amount: monto,
+      frequency: 1,
+    },
+  };
+  await fixtures({
+    subscriptions: [sub],
+    payments: [{ ...c.payment, transaction_amount: monto }],
+    invoices: [{ ...c.invoice, transaction_amount: monto }],
+    failUpdate: 503,
+  });
+  expect((await webhook("subscription_preapproval", sub.id)).status()).toBe(
+    503,
+  );
+  expect(await dbSelect("pagos", `user_id=eq.${c.user.id}`)).toHaveLength(0);
+  const svc = await supabase("service");
+  expect(
+    (await (await svc.get("/__dev/mp")).json()).subscriptions.find(
+      (s: { id: string }) => s.id === sub.id,
+    ).status,
+  ).toBe("authorized");
+  expect((await webhook("subscription_preapproval", sub.id)).status()).toBe(
+    200,
+  );
+  expect(
+    (await dbSelect("pagos", `user_id=eq.${c.user.id}`))[0].periodo_meses,
+  ).toBe(3);
+  expect(
+    (await (await svc.get("/__dev/mp")).json()).subscriptions.find(
+      (s: { id: string }) => s.id === sub.id,
+    ).status,
+  ).toBe("cancelled");
+  await svc.dispose();
+});
+
+test("dos cargos trimestrales históricos retenidos cubren seis meses; una devolución recalcula sin duplicar", async () => {
+  const c = await caso("approved", 3);
+  const sub = {
+    ...c.sub,
+    date_created: "2026-10-15T12:00:00Z",
+    auto_recurring: { ...c.sub.auto_recurring, frequency: 1 },
+  };
+  const fecha1 = "2026-10-15T12:00:00Z",
+    fecha2 = "2026-11-15T12:00:00Z";
+  const p2 = String(Number(c.payment.id) + 1),
+    f2 = String(Number(c.invoice.id) + 1);
+  await fixtures({
+    subscriptions: [sub],
+    payments: [
+      { ...c.payment, date_approved: fecha1, date_last_updated: fecha1 },
+      {
+        ...c.payment,
+        id: p2,
+        date_approved: fecha2,
+        date_last_updated: fecha2,
+      },
+    ],
+    invoices: [
+      { ...c.invoice, debit_date: fecha1 },
+      { ...c.invoice, id: f2, debit_date: fecha2, payment: { id: p2 } },
+    ],
+  });
+  for (let i = 0; i < 2; i++) {
+    expect((await webhook("subscription_preapproval", sub.id)).status()).toBe(
+      200,
+    );
+    expect(
+      new Date(
+        (await dbSelect("profiles", `id=eq.${c.user.id}`))[0].pro_until,
+      ).toISOString(),
+    ).toBe("2027-04-15T12:00:00.000Z");
+  }
+  await fixtures({
+    payments: [
+      {
+        ...c.payment,
+        id: p2,
+        date_approved: fecha2,
+        date_last_updated: new Date().toISOString(),
+        status: "refunded",
+        transaction_amount_refunded: 129.9,
+      },
+    ],
+  });
+  expect((await webhook("subscription_preapproval", sub.id)).status()).toBe(
+    200,
+  );
+  expect(
+    new Date(
+      (await dbSelect("profiles", `id=eq.${c.user.id}`))[0].pro_until,
+    ).toISOString(),
+  ).toBe("2027-01-15T12:00:00.000Z");
+  expect(await dbSelect("pagos", `user_id=eq.${c.user.id}`)).toHaveLength(2);
+});

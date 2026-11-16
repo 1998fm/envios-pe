@@ -50,7 +50,7 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
   const buckets = new Map([['logos', { id: 'logos', name: 'logos', public: true }], ['productos', { id: 'productos', name: 'productos', public: true }]])
   const files = new Map() // "bucket/path" -> { buffer, type }
 
-  const mpFixtures = { subscriptions: new Map(), invoices: new Map(), payments: new Map(), creates: 0, updates: 0, failCreate: 0, failReceipt: 0 }
+  const mpFixtures = { subscriptions: new Map(), invoices: new Map(), payments: new Map(), creates: 0, updates: 0, failCreate: 0, failReceipt: 0, failUpdate: 0 }
   async function handleMP(req,res,url) {
     if(url.pathname==='/__dev/mp') {
       const claims=await verifyBearer(req)
@@ -60,6 +60,7 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
       for(const type of ['subscriptions','invoices','payments'])for(const x of b[type]??[])mpFixtures[type].set(String(x.id),x)
       if(b.failCreate!==undefined)mpFixtures.failCreate=b.failCreate
       if(b.failReceipt!==undefined)mpFixtures.failReceipt=b.failReceipt
+      if(b.failUpdate!==undefined)mpFixtures.failUpdate=b.failUpdate
       return send(res,200,{ok:true})
     }
     if(req.headers.authorization!=='Bearer local-mp-token')return fail(res,401,'unauthorized','Invalid MP token')
@@ -78,7 +79,7 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
       return send(res,200,{paging:{total:items.length},results:items.slice(offset,offset+limit)})
     }
     const match=route.match(/^\/(preapproval|authorized_payments|v1\/payments)\/([\w-]+)$/)
-    if(match){const table=match[1]==='preapproval'?'subscriptions':match[1]==='authorized_payments'?'invoices':'payments';const value=mpFixtures[table].get(match[2]);if(!value)return fail(res,404,'not_found','Resource not found');if(req.method==='PUT'){Object.assign(value,await readJson(req));mpFixtures.updates++}return send(res,200,value)}
+    if(match){const table=match[1]==='preapproval'?'subscriptions':match[1]==='authorized_payments'?'invoices':'payments';const value=mpFixtures[table].get(match[2]);if(!value)return fail(res,404,'not_found','Resource not found');if(req.method==='PUT'){if(mpFixtures.failUpdate){const code=mpFixtures.failUpdate;mpFixtures.failUpdate=0;return fail(res,code,'mp_failure','Test failure')}Object.assign(value,await readJson(req));mpFixtures.updates++}return send(res,200,value)}
     return fail(res,404,'not_found','MP endpoint not found')
   }
 

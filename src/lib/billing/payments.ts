@@ -13,8 +13,13 @@ import {
   ErrorBilling,
   type FacturaMP,
   type Recibo,
+  type CuentaBilling,
   type SuscripcionMP,
 } from "./types";
+import {
+  detenerTrimestreHistorico,
+  trimestreHistoricoIncorrecto,
+} from "./legacy";
 export const reciboVigente = (r: Recibo) =>
   r.estado === "approved" || r.estado === "partially_refunded";
 export function sumarMesesUTC(iso: string, meses: number): string {
@@ -39,7 +44,7 @@ function condiciones(sub: SuscripcionMP, plan: "pro" | "business_plus") {
     ![1, 3].includes(Number(a.frequency))
   )
     throw new ErrorBilling("La suscripción tiene condiciones no reconocidas.");
-  const meses = Number(a.frequency);
+  const meses = trimestreHistoricoIncorrecto(sub) ? 3 : Number(a.frequency);
   const esperado =
     PRECIOS_PLAN[plan][meses === 3 ? "trimestral" : "mensual"].valor;
   if (
@@ -50,6 +55,27 @@ function condiciones(sub: SuscripcionMP, plan: "pro" | "business_plus") {
       "El importe de la suscripción requiere revisión de soporte.",
     );
   return { meses, monto: esperado };
+}
+// Recupera toda la cobertura pagada: dos cargos trimestrales retenidos son
+// seis meses. Se recalcula desde fechas de origen inmutables, incluso al recibir
+// una devolución o eventos fuera de orden, sin sumar de nuevo en cada reintento.
+function distribuirTrimestresHistoricos(s: CuentaBilling, suscripcion: string) {
+  const recibos = Object.values(s.recibos)
+    .filter((r) => r.suscripcion === suscripcion && r.historicoCorregido)
+    .sort(
+      (a, b) =>
+        (a.cobroInicio ?? a.inicio).localeCompare(b.cobroInicio ?? b.inicio) ||
+        a.id.localeCompare(b.id),
+    );
+  let finAnterior = "";
+  for (const r of recibos) {
+    const original = r.cobroInicio ?? r.inicio;
+    r.cobroInicio = original;
+    r.inicio =
+      reciboVigente(r) && finAnterior > original ? finAnterior : original;
+    r.fin = sumarMesesUTC(r.inicio, r.meses);
+    if (reciboVigente(r)) finAnterior = r.fin;
+  }
 }
 export async function inicializarCuenta(owner: string) {
   const { data, error } = await supabaseAdmin
@@ -218,7 +244,12 @@ export async function procesarFactura(
     fin: sumarMesesUTC(inicio, meses),
     aprobado,
     actualizado,
+    reembolsado: Number(pago.transaction_amount_refunded) || 0,
+    ...(trimestreHistoricoIncorrecto(sub)
+      ? { historicoCorregido: true, cobroInicio: inicio }
+      : {}),
   };
+  await detenerTrimestreHistorico(sub);
   await inicializarCuenta(referencia.owner);
   await cambiarCuenta(referencia.owner, (s) => {
     const anterior = s.recibos[id];
@@ -229,13 +260,22 @@ export async function procesarFactura(
           (["refunded", "charged_back", "cancelled"].includes(
             anterior.estado,
           ) ||
-            anterior.estado === estado)))
+            (anterior.estado === estado &&
+              anterior.meses === recibo.meses &&
+              anterior.fin === recibo.fin &&
+              (anterior.reembolsado ?? 0) === (recibo.reembolsado ?? 0)))))
     )
       return null;
     s.recibos[id] = recibo;
+    if (recibo.historicoCorregido)
+      distribuirTrimestresHistoricos(s, recibo.suscripcion);
     return s;
   });
-  await guardarComprobante(referencia.owner, id, origen);
+  if (recibo.historicoCorregido) {
+    for (const r of Object.values((await leerCuenta(referencia.owner)).recibos))
+      if (r.suscripcion === recibo.suscripcion && r.historicoCorregido)
+        await guardarComprobante(referencia.owner, r.id, origen);
+  } else await guardarComprobante(referencia.owner, id, origen);
   await proyectarAcceso(referencia.owner);
   return true;
 }
@@ -270,6 +310,9 @@ async function guardarComprobante(owner: string, id: string, origen: string) {
         preapproval_id: actual.suscripcion,
         estado: actual.estado,
         aprobado: actual.aprobado,
+        inicio: actual.inicio,
+        fin: actual.fin,
+        reembolsado: actual.reembolsado ?? 0,
       }),
       updated_at: actual.actualizado,
     };
@@ -309,6 +352,7 @@ export async function sincronizarSuscripcion(
   origen = "reconciliacion",
 ) {
   if (!referenciaMP(sub)) return 0;
+  await detenerTrimestreHistorico(sub);
   let procesadas = 0;
   for await (const factura of paginasMP<FacturaMP>(
     `/authorized_payments/search?preapproval_id=${encodeURIComponent(sub.id)}`,

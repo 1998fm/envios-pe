@@ -1,19 +1,54 @@
-import { paginasMP, referenciaMP } from "@/lib/billing/mp";
+import {
+  paginasMP,
+  referenciaMP,
+  obtenerSuscripcionMP,
+} from "@/lib/billing/mp";
 import { sincronizarSuscripcion } from "@/lib/billing/payments";
-import type { SuscripcionMP } from "@/lib/billing/types";
-// Paginar también las canceladas: pueden tener un reembolso posterior.
-export async function sincronizarPagosMP() {
+import { detenerTrimestreHistorico } from "@/lib/billing/legacy";
+import { ErrorBilling, type SuscripcionMP } from "@/lib/billing/types";
+export async function conciliarContratos(
+  contratos: AsyncIterable<SuscripcionMP> | Iterable<SuscripcionMP>,
+) {
   let revisadas = 0,
     sincronizadas = 0,
-    errores = 0;
-  for await (const sub of paginasMP<SuscripcionMP>("/preapproval/search")) {
-    if (!referenciaMP(sub)) continue;
+    errores = 0,
+    renovacionesDetenidas = 0;
+  const detalleErrores: {
+    suscripcion: string;
+    usuario: string;
+    error: string;
+  }[] = [];
+  for await (const sub of contratos) {
+    const ref = referenciaMP(sub);
+    if (!ref) continue;
     revisadas++;
     try {
-      sincronizadas += await sincronizarSuscripcion(sub);
-    } catch {
+      const actual = await obtenerSuscripcionMP(sub.id);
+      if (referenciaMP(actual)?.owner !== ref.owner)
+        throw new ErrorBilling("Referencia del contrato no coincidente.");
+      if (await detenerTrimestreHistorico(actual)) renovacionesDetenidas++;
+      sincronizadas += await sincronizarSuscripcion(actual);
+    } catch (e) {
       errores++;
+      detalleErrores.push({
+        suscripcion: sub.id,
+        usuario: ref.owner,
+        error:
+          e instanceof ErrorBilling
+            ? e.message
+            : "No se pudo verificar o registrar el contrato. Reintenta la sincronización.",
+      });
     }
   }
-  return { revisadas, sincronizadas, errores };
+  return {
+    revisadas,
+    sincronizadas,
+    errores,
+    renovacionesDetenidas,
+    detalleErrores,
+  };
+}
+// Incluye canceladas: conservan pagos y pueden recibir devoluciones posteriores.
+export async function sincronizarPagosMP() {
+  return conciliarContratos(paginasMP<SuscripcionMP>("/preapproval/search"));
 }

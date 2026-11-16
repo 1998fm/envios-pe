@@ -18,6 +18,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url)
   const search = (url.searchParams.get('search') ?? '').trim().toLowerCase()
+  const paginaRecibos = Math.max(1, Math.floor(Number(url.searchParams.get('paginaRecibos')) || 1))
   const estado = url.searchParams.get('estado') ?? '' // '', 'vigente' | 'vencido'
 
   // Quienes "han pagado" = perfiles con pro_until alguna vez establecido.
@@ -56,21 +57,28 @@ export async function GET(request: Request) {
     pagado_en: string | null
   }[] = []
 
+  let totalRecibos = 0
   try {
-    const { data: comprobantes } = await supabaseAdmin
+    const { data: comprobantes, error: errorPagos, count } = await supabaseAdmin
       .from('pagos')
-      .select('id, user_id, preapproval_id, plan, monto, periodo_meses, pro_until, origen, created_at')
-      .order('pro_until', { ascending: false })
-      .limit(200)
+      .select('id, user_id, preapproval_id, plan, monto, periodo_meses, pro_until, origen, created_at', { count: 'exact' })
+      .order('created_at', { ascending: false }).order('id', { ascending: false })
+      .range((paginaRecibos - 1) * 100, paginaRecibos * 100 - 1)
+    if (errorPagos) throw new Error('No se pudieron consultar los pagos registrados.')
+    totalRecibos = count ?? 0
 
     const perfilesPorId = new Map((profiles ?? []).map((p) => [p.id, p]))
 
     recibos = (comprobantes ?? []).map((c) => {
-      let meta: { tipo?: string; estado?: string; aprobado?: string; canal?: string } = {}
+      let meta: { tipo?: string; estado?: string; aprobado?: string; canal?: string; payment_id?: string; preapproval_id?: string; inicio?: string; reembolsado?: number } = {}
       try { meta = JSON.parse(c.origen) } catch {}
       const perfil = perfilesPorId.get(c.user_id)
       return {
         id: c.id,
+        payment_id: meta.payment_id ?? null,
+        suscripcion_id: meta.preapproval_id ?? c.preapproval_id,
+        inicio: meta.inicio ?? null,
+        reembolsado: meta.reembolsado ?? 0,
         user_id: c.user_id,
         empresa: perfil?.empresa ?? '',
         slug: perfil?.slug ?? '',
@@ -84,8 +92,8 @@ export async function GET(request: Request) {
         pagado_en: meta.tipo === 'mp-payment' ? meta.aprobado || null : c.created_at,
       }
     })
-  } catch (e) {
-    console.warn('[admin] tabla pagos no disponible:', (e as Error).message)
+  } catch {
+    return NextResponse.json({ error: 'No se pudieron consultar los pagos registrados. No se muestra un historial vacío como si fuera correcto.' }, { status: 503 })
   }
 
   const filas = (profiles ?? [])
@@ -139,6 +147,8 @@ export async function GET(request: Request) {
     vencidos,
     mrr,
     recibos,
+    totalRecibos,
+    paginaRecibos,
     ahora: now.toISOString(),
   })
 }

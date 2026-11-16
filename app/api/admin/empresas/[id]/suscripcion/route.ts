@@ -96,3 +96,41 @@ export async function DELETE(
     );
   }
 }
+
+export const maxDuration = 300;
+export async function POST(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const auth = await requireSuperAdmin();
+  if (!auth.ok)
+    return Response.json({ error: auth.error }, { status: auth.status });
+  const { id } = await params;
+  if (!uuid.test(id))
+    return Response.json({ error: "Empresa no válida." }, { status: 400 });
+  try {
+    const { suscripcionesDe } = await import("@/lib/billing/subscriptions");
+    const { conciliarContratos } = await import("@/lib/facturacion");
+    const result = await conciliarContratos(await suscripcionesDe(id));
+    return Response.json(
+      {
+        ok: result.errores === 0,
+        ...result,
+        error: result.errores
+          ? "Sincronización parcial. Revisa los contratos con error."
+          : undefined,
+      },
+      { status: result.errores ? 503 : 200 },
+    );
+  } catch (e) {
+    return Response.json(
+      {
+        error:
+          e instanceof ErrorBilling
+            ? e.message
+            : "No se pudo sincronizar Mercado Pago.",
+      },
+      { status: 503 },
+    );
+  }
+}

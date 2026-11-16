@@ -7,7 +7,7 @@
 - Los eventos aceptados son `subscription_preapproval`, `preapproval` (compatibilidad), `subscription_authorized_payment` y `payment`. Firma obligatoria con ID canónico único. `body.id` es el ID de notificación, no del recurso.
 - Los períodos provienen de `debit_date` de la factura y meses del contrato. Se suman meses de calendario, no 30/90 días. `next_payment_date` nunca acredita un período pagado.
 - Cobros pendientes/rechazados no conceden acceso. Reembolso total/contracargo retira la cobertura de ese cobro; un reembolso parcial conserva la cobertura y aparece como tal. Si existe otro período válido, prueba vigente o extensión manual, se conserva.
-- Pro anterior válido se reconoce con sus precios anteriores y concede Plus. No se crean nuevos contratos Pro ni se cambian automáticamente contratos históricos de Mercado Pago.
+- Pro anterior válido se reconoce con sus precios anteriores y concede Plus. No se crean nuevos contratos Pro. Los contratos históricos con el defecto exacto descrito abajo se cancelan durante la conciliación para detener cargos incorrectos.
 
 ## Persistencia e idempotencia
 
@@ -40,3 +40,16 @@ Variables privadas: `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `CRON_SECRET`. Confi
 El stack local implementa `/mp-api` y fixtures accesibles solo con service-role. El reemplazo de API solo funciona con token de prueba local y URL de base local; producción usa `https://api.mercadopago.com`. No requiere cargos reales.
 
 `e2e/billing.spec.ts` verifica aprobación, rechazo, reembolso, firmas/IDs, importe/moneda/pagador, concurrencia, historial, fallos recuperables, titularidad, cancelación desde el panel, cancelación administrativa auditada, Pro histórico y conciliación más allá de 100 contratos. Ejecutar también security, no-leaks, core-flows, planes y pruebas administrativas.
+
+
+## Reparación de trimestrales históricos (noviembre de 2026)
+
+El código previo al 10/11/2026 21:36:58 UTC enviaba `frequency: 1` incluso al cobrar S/129.90 (Plus trimestral) o S/79.90 (Pro trimestral). Cambiar el código de nuevas altas no modifica esos contratos ya existentes.
+
+La conciliación global, por negocio y las notificaciones firmadas identifican únicamente contratos con referencia histórica exacta `UUID__business_plus` o `UUID__pro`, fecha de creación anterior a la corrección, moneda PEN, frecuencia de un mes e importe trimestral exacto. Se verifica que el perfil exista y se relee el contrato. Se registra la incidencia en el registro privado de facturación antes de solicitar la cancelación. Se verifica con GET que Mercado Pago realmente confirme `cancelled`. Nunca se da por corregido un fallo de cancelación. La acción no cobra ni devuelve dinero y no crea contratos de reemplazo.
+
+Los pagos de esos contratos se validan con los mismos controles de factura/pagador/importe y se reconocen como tres meses de calendario. Los trimestres de varios pagos retenidos del mismo contrato se acumulan sin solaparse, usando las fechas originales; los reintentos no suman otra vez. Un pago devuelto totalmente o con contracargo no concede acceso y la distribución se recalcula. Se conserva la cobertura de otros pagos y las extensiones manuales previas. Las fechas se muestran en America/Lima. Si faltan datos o no coincide el patrón histórico, no se adivina el plan ni se cancela automáticamente: se informa el error para revisión.
+
+En Superadmin → Centro de soporte → negocio → Acceso Plus, «Sincronizar pagos y corregir contratos históricos» ejecuta la corrección de esa cuenta. Muestra también contratos cancelados, ID del contrato y próxima fecha de cobro (nula si cancelado). El historial contiene una fila por transacción, estado, devolución y cobertura. La sincronización global está en Pagos y suscripciones; incluye resultados parciales y los IDs con errores. Los comprobantes generales tienen paginación de 100 filas y no silencian errores de base de datos como si fueran historiales vacíos.
+
+El cron diario ejecuta la misma reparación. Publicar el código no certifica que una cuenta real ya haya sido conciliada: comprobar el resultado de la sincronización y el estado cancelado. Para volver a renovar después, el cliente debe autorizar una nueva contratación correcta; no se reactiva ni se cobra automáticamente.

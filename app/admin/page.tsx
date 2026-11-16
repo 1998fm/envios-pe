@@ -140,6 +140,11 @@ type Recibo = {
   pro_until: string | null
   origen: string
   pagado_en: string | null
+  payment_id?: string | null
+  suscripcion_id?: string
+  inicio?: string | null
+  reembolsado?: number
+  estado_pago?: string
 }
 
 type Alerta = {
@@ -154,7 +159,7 @@ type Alerta = {
 const fmtNum = (n: number) => n.toLocaleString('es-PE')
 const fmtMoney = (n: number) => `S/ ${n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const fmtDate = (iso: string | null | undefined) =>
-  iso ? new Date(iso).toLocaleString('es-PE') : '—'
+  iso ? new Date(iso).toLocaleString('es-PE', { timeZone: 'America/Lima' }) : '—'
 
 // Badge de plan con color
 function BadgePlan({ plan }: { plan: string }) {
@@ -266,6 +271,9 @@ export default function AdminPage() {
   const [admins, setAdmins] = useState<AdminRow[]>([])
   const [facturas, setFacturas] = useState<Factura[]>([])
   const [filtroEstado, setFiltroEstado] = useState('')
+  const [paginaRecibos, setPaginaRecibos] = useState(1)
+  const [totalRecibos, setTotalRecibos] = useState(0)
+  const [resultadoSync, setResultadoSync] = useState('')
   const [recibos, setRecibos] = useState<Recibo[]>([])
   const [sincronizandoPagos, setSincronizandoPagos] = useState(false)
   const [alertas, setAlertas] = useState<Alerta[]>([])
@@ -405,24 +413,28 @@ export default function AdminPage() {
 
   const cargarFacturacion = useCallback(async () => {
     try {
-      const q = filtroEstado ? `?estado=${filtroEstado}` : ''
+      const q = `?estado=${filtroEstado}&paginaRecibos=${paginaRecibos}`
       const d = await fetchJson(`/api/admin/facturacion${q}`)
       setFacturas(d.items)
       setRecibos(d.recibos ?? [])
+      setTotalRecibos(d.totalRecibos ?? 0)
     } catch (e) {
       setError((e as Error).message)
     }
-  }, [fetchJson, filtroEstado])
+  }, [fetchJson, filtroEstado, paginaRecibos])
 
   // Acción: sincronizar pagos con MercadoPago (recupera suscripciones autorizadas).
   const sincronizarPagos = async () => {
+    if (!window.confirm('Revisará todos los contratos y pagos. Cancelará las renovaciones mensuales históricas con importe trimestral y recuperará su cobertura pagada. No cobra ni devuelve dinero. ¿Continuar?')) return
+    setResultadoSync('')
     setSincronizandoPagos(true)
     setError('')
     try {
       const res = await fetch('/api/admin/facturacion/sync', { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Error al sincronizar pagos')
       await cargarFacturacion()
+      setResultadoSync(`${data.revisadas ?? 0} contratos revisados · ${data.sincronizadas ?? 0} cobros verificados · ${data.renovacionesDetenidas ?? 0} contratos históricos con renovación incorrecta detenida.`)
+      if (!res.ok) throw new Error(`${data.error ?? 'Sincronización incompleta'} ${(data.detalleErrores ?? []).map((e: {suscripcion: string; error: string}) => `${e.suscripcion}: ${e.error}`).join(' · ')}`)
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -453,7 +465,7 @@ export default function AdminPage() {
     if (tab === 'admins') cargarAdmins()
     if (tab === 'resumen') cargarAlertas()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sesion, tab, paginaE, paginaA])
+  }, [sesion, tab, paginaE, paginaA, filtroEstado, paginaRecibos])
 
   const refetchCurrent = () => {
     if (tab === 'resumen' || tab === 'soporte') cargarOverview()
@@ -1180,9 +1192,11 @@ export default function AdminPage() {
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
               <div className="px-4 py-3 border-b border-slate-100">
                 <p className="text-sm font-semibold text-slate-800">
-                  Comprobantes de MercadoPago <span className="text-slate-400 font-normal">({recibos.length})</span>
+                  Comprobantes de MercadoPago <span className="text-slate-400 font-normal">({totalRecibos})</span>
                 </p>
+                <div className="mt-2 flex items-center gap-3 text-xs"><button disabled={paginaRecibos <= 1} onClick={() => setPaginaRecibos(p => p - 1)}>Anterior</button><span>Página {paginaRecibos}</span><button disabled={paginaRecibos * 100 >= totalRecibos} onClick={() => setPaginaRecibos(p => p + 1)}>Siguiente</button></div>
               </div>
+              {resultadoSync && <p role="status" className="px-4 py-3 text-sm text-sky-800">{resultadoSync}</p>}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
@@ -1210,8 +1224,15 @@ export default function AdminPage() {
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                             r.origen === 'webhook' ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700'
                           }`}>
-                            {r.origen === 'webhook' ? 'Webhook' : 'Reconciliación'}
+                            {r.origen}
                           </span>
+                          <details className="mt-2 max-w-sm break-all text-xs"><summary className="cursor-pointer text-sky-700">Ver detalle del pago</summary>
+                            <p>Pago MP: {r.payment_id ?? 'Registro histórico sin ID de transacción'}</p>
+                            <p>Contrato MP: {r.suscripcion_id}</p>
+                            <p>Estado: {r.estado_pago} · Período: {r.periodo_meses} meses</p>
+                            <p>Inicio: {fmtDate(r.inicio)} · Fin de cobertura: {fmtDate(r.pro_until)}</p>
+                            <p>Reembolsado: {fmtMoney(r.reembolsado ?? 0)}</p>
+                          </details>
                         </td>
                       </tr>
                     ))}

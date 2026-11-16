@@ -7,6 +7,9 @@ type Suscripcion = {
   monto?: number;
   meses?: number;
   init_point?: string;
+  proximoCobro?: string | null;
+  creada?: string | null;
+  incidencia?: boolean;
 };
 type Datos = {
   suscripciones: Suscripcion[];
@@ -18,6 +21,11 @@ type Datos = {
     estado: string;
     aprobado: string;
     fin: string;
+    inicio: string;
+    meses: number;
+    suscripcion: string;
+    factura: string;
+    reembolsado?: number;
   }[];
 };
 const ignorar = () => {};
@@ -53,6 +61,39 @@ export default function SubscriptionManager({
   useEffect(() => {
     void Promise.resolve().then(cargar);
   }, [cargar]);
+  const sincronizar = async () => {
+    if (
+      !window.confirm(
+        "Sincronizará todos los pagos de este negocio. Si detecta un contrato histórico con importe trimestral y frecuencia mensual, cancelará esa renovación incorrecta y conservará el período pagado. No realiza cobros ni devoluciones. ¿Continuar?",
+      )
+    )
+      return;
+    setOcupado(true);
+    setError("");
+    setMensaje("");
+    try {
+      const res = await fetch(endpoint, { method: "POST" });
+      const r = await res.json();
+      await cargar();
+      const detalle = (r.detalleErrores ?? [])
+        .map(
+          (e: { suscripcion: string; error: string }) =>
+            `${e.suscripcion}: ${e.error}`,
+        )
+        .join(" · ");
+      if (!res.ok)
+        throw new Error(
+          `${r.error ?? "Sincronización incompleta."} ${detalle}`,
+        );
+      setMensaje(
+        `Sincronización completa: ${r.revisadas} contratos revisados, ${r.sincronizadas} cobros verificados, ${r.renovacionesDetenidas} contratos históricos con renovación incorrecta detenida.`,
+      );
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setOcupado(false);
+    }
+  };
   const cancelar = async (s: Suscripcion) => {
     if (
       !window.confirm(
@@ -114,7 +155,11 @@ export default function SubscriptionManager({
         </p>
       )}
       {datos?.suscripciones
-        .filter((s) => ["authorized", "paused", "pending"].includes(s.estado))
+        .filter(
+          (s) =>
+            requiereMotivo ||
+            ["authorized", "paused", "pending"].includes(s.estado),
+        )
         .map((s) => (
           <div
             key={s.id}
@@ -126,23 +171,53 @@ export default function SubscriptionManager({
                   ? "Renovación automática activa"
                   : s.estado === "paused"
                     ? "Suscripción pausada"
-                    : "Contratación pendiente"}
+                    : s.estado === "pending"
+                      ? "Contratación pendiente"
+                      : s.estado === "cancelled"
+                        ? "Renovación cancelada"
+                        : s.estado}
               </p>
               <p className="text-xs text-slate-500">
                 S/ {Number(s.monto).toFixed(2)} cada {s.meses}{" "}
                 {s.meses === 1 ? "mes" : "meses"}
               </p>
+              {requiereMotivo && (
+                <div className="mt-2 break-all text-xs text-slate-600">
+                  <p>Contrato MP: {s.id}</p>
+                  <p>
+                    Próximo cobro:{" "}
+                    {s.estado === "cancelled"
+                      ? "Sin renovación"
+                      : s.proximoCobro
+                        ? new Date(s.proximoCobro).toLocaleString("es-PE", {
+                            timeZone: "America/Lima",
+                          })
+                        : "Mercado Pago no informa fecha"}
+                  </p>
+                  {s.incidencia && (
+                    <p className="text-amber-800">
+                      Contrato histórico con importe trimestral y frecuencia
+                      mensual.{" "}
+                      {s.estado === "cancelled"
+                        ? "Renovación detenida."
+                        : "Sincroniza para detener la renovación incorrecta y recuperar la cobertura pagada."}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-            <button
-              type="button"
-              disabled={ocupado}
-              onClick={() => void cancelar(s)}
-              className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 disabled:opacity-50"
-            >
-              {s.estado === "pending"
-                ? "Cancelar contratación pendiente"
-                : "Cancelar renovación"}
-            </button>
+            {s.estado !== "cancelled" && (
+              <button
+                type="button"
+                disabled={ocupado}
+                onClick={() => void cancelar(s)}
+                className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 disabled:opacity-50"
+              >
+                {s.estado === "pending"
+                  ? "Cancelar contratación pendiente"
+                  : "Cancelar renovación"}
+              </button>
+            )}
           </div>
         ))}
       {datos?.hasta && (
@@ -185,10 +260,47 @@ export default function SubscriptionManager({
                     } as Record<string, string>
                   )[r.estado] ?? r.estado}
                 </span>
+                <details className="w-full break-all">
+                  <summary className="cursor-pointer text-sky-700">
+                    Ver detalle del pago
+                  </summary>
+                  <p>
+                    Pago MP: {r.id} · Factura: {r.factura}
+                  </p>
+                  <p>Contrato: {r.suscripcion}</p>
+                  <p>
+                    Período: {r.meses} meses · Desde{" "}
+                    {new Date(r.inicio).toLocaleString("es-PE", {
+                      timeZone: "America/Lima",
+                    })}{" "}
+                    hasta{" "}
+                    {new Date(r.fin).toLocaleString("es-PE", {
+                      timeZone: "America/Lima",
+                    })}
+                  </p>
+                  <p>
+                    Reembolsado: S/ {Number(r.reembolsado ?? 0).toFixed(2)}.{" "}
+                    {r.estado === "refunded" || r.estado === "charged_back"
+                      ? "Este pago no concede acceso."
+                      : "Cobertura sujeta al estado del pago."}
+                  </p>
+                </details>
               </li>
             ))}
           </ul>
         </details>
+      )}
+      {requiereMotivo && (
+        <button
+          type="button"
+          disabled={ocupado}
+          onClick={() => void sincronizar()}
+          className="mt-3 mr-4 rounded-lg bg-sky-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+        >
+          {ocupado
+            ? "Procesando…"
+            : "Sincronizar pagos y corregir contratos históricos"}
+        </button>
       )}
       <button
         type="button"
