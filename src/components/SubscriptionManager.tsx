@@ -38,6 +38,9 @@ export default function SubscriptionManager({
   endpoint?: string;
   requiereMotivo?: boolean;
 }) {
+  const [erroresSync, setErroresSync] = useState<
+    { suscripcion: string; error: string }[]
+  >([]);
   const [datos, setDatos] = useState<Datos | null>(null),
     [error, setError] = useState(""),
     [ocupado, setOcupado] = useState(false),
@@ -71,19 +74,16 @@ export default function SubscriptionManager({
     setOcupado(true);
     setError("");
     setMensaje("");
+    setErroresSync([]);
     try {
       const res = await fetch(endpoint, { method: "POST" });
       const r = await res.json();
       await cargar();
-      const detalle = (r.detalleErrores ?? [])
-        .map(
-          (e: { suscripcion: string; error: string }) =>
-            `${e.suscripcion}: ${e.error}`,
-        )
-        .join(" · ");
+      setErroresSync(r.detalleErrores ?? []);
       if (!res.ok)
         throw new Error(
-          `${r.error ?? "Sincronización incompleta."} ${detalle}`,
+          r.error ??
+            "Sincronización incompleta. Revisa los contratos pendientes de resolver.",
         );
       setMensaje(
         `Sincronización completa: ${r.revisadas} contratos revisados, ${r.sincronizadas} cobros verificados, ${r.renovacionesDetenidas} contratos históricos con renovación incorrecta detenida.`,
@@ -146,6 +146,19 @@ export default function SubscriptionManager({
         <p role="status" className="mt-2 text-emerald-700">
           {mensaje}
         </p>
+      )}
+      {erroresSync.length > 0 && (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <p className="font-semibold">Contratos pendientes de resolver</p>
+          <ul className="mt-2 space-y-2 text-xs">
+            {erroresSync.map((e) => (
+              <li key={e.suscripcion} className="break-all">
+                <p className="font-mono">{e.suscripcion}</p>
+                <p>{e.error}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {datos?.operacionPendiente && (
         <p className="mt-2 text-amber-700">

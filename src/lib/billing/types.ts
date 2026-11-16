@@ -77,6 +77,8 @@ export class ErrorBilling extends Error {
     message: string,
     public status = 503,
     public providerStatus?: number,
+    public providerOperation?: string,
+    public providerCode?: string,
   ) {
     super(message);
   }

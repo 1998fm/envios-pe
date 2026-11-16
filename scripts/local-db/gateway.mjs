@@ -50,21 +50,28 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
   const buckets = new Map([['logos', { id: 'logos', name: 'logos', public: true }], ['productos', { id: 'productos', name: 'productos', public: true }]])
   const files = new Map() // "bucket/path" -> { buffer, type }
 
-  const mpFixtures = { subscriptions: new Map(), invoices: new Map(), payments: new Map(), creates: 0, updates: 0, failCreate: 0, failReceipt: 0, failUpdate: 0 }
+  const mpFixtures = { subscriptions: new Map(), invoices: new Map(), payments: new Map(), creates: 0, updates: 0, failCreate: 0, failReceipt: 0, failUpdate: 0, searchLimit: 20, clampLimit: 0, omitTotal: false, failures: [], requests: [] }
   async function handleMP(req,res,url) {
     if(url.pathname==='/__dev/mp') {
       const claims=await verifyBearer(req)
       if(claims?.role!=='service_role')return fail(res,403,'forbidden','Not authorized')
-      if(req.method==='GET')return send(res,200,{ subscriptions:[...mpFixtures.subscriptions.values()],creates:mpFixtures.creates,updates:mpFixtures.updates })
+      if(req.method==='GET')return send(res,200,{ subscriptions:[...mpFixtures.subscriptions.values()],creates:mpFixtures.creates,updates:mpFixtures.updates,requests:mpFixtures.requests })
       const b=await readJson(req)
       for(const type of ['subscriptions','invoices','payments'])for(const x of b[type]??[])mpFixtures[type].set(String(x.id),x)
       if(b.failCreate!==undefined)mpFixtures.failCreate=b.failCreate
       if(b.failReceipt!==undefined)mpFixtures.failReceipt=b.failReceipt
       if(b.failUpdate!==undefined)mpFixtures.failUpdate=b.failUpdate
+      if(b.searchLimit!==undefined)mpFixtures.searchLimit=b.searchLimit
+      if(b.clampLimit!==undefined)mpFixtures.clampLimit=b.clampLimit
+      if(b.omitTotal!==undefined)mpFixtures.omitTotal=b.omitTotal
+      if(b.failures!==undefined)mpFixtures.failures=b.failures
       return send(res,200,{ok:true})
     }
     if(req.headers.authorization!=='Bearer local-mp-token')return fail(res,401,'unauthorized','Invalid MP token')
     const route=url.pathname.replace('/mp-api','')
+    mpFixtures.requests.push({route,method:req.method,limit:url.searchParams.get('limit'),offset:url.searchParams.get('offset')})
+    const failure=mpFixtures.failures.find(f=>f.remaining>0&&f.route===route&&(!f.method||f.method===req.method))
+    if(failure){failure.remaining--;return send(res,failure.status,{error:failure.code??'mp_failure',message:failure.message??'Test failure'})}
     if(route==='/preapproval'&&req.method==='POST'){
       if(mpFixtures.failCreate){const code=mpFixtures.failCreate;mpFixtures.failCreate=0;return fail(res,code,'mp_failure','Test failure')}
       const b=await readJson(req);const id=crypto.randomUUID().replaceAll('-','')
@@ -75,8 +82,10 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
       let items=[...(route.startsWith('/preapproval')?mpFixtures.subscriptions:mpFixtures.invoices).values()]
       for(const f of ['external_reference','preapproval_id'])if(url.searchParams.has(f))items=items.filter(v=>String(v[f])===url.searchParams.get(f))
       if(url.searchParams.has('payment_id'))items=items.filter(v=>String(v.payment?.id)===url.searchParams.get('payment_id'))
-      const offset=Number(url.searchParams.get('offset')||0),limit=Number(url.searchParams.get('limit')||100)
-      return send(res,200,{paging:{total:items.length},results:items.slice(offset,offset+limit)})
+      const offset=Number(url.searchParams.get('offset')||0),requested=Number(url.searchParams.get('limit')||20)
+      if(requested>mpFixtures.searchLimit)return send(res,400,{error:'invalid_limit',message:'limit exceeds supported page size'})
+      const limit=mpFixtures.clampLimit?Math.min(requested,mpFixtures.clampLimit):requested
+      return send(res,200,{paging:{offset,limit,...(mpFixtures.omitTotal?{}:{total:items.length})},results:items.slice(offset,offset+limit)})
     }
     const match=route.match(/^\/(preapproval|authorized_payments|v1\/payments)\/([\w-]+)$/)
     if(match){const table=match[1]==='preapproval'?'subscriptions':match[1]==='authorized_payments'?'invoices':'payments';const value=mpFixtures[table].get(match[2]);if(!value)return fail(res,404,'not_found','Resource not found');if(req.method==='PUT'){if(mpFixtures.failUpdate){const code=mpFixtures.failUpdate;mpFixtures.failUpdate=0;return fail(res,code,'mp_failure','Test failure')}Object.assign(value,await readJson(req));mpFixtures.updates++}return send(res,200,value)}

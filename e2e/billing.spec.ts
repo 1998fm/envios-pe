@@ -740,3 +740,121 @@ test("dos cargos trimestrales históricos retenidos cubren seis meses; una devol
   ).toBe("2027-01-15T12:00:00.000Z");
   expect(await dbSelect("pagos", `user_id=eq.${c.user.id}`)).toHaveLength(2);
 });
+
+test("sincronización diagnostica operación y HTTP sin revelar el cuerpo privado; reintenta solo lecturas transitorias", async ({
+  page,
+}) => {
+  const c = await caso();
+  const route = "/authorized_payments/search";
+  await fixtures({
+    failures: [{ route, remaining: 1, status: 429, code: "too_many_requests" }],
+  });
+  expect((await webhook("subscription_preapproval", c.sub.id)).status()).toBe(
+    200,
+  );
+  expect(await dbSelect("pagos", `user_id=eq.${c.user.id}`)).toHaveLength(1);
+  const admin = await createUser();
+  const svc = await supabase("service");
+  await svc.patch(`/rest/v1/profiles?id=eq.${admin.id}`, {
+    data: { role: "super_admin" },
+  });
+  const api = await appApi(null);
+  await api.post("/api/auth/login", {
+    data: { email: admin.email, password: admin.password },
+  });
+  await fixtures({
+    failures: [
+      {
+        route,
+        remaining: 2,
+        status: 403,
+        code: "forbidden",
+        message: "PRIVATE_PROVIDER_BODY_with_email_and_token",
+      },
+    ],
+  });
+  const result = await api.post(`/api/admin/empresas/${c.user.id}/suscripcion`);
+  expect(result.status()).toBe(503);
+  const body = await result.json();
+  expect(body.detalleErrores[0].http).toBe(403);
+  expect(body.detalleErrores[0].operacion).toBe("Buscar facturas");
+  expect(body.detalleErrores[0].error).toContain("HTTP 403");
+  expect(JSON.stringify(body)).not.toContain("PRIVATE_PROVIDER_BODY");
+  const requests = (await (await svc.get("/__dev/mp")).json()).requests;
+  expect(
+    requests
+      .filter((r: { route: string }) => r.route === route)
+      .every((r: { limit: string }) => Number(r.limit) <= 20),
+  ).toBe(true);
+  await page.context().addCookies((await api.storageState()).cookies);
+  await page.goto("/admin");
+  await page.getByPlaceholder("Nombre, correo o enlace").fill(c.user.email);
+  await page.getByRole("button").filter({ hasText: c.user.email }).click();
+  await page.getByRole("button", { name: "Acceso Plus", exact: true }).click();
+  page.once("dialog", (d) => d.accept());
+  await page
+    .getByRole("button", {
+      name: "Sincronizar pagos y corregir contratos históricos",
+    })
+    .click();
+  await expect(
+    page.getByText("Contratos pendientes de resolver", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(/Buscar facturas:.*HTTP 403/)).toBeVisible();
+  await expect(
+    page.getByText("PRIVATE_PROVIDER_BODY_with_email_and_token", {
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await fixtures({ failures: [] });
+  page.once("dialog", (d) => d.accept());
+  await page
+    .getByRole("button", {
+      name: "Sincronizar pagos y corregir contratos históricos",
+    })
+    .click();
+  await expect(page.getByRole("status")).toContainText(
+    "Sincronización completa",
+  );
+  await expect(
+    page.getByText("Contratos pendientes de resolver", { exact: true }),
+  ).toHaveCount(0);
+  await fixtures({
+    failures: [
+      {
+        route: "/preapproval/search",
+        remaining: 1,
+        status: 400,
+        code: "invalid_limit",
+      },
+    ],
+  });
+  const global = await api.post("/api/admin/facturacion/sync");
+  expect(global.status()).toBe(503);
+  expect((await global.json()).error).toContain("Buscar contratos:");
+  await fixtures({ failures: [] });
+  await api.dispose();
+  await svc.dispose();
+});
+
+test("la paginación respeta páginas reducidas por Mercado Pago aunque no informe total", async () => {
+  const c = await caso();
+  const facturas = Array.from({ length: 13 }, (_, i) => ({
+    ...c.invoice,
+    id: `${c.invoice.id}-${i}`,
+    payment: undefined,
+  }));
+  await fixtures({ invoices: facturas, clampLimit: 5, omitTotal: true });
+  expect((await webhook("subscription_preapproval", c.sub.id)).status()).toBe(
+    200,
+  );
+  const svc = await supabase("service");
+  const requests = (await (await svc.get("/__dev/mp")).json()).requests.filter(
+    (r: { route: string }) => r.route === "/authorized_payments/search",
+  );
+  expect(
+    requests.some((r: { offset: string }) => Number(r.offset) === 10),
+  ).toBe(true);
+  await fixtures({ clampLimit: 0, omitTotal: false });
+  await svc.dispose();
+});

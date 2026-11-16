@@ -274,6 +274,7 @@ export default function AdminPage() {
   const [paginaRecibos, setPaginaRecibos] = useState(1)
   const [totalRecibos, setTotalRecibos] = useState(0)
   const [resultadoSync, setResultadoSync] = useState('')
+  const [erroresSync, setErroresSync] = useState<{ suscripcion: string; error: string }[]>([])
   const [recibos, setRecibos] = useState<Recibo[]>([])
   const [sincronizandoPagos, setSincronizandoPagos] = useState(false)
   const [alertas, setAlertas] = useState<Alerta[]>([])
@@ -427,14 +428,16 @@ export default function AdminPage() {
   const sincronizarPagos = async () => {
     if (!window.confirm('Revisará todos los contratos y pagos. Cancelará las renovaciones mensuales históricas con importe trimestral y recuperará su cobertura pagada. No cobra ni devuelve dinero. ¿Continuar?')) return
     setResultadoSync('')
+    setErroresSync([])
     setSincronizandoPagos(true)
     setError('')
     try {
       const res = await fetch('/api/admin/facturacion/sync', { method: 'POST' })
       const data = await res.json()
       await cargarFacturacion()
+      setErroresSync(data.detalleErrores ?? [])
       setResultadoSync(`${data.revisadas ?? 0} contratos revisados · ${data.sincronizadas ?? 0} cobros verificados · ${data.renovacionesDetenidas ?? 0} contratos históricos con renovación incorrecta detenida.`)
-      if (!res.ok) throw new Error(`${data.error ?? 'Sincronización incompleta'} ${(data.detalleErrores ?? []).map((e: {suscripcion: string; error: string}) => `${e.suscripcion}: ${e.error}`).join(' · ')}`)
+      if (!res.ok) throw new Error(data.error ?? 'Sincronización incompleta. Revisa los contratos pendientes de resolver.')
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -1197,6 +1200,7 @@ export default function AdminPage() {
                 <div className="mt-2 flex items-center gap-3 text-xs"><button disabled={paginaRecibos <= 1} onClick={() => setPaginaRecibos(p => p - 1)}>Anterior</button><span>Página {paginaRecibos}</span><button disabled={paginaRecibos * 100 >= totalRecibos} onClick={() => setPaginaRecibos(p => p + 1)}>Siguiente</button></div>
               </div>
               {resultadoSync && <p role="status" className="px-4 py-3 text-sm text-sky-800">{resultadoSync}</p>}
+              {erroresSync.length > 0 && <div className="m-4 rounded-xl border border-amber-200 bg-amber-50 p-4"><h4 className="font-semibold text-amber-900">Contratos pendientes de resolver ({erroresSync.length})</h4><ul className="mt-2 max-h-72 space-y-3 overflow-y-auto text-xs text-amber-950">{erroresSync.map(e => <li key={e.suscripcion} className="break-all"><p className="font-mono">{e.suscripcion}</p><p>{e.error}</p></li>)}</ul><p className="mt-2 text-xs text-amber-900">Estos errores no confirman la cancelación ni la recuperación del acceso. Los pagos ya registrados no se duplican al reintentar.</p></div>}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">

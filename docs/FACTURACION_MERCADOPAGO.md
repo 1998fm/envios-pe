@@ -53,3 +53,10 @@ Los pagos de esos contratos se validan con los mismos controles de factura/pagad
 En Superadmin → Centro de soporte → negocio → Acceso Plus, «Sincronizar pagos y corregir contratos históricos» ejecuta la corrección de esa cuenta. Muestra también contratos cancelados, ID del contrato y próxima fecha de cobro (nula si cancelado). El historial contiene una fila por transacción, estado, devolución y cobertura. La sincronización global está en Pagos y suscripciones; incluye resultados parciales y los IDs con errores. Los comprobantes generales tienen paginación de 100 filas y no silencian errores de base de datos como si fueran historiales vacíos.
 
 El cron diario ejecuta la misma reparación. Publicar el código no certifica que una cuenta real ya haya sido conciliada: comprobar el resultado de la sincronización y el estado cancelado. Para volver a renovar después, el cliente debe autorizar una nueva contratación correcta; no se reactiva ni se cobra automáticamente.
+
+
+### Diagnóstico de sincronizaciones parciales
+
+Las lecturas a Mercado Pago usan páginas de 20 resultados, respetan el tamaño efectivo informado por `paging.limit` y avanzan hasta agotar todas las páginas. No se considera que un HTTP404 sea una lista de facturas vacía. Las consultas GET reintentan una vez ante red/timeout, HTTP429 o HTTP5xx, con espera limitada; POST y PUT nunca se reenvían automáticamente.
+
+Los errores identifican la operación (buscar contratos/facturas, consultar pago o actualizar contrato), HTTP y código del proveedor cuando es válido. El panel presenta los contratos fallidos por separado. Los cuerpos de error del proveedor no se publican ni registran, porque pueden contener datos privados; los logs `[mp-api]` solo incluyen operación, HTTP y código. Un HTTP401/403 exige comprobar autorización/configuración de la cuenta; no se soluciona omitiendo validaciones o acreditando pagos sin verificar. Publicar estos ajustes no demuestra que el incidente real haya desaparecido: se debe volver a sincronizar y comprobar el resultado real.
