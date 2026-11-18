@@ -1,44 +1,15 @@
-import { cookies } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { supabaseAnonKey, supabaseUrl } from '@/lib/supabaseEnv'
+import { getSessionUser } from '@/lib/ownerAuth'
 
 // Resultado de la autenticación de super admin.
 export type AdminAuthResult =
   | { ok: true; userId: string; email: string | null }
   | { ok: false; status: number; error: string }
 
-// Lee el usuario autenticado desde las cookies (sesión del navegador).
-async function getSessionUser(): Promise<{
-  id: string
-  email?: string | null
-} | null> {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    supabaseUrl(),
-    supabaseAnonKey(),
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll() {
-          // Solo lectura de sesión en API routes; no se modifican cookies.
-        },
-      },
-    }
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user ? { id: user.id, email: user.email } : null
-}
-
 // Valida que la petición provenga de un usuario super_admin activo.
 // Devuelve { ok: true, userId, email } si es admin; si no, la respuesta de error.
 export async function requireSuperAdmin(): Promise<AdminAuthResult> {
-  const user = await getSessionUser()
+  const user = await getSessionUser({ usarBearer: false, verificarUsuario: true })
   if (!user) {
     return { ok: false, status: 401, error: 'No autenticado' }
   }

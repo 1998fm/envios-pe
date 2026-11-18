@@ -1,5 +1,4 @@
 'use client'
-import { leerConRevision, type ControlLectura } from '@/lib/lecturaCondicionalCliente'
 
 import PrecioInput from '@/components/PrecioInput'
 
@@ -20,7 +19,6 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { usePolling } from '@/hooks/usePolling'
 import type { Producto } from '@/types/inventario'
 import EscannerVentas from '@/components/EscannerVentas'
 import TutorialSeccion from '@/components/TutorialSeccion'
@@ -83,10 +81,10 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
   /* Carga de datos                                                      */
   /* ------------------------------------------------------------------ */
 
-  const controlProductos = useRef<ControlLectura['current']>(null)
-  function cargarProductos(comprobar = false) {
-    return leerConRevision(`/api/productos?user_id=${userId}&limit=1000&selector=venta`, controlProductos, comprobar)
-      .then(({ res, json }) => { if (res.ok && !json.sinCambios) setProductos(json.data || []) })
+  function cargarProductos() {
+    return fetch(`/api/productos?user_id=${userId}&limit=1000&selector=venta`)
+      .then(r => r.json())
+      .then(j => setProductos(j.data || []))
       .catch(() => {})
   }
 
@@ -94,10 +92,8 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
     if (abierto) cargarProductos()
   }, [abierto, userId])
 
-  // Mientras el modal está abierto, el stock puede cambiar desde otra pestaña
-  // (una compra, otra venta, un ajuste). Sin esto, lo que se ve puede ya no
-  // ser lo que hay y el POST falla por 409. Se refresca cada pocos segundos.
-  usePolling(() => cargarProductos(true), 30_000, Boolean(abierto && userId))
+  // Se carga al abrir y tras un conflicto de stock; guardar vuelve a validar
+  // existencias en el servidor. No se descarga periódicamente el catálogo.
 
   useEffect(() => {
     if (abierto && trayectoDone() && !tourDone('modal-nueva-venta')) {

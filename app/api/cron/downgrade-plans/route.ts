@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cronAutorizado } from '@/lib/cronAuth'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { computeEffectivePlan } from '@/lib/planGating'
+import { medirConsumo } from '@/lib/consumoServidor'
 import { sincronizarPagosMP } from '@/lib/facturacion'
 
 export const maxDuration = 300
@@ -16,6 +17,9 @@ export async function GET(request: Request) {
   if (!cronAutorizado(request)) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
+
+  // Comparaciones diarias sin añadir un cron de pago ni consultar continuamente.
+  const medicion = medirConsumo().then(() => true, () => false)
 
   let pagos = { revisadas: 0, sincronizadas: 0, errores: 0 }
   let falloPagos = false
@@ -46,5 +50,6 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: !falloPagos && pagos.errores === 0, revisados, degradados, pagos }, { status: falloPagos || pagos.errores ? 503 : 200 })
+  const monitor = await medicion
+  return NextResponse.json({ ok: !falloPagos && pagos.errores === 0, revisados, degradados, pagos, monitor }, { status: falloPagos || pagos.errores ? 503 : 200 })
 }

@@ -175,7 +175,7 @@ export async function POST(req: Request) {
     if (idempotencyKey) {
       const { data: porLlave, error: errLlave } = await supabaseAdmin
         .from('envios')
-        .select('*')
+        .select('id,fecha_programada')
         .eq('idempotency_key', idempotencyKey)
         .maybeSingle()
       if (!errLlave && porLlave) {
@@ -190,7 +190,7 @@ export async function POST(req: Request) {
     const { data: perfil, error: perfilError } =
       await supabaseAdmin
         .from('profiles')
-        .select('*')
+        .select('id,plan,trial_end,pro_until,logistica_moto_dias,logistica_moto_usa_hora_corte,logistica_moto_hora_corte,logistica_moto_anticipacion,logistica_moto_anticipacion_solo_habiles,logistica_moto_limitar,logistica_moto_cupo,logistica_agencias_dias,logistica_agencias_usa_hora_corte,logistica_agencias_hora_corte,logistica_agencias_anticipacion,logistica_agencias_anticipacion_solo_habiles,logistica_agencias_limitar,logistica_agencias_cupo,moto_region')
         .eq('id', user_id)
         .single()
 
@@ -229,7 +229,7 @@ export async function POST(req: Request) {
     const hace30s = new Date(Date.now() - 30 * 1000).toISOString()
     const { data: duplicado } = await supabaseAdmin
       .from('envios')
-      .select('*')
+      .select('id,fecha_programada')
       .eq('user_id', user_id)
       .eq('dni', dni ?? null)
       .eq('telefono', telefono ?? null)
@@ -253,7 +253,7 @@ export async function POST(req: Request) {
     const hace10min = new Date(Date.now() - 10 * 60 * 1000).toISOString()
     const { data: duplicadoReciente } = await supabaseAdmin
       .from('envios')
-      .select('*')
+      .select('id,fecha_programada')
       .eq('user_id', user_id)
       .eq('nombre', nombre ?? '')
       .eq('dni', dni ?? '')
@@ -281,7 +281,7 @@ export async function POST(req: Request) {
     // duplicados y todas las ventas siguen acumulándose en ese mismo envío.
     const { data: abiertoExistente } = await supabaseAdmin
       .from('envios')
-      .select('*')
+      .select('id,fecha_programada,dni,telefono')
       .eq('user_id', user_id)
       .in('estado', ['NO_EMPACADO', 'EN_OBSERVACION'])
       .order('fecha_registro', { ascending: false })
@@ -431,7 +431,7 @@ export async function POST(req: Request) {
     if (error && idempotencyKey && error.code === '23505') {
       const { data: porLlave } = await supabaseAdmin
         .from('envios')
-        .select('*')
+        .select('id,fecha_programada')
         .eq('idempotency_key', idempotencyKey)
         .maybeSingle()
       if (porLlave) {

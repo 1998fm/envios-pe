@@ -55,24 +55,9 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const busqueda = (searchParams.get('busqueda') || '').trim().toLowerCase()
 
-  const [{ data: vinculos }, { data: ventas }, { data: envios }] = await Promise.all([
-    supabaseAdmin
-      .from('cliente_de')
-      .select('personas(*)')
-      .eq('profile_id', userId),
-    supabaseAdmin
-      .from('ventas')
-      .select('persona_id, total, estado, created_at')
-      .eq('profile_id', userId),
-    supabaseAdmin
-      .from('envios')
-      .select('id, dni, telefono, fecha_registro')
-      .eq('user_id', userId),
-  ])
-
-  const personas = (vinculos ?? [])
-    .map((v: any) => v.personas)
-    .filter(Boolean)
+  const { data: agrupados, error } = await supabaseAdmin.rpc('tori_datos_clientes', { p_owner: userId })
+  if (error) return NextResponse.json({ error: 'No se pudo calcular la lista de clientes.' }, { status: 503 })
+  const { personas, ventas, envios } = agrupados
 
   const grupos = agruparPersonas(personas)
 
@@ -97,17 +82,14 @@ export async function GET(request: Request) {
     const dniPreferido = miembros.find((p) => norm(p.dni))?.dni || null
     const telPreferido = miembros.find((p) => norm(p.telefono))?.telefono || null
 
-    const idsEnvios = new Set<string>()
-    for (const e of envios ?? []) {
-      const coincide =
-        (dniPreferido && norm(e.dni) === norm(dniPreferido)) ||
-        (telPreferido && norm(e.telefono) === norm(telPreferido))
-      if (coincide) idsEnvios.add(e.id)
-    }
-
+    const misEnvios = (envios ?? []).filter((e: { dni?: string; telefono?: string }) =>
+      (dniPreferido && norm(e.dni) === norm(dniPreferido)) ||
+      (telPreferido && norm(e.telefono) === norm(telPreferido))
+    )
+    const cantidadEnvios = misEnvios.reduce((s: number, e: { cantidad: number }) => s + Number(e.cantidad), 0)
     const fechas = [
-      ...misVentas.map((v: any) => v.created_at),
-      ...(envios ?? []).filter((e: any) => idsEnvios.has(e.id)).map((e: any) => e.fecha_registro),
+      ...misVentas.map((v: { created_at: string }) => v.created_at),
+      ...misEnvios.map((e: { fecha_registro: string }) => e.fecha_registro),
     ]
     const ultima = fechas.length ? fechas.reduce((a: string, b: string) => (a > b ? a : b)) : null
 
@@ -139,9 +121,9 @@ export async function GET(request: Request) {
       nombre: (principal.nombre || '').trim(),
       dni: dniPreferido ? dniPreferido.trim() : null,
       telefono: telPreferido ? telPreferido.trim() : null,
-      ventas: misVentas.length,
+      ventas: misVentas.reduce((s: number, v: { cantidad: number }) => s + Number(v.cantidad), 0),
       totalVentas,
-      envios: idsEnvios.size,
+      envios: cantidadEnvios,
       ultimaActividad: ultima,
       created_at: principal.created_at,
     })

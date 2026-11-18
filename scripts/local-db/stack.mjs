@@ -80,6 +80,8 @@ export const SCHEMA_ORDER = [
   'productos-familias.sql',
   'eliminar-producto-familia.sql',
   'rpc-lecturas-eficientes.sql',
+  'supabase-usage-snapshots.sql',
+  'rpc-resumenes-compactos.sql',
 ]
 
 /** Puerto libre elegido por el sistema (evita choques con restos de ejecuciones anteriores). */

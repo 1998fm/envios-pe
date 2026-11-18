@@ -15,7 +15,7 @@ export type OwnerAuthResult =
   | { ok: true; userId: string; email: string | null }
   | { ok: false; status: number; error: string }
 
-export async function getSessionUser(): Promise<{ id: string; email?: string | null } | null> {
+export async function getSessionUser(opciones: { usarBearer?: boolean; verificarUsuario?: boolean } = {}): Promise<{ id: string; email?: string | null } | null> {
   const cookieStore = await cookies()
   const headerStore = await headers()
 
@@ -46,22 +46,25 @@ export async function getSessionUser(): Promise<{ id: string; email?: string | n
   // Token en el header Authorization (clientes externos / pruebas). El
   // navegador normal manda la sesión por cookie.
   const authHeader = headerStore.get('authorization')
-  const token = authHeader?.toLowerCase().startsWith('bearer ')
+  const token = opciones.usarBearer !== false && authHeader?.toLowerCase().startsWith('bearer ')
     ? authHeader.slice(7).trim()
     : null
 
   // Verificar el JWT en local (getClaims usa las claves públicas y su cache,
   // sin viajar al servidor de auth). Es lo que hace que cada llamada a la API
   // no pague un viaje extra de ~150 ms solo por saber quién pregunta.
-  try {
-    const { data, error } = token
-      ? await supabase.auth.getClaims(token)
-      : await supabase.auth.getClaims()
-    if (!error && data?.claims?.sub) {
-      return { id: data.claims.sub, email: (data.claims.email as string) ?? null }
+  // El superadmin conserva la verificación online de identidad de Auth.
+  if (!opciones.verificarUsuario) {
+    try {
+      const { data, error } = token
+        ? await supabase.auth.getClaims(token)
+        : await supabase.auth.getClaims()
+      if (!error && data?.claims?.sub) {
+        return { id: data.claims.sub, email: (data.claims.email as string) ?? null }
+      }
+    } catch {
+      // se cae al getUser() de abajo
     }
-  } catch {
-    // se cae al getUser() de abajo
   }
 
   // Fallback: el servidor de auth (más lento, pero refresca el token si venció).

@@ -35,10 +35,11 @@ test.describe('Dashboard: cada pestaña muestra los datos del negocio', () => {
     const { u } = await negocioConDatos()
     await abrirDashboard(page, u)
     await expect(page.getByText('¡Hola, Explora SAC!')).toBeVisible()
-    await expect(page.getByText('Business Plus · Trial 30d')).toBeVisible()
-    await expect(page.getByText('SALDO DISPONIBLE')).toBeVisible()
+    await expect(page.getByText('Plus · Trial 14d')).toBeVisible()
+    await expect(page.getByText('Saldo disponible', { exact: true })).toBeVisible()
     await expect(page.getByText('S/ 89.00').first()).toBeVisible()
-    await expect(page.getByText('PEDIDOS SIN EMPACAR')).toBeVisible()
+    await expect(page.getByText('S/ 69.00', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('pedidos sin empacar', { exact: true })).toBeVisible()
   })
 
   const pestanas: [string, RegExp[]][] = [
@@ -132,10 +133,12 @@ test.describe('Dashboard: la pantalla no se rompe', () => {
     expect(errores).toEqual([])
   })
 
-  test('un usuario Básico ve su plan y el límite en el panel', async ({ page }) => {
+  test('un usuario Básico ve su plan y solicitudes ilimitadas en Envíos', async ({ page }) => {
     const u = await createUser({ plan: 'basic', empresa: 'Basico SAC' })
     await abrirDashboard(page, u)
-    await expect(page.getByText('¡Hola, Basico SAC!')).toBeVisible()
+    await expect(page.getByPlaceholder('Buscar por nombre, DNI o teléfono...')).toBeVisible()
+    await expect(page.getByText('Básico · solicitudes ilimitadas y gestión individual.', {exact: false})).toBeVisible()
+    await expect(page.getByRole('button', {name: 'Compartir formulario', exact: true})).toBeVisible()
     await expect(page.getByText(/Básico|Basic/i).first()).toBeVisible()
   })
 })

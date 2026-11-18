@@ -38,5 +38,6 @@ test('Resumen: facturado, ganancia, día de hoy y pendientes de envío', async (
 test('Roles y permisos aparece en el menú del dueño durante la prueba de Business Plus', async ({ page }) => {
   const u = await createUser({ plan: 'business_plus', trial: true })
   await abrirDashboard(page, u)
+  await page.getByTitle('Abrir menú', { exact: true }).hover()
   await expect(page.getByRole('button', { name: /Roles y permisos/ })).toBeVisible({ timeout: 15_000 })
 })

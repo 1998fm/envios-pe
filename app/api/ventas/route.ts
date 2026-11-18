@@ -192,7 +192,7 @@ export async function GET(request: Request) {
     const resumen = conResumen ? calcularResumenVentas(ordenadas as never[], total) : undefined
     const ids = ordenadas.slice(offset, offset + limit).map((v) => String(v.id))
     const { data: detalles, error: errorDetalles } = ids.length
-      ? await supabaseAdmin.from('ventas').select('*,items:venta_items(*)').eq('profile_id',userId).in('id',ids)
+      ? await supabaseAdmin.from('ventas').select('id,profile_id,codigo,persona_id,persona_nombre,persona_dni,persona_telefono,total,monto_pagado,estado,metodo_pago,estado_envio,envio_id,created_at,updated_at,items:venta_items(id,venta_id,producto_id,producto_nombre,cantidad,precio_unitario,costo_unitario,subtotal)').eq('profile_id',userId).in('id',ids)
       : { data: [], error: null }
     if (errorDetalles) return NextResponse.json({ error: mensajeDb(errorDetalles) }, { status: 500 })
     const porId = new Map((detalles || []).map((v) => [v.id,v]))
@@ -214,7 +214,7 @@ export async function GET(request: Request) {
 
   let query = supabaseAdmin
     .from('ventas')
-    .select('*, items:venta_items(*)', { count: 'exact' })
+    .select('id,profile_id,codigo,persona_id,persona_nombre,persona_dni,persona_telefono,total,monto_pagado,estado,metodo_pago,estado_envio,envio_id,created_at,updated_at,items:venta_items(id,venta_id,producto_id,producto_nombre,cantidad,precio_unitario,costo_unitario,subtotal)', { count: 'exact' })
     .eq('profile_id', userId)
   if (estado) query = query.eq('estado', estado)
 

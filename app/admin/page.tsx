@@ -34,9 +34,11 @@ import {
 import AdminSupportCenter from '@/components/admin/AdminSupportCenter'
 import CompanyDetailModal from '@/components/admin/CompanyDetailModal'
 
+const AdminConsumo = dynamic(() => import('@/components/admin/AdminConsumo'))
+
 const AdminLandingEditor = dynamic(() => import('@/components/admin/AdminLandingEditor'))
 
-type Tab = 'landing' | 'soporte' | 'resumen' | 'empresas' | 'planes' | 'shalom' | 'olva' | 'auditoria' | 'actividad' | 'facturacion' | 'admins'
+type Tab = 'consumo' | 'landing' | 'soporte' | 'resumen' | 'empresas' | 'planes' | 'shalom' | 'olva' | 'auditoria' | 'actividad' | 'facturacion' | 'admins'
 
 const PLANES = ['basic', 'business_plus']
 const PLAN_LABEL: Record<string, string> = {
@@ -230,6 +232,7 @@ const tabsList: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: 'resumen', label: 'Resumen', icon: <LayoutDashboard size={16} /> },
   { key: 'empresas', label: 'Empresas', icon: <Building2 size={16} /> },
   { key: 'facturacion', label: 'Facturación', icon: <Receipt size={16} /> },
+  { key: 'consumo', label: 'Consumo Supabase', icon: <Activity size={16} /> },
   { key: 'actividad', label: 'Actividad (7 días)', icon: <Activity size={16} /> },
   { key: 'planes', label: 'Planes', icon: <CreditCard size={16} /> },
   { key: 'shalom', label: 'Agencias Shalom', icon: <Truck size={16} /> },
@@ -241,6 +244,7 @@ const tabsList: { key: Tab; label: string; icon: React.ReactNode }[] = [
 export default function AdminPage() {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('soporte')
+  const [consumoRevision, setConsumoRevision] = useState(0)
   const [landingDirty, setLandingDirty] = useState(false)
   const cambiarTab = (next: Tab) => {
     if (tab === 'landing' && next !== tab && landingDirty && !window.confirm('¿Salir del editor sin guardar los cambios?')) return
@@ -471,6 +475,7 @@ export default function AdminPage() {
   }, [sesion, tab, paginaE, paginaA, filtroEstado, paginaRecibos])
 
   const refetchCurrent = () => {
+    if (tab === 'consumo') setConsumoRevision((v) => v + 1)
     if (tab === 'resumen' || tab === 'soporte') cargarOverview()
     if (tab === 'empresas') cargarEmpresas()
     if (tab === 'planes') cargarPlanes()
@@ -718,6 +723,7 @@ export default function AdminPage() {
       )}
 
       <div className="p-4 sm:p-6">
+        {tab === 'consumo' && <AdminConsumo refreshRevision={consumoRevision} />}
         {tab === 'landing' && <AdminLandingEditor onDirtyChange={setLandingDirty} />}
         {tab === 'soporte' && <AdminSupportCenter summary={overview} onNavigate={setTab} onRefresh={() => cargarOverview()} />}
         {/* ============ RESUEN ============ */}
