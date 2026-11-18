@@ -1,5 +1,7 @@
 'use client'
 
+import { leerConRevision, type ControlLectura } from '@/lib/lecturaCondicionalCliente'
+
 import { DISTRITO_SIN_COBERTURA, distritosConCobertura } from '@/lib/coberturaMoto'
 
 import { useEffect, useRef, useState } from 'react'
@@ -594,7 +596,8 @@ setLoading(false)
     }
   }, [])
 
-  async function fetchEnviosPage(offset: number, limite = 50): Promise<{ data: Envio[]; hasMore: boolean }> {
+  const controlEnvios = useRef<ControlLectura['current']>(null)
+  async function fetchEnviosPage(offset: number, limite = 50, comprobar = false): Promise<{ data: Envio[]; hasMore: boolean; sinCambios?: boolean }> {
     if (!userId) return { data: [], hasMore: false }
     ultimoFetchEnviosRef.current = Date.now()
     const params = new URLSearchParams({
@@ -607,8 +610,8 @@ setLoading(false)
       fecha_desde: fechaDesde,
       fecha_hasta: fechaHasta,
     })
-    const res = await fetch(`/api/envios?${params}`)
-    const json = await res.json()
+    const { res, json } = await leerConRevision(`/api/envios?${params}`, controlEnvios, comprobar)
+    if (res.ok && json.sinCambios) return { data: [], hasMore: false, sinCambios: true }
     if (!res.ok) return { data: [], hasMore: false }
     return { data: json.data || [], hasMore: json.hasMore === true }
   }
@@ -643,8 +646,7 @@ setLoading(false)
   useEffect(() => {
     enviosRef.current = envios
   })
-  const firmaEnvios = (lista: Envio[]) =>
-    lista.map((e) => `${e.id}|${e.estado}|${e.tamano ?? ''}|${e.fecha_programada ?? ''}|${e.observaciones ?? ''}`).join(';')
+
 
   usePolling(() => {
     // Evita dobles recargas cuando la acción la hizo el mismo usuario en esta
@@ -652,8 +654,8 @@ setLoading(false)
     if (Date.now() - ultimoFetchEnviosRef.current < 1500) return
     const cargados = enviosRef.current.length
     // Se piden tantos como ya hay en pantalla para no perder las páginas cargadas.
-    fetchEnviosRef.current(0, Math.min(200, Math.max(50, cargados))).then((result) => {
-      if (firmaEnvios(result.data) === firmaEnvios(enviosRef.current)) return
+    return fetchEnviosRef.current(0, Math.min(200, Math.max(50, cargados)), true).then((result) => {
+      if (result.sinCambios) return
       setEnvios(result.data)
       setHasMore(result.hasMore)
     })

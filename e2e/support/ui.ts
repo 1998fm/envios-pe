@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import type { TestUser } from './stack'
+import { randomIp } from './stack'
 
 /** Marca como vistos los tours guiados para que no tapen la pantalla. */
 export async function sinTours(page: Page) {
@@ -13,6 +14,9 @@ export async function sinTours(page: Page) {
 
 /** Inicia sesión por la pantalla de login y abre una pestaña del dashboard. */
 export async function abrirDashboard(page: Page, user: Pick<TestUser, 'email' | 'password'>, vista = 'resumen') {
+  // Cada recorrido usa su IP de prueba: repetir suites no debe consumir el
+  // límite de login de otros casos. La protección de producción no cambia.
+  await page.setExtraHTTPHeaders({ 'x-forwarded-for': randomIp() })
   await sinTours(page)
   await page.goto('/login')
   await page.getByPlaceholder('correo@ejemplo.com').fill(user.email)

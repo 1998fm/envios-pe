@@ -33,7 +33,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
   }
 
-  return NextResponse.json({ data, total: count ?? 0, offset, limit })
+  let montoTotal: number | undefined
+  if (searchParams.get('resumen') === '1') {
+    const { data: agregado, error: errorTotal } = await supabaseAdmin.rpc('tori_total_gastos', { p_owner: userId, p_categoria: categoria })
+    if (errorTotal) return NextResponse.json({ error: mensajeDb(errorTotal) }, { status: 500 })
+    montoTotal = Number(agregado)
+  }
+  return NextResponse.json({ data, total: count ?? 0, offset, limit, montoTotal })
 }
 
 export async function POST(request: Request) {

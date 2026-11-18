@@ -79,6 +79,7 @@ export const SCHEMA_ORDER = [
   'acceso-solo-servidor.sql',
   'productos-familias.sql',
   'eliminar-producto-familia.sql',
+  'rpc-lecturas-eficientes.sql',
 ]
 
 /** Puerto libre elegido por el sistema (evita choques con restos de ejecuciones anteriores). */

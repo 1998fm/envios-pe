@@ -1,4 +1,5 @@
 'use client'
+import { leerConRevision, type ControlLectura } from '@/lib/lecturaCondicionalCliente'
 import TutorialSeccion from '@/components/TutorialSeccion'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -89,13 +90,14 @@ export default function SeccionVentas({
   const [showNueva, setShowNueva] = useState(false)
 
   const ultimoFetchRef = useRef(0)
+  const controlVentas = useRef<ControlLectura['current']>(null)
 
   /* ------------------------------------------------------------------ */
   /* Datos                                                               */
   /* ------------------------------------------------------------------ */
 
   const cargarVentas = useCallback(
-    async (page = 0) => {
+    async (page = 0, comprobar = false) => {
       ultimoFetchRef.current = Date.now()
       const params = new URLSearchParams({ user_id: userId, resumen: '1' })
       if (filtroEstado) params.set('estado', filtroEstado)
@@ -103,12 +105,12 @@ export default function SeccionVentas({
       params.set('offset', String(page * PAGE_SIZE))
       params.set('limit', String(PAGE_SIZE))
 
-      const res = await fetch(`/api/ventas?${params}`)
+      const { res, json } = await leerConRevision(`/api/ventas?${params}`, controlVentas, comprobar)
+      if (res.ok && json.sinCambios) return
       if (!res.ok) {
         setLoading(false)
         return
       }
-      const json = await res.json()
       setVentas(json.data || [])
       setTotalRegistros(json.total ?? 0)
       setResumen(json.resumen ?? null)
@@ -133,7 +135,7 @@ export default function SeccionVentas({
   // acabamos de hacer un fetch, para no recargar dos veces por la propia acción.
   usePolling(() => {
     if (Date.now() - ultimoFetchRef.current < 1500) return
-    cargarVentas(0)
+    return cargarVentas(pagina, true)
   }, 30_000, Boolean(userId))
 
   const irAPagina = async (page: number) => {

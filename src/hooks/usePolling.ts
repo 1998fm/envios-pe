@@ -7,7 +7,7 @@ import { useEffect, useRef } from 'react'
  * volver a ella. Reemplaza a las suscripciones en tiempo real que antes abría el
  * navegador directo contra la base (ahora todo pasa por el servidor).
  */
-export function usePolling(accion: () => void, cadaMs = 10_000, activo = true) {
+export function usePolling(accion: () => void | Promise<unknown>, cadaMs = 10_000, activo = true) {
   const ref = useRef(accion)
   useEffect(() => {
     ref.current = accion
@@ -15,8 +15,13 @@ export function usePolling(accion: () => void, cadaMs = 10_000, activo = true) {
 
   useEffect(() => {
     if (!activo) return
-    const tick = () => {
-      if (document.visibilityState === 'visible') ref.current()
+    let ocupado = false
+    const tick = async () => {
+      if (ocupado || document.visibilityState !== 'visible') return
+      ocupado = true
+      try { await ref.current() }
+      catch { /* La siguiente actualización puede reintentar sin solaparse. */ }
+      finally { ocupado = false }
     }
     const id = setInterval(tick, cadaMs)
     document.addEventListener('visibilitychange', tick)

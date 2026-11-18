@@ -38,17 +38,12 @@ export default function SeccionGastos({ userId }: Props) {
     const params = new URLSearchParams({ user_id: userId })
     if (filtroCategoria !== 'TODAS') params.set('categoria', filtroCategoria)
 
-    const [res, resTotal] = await Promise.all([
-      fetch(`/api/gastos?${params}&offset=${offset}`),
-      fetch(`/api/gastos?${params}&limit=1000`),
-    ])
-    const [json, jsonTotal] = await Promise.all([res.json(), resTotal.json()])
+    const res = await fetch(`/api/gastos?${params}&offset=${offset}&resumen=1`)
+    const json = await res.json()
     if (res.ok) {
       setGastos((prev) => (append ? [...prev, ...(json.data || [])] : json.data || []))
       setHasMore((json.offset + json.data.length) < json.total)
-    }
-    if (resTotal.ok) {
-      setTotalMes((jsonTotal.data || []).reduce((acc: number, g: Gasto) => acc + Number(g.monto || 0), 0))
+      setTotalMes(Number(json.montoTotal || 0))
     }
     setLoading(false)
   }

@@ -1,4 +1,5 @@
 'use client'
+import { leerConRevision, type ControlLectura } from '@/lib/lecturaCondicionalCliente'
 
 import PrecioInput from '@/components/PrecioInput'
 
@@ -82,10 +83,10 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
   /* Carga de datos                                                      */
   /* ------------------------------------------------------------------ */
 
-  function cargarProductos() {
-    return fetch(`/api/productos?user_id=${userId}&limit=1000&selector=venta`)
-      .then((r) => r.json())
-      .then((j) => setProductos(j.data || []))
+  const controlProductos = useRef<ControlLectura['current']>(null)
+  function cargarProductos(comprobar = false) {
+    return leerConRevision(`/api/productos?user_id=${userId}&limit=1000&selector=venta`, controlProductos, comprobar)
+      .then(({ res, json }) => { if (res.ok && !json.sinCambios) setProductos(json.data || []) })
       .catch(() => {})
   }
 
@@ -96,7 +97,7 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
   // Mientras el modal está abierto, el stock puede cambiar desde otra pestaña
   // (una compra, otra venta, un ajuste). Sin esto, lo que se ve puede ya no
   // ser lo que hay y el POST falla por 409. Se refresca cada pocos segundos.
-  usePolling(cargarProductos, 30_000, Boolean(abierto && userId))
+  usePolling(() => cargarProductos(true), 30_000, Boolean(abierto && userId))
 
   useEffect(() => {
     if (abierto && trayectoDone() && !tourDone('modal-nueva-venta')) {

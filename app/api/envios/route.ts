@@ -1,3 +1,4 @@
+import { controlarCambios } from '@/lib/lecturaCondicionalServidor'
 import { normalizarIdentificador, patronIdentificador } from '@/lib/identidadCliente'
 import { distritoExcluido } from '@/lib/coberturaMoto'
 import { NextResponse } from 'next/server'
@@ -6,17 +7,19 @@ import { requireNegocio } from '@/lib/negocioAuth'
 import { calcularFechaEntrega } from '@/lib/logistica/calcularFechaEntrega'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { checkEnvioLimit } from '@/lib/planLimits'
-import { buscar } from '@/lib/buscar'
+import { normalizar, palabrasClave } from '@/lib/buscar'
 import { mensajeDb } from '@/lib/erroresEs'
 
 export async function GET(request: Request) {
   const auth = await requireNegocio('ver_envios')
   if (!auth.ok) return auth.response
   const userId = auth.ownerId
+  const { revision, response } = await controlarCambios(request, userId, 'envios', auth.permisos)
+  if (response) return response
 
   const { searchParams } = new URL(request.url)
-  const offset = parseInt(searchParams.get('offset') || '0')
-  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
+  const offset = Math.max(0, parseInt(searchParams.get('offset') || '0') || 0)
+  const limit = Math.max(1, Math.min(parseInt(searchParams.get('limit') || '50') || 50, 200))
   const busqueda = searchParams.get('busqueda') || ''
   const estados = searchParams.get('estados')?.split(',').filter(Boolean) || []
   const metodos = searchParams.get('metodos')?.split(',').filter(Boolean) || []
@@ -67,29 +70,24 @@ export async function GET(request: Request) {
   // 123" no encontraba nada. Con el motor, cada palabra se busca por separado
   // y todas tienen que aparecer en algún campo, sin importar el orden.
   if (busqueda.trim()) {
-    const { data: todos, error: errBusqueda } = await query
-      .order('fecha_registro', { ascending: false })
-      .range(0, 9999)
-
-    if (errBusqueda) {
-      return NextResponse.json({ error: mensajeDb(errBusqueda) }, { status: 500 })
-    }
-
-    const ordenados = buscar(
-      (todos || []) as unknown as Record<string, unknown>[],
-      busqueda,
-      (e) => [e.nombre as string, e.dni as string, e.telefono as string],
-      (e) => String(e.nombre || '')
-    )
-    const total = ordenados.length
+    const { data: resultado, error: errBusqueda } = await supabaseAdmin.rpc('tori_buscar_envios', {
+      p_owner: userId, p_palabras: palabrasClave(busqueda), p_frase: normalizar(busqueda),
+      p_estados: estados, p_metodos: metodos,
+      p_desde: fechaDesde ? iniDia(fechaDesde) : null,
+      p_hasta: fechaHasta ? finDia(fechaHasta) : fechaDesde ? finDia(fechaDesde) : null,
+      p_offset: offset, p_limit: limit,
+    })
+    if (errBusqueda) return NextResponse.json({ error: mensajeDb(errBusqueda) }, { status: 500 })
+    const { ids, total } = resultado as { ids: string[]; total: number }
+    // Solo los detalles de la página, siempre acotados al negocio autenticado.
+    const { data: filas, error } = ids.length
+      ? await supabaseAdmin.from('envios').select('*').eq('user_id', userId).in('id', ids)
+      : { data: [], error: null }
+    if (error) return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
+    const porId = new Map((filas || []).map((e) => [e.id, e]))
     return NextResponse.json({
-      data: ordenados.slice(offset, offset + limit),
-      // Con búsqueda ya sabemos el total exacto, así que no hace falta el
-      // truco de pedir limit+1 filas para saber si hay más.
-      hasMore: offset + limit < total,
-      total,
-      offset,
-      limit,
+      data: ids.flatMap((id) => porId.has(id) ? [porId.get(id)] : []),
+      hasMore: offset + limit < total, total, offset, limit, revision,
     })
   }
 
@@ -109,6 +107,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     data: filas,
     hasMore,
+    revision,
     total: offset + filas.length,
     offset,
     limit,

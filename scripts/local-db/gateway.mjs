@@ -48,7 +48,7 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
   const otps = new Map() // token -> { userId, type, redirectTo, challenge?, method? }
   const authCodes = new Map() // code PKCE -> { userId, challenge, method, type }
   const buckets = new Map([['logos', { id: 'logos', name: 'logos', public: true }], ['productos', { id: 'productos', name: 'productos', public: true }]])
-  let storageCalls = 0, authRefreshes = 0, restCalls = 0
+  let storageCalls = 0, authRefreshes = 0, restCalls = 0, restBytes = 0
   const files = new Map() // "bucket/path" -> { buffer, type }
 
   const mpFixtures = { subscriptions: new Map(), invoices: new Map(), payments: new Map(), creates: 0, updates: 0, failCreate: 0, failReceipt: 0, failUpdate: 0, searchLimit: 20, clampLimit: 0, omitTotal: false, failures: [], requests: [] }
@@ -505,6 +505,7 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
       { host: '127.0.0.1', port: postgrestPort, method: req.method, path: path + url.search, headers },
       (r) => {
         res.writeHead(r.statusCode || 502, { ...r.headers, ...CORS })
+        r.on('data', (chunk) => { restBytes += chunk.length })
         r.pipe(res)
       }
     )
@@ -526,7 +527,7 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
       if (url.pathname === '/__dev/usage') {
         const claims = await verifyBearer(req)
         if (claims?.role !== 'service_role') return fail(res,403,'forbidden','Not authorized')
-        return send(res,200,{ storageCalls, authRefreshes, restCalls })
+        return send(res,200,{ storageCalls, authRefreshes, restCalls, restBytes })
       }
       if (url.pathname.startsWith('/storage/v1')) { storageCalls++; return await handleStorage(req, res, url) }
       if (url.pathname === '/__dev/mailbox') return send(res, 200, mailbox)

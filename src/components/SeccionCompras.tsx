@@ -78,8 +78,8 @@ export default function SeccionCompras({ userId }: Props) {
       // Cargar activos y archivados: un producto con stock 0 (archivado) debe
       // seguir apareciendo para poder recomprar stock y que se reactive.
       Promise.all([
-        fetch(`/api/productos?user_id=${userId}&limit=1000`).then((r) => r.json()),
-        fetch(`/api/productos?user_id=${userId}&limit=1000&archivado=true`).then((r) => r.json()),
+        fetch(`/api/productos?user_id=${userId}&selector=compra&limit=1000`).then((r) => r.json()),
+        fetch(`/api/productos?user_id=${userId}&selector=compra&limit=1000&archivado=true`).then((r) => r.json()),
       ])
         .then(([activos, archivados]) => {
           const vistos = new Set((activos.data || []).map((p: Producto) => p.id))

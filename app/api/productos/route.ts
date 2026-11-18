@@ -1,10 +1,11 @@
+import { controlarCambios } from '@/lib/lecturaCondicionalServidor'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
 import { conImagenesProxy, desdeProxy } from '@/lib/mediaUrl'
 import { checkRecordLimit } from '@/lib/planLimits'
 import { ajustarStock } from '@/lib/stock'
-import { buscar } from '@/lib/buscar'
+import { normalizar, palabrasClave } from '@/lib/buscar'
 import { mensajeDb } from '@/lib/erroresEs'
 
 /** Sin permiso de ganancias por producto, el costo de compra no sale del servidor. */
@@ -24,6 +25,8 @@ export async function GET(request: Request) {
   const auth = await requirePlus('ver_productos', 'ver_ventas', 'ver_compras', 'ver_envios')
   if (!auth.ok) return auth.response
   const userId = auth.ownerId
+  const { revision, response } = await controlarCambios(request, userId, 'productos', auth.permisos)
+  if (response) return response
   const verCosto = auth.permisos.ver_ganancia_producto
 
   const { searchParams } = new URL(request.url)
@@ -31,12 +34,13 @@ export async function GET(request: Request) {
   // Por defecto solo se listan los activos (no archivados). Con archivado=true
   // se listan los archivados, para la vista correspondiente.
   const archivado = searchParams.get('archivado')
-  const offset = parseInt(searchParams.get('offset') || '0')
-  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 1000)
+  const offset = Math.max(0, parseInt(searchParams.get('offset') || '0') || 0)
+  const limit = Math.max(1, Math.min(parseInt(searchParams.get('limit') || '50') || 50, 1000))
 
-  const columnas = searchParams.get('selector') === 'venta'
+  const selector = searchParams.get('selector')
+  const columnas = selector === 'venta'
     ? 'id,nombre,sku,descripcion,precio_venta,stock_actual,unidad'
-    : '*'
+    : selector === 'compra' ? 'id,nombre,sku,descripcion,precio_compra,stock_actual,unidad' : '*'
   let query = supabaseAdmin
     .from('productos')
     .select(searchParams.get('catalogo') === '1' ? `${columnas},producto_variantes!left()` : columnas, { count: 'exact' })
@@ -46,38 +50,23 @@ export async function GET(request: Request) {
   if (searchParams.get('catalogo') === '1') query = query.is('producto_variantes', null)
 
   if (busqueda.trim()) {
-    // PostgREST no puede hacer un Y de "ilike" sobre la misma columna, así que
-    // el filtrado por palabras se hace en memoria. Se trae todo el catálogo del
-    // usuario (son cientos, no millones) y se pagina DESPUÉS de ordenar por
-    // relevancia: si se paginara antes, los cortes caerían sobre el orden
-    // alfabético y los resultados más importantes podrían quedar fuera de la
-    // primera página.
-    const { data: todos, error: errTodos } = await query
-      .order('nombre', { ascending: true })
-      .range(0, 9999)
-
-    if (errTodos) {
-      return NextResponse.json({ error: mensajeDb(errTodos) }, { status: 500 })
-    }
-
-    const campos = (p: Record<string, unknown>) => [
-      p.nombre as string,
-      p.sku as string,
-      p.descripcion as string,
-    ]
-
-    const ordenados = buscar(
-      (todos || []) as unknown as Record<string, unknown>[],
-      busqueda,
-      campos,
-      (p) => String(p.nombre || '')
-    )
-
-    const total = ordenados.length
-    const page = ordenados
-      .slice(offset, offset + limit)
-      .map((p) => salida(p, verCosto))
-    return NextResponse.json({ data: page, total, offset, limit })
+    const { data: resultado, error: errorBusqueda } = await supabaseAdmin.rpc('tori_buscar_productos', {
+      p_owner: userId, p_palabras: palabrasClave(busqueda), p_frase: normalizar(busqueda),
+      p_archivado: archivado === 'true', p_catalogo: searchParams.get('catalogo') === '1',
+      p_offset: offset, p_limit: limit,
+    })
+    if (errorBusqueda) return NextResponse.json({ error: mensajeDb(errorBusqueda) }, { status: 500 })
+    const { ids, total } = resultado as { ids: string[]; total: number }
+    const { data: detalles, error: errorDetalles } = ids.length
+      ? await supabaseAdmin.from('productos').select(columnas).eq('profile_id', userId).in('id', ids)
+      : { data: [], error: null }
+    if (errorDetalles) return NextResponse.json({ error: mensajeDb(errorDetalles) }, { status: 500 })
+    const porId = new Map(((detalles || []) as unknown as Record<string, unknown>[]).map((p) => [String(p.id), p]))
+    const page = ids.flatMap((id) => {
+      const p = porId.get(id)
+      return p ? [salida(p, verCosto)] : []
+    })
+    return NextResponse.json({ data: page, total, offset, limit, revision })
   }
 
   const { data, count, error } = await query
@@ -90,6 +79,7 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     data: (data ?? []).map((p) => salida(p as unknown as Record<string, unknown>, verCosto)),
+    revision,
     total: count ?? 0,
     offset,
     limit,

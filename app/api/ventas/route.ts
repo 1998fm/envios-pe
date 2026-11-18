@@ -1,3 +1,4 @@
+import { controlarCambios } from '@/lib/lecturaCondicionalServidor'
 import { normalizarIdentificador, patronIdentificador } from '@/lib/identidadCliente'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
@@ -16,8 +17,6 @@ function resumenSegunRol(resumen: ResumenVentas, verKpis: boolean, verGanancia: 
 
 const r2 = (n: number) => Math.round(n * 100) / 100
 
-/** Tope de filas para agregar el resumen. Si se supera, la UI lo avisa. */
-const TOPE_RESUMEN = 5000
 /** Tope de ventas candidatas que se revisan en memoria al buscar. */
 const TOPE_BUSQUEDA = 2000
 
@@ -72,6 +71,8 @@ export async function GET(request: Request) {
   const auth = await requirePlus('ver_ventas')
   if (!auth.ok) return auth.response
   const userId = auth.ownerId
+  const { revision, response } = await controlarCambios(request, userId, 'ventas', auth.permisos)
+  if (response) return response
   // Se aplican SIEMPRE, con o sin ?resumen=1: el rol no se puede esquivar
   // omitiendo un parámetro.
   const verKpis = auth.permisos.ver_kpis_venta
@@ -80,8 +81,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const estado = searchParams.get('estado') || ''
   const busqueda = (searchParams.get('busqueda') || '').trim()
-  const offset = parseInt(searchParams.get('offset') || '0')
-  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
+  const offset = Math.max(0, parseInt(searchParams.get('offset') || '0') || 0)
+  const limit = Math.max(1, Math.min(parseInt(searchParams.get('limit') || '50') || 50, 200))
   const conResumen = searchParams.get('resumen') === '1'
 
   // Con palabras multiples el filtrado se hace en memoria (mas abajo), asi que
@@ -118,7 +119,8 @@ export async function GET(request: Request) {
           if (!segura) return [] as string[]
           const { data } = await supabaseAdmin
             .from('venta_items')
-            .select('venta_id')
+            .select('venta_id,ventas!inner(profile_id)')
+            .eq('ventas.profile_id', userId)
             .ilike('producto_nombre', `%${segura}%`)
             .limit(3000)
           return [...new Set((data || []).map((r) => r.venta_id as string))]
@@ -144,7 +146,7 @@ export async function GET(request: Request) {
     // barata la segunda pasada en memoria.
     let qBase = supabaseAdmin
       .from('ventas')
-      .select('*, items:venta_items(*)')
+      .select('id,persona_nombre,persona_dni,persona_telefono,metodo_pago,estado,estado_envio,total,monto_pagado,items:venta_items(producto_nombre,cantidad,costo_unitario)')
       .eq('profile_id', userId)
     if (orBusqueda) qBase = qBase.or(orBusqueda)
     if (estado) qBase = qBase.eq('estado', estado)
@@ -188,11 +190,19 @@ export async function GET(request: Request) {
 
     const total = ordenadas.length
     const resumen = conResumen ? calcularResumenVentas(ordenadas as never[], total) : undefined
+    const ids = ordenadas.slice(offset, offset + limit).map((v) => String(v.id))
+    const { data: detalles, error: errorDetalles } = ids.length
+      ? await supabaseAdmin.from('ventas').select('*,items:venta_items(*)').eq('profile_id',userId).in('id',ids)
+      : { data: [], error: null }
+    if (errorDetalles) return NextResponse.json({ error: mensajeDb(errorDetalles) }, { status: 500 })
+    const porId = new Map((detalles || []).map((v) => [v.id,v]))
     return NextResponse.json({
-      data: ordenadas
-        .slice(offset, offset + limit)
-        .map((v) => (verGanancia ? v : sinCostoEnItems(v))),
+      data: ids.flatMap((id) => {
+        const v = porId.get(id)
+        return v ? [verGanancia ? v : sinCostoEnItems(v)] : []
+      }),
       total,
+      revision,
       offset,
       limit,
       // El resumen sale de lo que DE VERDAD coincide, no de lo que sobrevivo al
@@ -222,19 +232,14 @@ export async function GET(request: Request) {
   // cuántas ventas tiene pendientes sin tener que ir probando filtros.
   let resumen: ResumenVentas | undefined
   if (conResumen) {
-    let qResumen = supabaseAdmin
-      .from('ventas')
-      .select('total, monto_pagado, estado, items:venta_items(cantidad, costo_unitario)')
-      .eq('profile_id', userId)
-      .limit(TOPE_RESUMEN)
-    if (orBusqueda) qResumen = qResumen.or(orBusqueda)
-
-    const { data: todas } = await qResumen
-    resumen = calcularResumenVentas(todas ?? [], TOPE_RESUMEN)
+    const { data: agregado, error: errorResumen } = await supabaseAdmin.rpc('tori_resumen_ventas', { p_owner: userId })
+    if (errorResumen) return NextResponse.json({ error: mensajeDb(errorResumen) }, { status: 500 })
+    resumen = agregado as ResumenVentas
   }
 
   return NextResponse.json({
     data: (data ?? []).map((v) => (verGanancia ? v : sinCostoEnItems(v))),
+    revision,
     total: count ?? 0,
     offset,
     limit,
