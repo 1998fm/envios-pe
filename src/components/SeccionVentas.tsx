@@ -134,7 +134,7 @@ export default function SeccionVentas({
   usePolling(() => {
     if (Date.now() - ultimoFetchRef.current < 1500) return
     cargarVentas(0)
-  }, 10_000, Boolean(userId))
+  }, 30_000, Boolean(userId))
 
   const irAPagina = async (page: number) => {
     setNavegando(true)

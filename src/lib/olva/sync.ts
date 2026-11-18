@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { obtenerAgenciasOlva } from '@/lib/olva/agencias'
 import { mensajeDb } from '@/lib/erroresEs'
@@ -77,5 +78,6 @@ export async function ejecutarSyncOlva(): Promise<SyncResult> {
     }
   }
 
+  revalidateTag('agencias-olva', { expire: 0 })
   return { ok: true, sincronizadas: agencias.length }
 }

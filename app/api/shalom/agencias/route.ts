@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { leerShalomPublico } from '@/lib/agenciasPublicas'
 import agenciasFallback from '@/data/agencias-shalom.json'
 
 export const dynamic = 'force-dynamic'
@@ -15,15 +15,8 @@ export const dynamic = 'force-dynamic'
 // se ocultan del formulario.
 export async function GET() {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('agencias_shalom')
-      .select('etiqueta')
-      .eq('activa', true)
-      .eq('recibe', true)
-      .order('etiqueta', { ascending: true })
-
-    if (!error && Array.isArray(data) && data.length > 0) {
-      const etiquetas = data.map((r) => r.etiqueta).filter(Boolean)
+    const etiquetas = await leerShalomPublico()
+    if (etiquetas.length > 0) {
       return NextResponse.json(
         { origen: 'bd', agencias: etiquetas },
         {

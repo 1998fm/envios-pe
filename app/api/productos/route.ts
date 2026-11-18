@@ -34,9 +34,12 @@ export async function GET(request: Request) {
   const offset = parseInt(searchParams.get('offset') || '0')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 1000)
 
+  const columnas = searchParams.get('selector') === 'venta'
+    ? 'id,nombre,sku,descripcion,precio_venta,stock_actual,unidad'
+    : '*'
   let query = supabaseAdmin
     .from('productos')
-    .select(searchParams.get('catalogo') === '1' ? '*,producto_variantes!left()' : '*', { count: 'exact' })
+    .select(searchParams.get('catalogo') === '1' ? `${columnas},producto_variantes!left()` : columnas, { count: 'exact' })
     .eq('profile_id', userId)
     .eq('archivado', archivado === 'true')
 

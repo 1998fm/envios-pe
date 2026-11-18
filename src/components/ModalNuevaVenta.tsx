@@ -83,7 +83,7 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
   /* ------------------------------------------------------------------ */
 
   function cargarProductos() {
-    return fetch(`/api/productos?user_id=${userId}&limit=1000`)
+    return fetch(`/api/productos?user_id=${userId}&limit=1000&selector=venta`)
       .then((r) => r.json())
       .then((j) => setProductos(j.data || []))
       .catch(() => {})
@@ -96,7 +96,7 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
   // Mientras el modal está abierto, el stock puede cambiar desde otra pestaña
   // (una compra, otra venta, un ajuste). Sin esto, lo que se ve puede ya no
   // ser lo que hay y el POST falla por 409. Se refresca cada pocos segundos.
-  usePolling(cargarProductos, 8_000, Boolean(abierto && userId))
+  usePolling(cargarProductos, 30_000, Boolean(abierto && userId))
 
   useEffect(() => {
     if (abierto && trayectoDone() && !tourDone('modal-nueva-venta')) {

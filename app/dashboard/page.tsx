@@ -108,6 +108,7 @@ type PESTANA = typeof PESTANAS[number]
 // compartir un enlace. Va en un efecto (y no en el inicializador) para que
 // el HTML del servidor y el del cliente coincidan.
 const [pestañaActiva, setPestañaActiva] = useState<PESTANA>('envios')
+const viendoEnvios = pestañaActiva === 'envios'
 
 // ========================================
 // ROL Y PERMISOS
@@ -614,11 +615,16 @@ setLoading(false)
 
   useEffect(() => {
     if (!userId) return
-    fetchEnviosPage(0).then((result) => {
-      setEnvios(result.data)
-      setHasMore(result.hasMore)
-    })
-  }, [userId, busqueda, filtrosEstado, filtrosMetodo, fechaDesde, fechaHasta])
+    let vigente = true
+    const timer = setTimeout(() => {
+      fetchEnviosPage(0).then((result) => {
+        if (!vigente) return
+        setEnvios(result.data)
+        setHasMore(result.hasMore)
+      })
+    }, busqueda.trim() ? 300 : 0)
+    return () => { vigente = false; clearTimeout(timer) }
+  }, [userId, viendoEnvios, busqueda, filtrosEstado, filtrosMetodo, fechaDesde, fechaHasta])
 
   const fetchEnviosRef = useRef(fetchEnviosPage)
   useEffect(() => { fetchEnviosRef.current = fetchEnviosPage })
@@ -651,7 +657,7 @@ setLoading(false)
       setEnvios(result.data)
       setHasMore(result.hasMore)
     })
-  }, 10_000, Boolean(userId))
+  }, 30_000, Boolean(userId && pestañaActiva === 'envios'))
 
   async function cargarMas() {
     const result = await fetchEnviosPage(envios.length)

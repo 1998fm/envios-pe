@@ -1,3 +1,4 @@
+import { OPCIONES_COOKIE } from '@/lib/authServidor'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { cookies, headers } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
@@ -26,8 +27,17 @@ export async function getSessionUser(): Promise<{ id: string; email?: string | n
         getAll() {
           return cookieStore.getAll()
         },
-        setAll() {
-          // Solo lectura de sesión en API routes.
+        setAll(lista) {
+          // Una renovación debe viajar de vuelta al navegador. Si se descarta,
+          // cada consulta con la cookie vencida vuelve a pedir refresh_token.
+          try {
+            for (const { name, value, options } of lista) {
+              cookieStore.set(name, value, { ...options, ...OPCIONES_COOKIE })
+            }
+          } catch {
+            // Server Components no pueden escribir cookies; el proxy renueva
+            // antes de renderizarlos. Las rutas API sí persisten la renovación.
+          }
         },
       },
     }

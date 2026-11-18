@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { obtenerAgenciasShalom } from '@/lib/shalom/agencias'
 import { mensajeDb } from '@/lib/erroresEs'
@@ -62,5 +63,6 @@ export async function ejecutarSyncShalom(): Promise<SyncResult> {
     return { ok: false, error: mensajeDb(desactivar.error) }
   }
 
+  revalidateTag('agencias-shalom', { expire: 0 })
   return { ok: true, sincronizadas: agencias.length, version: resultado.version ?? null }
 }

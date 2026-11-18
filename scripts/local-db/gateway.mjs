@@ -48,6 +48,7 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
   const otps = new Map() // token -> { userId, type, redirectTo, challenge?, method? }
   const authCodes = new Map() // code PKCE -> { userId, challenge, method, type }
   const buckets = new Map([['logos', { id: 'logos', name: 'logos', public: true }], ['productos', { id: 'productos', name: 'productos', public: true }]])
+  let storageCalls = 0, authRefreshes = 0, restCalls = 0
   const files = new Map() // "bucket/path" -> { buffer, type }
 
   const mpFixtures = { subscriptions: new Map(), invoices: new Map(), payments: new Map(), creates: 0, updates: 0, failCreate: 0, failReceipt: 0, failUpdate: 0, searchLimit: 20, clampLimit: 0, omitTotal: false, failures: [], requests: [] }
@@ -266,6 +267,7 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
         return send(res, 200, await sessionFor(u))
       }
       if (grant === 'refresh_token') {
+        authRefreshes++
         const { rows } = await pool.query(
           'UPDATE auth.refresh_tokens SET revoked = true WHERE token = $1 AND revoked = false RETURNING user_id',
           [String(b.refresh_token || '')]
@@ -520,8 +522,13 @@ export function createGateway({ pool, jwtSecret, postgrestPort, port, autoconfir
       }
       if (url.pathname.startsWith('/mp-api') || url.pathname==='/__dev/mp') return await handleMP(req,res,url)
       if (url.pathname.startsWith('/auth/v1')) return await handleAuth(req, res, url)
-      if (url.pathname.startsWith('/rest/v1')) return proxyRest(req, res, url)
-      if (url.pathname.startsWith('/storage/v1')) return await handleStorage(req, res, url)
+      if (url.pathname.startsWith('/rest/v1')) { restCalls++; return proxyRest(req, res, url) }
+      if (url.pathname === '/__dev/usage') {
+        const claims = await verifyBearer(req)
+        if (claims?.role !== 'service_role') return fail(res,403,'forbidden','Not authorized')
+        return send(res,200,{ storageCalls, authRefreshes, restCalls })
+      }
+      if (url.pathname.startsWith('/storage/v1')) { storageCalls++; return await handleStorage(req, res, url) }
       if (url.pathname === '/__dev/mailbox') return send(res, 200, mailbox)
       if (url.pathname === '/__dev/health') return send(res, 200, { ok: true })
       return fail(res, 404, 'not_found', `No emulado en el stack local: ${url.pathname}`)

@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { unstable_cache, revalidateTag } from "next/cache";
 import { supabaseAdmin } from "app/f/[slug]/lib/supabase/admin";
 import {
   landingInicial,
@@ -62,16 +63,21 @@ export async function leerLanding(
     throw new Error("La versión de la landing no es válida.");
   return version;
 }
-export const landingPublicada = cache(async (): Promise<DocumentoLanding> => {
-  try {
-    return documentoParaPublico((await leerLanding("publicado")).documento);
-  } catch {
-    console.error(
-      "No se pudo cargar la landing publicada; se muestra la versión original.",
-    );
-    return landingInicial();
-  }
-});
+const leerPublicadaCacheada = unstable_cache(
+  async (): Promise<DocumentoLanding> => {
+    try {
+      return documentoParaPublico((await leerLanding("publicado")).documento);
+    } catch {
+      console.error(
+        "No se pudo cargar la landing publicada; se muestra la versión original.",
+      );
+      return landingInicial();
+    }
+  },
+  ["landing-publica-v1"],
+  { revalidate: 300, tags: ["landing-publica"] },
+);
+export const landingPublicada = cache(leerPublicadaCacheada);
 export async function guardarLanding(
   canal: CanalLanding,
   documento: DocumentoLanding,
@@ -119,5 +125,6 @@ export async function guardarLanding(
       return { conflicto: true as const };
     throw new Error("No se pudieron guardar los cambios de la landing.");
   }
+  if (canal === "publicado") revalidateTag("landing-publica", { expire: 0 });
   return { conflicto: false as const, version };
 }

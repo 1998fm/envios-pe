@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { leerOlvaPublico } from '@/lib/agenciasPublicas'
 import agenciasFallback from '@/data/agencias-olva.json'
 
 export const dynamic = 'force-dynamic'
@@ -11,15 +11,8 @@ export const dynamic = 'force-dynamic'
 //      o la consulta falla (el sistema nunca se queda sin lista).
 export async function GET() {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('agencias_olva')
-      .select(
-        'office_id, nombres, direccion, department, province, district, office_type, lat, lng'
-      )
-      .eq('activa', true)
-      .order('nombres', { ascending: true })
-
-    if (!error && Array.isArray(data) && data.length > 0) {
+    const data = await leerOlvaPublico()
+    if (data.length > 0) {
       return NextResponse.json(
         { origen: 'bd', agencias: data },
         {
