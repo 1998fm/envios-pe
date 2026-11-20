@@ -24,7 +24,7 @@ function cargarAgencias(): Promise<AgenciaOlva[]> {
 
   cachePromesa = (async () => {
     try {
-      const res = await fetch('/api/olva/agencias', { cache: 'no-store' })
+      const res = await fetch('/api/olva/agencias', { cache: 'default' })
       if (res.ok) {
         const json = await res.json()
         const lista = Array.isArray(json?.agencias) ? json.agencias : null

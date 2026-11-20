@@ -17,7 +17,6 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { usePolling } from '@/hooks/usePolling'
 import type { Producto } from '@/types/inventario'
 import EscannerVentas from '@/components/EscannerVentas'
 import TourHelpButton from '@/components/TourHelpButton'
@@ -80,8 +79,11 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
   /* Carga de datos                                                      */
   /* ------------------------------------------------------------------ */
 
+  // Catálogo liviano (solo lo que el selector usa) y sin consultas periódicas:
+  // se pide al abrir el modal y de nuevo si el servidor responde 409 (stock
+  // insuficiente, es decir, que lo mostrado ya no es lo que hay).
   function cargarProductos() {
-    return fetch(`/api/productos?user_id=${userId}&limit=1000`)
+    return fetch(`/api/productos?limit=1000&ligero=1`)
       .then((r) => r.json())
       .then((j) => setProductos(j.data || []))
       .catch(() => {})
@@ -90,11 +92,6 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
   useEffect(() => {
     if (abierto) cargarProductos()
   }, [abierto, userId])
-
-  // Mientras el modal está abierto, el stock puede cambiar desde otra pestaña
-  // (una compra, otra venta, un ajuste). Sin esto, lo que se ve puede ya no
-  // ser lo que hay y el POST falla por 409. Se refresca cada pocos segundos.
-  usePolling(cargarProductos, 8_000, Boolean(abierto && userId))
 
   useEffect(() => {
     if (abierto && trayectoDone() && !tourDone('modal-nueva-venta')) {

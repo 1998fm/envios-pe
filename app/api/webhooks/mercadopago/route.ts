@@ -1,8 +1,11 @@
 import { obtenerSuscripcion, planDesdeMonto } from '@/lib/mercadopago'
 import { registrarPago } from '@/lib/pagos'
 import { WebhookSignatureValidator } from 'mercadopago'
+import { invalidarCacheNegocio } from '@/lib/negocioAuth'
+import { invalidarFormularios } from '@/lib/cacheServidor'
+import { conInvalidacion } from '@/lib/conInvalidacion'
 
-export async function POST(request: Request) {
+async function POST_(request: Request) {
   try {
     const body = await request.json()
     const url = new URL(request.url)
@@ -88,3 +91,5 @@ export async function POST(request: Request) {
 export async function GET() {
   return new Response('OK', { status: 200 })
 }
+
+export const POST = conInvalidacion(POST_, invalidarCacheNegocio, invalidarFormularios)

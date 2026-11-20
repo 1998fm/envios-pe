@@ -4,6 +4,8 @@ import { requireOwner } from '@/lib/ownerAuth'
 import { esTablaFaltante, esVistaValida, normalizarPermisos } from '@/lib/roles'
 import { checkRolesLimit } from '@/lib/planLimits'
 import { mensajeDb } from '@/lib/erroresEs'
+import { invalidarCacheNegocio } from '@/lib/negocioAuth'
+import { conInvalidacion } from '@/lib/conInvalidacion'
 
 // ============================================================
 // Roles del negocio del usuario autenticado.
@@ -78,7 +80,7 @@ export async function GET() {
   return NextResponse.json({ roles: roles ?? [], members: membersDetallados })
 }
 
-export async function POST(request: Request) {
+async function POST_(request: Request) {
   const auth = await requireOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -120,7 +122,7 @@ export async function POST(request: Request) {
   return NextResponse.json({ role: data })
 }
 
-export async function PATCH(request: Request) {
+async function PATCH_(request: Request) {
   const auth = await requireOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -161,7 +163,7 @@ export async function PATCH(request: Request) {
   return NextResponse.json({ role: data })
 }
 
-export async function DELETE(request: Request) {
+async function DELETE_(request: Request) {
   const auth = await requireOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -185,3 +187,7 @@ export async function DELETE(request: Request) {
 
   return NextResponse.json({ ok: true })
 }
+
+export const POST = conInvalidacion(POST_, invalidarCacheNegocio)
+export const PATCH = conInvalidacion(PATCH_, invalidarCacheNegocio)
+export const DELETE = conInvalidacion(DELETE_, invalidarCacheNegocio)

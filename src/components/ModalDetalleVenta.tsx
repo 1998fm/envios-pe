@@ -48,7 +48,7 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
 
   useEffect(() => {
     if (!venta?.id || !userId || !editando) return
-    fetch(`/api/productos?user_id=${userId}&limit=1000`)
+    fetch(`/api/productos?limit=1000&ligero=1`)
       .then((r) => r.json())
       .then((j) => setProductos(j.data || []))
   }, [venta?.id, userId, editando])

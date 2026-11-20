@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, cerrarSesion, ErrorApi, obtenerSesion } from '@/lib/clienteApi'
 import { guardarConfiguracionServidor } from '@/lib/configuracionCliente'
-import { usePolling } from '@/hooks/usePolling'
 import { useRouter } from 'next/navigation'
 import { exportarShalom, MAX_ENVIOS_POR_ARCHIVO } from 'app/f/[slug]/lib/shalomExport'
 import { toast } from 'sonner'
@@ -676,7 +675,6 @@ setLoading(false)
 
   async function fetchEnviosPage(offset: number, limite = 50): Promise<{ data: Envio[]; hasMore: boolean }> {
     if (!userId) return { data: [], hasMore: false }
-    ultimoFetchEnviosRef.current = Date.now()
     const params = new URLSearchParams({
       user_id: userId,
       offset: String(offset),
@@ -701,38 +699,11 @@ setLoading(false)
     })
   }, [userId, busqueda, filtrosEstado, filtrosMetodo, fechaDesde, fechaHasta])
 
-  const fetchEnviosRef = useRef(fetchEnviosPage)
-  useEffect(() => { fetchEnviosRef.current = fetchEnviosPage })
-  const ultimoFetchEnviosRef = useRef(0)
-
   useEffect(() => {
     const limpiar = () => setEnviosEtiquetas([])
     window.addEventListener('afterprint', limpiar)
     return () => window.removeEventListener('afterprint', limpiar)
   }, [])
-
-  // Si otra sesión crea o cambia pedidos, la lista se actualiza: el navegador
-  // consulta al servidor cada pocos segundos mientras la pestaña está visible
-  // (antes abría una conexión en tiempo real directo contra la base).
-  const enviosRef = useRef<Envio[]>([])
-  useEffect(() => {
-    enviosRef.current = envios
-  })
-  const firmaEnvios = (lista: Envio[]) =>
-    lista.map((e) => `${e.id}|${e.estado}|${e.tamano ?? ''}|${e.fecha_programada ?? ''}|${e.observaciones ?? ''}`).join(';')
-
-  usePolling(() => {
-    // Evita dobles recargas cuando la acción la hizo el mismo usuario en esta
-    // pestaña (que ya ha actualizado el estado localmente al guardar).
-    if (Date.now() - ultimoFetchEnviosRef.current < 1500) return
-    const cargados = enviosRef.current.length
-    // Se piden tantos como ya hay en pantalla para no perder las páginas cargadas.
-    fetchEnviosRef.current(0, Math.min(200, Math.max(50, cargados))).then((result) => {
-      if (firmaEnvios(result.data) === firmaEnvios(enviosRef.current)) return
-      setEnvios(result.data)
-      setHasMore(result.hasMore)
-    })
-  }, 10_000, Boolean(userId))
 
   async function cargarMas() {
     const result = await fetchEnviosPage(envios.length)

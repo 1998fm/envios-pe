@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
 import { mensajeDb } from '@/lib/erroresEs'
+import { invalidarCacheNegocio } from '@/lib/negocioAuth'
+import { invalidarFormularios } from '@/lib/cacheServidor'
+import { conInvalidacion } from '@/lib/conInvalidacion'
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function POST_(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireSuperAdmin()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -75,3 +78,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   return NextResponse.json({ ok: true, blocked })
 }
+
+export const POST = conInvalidacion(POST_, invalidarCacheNegocio, invalidarFormularios)

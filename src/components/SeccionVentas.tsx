@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Plus,
@@ -21,7 +21,6 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { usePolling } from '@/hooks/usePolling'
 import type { Venta } from '@/types/inventario'
 import ModalDetalleVenta from '@/components/ModalDetalleVenta'
 import ModalNuevaVenta from '@/components/ModalNuevaVenta'
@@ -87,15 +86,12 @@ export default function SeccionVentas({
   const [itemsAbiertos, setItemsAbiertos] = useState<string | null>(null)
   const [showNueva, setShowNueva] = useState(false)
 
-  const ultimoFetchRef = useRef(0)
-
   /* ------------------------------------------------------------------ */
   /* Datos                                                               */
   /* ------------------------------------------------------------------ */
 
   const cargarVentas = useCallback(
     async (page = 0) => {
-      ultimoFetchRef.current = Date.now()
       const params = new URLSearchParams({ user_id: userId, resumen: '1' })
       if (filtroEstado) params.set('estado', filtroEstado)
       if (busqueda.trim()) params.set('busqueda', busqueda.trim())
@@ -126,14 +122,6 @@ export default function SeccionVentas({
     }, busqueda ? 300 : 0)
     return () => clearTimeout(t)
   }, [cargarVentas, busqueda])
-
-  // Si otra sesión registra o edita una venta, la lista se actualiza: se consulta
-  // al servidor cada pocos segundos mientras la pestaña está visible. Se omite si
-  // acabamos de hacer un fetch, para no recargar dos veces por la propia acción.
-  usePolling(() => {
-    if (Date.now() - ultimoFetchRef.current < 1500) return
-    cargarVentas(0)
-  }, 10_000, Boolean(userId))
 
   const irAPagina = async (page: number) => {
     setNavegando(true)

@@ -18,6 +18,26 @@ const nextConfig: NextConfig = {
       destination: `${ALMACEN}/storage/v1/object/public/${bucket}/:ruta*`,
     }))
   },
+  // Caché de imágenes públicas. Cada vez que el navegador/CDN las pide de nuevo
+  // es egress de Storage.
+  //  · productos: el nombre de archivo lleva fecha + sufijo aleatorio, nunca se
+  //    reescribe → inmutable, un año.
+  //  · logos: se guardan como <negocio>/logo.<ext> y se REEMPLAZAN al cambiarlos,
+  //    así que solo caché corta (5 min en navegador, 1 h en CDN).
+  async headers() {
+    return [
+      {
+        source: '/media/productos/:ruta*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        source: '/media/logos/:ruta*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400' },
+        ],
+      },
+    ]
+  },
   turbopack: {
     root: process.cwd(),
   },

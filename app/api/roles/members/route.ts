@@ -5,13 +5,15 @@ import { esTablaFaltante } from '@/lib/roles'
 import { crearInvitacion } from '@/lib/invitaciones'
 import { checkRolesLimit } from '@/lib/planLimits'
 import { mensajeDb } from '@/lib/erroresEs'
+import { invalidarCacheNegocio } from '@/lib/negocioAuth'
+import { conInvalidacion } from '@/lib/conInvalidacion'
 
 // ============================================================
 // Miembros del negocio: qué usuarios tienen acceso y con qué rol.
 // ============================================================
 
 // Agrega un usuario al negocio por email.
-export async function POST(request: Request) {
+async function POST_(request: Request) {
   const auth = await requireOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -126,7 +128,7 @@ export async function POST(request: Request) {
 }
 
 // Cambia el rol de un miembro.
-export async function PATCH(request: Request) {
+async function PATCH_(request: Request) {
   const auth = await requireOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -170,7 +172,7 @@ export async function PATCH(request: Request) {
 }
 
 // Quita a un miembro del negocio.
-export async function DELETE(request: Request) {
+async function DELETE_(request: Request) {
   const auth = await requireOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -195,3 +197,7 @@ export async function DELETE(request: Request) {
 
   return NextResponse.json({ ok: true })
 }
+
+export const POST = conInvalidacion(POST_, invalidarCacheNegocio)
+export const PATCH = conInvalidacion(PATCH_, invalidarCacheNegocio)
+export const DELETE = conInvalidacion(DELETE_, invalidarCacheNegocio)

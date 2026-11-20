@@ -1,10 +1,14 @@
-import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
+import { leerDatosFormulario } from '@/lib/cacheServidor'
 import { urlHttpSegura } from '@/lib/urlSegura'
 import { aProxy } from '@/lib/mediaUrl'
 import PublicForm from '@/components/PublicForm'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { validarHoraCorte } from '@/lib/logistica/validarHoraCorte'
 import { esDiaDeshabilitado } from '@/lib/logistica/esDiaDeshabilitado'
+
+// La hora de corte y los días cerrados dependen del momento de la visita: la
+// página nunca se sirve ya armada. Solo los datos del negocio vienen de caché.
+export const dynamic = 'force-dynamic'
 
 export default async function FormPage({
   params,
@@ -13,11 +17,8 @@ export default async function FormPage({
 }) {
   const { slug } = await params
 
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('*')
-    .eq('slug', slug)
-    .single()
+  const datos = await leerDatosFormulario(slug)
+  const profile = datos?.profile
 
   if (!profile) {
     return (
@@ -49,15 +50,8 @@ export default async function FormPage({
   // configuró (las claves de sus tarifas). Para LIMA se usa la lista de
   // distritos-metropolitanos precargada.
   let distritosMotorizado: string[] | undefined
-  if ((profile.moto_region ?? 'lima') === 'provincia') {
-    const { data: tarifas } = await supabaseAdmin
-      .from('tarifas_moto')
-      .select('tarifas')
-      .eq('profile_id', profile.id)
-      .maybeSingle()
-    if (tarifas?.tarifas) {
-      distritosMotorizado = Object.keys(tarifas.tarifas)
-    }
+  if ((profile.moto_region ?? 'lima') === 'provincia' && datos?.tarifas) {
+    distritosMotorizado = Object.keys(datos.tarifas)
   }
 
   // Motorizado solo aparece en el formulario si el negocio marcó al menos un

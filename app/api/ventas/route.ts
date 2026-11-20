@@ -15,8 +15,6 @@ function resumenSegunRol(resumen: ResumenVentas, verKpis: boolean, verGanancia: 
 
 const r2 = (n: number) => Math.round(n * 100) / 100
 
-/** Tope de filas para agregar el resumen. Si se supera, la UI lo avisa. */
-const TOPE_RESUMEN = 5000
 /** Tope de ventas candidatas que se revisan en memoria al buscar. */
 const TOPE_BUSQUEDA = 2000
 
@@ -221,15 +219,10 @@ export async function GET(request: Request) {
   // cuántas ventas tiene pendientes sin tener que ir probando filtros.
   let resumen: ResumenVentas | undefined
   if (conResumen) {
-    let qResumen = supabaseAdmin
-      .from('ventas')
-      .select('total, monto_pagado, estado, items:venta_items(cantidad, costo_unitario)')
-      .eq('profile_id', userId)
-      .limit(TOPE_RESUMEN)
-    if (orBusqueda) qResumen = qResumen.or(orBusqueda)
-
-    const { data: todas } = await qResumen
-    resumen = calcularResumenVentas(todas ?? [], TOPE_RESUMEN)
+    // La base agrega (sum/count) y devuelve unos cientos de bytes; antes se
+    // bajaban hasta 5.000 ventas con sus items solo para sumar en Node.
+    const { data: agregado } = await supabaseAdmin.rpc('resumen_ventas', { p_owner: userId })
+    resumen = (agregado as ResumenVentas | null) ?? undefined
   }
 
   return NextResponse.json({

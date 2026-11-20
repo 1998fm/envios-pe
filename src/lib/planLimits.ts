@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
+import { unstable_cache } from 'next/cache'
 import { computeEffectivePlan } from '@/lib/planGating'
+import { TAG_PLAN_FEATURES } from '@/lib/cacheServidor'
 import { supabaseServiceKey, supabaseUrl } from '@/lib/supabaseEnv'
 
 const supabaseAdmin = createClient(
@@ -38,13 +40,20 @@ export type TrialStatus = {
   daysRemaining: number | null
 }
 
+// Los límites por plan casi nunca cambian (solo cuando el admin edita la tabla):
+// se leen una vez cada 10 minutos y /api/admin/planes invalida la caché.
+const leerPlanFeatures = (plan: string) =>
+  unstable_cache(
+    async (): Promise<PlanFeature | null> => {
+      const { data } = await supabaseAdmin.from('plan_features').select('*').eq('plan', plan).single()
+      return data
+    },
+    ['plan-features', plan],
+    { revalidate: 600, tags: [TAG_PLAN_FEATURES] }
+  )()
+
 export async function getPlanFeatures(plan: string): Promise<PlanFeature | null> {
-  const { data } = await supabaseAdmin
-    .from('plan_features')
-    .select('*')
-    .eq('plan', plan)
-    .single()
-  return data
+  return leerPlanFeatures(plan)
 }
 
 export async function checkTrialStatus(userId: string): Promise<TrialStatus> {

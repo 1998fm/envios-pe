@@ -71,6 +71,7 @@ export const SCHEMA_ORDER = [
   'roles-negocio.sql',
   'limpieza-envios-30-dias.sql',
   'indices-optimizacion.sql',
+  'rpc-resumen-ventas.sql',
   'realtime-envios.sql',
   'realtime-ventas.sql',
   'rls-policies.sql',

@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 import { requireNegocio } from '@/lib/negocioAuth'
 import { guardarConfiguracion, type ConfigEntrada } from '@/lib/configuracionNegocio'
+import { invalidarFormularios } from '@/lib/cacheServidor'
+import { conInvalidacion } from '@/lib/conInvalidacion'
 
 // Guarda la configuración del negocio (solo el dueño). Recibe multipart:
 //   config        JSON con los campos del formulario
 //   logo          (opcional) imagen del logo
 //   mensajeImagen (opcional) imagen del mensaje de éxito
-export async function POST(request: Request) {
+async function POST_(request: Request) {
   const auth = await requireNegocio()
   if (!auth.ok) return auth.response
   if (!auth.esOwner) {
@@ -38,3 +40,5 @@ export async function POST(request: Request) {
   if (r.error) return NextResponse.json({ error: r.error }, { status: 400 })
   return NextResponse.json({ ok: true, ...r })
 }
+
+export const POST = conInvalidacion(POST_, invalidarFormularios)

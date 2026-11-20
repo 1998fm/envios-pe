@@ -3,6 +3,7 @@ import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
 import { ejecutarSyncShalom } from '@/lib/shalom/sync'
 import { mensajeDb } from '@/lib/erroresEs'
+import { invalidarAgenciasShalom } from '@/lib/cacheServidor'
 
 export async function GET() {
   const auth = await requireSuperAdmin()
@@ -48,6 +49,8 @@ export async function POST() {
   }
 
   const r = await ejecutarSyncShalom()
+  // La lista cambió: el servidor y el CDN deben releerla.
+  invalidarAgenciasShalom()
   await registrarAuditoria(auth, 'sync_agencias', {
     ok: r.ok,
     sincronizadas: r.sincronizadas ?? null,
