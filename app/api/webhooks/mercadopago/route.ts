@@ -1,10 +1,10 @@
-import { WebhookSignatureValidator } from "mercadopago";
-import { obtenerSuscripcionMP } from "@/lib/billing/mp";
+import { validarFirmaMP } from "@/lib/billing/signature";
 import {
-  procesarFacturaPorId,
-  sincronizarPago,
-  sincronizarSuscripcion,
-} from "@/lib/billing/payments";
+  guardarEventoMP,
+  procesarEventoMP,
+  type TipoEventoMP,
+} from "@/lib/billing/events";
+export const maxDuration = 300;
 export async function POST(request: Request) {
   if (!process.env.MP_WEBHOOK_SECRET)
     return new Response("Webhook no configurado", { status: 503 });
@@ -21,14 +21,15 @@ export async function POST(request: Request) {
     return new Response("Falta el identificador", { status: 400 });
   const id = String(signed).toLowerCase();
   try {
-    WebhookSignatureValidator.validate({
-      xSignature: signature,
-      xRequestId: requestId,
-      dataId: id,
-      secret: process.env.MP_WEBHOOK_SECRET,
-      toleranceSeconds: 600,
-    });
-  } catch {
+    validarFirmaMP(signature, requestId, id, process.env.MP_WEBHOOK_SECRET);
+  } catch (e) {
+    // Sin escrituras por entradas no autenticadas: evita que un atacante llene la cola.
+    const motivo =
+      e instanceof Error &&
+      ["fecha_formato", "fecha_fuera_de_plazo"].includes(e.message)
+        ? e.message
+        : "firma_rechazada";
+    console.warn("[mp-firma]", JSON.stringify({ motivo, recurso: id }));
     return new Response("Firma no válida", { status: 401 });
   }
   // Nunca usar body.id: identifica la notificación, no el recurso firmado.
@@ -40,12 +41,22 @@ export async function POST(request: Request) {
   const topic = String(
     body.type || url.searchParams.get("topic") || "",
   ).toLowerCase();
+  const tipo = topic === "preapproval" ? "subscription_preapproval" : topic;
+  if (
+    ![
+      "payment",
+      "subscription_preapproval",
+      "subscription_authorized_payment",
+    ].includes(tipo)
+  )
+    return new Response("Evento no utilizado", { status: 200 });
   try {
-    if (topic === "subscription_preapproval" || topic === "preapproval")
-      await sincronizarSuscripcion(await obtenerSuscripcionMP(id), "webhook");
-    else if (topic === "subscription_authorized_payment")
-      await procesarFacturaPorId(id);
-    else if (topic === "payment") await sincronizarPago(id);
+    const evento = await guardarEventoMP(
+      tipo as TipoEventoMP,
+      id,
+      `${requestId}:${signature}`,
+    );
+    await procesarEventoMP(evento);
     return new Response("OK", { status: 200 });
   } catch {
     console.error(

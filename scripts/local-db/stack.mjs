@@ -82,6 +82,7 @@ export const SCHEMA_ORDER = [
   'rpc-lecturas-eficientes.sql',
   'supabase-usage-snapshots.sql',
   'rpc-resumenes-compactos.sql',
+  'mp-eventos.sql',
 ]
 
 /** Puerto libre elegido por el sistema (evita choques con restos de ejecuciones anteriores). */

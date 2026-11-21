@@ -34,6 +34,8 @@ import {
 import AdminSupportCenter from '@/components/admin/AdminSupportCenter'
 import CompanyDetailModal from '@/components/admin/CompanyDetailModal'
 
+const AdminPagosDiagnostico = dynamic(() => import('@/components/admin/AdminPagosDiagnostico'))
+
 const AdminConsumo = dynamic(() => import('@/components/admin/AdminConsumo'))
 
 const AdminLandingEditor = dynamic(() => import('@/components/admin/AdminLandingEditor'))
@@ -244,6 +246,7 @@ const tabsList: { key: Tab; label: string; icon: React.ReactNode }[] = [
 export default function AdminPage() {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('soporte')
+  const [pagosRevision, setPagosRevision] = useState(0)
   const [consumoRevision, setConsumoRevision] = useState(0)
   const [landingDirty, setLandingDirty] = useState(false)
   const cambiarTab = (next: Tab) => {
@@ -440,6 +443,7 @@ export default function AdminPage() {
       const data = await res.json()
       await cargarFacturacion()
       setErroresSync(data.detalleErrores ?? [])
+      setPagosRevision(r => r + 1)
       setResultadoSync(`${data.revisadas ?? 0} contratos revisados · ${data.sincronizadas ?? 0} cobros verificados · ${data.renovacionesDetenidas ?? 0} contratos históricos con renovación incorrecta detenida.`)
       if (!res.ok) throw new Error(`${data.error ?? 'Sincronización incompleta.'} ${data.detalleErrores?.[0]?.error ?? ''}`)
     } catch (e) {
@@ -1099,6 +1103,7 @@ export default function AdminPage() {
         {/* ============ FACTURACIÓN ============ */}
         {tab === 'facturacion' && (
           <div className="space-y-4">
+            <AdminPagosDiagnostico revision={pagosRevision} />
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <p className="text-sm text-slate-600">

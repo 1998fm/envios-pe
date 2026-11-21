@@ -3,7 +3,7 @@ import { cronAutorizado } from '@/lib/cronAuth'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { medirConsumo } from '@/lib/consumoServidor'
-import { sincronizarPagosMP } from '@/lib/facturacion'
+import { recuperarPagosMP } from '@/lib/billing/recovery'
 
 export const maxDuration = 300
 
@@ -24,7 +24,9 @@ export async function GET(request: Request) {
   let pagos = { revisadas: 0, sincronizadas: 0, errores: 0 }
   let falloPagos = false
   try {
-    pagos = await sincronizarPagosMP()
+    const recuperacion = await recuperarPagosMP('cron')
+    pagos = recuperacion
+    falloPagos = !recuperacion.ok
   } catch {
     falloPagos = true
     console.error('[cron] No se pudo conciliar Mercado Pago.')

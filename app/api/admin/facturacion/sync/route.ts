@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireSuperAdmin } from '@/lib/adminAuth'
 import { ErrorBilling } from '@/lib/billing/types'
-import { sincronizarPagosMP } from '@/lib/facturacion'
+import { recuperarPagosMP } from '@/lib/billing/recovery'
 export const maxDuration = 300
 
 // POST: botón "Sincronizar pagos" en Facturación. Consulta MercadoPago y
@@ -13,8 +13,8 @@ export async function POST() {
   }
 
   try {
-    const result = await sincronizarPagosMP()
-    return NextResponse.json({ ok: result.errores === 0, ...result, error: result.errores ? "Sincronización parcial: revisa el detalle de contratos con error." : undefined }, { status: result.errores ? 503 : 200 })
+    const result = await recuperarPagosMP('admin')
+    return NextResponse.json({ ...result, error: !result.ok ? ["Sincronización parcial: revisa el diagnóstico de pagos.", result.contratosDetalle, result.descubrimientoDetalle].filter(Boolean).join(" ") : undefined }, { status: !result.ok ? 503 : 200 })
   } catch (e) {
     return NextResponse.json({ error: e instanceof ErrorBilling ? e.message : 'No se pudo sincronizar los pagos con MercadoPago.' }, { status: 503 })
   }

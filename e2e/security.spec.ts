@@ -651,14 +651,22 @@ test.describe('#9 Webhook de MercadoPago', () => {
     expect((await api.post('/api/webhooks/mercadopago?data.id=123', { data: body, headers: { 'x-signature': mala, 'x-request-id': 'r2' } })).status()).toBe(401)
   })
 
-  test('con firma válida se acepta (y un tópico que no es suscripción no toca planes)', async () => {
+  test('una firma válida no confirma un pago inexistente; los tópicos ajenos se ignoran', async () => {
     const api = await appApi(null)
     const reqId = uniq('req')
     const r = await api.post('/api/webhooks/mercadopago?data.id=999', {
       data: { type: 'payment', data: { id: '999' } },
       headers: { 'x-signature': firma('999', reqId), 'x-request-id': reqId },
     })
-    expect(r.status()).toBe(200)
+    expect(r.status()).toBe(503)
+    const eventos = await dbSelect<{ estado: string }>('mp_eventos', 'recurso=eq.999')
+    expect(eventos.some(e => e.estado === 'error')).toBe(true)
+    const ajeno = await api.post('/api/webhooks/mercadopago?data.id=777', {
+      data: { type: 'merchant_order', data: { id: '777' } },
+      headers: { 'x-signature': firma('777', reqId), 'x-request-id': reqId },
+    })
+    expect(ajeno.status()).toBe(200)
+    expect(await dbSelect('mp_eventos', 'recurso=eq.777')).toHaveLength(0)
   })
 
   test('una firma vieja (replay) se rechaza', async () => {

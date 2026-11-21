@@ -361,6 +361,10 @@ export async function sincronizarSuscripcion(
       `/authorized_payments/search?preapproval_id=${encodeURIComponent(sub.id)}`,
     ))
       if (await procesarFactura(factura, origen)) procesadas++;
+    if (!procesadas && Number(sub.summarized?.charged_quantity) > 0)
+      throw new ErrorBilling(
+        "El contrato informa cobros pero sus facturas aún no están disponibles. Se reintentará.",
+      );
     return procesadas;
   } catch (e) {
     if (
@@ -411,10 +415,32 @@ export async function sincronizarSuscripcion(
 }
 
 export async function sincronizarPago(id: string) {
+  const pago = await obtenerPagoMP(id);
+  if (String(pago.id) !== id)
+    throw new ErrorBilling("Pago no coincidente.", 400);
+  let encontradas = 0,
+    procesadas = 0;
   for await (const factura of paginasMP<FacturaMP>(
     `/authorized_payments/search?payment_id=${encodeURIComponent(id)}`,
-  ))
-    await procesarFactura(factura, "webhook", id);
+  )) {
+    encontradas++;
+    if (await procesarFactura(factura, "webhook", id)) procesadas++;
+  }
+  if (
+    !encontradas &&
+    pago.external_reference &&
+    !referenciaMP({
+      id: "",
+      status: "",
+      external_reference: pago.external_reference,
+    })
+  )
+    return 0;
+  if (!encontradas)
+    throw new ErrorBilling(
+      "La factura del pago aún no está disponible. Se reintentará sin acreditar un cobro sin verificar.",
+    );
+  return procesadas;
 }
 export async function procesarFacturaPorId(id: string) {
   const factura = await obtenerFacturaMP(id);
