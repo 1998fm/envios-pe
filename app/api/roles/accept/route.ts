@@ -3,6 +3,8 @@ import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { getSessionUser } from '@/lib/ownerAuth'
 import { esTablaFaltante } from '@/lib/roles'
 import { mensajeAuth, mensajeDb } from '@/lib/erroresEs'
+import { invalidarCacheNegocio } from '@/lib/negocioAuth'
+import { conInvalidacion } from '@/lib/conInvalidacion'
 
 // ============================================================
 // ACEPTAR INVITACIÓN
@@ -95,7 +97,7 @@ export async function GET(request: Request) {
   })
 }
 
-export async function POST(request: Request) {
+async function POST_(request: Request) {
   const body = await request.json().catch(() => null)
   const token = typeof body?.token === 'string' ? body.token.trim() : ''
   const password = typeof body?.password === 'string' ? body.password : ''
@@ -247,3 +249,5 @@ export async function POST(request: Request) {
     requiereLogin,
   })
 }
+
+export const POST = conInvalidacion(POST_, invalidarCacheNegocio)

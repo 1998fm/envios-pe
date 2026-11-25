@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
 import { mensajeDb } from '@/lib/erroresEs'
+import { invalidarCacheNegocio } from '@/lib/negocioAuth'
+import { invalidarPlanes } from '@/lib/cacheServidor'
+import { conInvalidacion } from '@/lib/conInvalidacion'
 
 // Campos editables de cada plan (límites y features booleanos; NO precios).
 export const CAMPOS_PLAN = [
@@ -34,7 +37,7 @@ export async function GET() {
   return NextResponse.json({ planes: data })
 }
 
-export async function PUT(request: Request) {
+async function PUT_(request: Request) {
   const auth = await requireSuperAdmin()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -89,3 +92,5 @@ export async function PUT(request: Request) {
   const { data } = await supabaseAdmin.from('plan_features').select('*').order('plan')
   return NextResponse.json({ ok: true, planes: data })
 }
+
+export const PUT = conInvalidacion(PUT_, invalidarCacheNegocio, invalidarPlanes)

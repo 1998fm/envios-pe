@@ -3,6 +3,7 @@ import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
 import { ejecutarSyncOlva } from '@/lib/olva/sync'
 import { mensajeDb } from '@/lib/erroresEs'
+import { invalidarAgenciasOlva } from '@/lib/cacheServidor'
 
 export async function GET() {
   const auth = await requireSuperAdmin()
@@ -48,6 +49,8 @@ export async function POST() {
   }
 
   const r = await ejecutarSyncOlva()
+  // La lista cambió: el servidor y el CDN deben releerla.
+  invalidarAgenciasOlva()
   await registrarAuditoria(auth, 'sync_agencias_olva', {
     ok: r.ok,
     sincronizadas: r.sincronizadas ?? null,

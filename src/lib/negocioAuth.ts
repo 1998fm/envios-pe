@@ -32,6 +32,44 @@ function fallo(status: number, error: string): NegocioAuthResult {
   return { ok: false, response: NextResponse.json({ error }, { status }) }
 }
 
+// Caché en memoria (por instancia del servidor) de "quién es y qué puede ver".
+// Resolver el negocio cuesta 2-3 consultas a la base en CADA llamada a la API y
+// el dashboard hace varias por minuto. Con 20 s de vida, un cambio de rol o la
+// desactivación de una cuenta se aplica con un retraso máximo de 20 s.
+const TTL_NEGOCIO_MS = 20_000
+const MAX_ENTRADAS = 500
+type EntradaNegocio = {
+  vence: number
+  disabled: boolean
+  negocio: Awaited<ReturnType<typeof resolverNegocioActual>>
+}
+const cacheNegocio = new Map<string, EntradaNegocio>()
+
+/** Olvida lo guardado de un usuario (o todo) tras cambiar roles, miembros o cuentas. */
+export function invalidarCacheNegocio(userId?: string) {
+  if (userId) cacheNegocio.delete(userId)
+  else cacheNegocio.clear()
+}
+
+async function cargarNegocio(userId: string): Promise<EntradaNegocio> {
+  const ahora = Date.now()
+  const guardada = cacheNegocio.get(userId)
+  if (guardada && guardada.vence > ahora) return guardada
+
+  const [{ data: perfil }, negocio] = await Promise.all([
+    supabaseAdmin.from('profiles').select('disabled').eq('id', userId).maybeSingle(),
+    resolverNegocioActual(supabaseAdmin, userId),
+  ])
+  const entrada: EntradaNegocio = { vence: ahora + TTL_NEGOCIO_MS, disabled: Boolean(perfil?.disabled), negocio }
+
+  if (cacheNegocio.size >= MAX_ENTRADAS) {
+    for (const [k, v] of cacheNegocio) if (v.vence <= ahora) cacheNegocio.delete(k)
+    if (cacheNegocio.size >= MAX_ENTRADAS) cacheNegocio.clear()
+  }
+  cacheNegocio.set(userId, entrada)
+  return entrada
+}
+
 /**
  * @param requeridos permisos del rol; basta con tener UNO (las pestañas se
  *   pueden alcanzar por varias vistas). El dueño siempre pasa.
@@ -42,14 +80,8 @@ export async function requireNegocio(
   const sesion = await getSessionUser()
   if (!sesion) return fallo(401, 'No autenticado')
 
-  const { data: perfil } = await supabaseAdmin
-    .from('profiles')
-    .select('disabled')
-    .eq('id', sesion.id)
-    .maybeSingle()
-  if (perfil?.disabled) return fallo(403, 'Cuenta desactivada')
-
-  const negocio = await resolverNegocioActual(supabaseAdmin, sesion.id)
+  const { disabled, negocio } = await cargarNegocio(sesion.id)
+  if (disabled) return fallo(403, 'Cuenta desactivada')
 
   if (negocio.esOwner) {
     return {

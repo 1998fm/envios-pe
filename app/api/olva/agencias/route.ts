@@ -1,45 +1,15 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import agenciasFallback from '@/data/agencias-olva.json'
+import { leerAgenciasOlva } from '@/lib/cacheServidor'
 
-export const dynamic = 'force-dynamic'
-
-// Devuelve la lista de tiendas/agencias Olva para el selector del formulario.
-// Prioridad:
-//   1) Tabla agencias_olva (sincronizada con Olva) si tiene datos.
-//   2) JSON estático como respaldo automático si la tabla está vacía
-//      o la consulta falla (el sistema nunca se queda sin lista).
+// Lista de agencias Olva. Se sincroniza una vez por semana, así que el servidor
+// la lee de la base solo cuando cambia (caché de datos, se invalida al
+// sincronizar) y el navegador/CDN la reutilizan un día. Si la tabla está vacía
+// o falla, se sirve el JSON empaquetado como respaldo.
 export async function GET() {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('agencias_olva')
-      .select(
-        'office_id, nombres, direccion, department, province, district, office_type, lat, lng'
-      )
-      .eq('activa', true)
-      .order('nombres', { ascending: true })
-
-    if (!error && Array.isArray(data) && data.length > 0) {
-      return NextResponse.json(
-        { origen: 'bd', agencias: data },
-        {
-          headers: {
-            'Cache-Control': 's-maxage=60, stale-while-revalidate=3600',
-          },
-        }
-      )
-    }
-  } catch (e) {
-    console.error('[olva/agencias] error leyendo BD:', e)
-  }
-
-  // Fallback al JSON estático (sin caída).
-  return NextResponse.json(
-    { origen: 'fallback', agencias: agenciasFallback },
-    {
-      headers: {
-        'Cache-Control': 's-maxage=60, stale-while-revalidate=3600',
-      },
-    }
-  )
+  const datos = await leerAgenciasOlva()
+  return NextResponse.json(datos, {
+    headers: {
+      'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+    },
+  })
 }

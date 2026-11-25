@@ -1,49 +1,15 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import agenciasFallback from '@/data/agencias-shalom.json'
+import { leerAgenciasShalom } from '@/lib/cacheServidor'
 
-export const dynamic = 'force-dynamic'
-
-// Devuelve la lista de agencias Shalom para el autocomplete.
-// Prioridad:
-//   1) Tabla agencias_shalom (sincronizada con Shalom) si tiene datos.
-//   2) JSON estático como respaldo automático si la tabla está vacía
-//      o la consulta falla (el sistema nunca se queda sin lista).
-// IMPORTANTE: solo se muestran agencias con `recibe = true`. Las agencias
-// sin categoría de recepción (centros de acopio internos, terminales
-// aeroportuarias, solo-envío, pendientes...) NO aceptan paquetes, por eso
-// se ocultan del formulario.
+// Lista de agencias Shalom. Se sincroniza una vez por semana, así que el servidor
+// la lee de la base solo cuando cambia (caché de datos, se invalida al
+// sincronizar) y el navegador/CDN la reutilizan un día. Si la tabla está vacía
+// o falla, se sirve el JSON empaquetado como respaldo.
 export async function GET() {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('agencias_shalom')
-      .select('etiqueta')
-      .eq('activa', true)
-      .eq('recibe', true)
-      .order('etiqueta', { ascending: true })
-
-    if (!error && Array.isArray(data) && data.length > 0) {
-      const etiquetas = data.map((r) => r.etiqueta).filter(Boolean)
-      return NextResponse.json(
-        { origen: 'bd', agencias: etiquetas },
-        {
-          headers: {
-            'Cache-Control': 's-maxage=60, stale-while-revalidate=3600',
-          },
-        }
-      )
-    }
-  } catch (e) {
-    console.error('[shalom/agencias] error leyendo BD:', e)
-  }
-
-  // Fallback al JSON estático (sin caída). El JSON ya viene filtrado.
-  return NextResponse.json(
-    { origen: 'fallback', agencias: agenciasFallback },
-    {
-      headers: {
-        'Cache-Control': 's-maxage=60, stale-while-revalidate=3600',
-      },
-    }
-  )
+  const datos = await leerAgenciasShalom()
+  return NextResponse.json(datos, {
+    headers: {
+      'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+    },
+  })
 }

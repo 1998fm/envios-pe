@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cronAutorizado, claveValida } from '@/lib/cronAuth'
 import { ejecutarSyncOlva } from '@/lib/olva/sync'
+import { invalidarAgenciasOlva } from '@/lib/cacheServidor'
 
 // GET: invocado por el cron semanal de Vercel.
 // Vercel envía Authorization: Bearer $CRON_SECRET (variable CRON_SECRET).
@@ -10,6 +11,8 @@ export async function GET(request: Request) {
   }
 
   const r = await ejecutarSyncOlva()
+  // La lista cambió: el servidor y el CDN deben releerla.
+  invalidarAgenciasOlva()
   return NextResponse.json(r, { status: r.ok ? 200 : 502 })
 }
 
@@ -21,5 +24,7 @@ export async function POST(request: Request) {
   }
 
   const r = await ejecutarSyncOlva()
+  // La lista cambió: el servidor y el CDN deben releerla.
+  invalidarAgenciasOlva()
   return NextResponse.json(r, { status: r.ok ? 200 : 502 })
 }

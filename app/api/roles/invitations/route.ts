@@ -4,6 +4,8 @@ import { requireOwner } from '@/lib/ownerAuth'
 import { esTablaFaltante } from '@/lib/roles'
 import { crearInvitacion, linkDeInvitacion, renovarLink } from '@/lib/invitaciones'
 import { mensajeDb } from '@/lib/erroresEs'
+import { invalidarCacheNegocio } from '@/lib/negocioAuth'
+import { conInvalidacion } from '@/lib/conInvalidacion'
 
 // ============================================================
 // INVITACIONES PENDIENTES
@@ -46,7 +48,7 @@ export async function GET(request: Request) {
 }
 
 // Crear invitación (devuelve el link para compartir)
-export async function POST(request: Request) {
+async function POST_(request: Request) {
   const auth = await requireOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -90,7 +92,7 @@ export async function POST(request: Request) {
 }
 
 // Genera un link nuevo (invalida el anterior)
-export async function PATCH(request: Request) {
+async function PATCH_(request: Request) {
   const auth = await requireOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -125,7 +127,7 @@ export async function PATCH(request: Request) {
 }
 
 // Cancelar una invitación
-export async function DELETE(request: Request) {
+async function DELETE_(request: Request) {
   const auth = await requireOwner()
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -150,3 +152,7 @@ export async function DELETE(request: Request) {
 
   return NextResponse.json({ ok: true })
 }
+
+export const POST = conInvalidacion(POST_, invalidarCacheNegocio)
+export const PATCH = conInvalidacion(PATCH_, invalidarCacheNegocio)
+export const DELETE = conInvalidacion(DELETE_, invalidarCacheNegocio)

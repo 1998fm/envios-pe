@@ -40,7 +40,7 @@ npm run lint
 3. **Clientes Supabase**: admin (`app/f/[slug]/lib/supabase/admin.ts`, service role) para casi todo; `clienteAuth` (`src/lib/authServidor.ts`, anon + cookies) solo para `/api/auth/*` y `/auth/*`. Env en `src/lib/supabaseEnv.ts`.
 4. **`proxy.ts`** (raíz; Next 16 renombró `middleware.ts` → `proxy.ts`, exporta `proxy`): solo barrera de UX (redirige `/dashboard`, `/admin`, `/onboarding` sin sesión; `/login`/`/register` con sesión). La autorización real está en cada API route.
 5. **Imágenes**: `/media/{logos|productos}/...` se reescribe en `next.config.ts` hacia Storage; el navegador nunca ve la URL real.
-6. **Tiempo real reemplazado por polling** (`src/hooks/usePolling.ts`); los `realtime-*.sql` son legado.
+6. **Sin tiempo real ni polling**: los datos se cargan al abrir cada pantalla y se recargan solo tras acciones del propio usuario (egress de Supabase: no volver a consultar en intervalos). Los `realtime-*.sql` son legado.
 7. **Errores en español**: traducir errores de DB/Auth con `src/lib/erroresEs.ts` (`mensajeDb`, etc.); el detalle original solo al log del servidor. Errores de SQL propios: `RAISE EXCEPTION` (código P0001) ya en español.
 8. **Rate limit** en memoria por IP (`src/lib/rateLimit.ts`, `permitir()`); es barrera casual en serverless, no global.
 9. Validación de entradas del cliente: `idsValidos` (UUID) en `src/lib/enviosServidor.ts`, `urlSegura.ts`, `listaValida.ts`, `mediaUrl.ts`.
@@ -82,7 +82,7 @@ src/
   components/                  Seccion* (Ventas, Productos, Compras, Gastos, Clientes, Formulario), Modal*,
                                PanelResumen, Onboarding*, landing/*, ui/* (Button, Modal, Select, Field…), admin/*
   lib/                         lógica de negocio y auth (ver arriba)
-  hooks/                       useEsMovil, usePolling, useRol*…
+  hooks/                       useEsMovil, useRol*…
   context/OnboardingContext    tours guiados (src/lib/tours.ts)
   types/                       config.ts, envio.ts, inventario.ts
 supabase/                      scripts SQL SIN numerar (esquema, migraciones, RPCs, RLS); instalacion-completa.sql = generado
@@ -142,7 +142,7 @@ Si cambias límites hay que tocar **los tres sitios** (FEATURES, `plan_features`
 - **Búsqueda** (`src/lib/buscar.ts`) por palabras; va DESPUÉS de estados/método/fechas en la query (si no, se saltaba los filtros).
 - Subidas de imagen: PNG/JPG/WEBP/GIF, máx 3 MB, siempre validadas en servidor (`configuracionNegocio.ts`, `/api/uploads/producto`); el cliente comprime con `comprimirImagen.ts`. URLs guardadas en forma canónica y servidas vía `/media` (`mediaUrl.ts`: `aProxy`/`desdeProxy`).
 - Idempotencia de envíos públicos: `envios-idempotencia.sql`.
-- `dashboard/page.tsx` es un monolito (~1470 líneas, estado de envíos, filtros, modales, polling cada 10 s con `usePolling`); las demás pestañas ya son componentes `Seccion*`. Preferir extraer en vez de seguir creciendo.
+- `dashboard/page.tsx` es un monolito (~1470 líneas, estado de envíos, filtros, modales); las demás pestañas ya son componentes `Seccion*`. Preferir extraer en vez de seguir creciendo.
 - Vista móvil: `useEsMovil` + barra inferior; cualquier tabla/modal nuevo debe verse bien a 360 px (cubierto por `movil.spec.ts`).
 - Marca/estilo: paleta `tori-*` en `app/globals.css` (Tailwind 4 `@theme`, azul `#1397df` como 500), fuentes Geist, mascota `ToriMascot`/`LogoTori`. Componentes base reutilizables en `src/components/ui/`.
 - `export` de `xlsx` se hace en el cliente; `html5-qrcode` solo en navegador (no importar en servidor).
@@ -162,7 +162,7 @@ Si cambias límites hay que tocar **los tres sitios** (FEATURES, `plan_features`
 ## Desfases conocidos (no confíes ciegamente en la doc)
 
 - `docs/GUIA_SISTEMA.md` habla de planes Básico/Pro, de `app/middleware.ts` y de APIs "sin autenticación por sesión": **obsoleto**. Hoy hay 3 planes, `proxy.ts` y `requireNegocio`. Los límites reales están en `src/lib/planGating.ts` (`FEATURES`), no en esa guía/README.
-- README menciona `x-vercel-cron` y Realtime; hoy el cron usa `CRON_SECRET` y se usa polling.
+- README menciona `x-vercel-cron` y Realtime; hoy el cron usa `CRON_SECRET` y no hay polling ni Realtime.
 - `README.md` dice `app/f/[slug]/lib/` con helpers de Supabase de cliente; ahora solo queda el cliente admin de servidor.
 
 ## Convenciones

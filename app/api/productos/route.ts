@@ -33,10 +33,20 @@ export async function GET(request: Request) {
   const archivado = searchParams.get('archivado')
   const offset = parseInt(searchParams.get('offset') || '0')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 1000)
+  // ?ligero=1: solo las columnas del selector de ventas/compras (sin fechas,
+  // stock mínimo, etc.). Reduce bastante lo que baja de la base.
+  const ligero = searchParams.get('ligero') === '1'
 
   let query = supabaseAdmin
     .from('productos')
-    .select('*', { count: 'exact' })
+    // El tipo de la consulta se deriva del texto del select; con una variable
+    // no se puede, así que se tipa como '*' (la forma de fila es la misma).
+    .select(
+      (ligero
+        ? 'id, profile_id, nombre, sku, descripcion, precio_venta, precio_compra, stock_actual, unidad, imagen_url'
+        : '*') as '*',
+      { count: 'exact' }
+    )
     .eq('profile_id', userId)
     .eq('archivado', archivado === 'true')
 
