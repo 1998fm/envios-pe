@@ -1,77 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { validarHoraCorte } from '@/lib/logistica/validarHoraCorte'
-import { computeEffectivePlan } from '@/lib/planGating'
-import { sumarDiasHabiles } from '@/lib/logistica/sumarDiasHabiles'
-import { mensajeDb } from '@/lib/erroresEs'
-
-async function contarEnviosDelDia(userId: string, fecha: string): Promise<number> {
-  const inicio = new Date(fecha + 'T00:00:00.000Z').toISOString()
-  const fin = new Date(fecha + 'T23:59:59.999Z').toISOString()
-  const { count } = await supabaseAdmin
-    .from('envios')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .gte('fecha_programada', inicio)
-    .lt('fecha_programada', fin)
-  return count ?? 0
-}
-
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "app/f/[slug]/lib/supabase/admin";
+import { mensajeDb } from "@/lib/erroresEs";
 export async function GET(request: NextRequest) {
-  const userId = request.nextUrl.searchParams.get('userId')
-  if (!userId) {
-    return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
-  }
-
-  const { data: perfil, error } = await supabaseAdmin
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single()
-
-  if (error) {
-    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
-  }
-
-  const esPro = computeEffectivePlan(perfil).plan !== 'basic'
-
-  const diasConfig: string[] = perfil?.logistica_moto_dias ?? ['MONDAY']
-  // Respaldo de seguridad: el form ya oculta motorizado sin días; el lunes solo
-  // evita un loop infinito ante una llamada directa a la API.
-  const diasDisponibles = diasConfig.length > 0 ? diasConfig : ['MONDAY']
-  const usaHora = esPro ? (perfil?.logistica_moto_usa_hora_corte ?? false) : false
-  const horaCorte = esPro ? (perfil?.logistica_moto_hora_corte ?? '18:00') : '18:00'
-  const anticipacion = esPro ? Number(perfil?.logistica_moto_anticipacion ?? 1) : 1
-  const soloHabiles = esPro && anticipacion >= 2 ? Boolean(perfil?.logistica_moto_anticipacion_solo_habiles) : false
-  const limitar = esPro ? (perfil?.logistica_moto_limitar ?? false) : false
-  const cupo = esPro ? Number(perfil?.logistica_moto_cupo ?? 0) : 0
-
-  // Normalizar a Perú y determinar offset según hora de corte
-  const peruStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
-  const [y, m, d] = peruStr.split('-').map(Number)
-  const hoyPeru = new Date(y, m - 1, d, 12, 0, 0, 0)
-
-  const offset = usaHora && validarHoraCorte(horaCorte) ? anticipacion + 1 : anticipacion
-
-  const fechasDisponibles: string[] = []
-  const candidata = soloHabiles ? sumarDiasHabiles(diasDisponibles, offset, hoyPeru) : new Date(hoyPeru)
-  if (!soloHabiles) {
-    candidata.setDate(candidata.getDate() + offset)
-  }
-
-  while (fechasDisponibles.length < 3) {
-    const nombreDia = candidata
-      .toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/Lima' })
-      .toUpperCase()
-    if (diasDisponibles.includes(nombreDia)) {
-      const fechaStr = candidata.toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
-      const count = limitar ? await contarEnviosDelDia(userId, fechaStr) : 0
-      if (!limitar || count < cupo) {
-        fechasDisponibles.push(fechaStr)
-      }
-    }
-    candidata.setDate(candidata.getDate() + 1)
-  }
-
-  return NextResponse.json({ fechasDisponibles })
+  const userId = request.nextUrl.searchParams.get("userId");
+  if (
+    !userId ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      userId,
+    )
+  )
+    return NextResponse.json({ error: "Negocio no válido." }, { status: 400 });
+  const { data, error } = await supabaseAdmin.rpc("tori_fechas_logistica", {
+    p_owner: userId,
+    p_metodo: "MOTORIZADO",
+    p_cantidad: 3,
+  });
+  if (error)
+    return NextResponse.json(
+      { error: mensajeDb(error) },
+      { status: error.code === "P0001" ? 409 : 503 },
+    );
+  return NextResponse.json(data, {
+    headers: { "Cache-Control": "private, no-store" },
+  });
 }

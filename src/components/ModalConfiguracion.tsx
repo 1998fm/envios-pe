@@ -357,6 +357,8 @@ function ModalConfiguracionContenido({
                         <AyudaLogistica className="ml-auto" />
                       </div>
                       <ConfiguracionMetodo
+                        bloqueado={isBasic}
+                        onUpgrade={onUpgrade}
                         dias={config.logisticaMotoDias}
                         setDias={setter('logisticaMotoDias')}
                         usaHora={config.logisticaMotoUsaHoraCorte}
@@ -376,7 +378,8 @@ function ModalConfiguracionContenido({
                       <label className="flex items-center gap-3 cursor-pointer mt-5 pt-4 border-t border-slate-100">
                         <input
                           type="checkbox"
-                          checked={config.mostrarEscogerFecha}
+                          disabled={isBasic}
+                          checked={!isBasic && config.mostrarEscogerFecha}
                           onChange={(e) => upd('mostrarEscogerFecha', e.target.checked)}
                           className="accent-sky-600 w-4 h-4"
                         />
@@ -399,6 +402,8 @@ function ModalConfiguracionContenido({
                           <AyudaLogistica className="ml-auto" />
                         </div>
                         <ConfiguracionMetodo
+                          bloqueado={isBasic}
+                          onUpgrade={onUpgrade}
                           dias={config.logisticaAgenciasDias}
                           setDias={setter('logisticaAgenciasDias')}
                           usaHora={config.logisticaAgenciasUsaHoraCorte}

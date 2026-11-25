@@ -144,6 +144,42 @@ export async function guardarConfiguracion(
     .maybeSingle();
   const basico = computeEffectivePlan(perfil ?? {}).plan === "basic";
 
+  if (!basico) {
+    for (const [activo, nombre, anticipacion, limitar, cupo] of [
+      [
+        config.metodoMotorizado,
+        "motorizado",
+        config.logisticaMotoAnticipacion,
+        config.logisticaMotoLimitar,
+        config.logisticaMotoCupo,
+      ],
+      [
+        config.metodoShalom ||
+          config.metodoOlva ||
+          config.metodoMarvisur ||
+          config.metodoFlores ||
+          config.metodoOtro,
+        "agencias",
+        config.logisticaAgenciasAnticipacion,
+        config.logisticaAgenciasLimitar,
+        config.logisticaAgenciasCupo,
+      ],
+    ] as const) {
+      if (!activo) continue;
+      if (
+        !Number.isInteger(Number(anticipacion)) ||
+        Number(anticipacion) < 1 ||
+        Number(anticipacion) > 365
+      )
+        return {
+          error: `Configura la anticipación de ${nombre} entre 1 y 365 días.`,
+        };
+      if (limitar && (!Number.isInteger(Number(cupo)) || Number(cupo) < 1))
+        return {
+          error: `Configura un cupo diario mayor que cero para ${nombre}.`,
+        };
+    }
+  }
   const slug = generarSlug(config.empresa);
   if (!slug) return { error: "El nombre del negocio no es válido." };
   if (!(await slugLibre(ownerId, slug))) {

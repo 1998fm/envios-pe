@@ -222,7 +222,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan
     if (!fechaProgramada || fechaProgramada === current.fecha_programada?.split('T')[0]) return
     setGuardando(true)
     setMensaje('')
-    const nuevaFecha = new Date(fechaProgramada + 'T12:00:00').toISOString()
+    const nuevaFecha = new Date(fechaProgramada + 'T12:00:00-05:00').toISOString()
     try {
       await api(`/api/envios/${current.id}`, { method: 'PATCH', json: { fecha_programada: nuevaFecha } })
       setMensaje('Fecha actualizada')

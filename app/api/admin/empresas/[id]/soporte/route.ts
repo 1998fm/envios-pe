@@ -423,7 +423,9 @@ export async function POST(
       );
     else update = update.eq(k, value);
   }
-  const result = await update.select("id").maybeSingle();
+  const result = table === "envios" && "fecha_programada" in changes
+    ? await supabaseAdmin.rpc("tori_actualizar_envio_logistico",{p_owner:id,p_id:rowId,p_cambios:changes,p_esperado:Object.fromEntries(compare.map(k=>[k,before[k]]))})
+    : await update.select("id").maybeSingle();
   const success = !result.error && !!result.data;
   await supabaseAdmin
     .from("admin_audit_log")
@@ -434,7 +436,7 @@ export async function POST(
   if (result.error)
     return fail(
       mensajeDb(result.error),
-      result.error.code === "23505" ? 409 : 500,
+      ["23505","P0001"].includes(result.error.code) ? 409 : 500,
     );
   if (!result.data)
     return fail(

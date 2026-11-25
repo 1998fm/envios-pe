@@ -4,8 +4,6 @@ import { distritoExcluido } from '@/lib/coberturaMoto'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireNegocio } from '@/lib/negocioAuth'
-import { calcularFechaEntrega } from '@/lib/logistica/calcularFechaEntrega'
-import { computeEffectivePlan } from '@/lib/planGating'
 import { checkEnvioLimit } from '@/lib/planLimits'
 import { normalizar, palabrasClave } from '@/lib/buscar'
 import { mensajeDb } from '@/lib/erroresEs'
@@ -177,6 +175,7 @@ export async function POST(req: Request) {
         .from('envios')
         .select('id,fecha_programada')
         .eq('idempotency_key', idempotencyKey)
+        .eq('user_id', user_id)
         .maybeSingle()
       if (!errLlave && porLlave) {
         return NextResponse.json({
@@ -190,7 +189,7 @@ export async function POST(req: Request) {
     const { data: perfil, error: perfilError } =
       await supabaseAdmin
         .from('profiles')
-        .select('id,plan,trial_end,pro_until,logistica_moto_dias,logistica_moto_usa_hora_corte,logistica_moto_hora_corte,logistica_moto_anticipacion,logistica_moto_anticipacion_solo_habiles,logistica_moto_limitar,logistica_moto_cupo,logistica_agencias_dias,logistica_agencias_usa_hora_corte,logistica_agencias_hora_corte,logistica_agencias_anticipacion,logistica_agencias_anticipacion_solo_habiles,logistica_agencias_limitar,logistica_agencias_cupo,moto_region')
+        .select('id,moto_region')
         .eq('id', user_id)
         .single()
 
@@ -304,67 +303,8 @@ export async function POST(req: Request) {
       }
     }
 
-    const esPro = computeEffectivePlan(perfil).plan !== 'basic'
-
-    // Recepción ilimitada en ambos planes; se conserva la interfaz del comprobador.
     const limiteEnvio = await checkEnvioLimit(user_id)
-    if (!limiteEnvio.allowed) {
-      return NextResponse.json({ error: limiteEnvio.reason }, { status: 403 })
-    }
-
-    // Para básico la configuración logística personalizada (días, hora de corte, cupo) no aplica
-    const logistica = esPro
-      ? {
-          logisticaMotoDias: perfil.logistica_moto_dias ?? ['MONDAY'],
-          logisticaMotoUsaHoraCorte: perfil.logistica_moto_usa_hora_corte ?? false,
-          logisticaMotoHoraCorte: perfil.logistica_moto_hora_corte ?? '18:00',
-          logisticaMotoAnticipacion: perfil.logistica_moto_anticipacion ?? 1,
-          logisticaMotoAnticipacionSoloHabiles: perfil.logistica_moto_anticipacion_solo_habiles ?? false,
-          logisticaMotoLimitar: perfil.logistica_moto_limitar ?? false,
-          logisticaMotoCupo: perfil.logistica_moto_cupo ?? 0,
-          logisticaAgenciasDias: perfil.logistica_agencias_dias ?? ['MONDAY'],
-          logisticaAgenciasUsaHoraCorte: perfil.logistica_agencias_usa_hora_corte ?? false,
-          logisticaAgenciasHoraCorte: perfil.logistica_agencias_hora_corte ?? '18:00',
-          logisticaAgenciasAnticipacion: perfil.logistica_agencias_anticipacion ?? 1,
-          logisticaAgenciasAnticipacionSoloHabiles: perfil.logistica_agencias_anticipacion_solo_habiles ?? false,
-          logisticaAgenciasLimitar: perfil.logistica_agencias_limitar ?? false,
-          logisticaAgenciasCupo: perfil.logistica_agencias_cupo ?? 0,
-        }
-      : {
-          logisticaMotoDias: perfil.logistica_moto_dias ?? ['MONDAY'],
-          logisticaMotoUsaHoraCorte: false,
-          logisticaMotoHoraCorte: '18:00',
-          logisticaMotoAnticipacion: 1,
-          logisticaMotoAnticipacionSoloHabiles: false,
-          logisticaMotoLimitar: false,
-          logisticaMotoCupo: 0,
-          logisticaAgenciasDias: perfil.logistica_agencias_dias ?? ['MONDAY'],
-          logisticaAgenciasUsaHoraCorte: false,
-          logisticaAgenciasHoraCorte: '18:00',
-          logisticaAgenciasAnticipacion: 1,
-          logisticaAgenciasAnticipacionSoloHabiles: false,
-          logisticaAgenciasLimitar: false,
-          logisticaAgenciasCupo: 0,
-        }
-
-    let fechaProgramada: Date
-
-    if (esPro && fechaProgramadaBody) {
-      fechaProgramada = new Date(fechaProgramadaBody)
-    } else {
-      const tipoMetodo =
-        metodo === 'MOTORIZADO'
-          ? 'MOTO'
-          : 'AGENCIA'
-
-      fechaProgramada =
-        await calcularFechaEntrega(
-          supabaseAdmin,
-          user_id,
-          logistica,
-          tipoMetodo
-        )
-    }
+    if (!limiteEnvio.allowed) return NextResponse.json({ error: limiteEnvio.reason }, { status: 403 })
 
     const insertPayload: Record<string, any> = {
       user_id,
@@ -389,7 +329,7 @@ export async function POST(req: Request) {
         new Date().toISOString(),
 
       fecha_programada:
-        fechaProgramada.toISOString(),
+        fechaProgramadaBody || null,
     }
     if (tipoEntregaBody === 'AGENCIA' || tipoEntregaBody === 'DOMICILIO') {
       insertPayload.tipo_entrega = tipoEntregaBody
@@ -402,29 +342,7 @@ export async function POST(req: Request) {
     }
     if (idempotencyKey) insertPayload.idempotency_key = idempotencyKey
 
-    let { data, error } =
-      await supabaseAdmin
-        .from('envios')
-        .insert([insertPayload])
-        .select()
-        .single()
-
-    // La columna aún no existe (migración pendiente en Supabase):
-    // reintentar sin la llave para no bloquear el pedido.
-    if (
-      error &&
-      idempotencyKey &&
-      (error.code === 'PGRST204' || /idempotency_key/i.test(error.message || ''))
-    ) {
-      delete insertPayload.idempotency_key
-      const reintento = await supabaseAdmin
-        .from('envios')
-        .insert([insertPayload])
-        .select()
-        .single()
-      data = reintento.data
-      error = reintento.error
-    }
+    const { data, error } = await supabaseAdmin.rpc('tori_crear_envio_logistico', { p_envio: insertPayload })
 
     // Carrera concurrente: otro request creó el envío con esta misma
     // llave (índice único). Devolver el existente en vez de fallar.
@@ -433,6 +351,7 @@ export async function POST(req: Request) {
         .from('envios')
         .select('id,fecha_programada')
         .eq('idempotency_key', idempotencyKey)
+        .eq('user_id', user_id)
         .maybeSingle()
       if (porLlave) {
         return NextResponse.json({
@@ -449,7 +368,7 @@ export async function POST(req: Request) {
           error: mensajeDb(error),
         },
         {
-          status: 400,
+          status: error.code === 'P0001' ? 409 : 400,
         }
       )
     }

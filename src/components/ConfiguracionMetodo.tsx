@@ -228,6 +228,8 @@ export default function ConfiguracionMetodo({
       {compacto && !bloqueado && anticipacionCampo}
       {bloqueado ? (
         <div className="space-y-3">
+          <p className="text-sm text-slate-600">Básico programa con 1 día de anticipación y sin cupo diario. Personaliza estas reglas con Plus.</p>
+          <FilaBloqueada onUpgrade={onUpgrade} titulo="Días de anticipación" descripcion="Personalizables en Plus" />
           <FilaBloqueada
             onUpgrade={onUpgrade}
             titulo="Hora de corte"

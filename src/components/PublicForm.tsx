@@ -212,9 +212,11 @@ export default function PublicForm({
     try {
       const res = await fetch(`/api/logistica/moto?userId=${userId}`)
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudieron consultar las fechas.")
       setFechasDisponibles(data.fechasDisponibles ?? [])
-    } catch {
+    } catch (e) {
       setFechasDisponibles([])
+      setError(e instanceof Error ? e.message : 'No se pudieron consultar las fechas.')
     }
     setCargandoFechas(false)
   }, [userId])
@@ -340,6 +342,13 @@ export default function PublicForm({
       return
     }
 
+    if (metodo === 'MOTORIZADO' && isPro && escogerDia && !fechaSeleccionada) {
+      setError('Elige una fecha de entrega disponible.')
+      setLoading(false)
+      enviandoRef.current = false
+      return
+    }
+
     let detalle = ''
     if (metodo === 'RECOJO') detalle = mensajeRecojo || 'Recojo en tienda'
     if (metodo === 'SHALOM') detalle = agencia
@@ -391,12 +400,17 @@ export default function PublicForm({
           detalle,
           observaciones: '',
           idempotency_key: idempotencyKey,
-          ...(isPro && fechaSeleccionada ? { fecha_programada: new Date(fechaSeleccionada + 'T12:00:00').toISOString() } : {}),
+          ...(isPro && fechaSeleccionada ? { fecha_programada: fechaSeleccionada } : {}),
         }),
       })
 
       if (!res.ok) {
-        setError('Ocurrió un error al registrar el pedido. Inténtalo de nuevo.')
+        const detalleError = await res.json().catch(() => null)
+        if (res.status === 409 && fechaSeleccionada) {
+          setFechaSeleccionada('')
+          await activarEscogerDia()
+        }
+        setError(detalleError?.error || 'Ocurrió un error al registrar el pedido. Inténtalo de nuevo.')
         return
       }
 
@@ -413,7 +427,7 @@ export default function PublicForm({
       setLoading(false)
       enviandoRef.current = false
     }
-  }, [nombre, dni, telefono, cantidadProductos, metodo, agencia, provincia, tipoEntrega, agenciaOlva, agenciasOlvaProvincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom, solicitarCantidadProductos, distritosMotoList])
+  }, [nombre, dni, telefono, cantidadProductos, metodo, agencia, provincia, tipoEntrega, agenciaOlva, agenciasOlvaProvincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom, solicitarCantidadProductos, distritosMotoList, activarEscogerDia, escogerDia, loading, mensajeRecojo])
 
   if (formularioDeshabilitado) {
     return (

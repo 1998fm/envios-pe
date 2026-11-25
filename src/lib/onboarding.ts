@@ -171,8 +171,12 @@ export function validarPasoInicial(
         dias.some((d) => !DIAS.includes(d))
       )
         return `Elige al menos un día de atención para ${nombre}.`;
-      if (!Number.isInteger(Number(anticipacion)) || Number(anticipacion) < 1)
-        return `La anticipación de ${nombre} debe ser de al menos un día.`;
+      if (
+        !Number.isInteger(Number(anticipacion)) ||
+        Number(anticipacion) < 1 ||
+        Number(anticipacion) > 365
+      )
+        return `La anticipación de ${nombre} debe estar entre 1 y 365 días.`;
       if (usaHora && !/^([01]\d|2[0-3]):[0-5]\d$/.test(hora ?? ""))
         return `Revisa la hora de corte de ${nombre}.`;
       if (limitar && (!Number.isInteger(Number(cupo)) || Number(cupo) < 1))

@@ -30,8 +30,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     cambios.tamano = t || null
   }
   if ('fecha_programada' in body) {
-    const f = new Date(body.fecha_programada)
-    if (Number.isNaN(f.getTime())) {
+    const valor = body.fecha_programada
+    if (typeof valor !== 'string' || valor.length > 50 || !/^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(valor)) return NextResponse.json({ error: 'Fecha no válida' }, { status: 400 })
+    const f = new Date(typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor) ? `${valor}T12:00:00-05:00` : valor)
+    if (Number.isNaN(f.getTime()) || (/^\d{4}-\d{2}-\d{2}$/.test(valor) && f.toISOString().slice(0,10) !== valor)) {
       return NextResponse.json({ error: 'Fecha no válida' }, { status: 400 })
     }
     cambios.fecha_programada = f.toISOString()
@@ -48,15 +50,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   cambios.updated_at = new Date().toISOString()
 
-  const { data, error } = await supabaseAdmin
-    .from('envios')
-    .update(cambios)
-    .eq('id', id)
-    .eq('user_id', auth.ownerId)
-    .select('*')
-    .maybeSingle()
+  const { data, error } = 'fecha_programada' in cambios
+    ? await supabaseAdmin.rpc('tori_actualizar_envio_logistico', { p_owner:auth.ownerId,p_id:id,p_cambios:cambios })
+    : await supabaseAdmin.from('envios').update(cambios).eq('id',id).eq('user_id',auth.ownerId).select('*').maybeSingle()
 
-  if (error) return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
+  if (error) return NextResponse.json({ error: mensajeDb(error) }, { status: error.code === 'P0001' ? 409 : 500 })
   if (!data) return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 })
 
   if (cambios.estado === 'ENVIADO') await sincronizarVentasEnviadas(auth.ownerId, [id])
