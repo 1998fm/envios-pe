@@ -1,4 +1,5 @@
 "use client";
+import {usePlan} from "@/context/PlanesContext";
 import { useState } from "react";
 import { ChevronDown, CheckCircle2, Circle, ExternalLink } from "lucide-react";
 import {
@@ -28,6 +29,7 @@ export default function PrimerosPasos({
   onConfigurar,
   onEnvios,
 }: Props) {
+  const {permite}=usePlan(plan);
   const [abierto, setAbierto] = useState(false);
   const [probado, setProbado] = useState(
     () =>
@@ -154,7 +156,7 @@ export default function PrimerosPasos({
               </article>
             )}
           </div>
-          {plan !== "basic" &&
+          {['productos','ventas','compras'].some(k=>permite(k)) &&
             ["productos", "compras", "ventas"].some((v) =>
               visibles.includes(v),
             ) && (

@@ -11,6 +11,7 @@ export async function GET() {
   const features: PlanFeature | null = await getPlanFeatures(trial.plan)
 
   return NextResponse.json({
+    ...features,
     plan: trial.plan,
     isTrial: trial.isTrial,
     isPaid: trial.isPaid,

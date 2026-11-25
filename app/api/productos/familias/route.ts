@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { imagenEnUso } from "@/lib/productos/imagenes";
 import { rutaDesdeUrlProducto } from "@/lib/comprimirImagen";
 import { NextResponse } from "next/server";
@@ -15,6 +16,8 @@ const falta = (e: { code?: string } | null) =>
 export async function GET(request: Request) {
   const auth = await requirePlus("ver_productos");
   if (!auth.ok) return auth.response;
+  const permisoPlan=requireFunciones(auth,'productos_variantes');
+  if(permisoPlan)return permisoPlan;
   const q = new URL(request.url).searchParams,
     id = q.get("id");
   if (id) {
@@ -114,6 +117,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const auth = await requirePlus("ver_productos");
   if (!auth.ok) return auth.response;
+  const permisoPlan=requireFunciones(auth,'productos_variantes');
+  if(permisoPlan)return permisoPlan;
   let body;
   try {
     const raw = await request.text();
@@ -129,6 +134,31 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  // Desactivar fotos conserva las ya guardadas; editar un precio no las elimina.
+  if(requireFunciones(auth,'productos_fotos') && ['crear','guardar','agrupar'].includes(body.accion)) {
+    const imagen='imagen_url' in body.datos?body.datos.imagen_url:null;
+    const actual=body.id?await supabaseAdmin.from('productos_familias').select('imagen_url').eq('id',body.id).eq('profile_id',auth.ownerId).maybeSingle():null;
+    if(actual?.error)return NextResponse.json({error:'No se pudo verificar la foto actual.'},{status:503});
+    if((imagen??null)!==(actual?.data?.imagen_url??null))return requireFunciones(auth,'productos_fotos')!;
+    const filas=body.variantes as Record<string,unknown>[];
+    const ids=filas.flatMap(v=>typeof v.producto_id==='string'?[v.producto_id]:[]);
+    const fotos=ids.length?await supabaseAdmin.from('productos').select('id,imagen_url').eq('profile_id',auth.ownerId).in('id',ids):null;
+    if(fotos?.error)return NextResponse.json({error:'No se pudieron verificar las fotos actuales.'},{status:503});
+    for(const v of filas){
+      if('imagen_url' in v && (v.imagen_url??null)!==(fotos?.data?.find(p=>p.id===v.producto_id)?.imagen_url??null))return requireFunciones(auth,'productos_fotos')!;
+      // Evita que cambiar la preferencia sustituya una foto especial por la general.
+      delete v.imagen_especial;
+    }
+  }
+  if(body.accion==='guardar' && requireFunciones(auth,'productos_archivar')){
+    const filas=body.variantes as Record<string,unknown>[];
+    const ids=filas.flatMap(v=>typeof v.producto_id==='string'?[v.producto_id]:[]);
+    const actuales=ids.length?await supabaseAdmin.from('productos').select('id,archivado').eq('profile_id',auth.ownerId).in('id',ids):null;
+    if(actuales?.error)return NextResponse.json({error:'No se pudo verificar el archivo de las variantes.'},{status:503});
+    if(filas.some(v=>'archivado' in v && v.archivado!==(actuales?.data?.find(p=>p.id===v.producto_id)?.archivado??false)))return requireFunciones(auth,'productos_archivar')!;
+  }
+  if(body.accion==='guardar' && body.variantes.some(v=>!v.producto_id)){const crear=requireFunciones(auth,'productos_crear');if(crear)return crear;}
+  const accionPlan=body.accion==='agrupar'?null:requireFunciones(auth,body.accion==='crear'?'productos_crear':'productos_editar');if(accionPlan)return accionPlan;
   const r = await supabaseAdmin.rpc("gestionar_producto_familia", {
     p_owner: auth.ownerId,
     p_accion: body.accion,
@@ -157,6 +187,8 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const auth = await requirePlus("ver_productos");
   if (!auth.ok) return auth.response;
+  const permisoPlan=requireFunciones(auth,'productos_variantes','productos_eliminar');
+  if(permisoPlan)return permisoPlan;
   const body = await request.json().catch(() => null);
   if (
     !body ||

@@ -1,5 +1,6 @@
 'use client'
 
+import AdminPlanes from '@/components/AdminPlanes'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
@@ -79,20 +80,6 @@ type Overview = {
   totalEnvios: number
   totalVentas: number
   serie: { dia: string; envios: number; ventas: number }[]
-}
-
-type PlanRow = {
-  plan: string
-  max_envios: number | null
-  max_metodos: number | null
-  max_productos: number | null
-  max_ventas: number | null
-  max_exportaciones_shalom: number | null
-  max_pedidos_copiar: number | null
-  form_branding: boolean
-  dashboard_completo: boolean
-  envios_masivos: boolean
-  control_logistico: boolean
 }
 
 type Activo = {
@@ -263,7 +250,6 @@ export default function AdminPage() {
   const [busqueda, setBusqueda] = useState('')
   const [filtroPlan, setFiltroPlan] = useState('')
   const [paginaE, setPaginaE] = useState(1)
-  const [planRows, setPlanRows] = useState<PlanRow[] | null>(null)
   const [activos, setActivos] = useState<Activo[]>([])
   const [totalActivos, setTotalActivos] = useState(0)
   const [desdeActivos, setDesdeActivos] = useState('')
@@ -357,15 +343,6 @@ export default function AdminPage() {
       setError((e as Error).message)
     }
   }, [fetchJson, paginaE, busqueda, filtroPlan])
-
-  const cargarPlanes = useCallback(async () => {
-    try {
-      const d = await fetchJson('/api/admin/planes')
-      setPlanRows(d.planes)
-    } catch (e) {
-      setError((e as Error).message)
-    }
-  }, [fetchJson])
 
   const cargarActividad = useCallback(async () => {
     try {
@@ -467,7 +444,6 @@ export default function AdminPage() {
     if (!sesion) return
     if (tab === 'resumen' || tab === 'soporte') cargarOverview()
     if (tab === 'empresas') cargarEmpresas()
-    if (tab === 'planes') cargarPlanes()
     if (tab === 'actividad') cargarActividad()
     if (tab === 'shalom') cargarShalom()
     if (tab === 'olva') cargarOlva()
@@ -482,7 +458,6 @@ export default function AdminPage() {
     if (tab === 'consumo') setConsumoRevision((v) => v + 1)
     if (tab === 'resumen' || tab === 'soporte') cargarOverview()
     if (tab === 'empresas') cargarEmpresas()
-    if (tab === 'planes') cargarPlanes()
     if (tab === 'actividad') cargarActividad()
     if (tab === 'shalom') cargarShalom()
     if (tab === 'olva') cargarOlva()
@@ -624,26 +599,6 @@ export default function AdminPage() {
     } finally {
       setSincronizandoOlva(false)
     }
-  }
-
-  // Acción: guardar planes
-  const guardarPlanes = async () => {
-    if (!planRows) return
-    setError('')
-    try {
-      const body: Record<string, Record<string, unknown>> = {}
-      planRows.forEach((p) => (body[p.plan] = { ...p }))
-      await fetchJson('/api/admin/planes', { method: 'PUT', body: JSON.stringify(body) })
-      cargarPlanes()
-    } catch (e) {
-      setError((e as Error).message)
-    }
-  }
-
-  const setCampoPlan = (plan: string, campo: keyof PlanRow, valor: unknown) => {
-    setPlanRows((prev) =>
-      prev ? prev.map((p) => (p.plan === plan ? { ...p, [campo]: valor } : p)) : prev
-    )
   }
 
   if (chequeando) {
@@ -986,71 +941,7 @@ export default function AdminPage() {
         )}
 
         {/* ============ PLANES ============ */}
-        {tab === 'planes' && planRows && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-                    <tr>
-                      <th className="px-4 py-3 font-semibold">Plan</th>
-                      <th className="px-4 py-3 font-semibold">Máx. envíos</th>
-                      <th className="px-4 py-3 font-semibold">Máx. métodos</th>
-                      <th className="px-4 py-3 font-semibold">Máx. productos</th>
-                      <th className="px-4 py-3 font-semibold">Máx. ventas</th>
-                      <th className="px-4 py-3 font-semibold">Máx. export Shalom</th>
-                      <th className="px-4 py-3 font-semibold">Máx. copiar</th>
-                      <th className="px-4 py-3 font-semibold">Features</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {planRows.map((p) => (
-                      <tr key={p.plan} className="align-top">
-                        <td className="px-4 py-3 font-semibold text-slate-900">{PLAN_LABEL[p.plan] ?? p.plan}</td>
-                        {(['max_envios', 'max_metodos', 'max_productos', 'max_ventas', 'max_exportaciones_shalom', 'max_pedidos_copiar'] as const).map((campo) => (
-                          <td key={campo} className="px-4 py-3">
-                            <input
-                              type="text"
-                              disabled={p.plan !== 'basic' || campo !== 'max_metodos'}
-                              value={p[campo] === null ? '' : String(p[campo])}
-                              onChange={(e) => setCampoPlan(p.plan, campo, e.target.value)}
-                              placeholder="Ilimit."
-                              className="w-24 px-2 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            />
-                          </td>
-                        ))}
-                        <td className="px-4 py-3">
-                          <div className="space-y-1">
-                            {([
-                              ['form_branding', 'Marca blanca'],
-                              ['dashboard_completo', 'Dashboard completo'],
-                              ['envios_masivos', 'Envíos masivos'],
-                              ['control_logistico', 'Control logístico'],
-                            ] as const).map(([campo, label]) => (
-                              <label key={campo} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  disabled
-                                  checked={!!p[campo]}
-                                  onChange={(e) => setCampoPlan(p.plan, campo, e.target.checked)}
-                                  className="h-4 w-4 rounded border-slate-300"
-                                />
-                                {label}
-                              </label>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button onClick={guardarPlanes}>Guardar planes</Button>
-            </div>
-          </div>
-        )}
+        {tab === 'planes' && <AdminPlanes />}
 
         {/* ============ SHALOM ============ */}
         {tab === 'shalom' && (

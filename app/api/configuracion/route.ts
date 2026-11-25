@@ -1,3 +1,4 @@
+import {requireAlgunaFuncion} from '@/lib/negocioAuth'
 import { NextResponse } from 'next/server'
 import { requireNegocio } from '@/lib/negocioAuth'
 import { guardarConfiguracion, type ConfigEntrada } from '@/lib/configuracionNegocio'
@@ -9,6 +10,8 @@ import { guardarConfiguracion, type ConfigEntrada } from '@/lib/configuracionNeg
 export async function POST(request: Request) {
   const auth = await requireNegocio()
   if (!auth.ok) return auth.response
+  const permisoPlan=requireAlgunaFuncion(auth,'configuracion','formulario');
+  if(permisoPlan)return permisoPlan;
   if (!auth.esOwner) {
     return NextResponse.json({ error: 'Solo el dueño puede cambiar la configuración' }, { status: 403 })
   }

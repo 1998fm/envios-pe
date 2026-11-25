@@ -1,5 +1,7 @@
 'use client'
 
+import {usePlan} from '@/context/PlanesContext'
+import {openUpgrade} from '@/lib/planGating'
 import { useState } from 'react'
 import MenuSelect from '@/components/ui/MenuSelect'
 import { toast } from 'sonner'
@@ -31,6 +33,7 @@ function badge(value: string) {
 }
 
 export default function EstadoSelect({ envioId, estadoActual }: Props) {
+  const {permite}=usePlan()
   const [seleccion, setSeleccion] = useState({ recibido: estadoActual, valor: estadoActual })
   // Un cambio masivo o de otra sesión debe reflejarse también en el selector.
   if (seleccion.recibido !== estadoActual) {
@@ -40,6 +43,7 @@ export default function EstadoSelect({ envioId, estadoActual }: Props) {
   const setEstado = (valor: string) => setSeleccion({ recibido: estadoActual, valor })
 
   async function cambiarEstado(nuevoEstado: string) {
+    if(!permite('envios_estado')){openUpgrade();return}
     const anterior = estado
     setEstado(nuevoEstado)
     try {

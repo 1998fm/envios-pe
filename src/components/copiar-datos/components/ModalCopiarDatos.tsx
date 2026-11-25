@@ -1,5 +1,7 @@
 'use client'
 
+import {usePlan} from '@/context/PlanesContext'
+import {openUpgrade} from '@/lib/planGating'
 import { useState, useEffect } from 'react'
 import TarjetaEnvio from './TarjetaEnvio'
 import ResumenCopiarDatos from './ResumenCopiarDatos'
@@ -21,7 +23,7 @@ export default function ModalCopiarDatos({
   onCerrar,
   onCambiarCobro,
 }: ModalCopiarDatosProps) {
-  if (!abierto) return null
+  const {permite,configuracion}=usePlan()
   const { startTour } = useOnboarding()
 
   useEffect(() => {
@@ -47,6 +49,7 @@ export default function ModalCopiarDatos({
   }
 
   async function copiarDatos() {
+    if(!permite('copiar')||(configuracion.max_pedidos_copiar!==null&&envios.length>configuracion.max_pedidos_copiar)){openUpgrade();return}
     const texto = generarTextoMoto(envios, tarifas, cobrarEnvios)
     await navigator.clipboard.writeText(texto)
     setCopiado(true)
@@ -54,9 +57,11 @@ export default function ModalCopiarDatos({
   }
 
   function exportarExcel() {
+    if(!permite('exportar')){openUpgrade();return}
     exportarExcelMoto(envios, tarifas, cobrarEnvios)
   }
 
+  if(!abierto)return null
   return (
     <div role="dialog" aria-modal="true" aria-label="Copiar datos para Motorizado" className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 sm:p-6">
       <div className="relative overflow-hidden bg-white  rounded-2xl border border-slate-200  shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col">

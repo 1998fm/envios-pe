@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { controlarCambios } from '@/lib/lecturaCondicionalServidor'
 import { normalizarIdentificador, patronIdentificador } from '@/lib/identidadCliente'
 import { NextResponse } from 'next/server'
@@ -250,6 +251,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const auth = await requirePlus('ver_ventas')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'ventas_crear');
+  if(permisoPlan)return permisoPlan;
   const user_id = auth.ownerId
 
   const body = await request.json()

@@ -10,6 +10,7 @@ export type FeatureDef = {
   min: PlanName
 }
 
+// Valores iniciales para compatibilidad. La autorización real usa planesServidor/usePlan.
 export const FEATURES: FeatureDef[] = [
   { key: 'envios', label: 'Envíos mensuales', basic: 'Ilimitados', business_plus: 'Ilimitados', min: 'basic' },
   { key: 'metodos', label: 'Métodos de envío', basic: 'Hasta 2', business_plus: 'Ilimitados', min: 'basic' },

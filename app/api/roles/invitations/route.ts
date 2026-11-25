@@ -1,3 +1,4 @@
+import {accesoPlan,permitePlan} from '@/lib/planesServidor'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlusOwner } from '@/lib/ownerAuth'
@@ -51,6 +52,8 @@ export async function POST(request: Request) {
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
+  if(!permitePlan(await accesoPlan(auth.userId),'roles_invitaciones'))return NextResponse.json({error:'Tu plan no permite esta función.'},{status:403})
+
 
   const body = await request.json().catch(() => null)
   const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : ''
@@ -95,6 +98,8 @@ export async function PATCH(request: Request) {
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
+  if(!permitePlan(await accesoPlan(auth.userId),'roles_invitaciones'))return NextResponse.json({error:'Tu plan no permite esta función.'},{status:403})
+
 
   const body = await request.json().catch(() => null)
   const id = typeof body?.id === 'string' ? body.id : ''
@@ -130,6 +135,8 @@ export async function DELETE(request: Request) {
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
+  if(!permitePlan(await accesoPlan(auth.userId),'roles_invitaciones'))return NextResponse.json({error:'Tu plan no permite esta función.'},{status:403})
+
 
   const body = await request.json().catch(() => null)
   const id = body?.id ?? new URL(request.url).searchParams.get('id')

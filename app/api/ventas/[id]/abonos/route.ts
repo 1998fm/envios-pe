@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -48,6 +49,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_ventas')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'ventas_cobros');
+  if(permisoPlan)return permisoPlan;
   const { id } = await params
   const body = await request.json()
   const { monto, metodo_pago, notas } = body
@@ -129,6 +132,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_ventas')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'ventas_cobros');
+  if(permisoPlan)return permisoPlan;
   const { id } = await params
 
   if (!(await ventaEsDelNegocio(id, auth.ownerId))) {

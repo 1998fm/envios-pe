@@ -29,6 +29,7 @@ type Props = {
 
   mostrarNombreMetodo?: boolean;
 
+  permisos?: {anticipacion:boolean;corte:boolean;cupo:boolean};
   bloqueado?: boolean;
   onUpgrade?: () => void;
 };
@@ -86,10 +87,12 @@ export default function ConfiguracionMetodo({
   setCupo,
 
 
+  permisos,
   bloqueado = false,
   onUpgrade,
 }: Props) {
-  const anticipacionCampo = (
+  const acceso=permisos??{anticipacion:!bloqueado,corte:!bloqueado,cupo:!bloqueado}
+  const anticipacionCampo = !acceso.anticipacion ? <FilaBloqueada titulo="Días de anticipación" descripcion="No incluido en tu plan" onUpgrade={onUpgrade}/> : (
     <div className="space-y-3">
       <label className="flex items-center gap-3">
         <div>
@@ -121,7 +124,7 @@ export default function ConfiguracionMetodo({
   );
   const reglasAvanzadas = (
     <>
-      <div className="space-y-3">
+      {!acceso.corte ? <FilaBloqueada titulo="Hora de corte" descripcion="No incluido en tu plan" onUpgrade={onUpgrade}/> : <div className="space-y-3">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -154,8 +157,9 @@ export default function ConfiguracionMetodo({
         )}
       </div>
 
+      }
       {!compacto && anticipacionCampo}
-      {anticipacion >= 2 && setSoloHabiles && (
+      {acceso.anticipacion && anticipacion >= 2 && setSoloHabiles && (
         <div className="space-y-3">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
@@ -177,7 +181,7 @@ export default function ConfiguracionMetodo({
         </div>
       )}
 
-      <label className="flex items-center gap-3 cursor-pointer">
+      {!acceso.cupo ? <FilaBloqueada titulo="Cupo diario" descripcion="No incluido en tu plan" onUpgrade={onUpgrade}/> : <label className="flex items-center gap-3 cursor-pointer">
         <input
           type="checkbox"
           checked={limitar}
@@ -194,7 +198,8 @@ export default function ConfiguracionMetodo({
         </div>
       </label>
 
-      {limitar && (
+      }
+      {acceso.cupo && limitar && (
         <div className="flex items-center gap-4 ml-7">
           <label className="text-sm text-slate-700 font-medium">
             Cupo máximo diario
@@ -225,6 +230,7 @@ export default function ConfiguracionMetodo({
         <SelectorDias value={dias} onChange={setDias} />
       </div>
 
+      {!acceso.anticipacion && !acceso.corte && !acceso.cupo && <p className="text-sm text-slate-600">Tu plan programa con 1 día de anticipación, sin hora de corte ni cupo diario.</p>}
       {compacto && !bloqueado && anticipacionCampo}
       {bloqueado ? (
         <div className="space-y-3">

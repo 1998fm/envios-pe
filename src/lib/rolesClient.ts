@@ -1,3 +1,4 @@
+import {planConfigurado,permitePlan} from '@/lib/planesServidor'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   esTablaFaltante,
@@ -107,7 +108,9 @@ export async function resolverNegocioActual(
     // si falla la consulta, asumimos basic (sin acceso a roles)
   }
 
-  if (ownerPlan !== 'business_plus') {
+  let equipoHabilitado=false
+  try {equipoHabilitado=permitePlan(await planConfigurado(ownerPlan),'roles')} catch {}
+  if (!equipoHabilitado) {
     return {
       ...base,
       ownerId: miembro.owner_id,

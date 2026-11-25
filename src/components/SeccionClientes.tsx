@@ -1,4 +1,6 @@
 'use client'
+import {openUpgrade} from '@/lib/planGating'
+import {usePlan} from '@/context/PlanesContext'
 
 import { useEsMovil } from '@/hooks/useEsMovil'
 import { useEffect, useMemo, useState } from 'react'
@@ -30,6 +32,8 @@ type Props = {
 }
 
 export default function SeccionClientes({ userId }: Props) {
+  const {permite}=usePlan()
+
   const esMovil = useEsMovil()
   const { startTour } = useOnboarding()
   const confirmar = useConfirm()
@@ -69,11 +73,13 @@ export default function SeccionClientes({ userId }: Props) {
   }, [editando, startTour])
 
   function iniciarEdicion(c: Cliente) {
+    if(!permite('clientes_editar')){openUpgrade();return}
     setEditando(c)
     setEditForm({ nombre: c.nombre, dni: c.dni || '', telefono: c.telefono || '' })
   }
 
   async function guardarEdicion() {
+    if(!permite('clientes_editar')){openUpgrade();return}
     if (!editando) return
     if (!editForm.nombre.trim()) {
       toast.error('El nombre es requerido')
@@ -114,6 +120,7 @@ export default function SeccionClientes({ userId }: Props) {
   }
 
   async function eliminarCliente(c: Cliente) {
+    if(!permite('clientes_eliminar')){openUpgrade();return}
     if (!(await confirmar({ message: `¿Eliminar a ${c.nombre}? Se quitará de tu lista de clientes.`, danger: true, confirmLabel: 'Sí, eliminar' }))) return
     const res = await fetch(`/api/clientes/${c.id}`, {
       method: 'DELETE',

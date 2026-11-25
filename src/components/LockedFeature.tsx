@@ -10,8 +10,8 @@ type Props = {
 }
 
 export default function LockedFeature({
-  label = 'Función Plus',
-  hint = 'Disponible en Plus',
+  label = 'Función no incluida',
+  hint = 'Consulta las funciones disponibles en Planes',
   className = '',
 }: Props) {
   return (

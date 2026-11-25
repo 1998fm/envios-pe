@@ -68,7 +68,7 @@ test('Básico mantiene formulario y configuración, y redirige las vistas Plus',
   const { abrirDashboard } = await import('./support/ui')
   const u = await createUser({ plan: 'basic' })
   await abrirDashboard(page, u, 'envios')
-  await expect(page.getByText('Básico · solicitudes ilimitadas y gestión individual.', { exact: false })).toBeVisible()
+  await expect(page.getByText('Básico · solicitudes ilimitadas.', { exact: false })).toBeVisible()
   await page.goto('/dashboard?v=productos')
   await expect(page).toHaveURL(/v=envios/)
   await expect(page.getByRole('button', { name: 'Nuevo producto', exact: true })).toHaveCount(0)

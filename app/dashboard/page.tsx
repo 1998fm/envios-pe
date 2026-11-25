@@ -61,7 +61,8 @@ import SeccionCompras from '@/components/SeccionCompras'
 import SeccionGastos from '@/components/SeccionGastos'
 import SeccionClientes from '@/components/SeccionClientes'
 import ModalRoles from '@/components/ModalRoles'
-import { UPGRADE_EVENT, computeEffectivePlan, puedeUsarSeccion, openUpgrade } from '@/lib/planGating'
+import { UPGRADE_EVENT, computeEffectivePlan, openUpgrade } from '@/lib/planGating'
+import {usePlan,PlanActualProvider} from '@/context/PlanesContext'
 import PrimerosPasos from '@/components/PrimerosPasos'
 
 export default function DashboardPage() {
@@ -93,11 +94,11 @@ const [mensajeToast, setMensajeToast] =
   const [config, setConfig] =
   useState<ConfigState>(initialConfigState)
 const [plan, setPlan] = useState('basic')
+const {permite,configuracion:planConfigurado}=usePlan(plan)
 const [diasRestantes, setDiasRestantes] = useState<number | null>(null)
 const [shalomUso, setShalomUso] = useState<{ used: number; max: number | null }>({ used: 0, max: null })
-const [planFeatures, setPlanFeatures] = useState<{ max_metodos?: number | null; max_pedidos_copiar?: number | null; max_envios?: number | null; max_miembros?: number | null } | null>(null)
-const [maxMiembros, setMaxMiembros] = useState(0)
-const [puedeUsarRoles, setPuedeUsarRoles] = useState(false)
+const maxMiembros=planConfigurado.max_miembros
+const puedeUsarRoles=permite('roles')
 const [mostrarBannerTrial, setMostrarBannerTrial] = useState(false)
 const [mostrarModalRoles, setMostrarModalRoles] =
   useState(false)
@@ -127,11 +128,11 @@ const {
 const permisos: PermisosRol = esOwner ? PERMISOS_TODOS : (rol?.permisos ?? PERMISOS_NINGUNO)
 
 const pestanasPermitidas = PESTANAS.filter((p) =>
-  puedeVerVista(permisos, p as VistaDashboard) && puedeUsarSeccion(plan, p)
+  puedeVerVista(permisos, p as VistaDashboard) && permite(p)
 )
 
-const puedeVerGananciasVenta = esOwner || permisos.ver_ganancia_venta
-const puedeVerGananciasProducto = esOwner || permisos.ver_ganancia_producto
+const puedeVerGananciasVenta = permite('ganancia') && (esOwner || permisos.ver_ganancia_venta)
+const puedeVerGananciasProducto = permite('ganancia') && (esOwner || permisos.ver_ganancia_producto)
 const puedeVerKpisVenta = esOwner || permisos.ver_kpis_venta
 
 // Restaura la pestaña activa desde el URL (?v=...) al recargar o compartir enlace.
@@ -144,7 +145,7 @@ useEffect(() => {
 }, [])
 
 const cambiarPestaña = (tab: PESTANA) => {
-  if (!puedeUsarSeccion(plan, tab)) { openUpgrade(); return }
+  if (!permite(tab)) { openUpgrade(); return }
   if (!puedeVerVista(permisos, tab as VistaDashboard)) return
   setPestañaActiva(tab)
   const url = tab === 'resumen' ? '/dashboard' : `/dashboard?v=${tab}`
@@ -215,7 +216,7 @@ const [
 ======================================== */
 
 function abrirModalCopiar() {
-  if (plan === 'basic') { openUpgrade(); return }
+  if (!permite('copiar') && !permite('exportar')) { openUpgrade(); return }
 
   const estadoInicial: Record<string, boolean> = {}
 
@@ -415,7 +416,7 @@ const mostrarBotonCopiar =
   enviosMotoSeleccionados.length ===
     seleccionados.length
 
-const copiarDatosLocked = plan === 'basic'
+const copiarDatosLocked = !permite('copiar') && !permite('exportar')
 
   useEffect(() => {
     async function cargar() {
@@ -544,7 +545,7 @@ setLoading(false)
 
   // Uso mensual de exportaciones Shalom (solo visible en básico)
   useEffect(() => {
-    if (!userId || plan !== 'basic') return
+    if (!userId || !permite('shalom')) return
     fetch(`/api/usage/shalom?user_id=${userId}`)
       .then((r) => r.json())
       .then((d) => {
@@ -552,22 +553,6 @@ setLoading(false)
       })
       .catch(() => {})
   }, [userId, plan])
-
-  // Límites por plan (métodos, copiar datos, miembros) desde la base de datos
-  useEffect(() => {
-    if (!userId) return
-    fetch(`/api/plan/features?user_id=${userId}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d && d.plan) {
-          setPlanFeatures(d)
-          setMaxMiembros(d.max_miembros ?? 0)
-          // Roles: Plus vigente, también durante la prueba gratuita
-          setPuedeUsarRoles(d.plan === 'business_plus')
-        }
-      })
-      .catch(() => {})
-  }, [userId])
 
   // Banner de trial vencido (Plus expirado)
   useEffect(() => {
@@ -598,7 +583,7 @@ setLoading(false)
 
   const controlEnvios = useRef<ControlLectura['current']>(null)
   async function fetchEnviosPage(offset: number, limite = 50, comprobar = false): Promise<{ data: Envio[]; hasMore: boolean; sinCambios?: boolean }> {
-    if (!userId) return { data: [], hasMore: false }
+    if (!userId || !permite('envios')) return { data: [], hasMore: false }
     ultimoFetchEnviosRef.current = Date.now()
     const params = new URLSearchParams({
       user_id: userId,
@@ -682,7 +667,7 @@ setLoading(false)
   }
 
 async function exportarSeleccionados() {
-  if (plan === 'basic') { openUpgrade(); return }
+  if (!permite('shalom')) { openUpgrade(); return }
 
   if (!userId) return
 
@@ -741,7 +726,7 @@ async function confirmarExportacion(seleccion: boolean[]) {
     return
   }
 
-  if (plan === 'basic' && userId) {
+  if (userId) {
 
     const res = await fetch(
       '/api/usage/shalom',
@@ -782,7 +767,7 @@ async function confirmarExportacion(seleccion: boolean[]) {
   seleccion
 )
 
-if (marcarComoEnviado) {
+if (marcarComoEnviado && permite('cambio_masivo') && permite('envios_estado')) {
 
   const ids =
     enviosExportar.map(
@@ -815,7 +800,7 @@ setMostrarModalExportar(false)
 }
 
 async function aplicarCambioMasivo() {
-  if (plan === 'basic') { openUpgrade(); return }
+  if (!permite('cambio_masivo') || !permite('envios_estado')) { openUpgrade(); return }
 
   let ids: string[] = []
 
@@ -1030,7 +1015,7 @@ for (
   const tieneEnvios = envios.length > 0
 
   return (
-  <main id="dashboard-content"
+  <PlanActualProvider plan={plan}><main id="dashboard-content"
     className="min-h-screen bg-slate-50 p-3 pb-28 sm:p-6 md:pb-6 lg:p-8"
   >
     <DashboardTopBar
@@ -1038,6 +1023,7 @@ for (
       plan={plan}
       diasRestantes={diasRestantes}
       onCompartir={() => {
+        if(!permite('formulario')){openUpgrade();return}
         navigator.clipboard.writeText(
           `${window.location.origin}/f/${slugEmpresa}`
         )
@@ -1051,6 +1037,7 @@ for (
       }}
     />
 
+    {pestanasPermitidas.length===0 && <p className="my-6 rounded-xl bg-white p-5 text-slate-600">Tu plan o rol no tiene secciones habilitadas. Contacta al administrador del negocio.</p>}
     {mostrarBannerTrial && (
       <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4">
         <div className="flex items-center justify-between">
@@ -1078,12 +1065,12 @@ for (
       shalomUso={shalomUso}
       pestañaActiva={pestañaActiva}
       visibles={pestanasPermitidas}
-      puedeConfigurar={esOwner}
+      puedeConfigurar={esOwner && permite('configuracion')}
       onNavegar={cambiarPestaña}
       onExportShalom={exportarSeleccionados}
-      onCambioMasivo={() => plan === 'basic' ? openUpgrade() : setMostrarModalEstado(true)}
+      onCambioMasivo={() => !permite('cambio_masivo') || !permite('envios_estado') ? openUpgrade() : setMostrarModalEstado(true)}
       onGenerarEtiquetas={async () => {
-        if (plan === 'basic') { openUpgrade(); return }
+        if (!permite('etiquetas')) { openUpgrade(); return }
         if (seleccionados.length === 0) {
           toast.error('Selecciona al menos un envío')
           return
@@ -1114,23 +1101,23 @@ for (
       puedeUsarRoles={puedeUsarRoles}
       maxMiembros={maxMiembros}
       onCopiarDatos={abrirModalCopiar}
-      onConfig={() => setMostrarConfig(true)}
+      onConfig={() => permite('configuracion') ? setMostrarConfig(true) : openUpgrade()}
       onVerRoles={() => setMostrarModalRoles(true)}
       esOwner={esOwner}
     />
 
-    {usuarioActualId && <PrimerosPasos key={`${usuarioActualId}:${pestañaActiva}`} userId={usuarioActualId} config={config} slug={slugEmpresa} plan={plan} puedeConfigurar={esOwner} visibles={pestanasPermitidas} onConfigurar={() => setMostrarConfig(true)} onEnvios={() => cambiarPestaña('envios')} />}
+    {usuarioActualId && <PrimerosPasos key={`${usuarioActualId}:${pestañaActiva}`} userId={usuarioActualId} config={config} slug={slugEmpresa} plan={plan} puedeConfigurar={esOwner && permite('configuracion')} visibles={pestanasPermitidas} onConfigurar={() => permite('configuracion') ? setMostrarConfig(true) : openUpgrade()} onEnvios={() => cambiarPestaña('envios')} />}
 
-    {userId && pestañaActiva === 'resumen' && puedeUsarSeccion(plan, 'resumen') && (
+    {userId && pestañaActiva === 'resumen' && permite('resumen') && (
       <PanelResumen
         userId={userId}
         onNavegar={cambiarPestaña}
-        onConfig={() => setMostrarConfig(true)}
+        onConfig={() => permite('configuracion') ? setMostrarConfig(true) : openUpgrade()}
         config={config}
       />
     )}
 
-    {pestañaActiva === 'envios' && (
+    {pestañaActiva === 'envios' && permite('envios') && (
       <div className="space-y-4 mb-8">
         <FilterBar
           ayuda={<TutorialEnvios />}
@@ -1152,11 +1139,11 @@ for (
 
        {/* CONTENIDO POR PESTAÑA */}
 
-       {pestañaActiva === 'envios' && (
+       {pestañaActiva === 'envios' && permite('envios') && (
          <>
            {plan === 'basic' && (
              <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-               Básico · solicitudes ilimitadas y gestión individual. <button onClick={() => setMostrarUpgrade(true)} className="font-semibold text-tori-600">Ver herramientas de Plus</button>
+               Básico · {planConfigurado.max_envios===null?'solicitudes ilimitadas':`hasta ${planConfigurado.max_envios} solicitudes al mes`}. <button onClick={() => setMostrarUpgrade(true)} className="font-semibold text-tori-600">Ver herramientas de Plus</button>
              </div>
            )}
 
@@ -1166,7 +1153,7 @@ for (
              seleccionados={seleccionados}
              onToggleSeleccionTodos={toggleSeleccionTodos}
              onToggleSeleccion={toggleSeleccion}
-             onDoubleClick={setEnvioDetalle}
+             onDoubleClick={(e) => permite('envios_detalle') ? setEnvioDetalle(e) : openUpgrade()}
              mostrarFechaProgramada={agruparPor === 'registro'}
              agruparPor={agruparPor}
              onCambiarAgruparPor={setAgruparPor}
@@ -1185,14 +1172,14 @@ for (
          </>
        )}
 
-        {pestañaActiva === 'productos' && puedeUsarSeccion(plan, 'productos') && (
+        {pestañaActiva === 'productos' && permite('productos') && (
           <SeccionProductos
             userId={userId || ''}
             plan={plan}
             puedeVerGanancias={puedeVerGananciasProducto}
           />
         )}
-        {pestañaActiva === 'ventas' && puedeUsarSeccion(plan, 'ventas') && (
+        {pestañaActiva === 'ventas' && permite('ventas') && (
           <SeccionVentas
             userId={userId || ''}
             plan={plan}
@@ -1200,9 +1187,9 @@ for (
             puedeVerKpis={puedeVerKpisVenta}
           />
         )}
-        {pestañaActiva === 'compras' && puedeUsarSeccion(plan, 'compras') && <SeccionCompras userId={userId || ''} />}
-        {pestañaActiva === 'gastos' && puedeUsarSeccion(plan, 'gastos') && <SeccionGastos userId={userId || ''} />}
-        {pestañaActiva === 'clientes' && puedeUsarSeccion(plan, 'clientes') && <SeccionClientes userId={userId || ''} />}
+        {pestañaActiva === 'compras' && permite('compras') && <SeccionCompras userId={userId || ''} />}
+        {pestañaActiva === 'gastos' && permite('gastos') && <SeccionGastos userId={userId || ''} />}
+        {pestañaActiva === 'clientes' && permite('clientes') && <SeccionClientes userId={userId || ''} />}
        {pestañaActiva === 'formulario' && (
          <SeccionFormulario
            userId={userId || ''}
@@ -1223,7 +1210,7 @@ for (
   distritosMoto={distritosMoto}
   guardarConfiguracion={guardarConfiguracion}
   plan={plan}
-  maxMetodos={planFeatures?.max_metodos ?? null}
+  maxMetodos={planConfigurado.max_metodos ?? null}
   onUpgrade={() => setMostrarUpgrade(true)}
 />
 
@@ -1360,6 +1347,6 @@ for (
 />
 
 <FloatingChat />
-    </main>
+    </main></PlanActualProvider>
   )
 }

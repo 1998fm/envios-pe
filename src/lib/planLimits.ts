@@ -1,3 +1,4 @@
+import {planConfigurado, permitePlan} from '@/lib/planesServidor'
 import { createClient } from '@supabase/supabase-js'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { supabaseServiceKey, supabaseUrl } from '@/lib/supabaseEnv'
@@ -8,6 +9,8 @@ const supabaseAdmin = createClient(
 )
 
 export type PlanFeature = {
+  permisos: import("@/lib/planCatalogo").PermisosPlan
+  revision: number
   plan: string
   max_envios: number | null
   max_metodos: number | null
@@ -39,27 +42,10 @@ export type TrialStatus = {
 }
 
 export async function getPlanFeatures(plan: string): Promise<PlanFeature | null> {
-  const { data } = await supabaseAdmin
-    .from('plan_features')
-    .select('*')
-    .eq('plan', plan)
-    .single()
-  // Política comercial autoritativa: no depende de que una migración ya esté aplicada.
-  const plus = plan === 'business_plus' || plan === 'pro'
-  return {
-    ...data,
-    plan: plus ? 'business_plus' : 'basic',
-    max_envios: null,
-    max_metodos: plus ? null : (data?.max_metodos ?? 2),
-    form_branding: plus,
-    dashboard_completo: plus,
-    envios_masivos: plus,
-    control_logistico: plus,
-    max_productos: plus ? null : 0,
-    max_ventas: plus ? null : 0,
-    max_exportaciones_shalom: plus ? null : 0,
-    max_pedidos_copiar: plus ? null : 0,
-    max_miembros: plus ? 4 : 0,
+  const p=await planConfigurado(plan)
+  return {...p,
+    form_branding:permitePlan(p,'marca_blanca'),dashboard_completo:permitePlan(p,'resumen'),envios_masivos:permitePlan(p,'cambio_masivo'),control_logistico:['logistica_anticipacion','logistica_corte','logistica_cupo'].some(k=>permitePlan(p,k)),
+    max_productos:permitePlan(p,'productos')?p.max_productos:0,max_ventas:permitePlan(p,'ventas')?p.max_ventas:0,max_exportaciones_shalom:permitePlan(p,'shalom')?p.max_exportaciones_shalom:0,max_pedidos_copiar:permitePlan(p,'copiar')?p.max_pedidos_copiar:0,max_miembros:permitePlan(p,'roles')?p.max_miembros:0,
   }
 }
 
@@ -147,7 +133,7 @@ export async function checkRecordLimit(
       allowed: false,
       used,
       max: limite,
-      reason: `Límite de ${limite} ${nombre} alcanzado en el plan Básico. Actualiza a Plus para más ${nombre}.`,
+      reason: `Límite de ${limite} ${nombre} alcanzado en tu plan.`,
     }
   }
 
@@ -179,12 +165,12 @@ export async function checkShalomExportLimit(userId: string): Promise<LimitCheck
 
   const used = count ?? 0
 
-  if (used >= max) {
+  if (max !== null && used >= max) {
     return {
       allowed: false,
       used,
       max,
-      reason: `Límite de ${max} exportaciones a Shalom por mes alcanzado. Actualiza a Plus para exportaciones ilimitadas.`,
+      reason: `Límite de ${max} exportaciones a Shalom por mes alcanzado. Revisa las condiciones de tu plan.`,
     }
   }
 
@@ -201,14 +187,8 @@ export async function checkRolesLimit(ownerId: string): Promise<LimitCheck> {
   // Plus vigente: incluye la prueba gratuita (si venció, el plan efectivo es basic).
   const { plan } = await checkTrialStatus(ownerId)
 
-  if (plan !== 'business_plus') {
-    return {
-      allowed: false,
-      used: 0,
-      max: 0,
-      reason: 'Requiere plan Plus activo',
-    }
-  }
+  const features=await getPlanFeatures(plan)
+  if (!features || !permitePlan(features as import('@/lib/planCatalogo').ConfigPlan,'roles')) return {allowed:false,used:0,max:0,reason:'Tu plan no permite administrar el equipo.'}
 
   const { count, error } = await supabaseAdmin
     .from('business_members')
@@ -220,14 +200,14 @@ export async function checkRolesLimit(ownerId: string): Promise<LimitCheck> {
   }
 
   const used = count ?? 0
-  const max = 4
+  const max = features.max_miembros
 
-  if (used >= max) {
+  if (max !== null && used >= max) {
     return {
       allowed: false,
       used,
       max,
-      reason: `Límite de ${max} miembros alcanzado en Plus`,
+      reason: `Límite de ${max} miembros alcanzado en tu plan`,
     }
   }
 

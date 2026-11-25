@@ -1,4 +1,5 @@
 'use client'
+import {usePlan} from '@/context/PlanesContext'
 
 import PrecioInput from '@/components/PrecioInput'
 
@@ -23,7 +24,7 @@ import type { Producto } from '@/types/inventario'
 import EscannerVentas from '@/components/EscannerVentas'
 import TutorialSeccion from '@/components/TutorialSeccion'
 import { useOnboarding } from '@/context/OnboardingContext'
-import { openUpgrade, planNivel } from '@/lib/planGating'
+import { openUpgrade } from '@/lib/planGating'
 import { buscar } from '@/lib/buscar'
 import { beepOk, beepError } from '@/lib/beep'
 import { fmtSoles, parsearNumero } from '@/lib/format'
@@ -51,6 +52,8 @@ const METODOS_PAGO = [
 ] as const
 
 export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, plan = 'basic' }: Props) {
+  const {permite}=usePlan(plan)
+
   const { startTour } = useOnboarding()
 
   const [busquedaCli, setBusquedaCli] = useState('')
@@ -244,6 +247,7 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
   const creandoRef = useRef(false)
 
   async function crearVenta() {
+    if(!permite('ventas_crear')){openUpgrade();return}
     if (creandoRef.current) return
     creandoRef.current = true
     try {
@@ -491,7 +495,7 @@ export default function ModalNuevaVenta({ abierto, onCerrar, onCreada, userId, p
                       className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm font-medium text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-tori-400 focus:bg-white focus:ring-[3px] focus:ring-tori-400/15"
                     />
                   </div>
-                  {planNivel(plan) >= 2 ? (
+                  {permite('lector_qr') ? (
                     <button
                       onClick={() => setShowEscanner(true)}
                       title="Escanear código QR del producto"

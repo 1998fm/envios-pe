@@ -1,11 +1,13 @@
 'use client'
 
+import {usePlan} from '@/context/PlanesContext'
+import {FUNCIONES_PLAN,LIMITES_PLAN,permiteFuncion} from '@/lib/planCatalogo'
 import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import Modal from '@/components/ui/Modal'
 import SubscriptionManager from '@/components/SubscriptionManager'
-import { FEATURES, PRECIOS_PLUS } from '@/lib/planGating'
+import { PRECIOS_PLUS } from '@/lib/planGating'
 
 type Props = {
   abierto: boolean
@@ -17,6 +19,8 @@ type Props = {
 }
 
 export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpresa, userId, puedeGestionar = true }: Props) {
+  const {planes}=usePlan()
+  const FEATURES=FUNCIONES_PLAN.filter(f=>f.grupo==='Secciones'||!f.key.includes('_')).map(f=>({...f,basic:permiteFuncion(planes.find(p=>p.plan==='basic')!.permisos,f.key),business_plus:permiteFuncion(planes.find(p=>p.plan==='business_plus')!.permisos,f.key)})) as {key:string;label:string;basic:boolean;business_plus:boolean}[]
   const [periodo, setPeriodo] = useState<'mensual' | 'trimestral'>('mensual')
   const [loading, setLoading] = useState(false)
   const [suscripcionActiva, setSuscripcionActiva] = useState(true)
@@ -61,15 +65,16 @@ export default function ModalUpgrade({ abierto, onCerrar, planActual, nombreEmpr
             <div key={plan} className="flex flex-col rounded-2xl border border-slate-200 p-5">
               <h3 className="text-xl font-bold">{plan === 'basic' ? 'Básico' : 'Plus'}{planActual === plan ? ' · Plan actual' : ''}</h3>
               <p className="my-3 text-3xl font-extrabold">{plan === 'basic' ? 'Gratis' : `S/ ${PRECIOS_PLUS[periodo].valor.toFixed(2)}`}</p>
-              <p className="mb-4 text-sm text-slate-500">{plan === 'basic' ? 'Recibe y gestiona pedidos individualmente, sin límite mensual.' : periodo === 'mensual' ? 'Pago mensual. Todas las herramientas incluidas.' : 'Pago cada 3 meses. Todas las herramientas incluidas.'}</p>
+              <p className="mb-4 text-sm text-slate-500">{plan === 'basic' ? 'Accede a las funciones marcadas en este plan.' : periodo === 'mensual' ? 'Pago mensual. Funciones incluidas según este plan.' : 'Pago cada 3 meses. Funciones incluidas según este plan.'}</p>
               <ul className="flex-1 space-y-2">
                 {FEATURES.map((f) => (
                   <li key={f.key} className={`flex items-start gap-2 text-sm ${f[plan] === false ? 'text-slate-400' : 'text-slate-700'}`}>
                     {f[plan] === false ? <X size={15} className="mt-0.5 shrink-0" /> : <Check size={15} className="mt-0.5 shrink-0 text-emerald-600" />}
-                    <span>{f.label}{typeof f[plan] === 'string' ? `: ${f[plan]}` : ''}</span>
+                    <span>{f.label}</span>
                   </li>
                 ))}
               </ul>
+              <ul className="mt-4 space-y-1 text-xs text-slate-500">{LIMITES_PLAN.map(l=><li key={l.key}>{l.label}: {planes.find(p=>p.plan===plan)?.[l.key]??'Sin límite'}</li>)}</ul>
               {plan === 'business_plus' && <button data-tour="upgrade-pagar" onClick={pagar} disabled={loading || suscripcionActiva || !puedeGestionar} className="mt-5 rounded-xl bg-tori-600 px-4 py-3 font-bold text-white disabled:opacity-50">{loading ? 'Redirigiendo a MercadoPago...' : !puedeGestionar ? 'Solo el dueño puede contratar' : suscripcionActiva ? 'Gestiona tu suscripción arriba' : `Contratar Plus · S/ ${PRECIOS_PLUS[periodo].valor.toFixed(2)}`}</button>}
             </div>
           ))}

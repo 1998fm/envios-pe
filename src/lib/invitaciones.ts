@@ -1,3 +1,4 @@
+import {accesoPlan,permitePlan} from '@/lib/planesServidor'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 
 // ============================================================
@@ -58,6 +59,7 @@ export async function crearInvitacion(
   roleId: string,
   origin: string
 ): Promise<ResultadoInvitacion> {
+  if(!permitePlan(await accesoPlan(ownerId),'roles_invitaciones'))throw Error('Tu plan no permite crear invitaciones.')
   const correo = email.trim().toLowerCase()
 
   // Si ya hay una invitación para ese email, se reutiliza la fila

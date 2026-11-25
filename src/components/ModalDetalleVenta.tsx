@@ -1,4 +1,5 @@
 'use client'
+import {usePlan} from '@/context/PlanesContext'
 
 import PrecioInput from '@/components/PrecioInput'
 
@@ -10,7 +11,7 @@ import { tourDone, trayectoDone } from '@/lib/tours'
 import { buscar } from '@/lib/buscar'
 import TourHelpButton from '@/components/TourHelpButton'
 import { useOnboarding } from '@/context/OnboardingContext'
-import { openUpgrade, planNivel } from '@/lib/planGating'
+import { openUpgrade } from '@/lib/planGating'
 import { Lock } from 'lucide-react'
 
 type Props = {
@@ -39,6 +40,8 @@ type EditItem = {
 }
 
 export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = 'basic', userId, puedeVerGanancias = true }: Props) {
+  const {permite}=usePlan(plan)
+
   const { startTour } = useOnboarding()
   const [editando, setEditando] = useState(false)
   const [guardando, setGuardando] = useState(false)
@@ -67,6 +70,7 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
   const v = venta
 
   function iniciarEdicion() {
+    if(!permite('ventas_editar')){openUpgrade();return}
     setNombreEdit(v.persona_nombre)
     setMetodoEdit(v.metodo_pago as 'EFECTIVO' | 'YAPE_PLIN' | 'TARJETA')
     setItemsEdit(
@@ -126,6 +130,7 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
   const productosFiltrados = buscar(productos, busquedaProd, (p) => [p.nombre, p.sku, p.descripcion], (p) => p.nombre)
 
   async function guardarCambios() {
+    if(!permite('ventas_editar')){openUpgrade();return}
     if (itemsEdit.length === 0) { toast.error('Agrega al menos un producto'); return }
     if (!nombreEdit.trim()) { toast.error('El nombre del cliente es requerido'); return }
     setGuardando(true)
@@ -338,7 +343,7 @@ export default function ModalDetalleVenta({ venta, onCerrar, onGuardar, plan = '
                   <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Total</p>
                   <p className="font-bold text-slate-900 text-lg">S/ {venta.total.toFixed(2)}</p>
                 </div>
-                {!puedeVerGanancias ? null : planNivel(plan) >= 1 ? (
+                {!puedeVerGanancias ? null : permite('ganancia') ? (
                   <div className="bg-slate-50 rounded-2xl p-3">
                     <p className="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Ganancia</p>
                     <p className="font-bold text-emerald-600 text-lg">S/ {ganancia.toFixed(2)}</p>

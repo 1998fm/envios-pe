@@ -1,3 +1,4 @@
+import {requireFunciones, requireAlgunaFuncion} from '@/lib/negocioAuth'
 import { controlarCambios } from '@/lib/lecturaCondicionalServidor'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
@@ -24,6 +25,8 @@ export async function GET(request: Request) {
   // El catálogo también alimenta los selectores de ventas y compras.
   const auth = await requirePlus('ver_productos', 'ver_ventas', 'ver_compras', 'ver_envios')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireAlgunaFuncion(auth,'productos','ventas_crear','compras_crear','envios_validar');
+  if(permisoPlan)return permisoPlan;
   const userId = auth.ownerId
   const { revision, response } = await controlarCambios(request, userId, 'productos', auth.permisos)
   if (response) return response
@@ -89,11 +92,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'productos_crear');
+  if(permisoPlan)return permisoPlan;
   const user_id = auth.ownerId
 
   const body = await request.json()
   const { nombre, sku, descripcion, precio_venta, precio_compra, stock_actual, stock_minimo, unidad, imagen_url } = body
 
+  if(imagen_url){const foto=requireFunciones(auth,'productos_fotos');if(foto)return foto;}
   if (!nombre) {
     return NextResponse.json({ error: 'nombre es requerido' }, { status: 400 })
   }

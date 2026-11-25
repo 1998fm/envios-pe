@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -8,6 +9,8 @@ import { mensajeDb } from '@/lib/erroresEs'
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_compras')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'compras_anular');
+  if(permisoPlan)return permisoPlan;
   const { id } = await params
   const body = await request.json()
   const { estado } = body
@@ -64,6 +67,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_compras')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'compras_anular');
+  if(permisoPlan)return permisoPlan;
   const { id } = await params
 
   const { data: compra } = await supabaseAdmin

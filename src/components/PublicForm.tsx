@@ -1,5 +1,6 @@
 'use client'
 
+import {permiteFuncion,permisosIniciales,type PermisosPlan} from '@/lib/planCatalogo'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { urlHttpSegura } from '@/lib/urlSegura'
 
@@ -26,8 +27,7 @@ import { existeEnLista } from '@/lib/listaValida'
 
 type Props = {
   userId: string
-  isPro?: boolean
-  isBusinessPlus?: boolean
+  permisos?: PermisosPlan
   logoUrl?: string
   redirectMessage?: string
   redirectMessageImage?: string
@@ -102,8 +102,7 @@ function formatearFecha(fechaStr: string): string {
 
 export default function PublicForm({
   userId,
-  isPro = false,
-  isBusinessPlus = false,
+  permisos=permisosIniciales('basic'),
   logoUrl,
   redirectMessage,
   redirectMessageImage,
@@ -136,6 +135,8 @@ export default function PublicForm({
     [colorPrimario, colorSecundario]
   )
   const distritosMotoList = distritosMotorizado ?? (distritosMoto as string[])
+  const permite=(key:string)=>permiteFuncion(permisos,key)
+  const puedeElegirFecha=permite('escoger_fecha'),puedeRedirigir=permite('redirect')
   const [loading, setLoading] = useState(false)
   const [enviado, setEnviado] = useState(false)
   const [pedidoPendienteExistente, setPedidoPendienteExistente] = useState(false)
@@ -263,14 +264,14 @@ export default function PublicForm({
   }, [userId])
 
   useEffect(() => {
-    if (enviado && isPro && redirectUrl) {
+    if (enviado && puedeRedirigir && redirectUrl) {
       const timer = setTimeout(() => {
         const destino = urlHttpSegura(redirectUrl)
         if (destino) window.location.href = destino
       }, 3000)
       return () => clearTimeout(timer)
     }
-  }, [enviado, redirectUrl, isPro])
+  }, [enviado, redirectUrl, puedeRedirigir])
 
   const handleSubmit = useCallback(async () => {
     if (enviandoRef.current || loading) return
@@ -342,7 +343,7 @@ export default function PublicForm({
       return
     }
 
-    if (metodo === 'MOTORIZADO' && isPro && escogerDia && !fechaSeleccionada) {
+    if (metodo === 'MOTORIZADO' && puedeElegirFecha && escogerDia && !fechaSeleccionada) {
       setError('Elige una fecha de entrega disponible.')
       setLoading(false)
       enviandoRef.current = false
@@ -400,7 +401,7 @@ export default function PublicForm({
           detalle,
           observaciones: '',
           idempotency_key: idempotencyKey,
-          ...(isPro && fechaSeleccionada ? { fecha_programada: fechaSeleccionada } : {}),
+          ...(puedeElegirFecha && fechaSeleccionada ? { fecha_programada: fechaSeleccionada } : {}),
         }),
       })
 
@@ -427,7 +428,7 @@ export default function PublicForm({
       setLoading(false)
       enviandoRef.current = false
     }
-  }, [nombre, dni, telefono, cantidadProductos, metodo, agencia, provincia, tipoEntrega, agenciaOlva, agenciasOlvaProvincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, isPro, idempotencyKey, agenciasShalom, solicitarCantidadProductos, distritosMotoList, activarEscogerDia, escogerDia, loading, mensajeRecojo])
+  }, [nombre, dni, telefono, cantidadProductos, metodo, agencia, provincia, tipoEntrega, agenciaOlva, agenciasOlvaProvincia, distrito, direccion, referencia, userId, nombreOtro, fechaSeleccionada, puedeElegirFecha, idempotencyKey, agenciasShalom, solicitarCantidadProductos, distritosMotoList, activarEscogerDia, escogerDia, loading, mensajeRecojo])
 
   if (formularioDeshabilitado) {
     return (
@@ -435,7 +436,7 @@ export default function PublicForm({
         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 relative overflow-hidden text-center">
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600" />
           <div className="flex flex-col items-center gap-4">
-            {isPro && logoUrl && (
+            {permite('logo') && logoUrl && (
               <div className="flex justify-center">
                 <img
                   src={logoUrl}
@@ -480,10 +481,10 @@ export default function PublicForm({
           </div>
         ) : (
           <SuccessScreen
-            logoUrl={isPro ? logoUrl : undefined}
-            redirectMessage={isPro ? redirectMessage : undefined}
-            redirectMessageImage={isPro ? redirectMessageImage : undefined}
-            redirectUrl={isPro ? redirectUrl : undefined}
+            logoUrl={permite('logo') ? logoUrl : undefined}
+            redirectMessage={puedeRedirigir ? redirectMessage : undefined}
+            redirectMessageImage={puedeRedirigir ? redirectMessageImage : undefined}
+            redirectUrl={puedeRedirigir ? redirectUrl : undefined}
             fechaProgramada={fechaProgramada}
             colorPrimario={colorPrimario}
             colorSecundario={colorSecundario}
@@ -509,7 +510,7 @@ export default function PublicForm({
         />
 
         <div className="space-y-6 mt-2">
-          <FormHeader logoUrl={isPro ? logoUrl : undefined} />
+          <FormHeader logoUrl={permite('logo') ? logoUrl : undefined} />
 
           {mostrarTracking && (
             <button
@@ -592,7 +593,7 @@ export default function PublicForm({
             />
           )}
 
-          {metodo === 'MOTORIZADO' && isPro && mostrarEscogerFecha && (
+          {metodo === 'MOTORIZADO' && puedeElegirFecha && mostrarEscogerFecha && (
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600 ">
                 <input
@@ -665,16 +666,16 @@ export default function PublicForm({
           <SubmitButton loading={loading} onClick={handleSubmit} />
 
           <SocialLinks
-            instagramUrl={isBusinessPlus ? instagramUrl : undefined}
-            facebookUrl={isBusinessPlus ? facebookUrl : undefined}
-            tiktokUrl={isBusinessPlus ? tiktokUrl : undefined}
-            webUrl={isBusinessPlus ? webUrl : undefined}
-            whatsappUrl={isBusinessPlus ? whatsappUrl : undefined}
+            instagramUrl={permite('redes') ? instagramUrl : undefined}
+            facebookUrl={permite('redes') ? facebookUrl : undefined}
+            tiktokUrl={permite('redes') ? tiktokUrl : undefined}
+            webUrl={permite('redes') ? webUrl : undefined}
+            whatsappUrl={permite('redes') ? whatsappUrl : undefined}
           />
         </div>
       </div>
 
-      <div className="mt-6 text-center">
+      {!permite('marca_blanca') && <div className="mt-6 text-center">
         <a
           href="/"
           target="_blank"
@@ -690,6 +691,7 @@ export default function PublicForm({
         </a>
       </div>
 
+      }
       {mostrandoTracking && (
         <TrackingBox userId={userId} onCerrar={() => setMostrandoTracking(false)} />
       )}

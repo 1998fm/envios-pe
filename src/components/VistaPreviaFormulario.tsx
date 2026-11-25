@@ -1,5 +1,6 @@
 'use client'
 
+import {usePlan} from '@/context/PlanesContext'
 import { useEffect, useState } from 'react'
 import { Eye, CheckCircle2 } from 'lucide-react'
 import PublicForm from '@/components/PublicForm'
@@ -15,7 +16,8 @@ type Props = {
 
 export default function VistaPreviaFormulario({ userId, config, plan = 'basic', distritosMotorizado }: Props) {
   const [vista, setVista] = useState<'form' | 'success'>('form')
-  const isPro = plan !== 'basic'
+  const {permite,configuracion}=usePlan(plan)
+  const isPro=permite('logo')
   const cssVars = formCssVars(config.colorPrimario, config.colorSecundario)
 
   useEffect(() => {
@@ -61,8 +63,7 @@ export default function VistaPreviaFormulario({ userId, config, plan = 'basic', 
             <div className="pointer-events-none select-none">
               <PublicForm
                 userId={userId}
-                isPro={isPro}
-                isBusinessPlus={plan === 'business_plus'}
+                permisos={configuracion.permisos}
                 logoUrl={config.logoUrl}
                 redirectMessage={config.redirectMessage}
                 redirectMessageImage={config.redirectMessageImage}
@@ -111,14 +112,14 @@ export default function VistaPreviaFormulario({ userId, config, plan = 'basic', 
               </div>
               <h4 className="text-xl font-bold text-slate-900">Pedido registrado correctamente</h4>
               <p className="mt-3 text-sm text-slate-500 whitespace-pre-line">
-                {isPro && config.redirectMessage ? config.redirectMessage : 'Gracias por tu solicitud.'}
+                {permite('redirect') && config.redirectMessage ? config.redirectMessage : 'Gracias por tu solicitud.'}
               </p>
-              {isPro && config.redirectMessageImage && (
+              {permite('redirect') && config.redirectMessageImage && (
                 <div className="mt-5 flex justify-center">
                   <img src={config.redirectMessageImage} alt="Mensaje de éxito" className="max-h-64 max-w-full object-contain rounded-xl" />
                 </div>
               )}
-              {isPro && config.redirectUrl && (
+              {permite('redirect') && config.redirectUrl && (
                 <p className="mt-5 text-xs text-slate-400">
                   Redireccionando a <span className="font-semibold text-slate-500">{config.redirectUrl}</span>...
                 </p>

@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -6,6 +7,8 @@ import { mensajeDb } from '@/lib/erroresEs'
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'productos_kardex');
+  if(permisoPlan)return permisoPlan;
   const userId = auth.ownerId
 
   const { id } = await params

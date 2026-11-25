@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -97,6 +98,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_clientes')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'clientes_editar');
+  if(permisoPlan)return permisoPlan;
   const user_id = auth.ownerId
 
   const { id } = await params
@@ -211,6 +214,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_clientes')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'clientes_eliminar');
+  if(permisoPlan)return permisoPlan;
   const user_id = auth.ownerId
 
   const { id } = await params

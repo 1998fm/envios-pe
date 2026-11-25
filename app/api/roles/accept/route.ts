@@ -1,3 +1,5 @@
+import { accesoPlan,permitePlan } from '@/lib/planesServidor'
+import { checkRolesLimit } from '@/lib/planLimits'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { getSessionUser } from '@/lib/ownerAuth'
@@ -140,6 +142,11 @@ export async function POST(request: Request) {
       { status: 410 }
     )
   }
+
+  const plan=await accesoPlan(invitacion.owner_id).catch(()=>null)
+  if(!plan||!permitePlan(plan,'roles_invitaciones')||!permitePlan(plan,'roles_miembros'))return NextResponse.json({error:'El negocio no permite nuevas incorporaciones.'},{status:403})
+  const cupo=await checkRolesLimit(invitacion.owner_id)
+  if(!cupo.allowed)return NextResponse.json({error:cupo.reason},{status:403})
 
   // 1. Usuario de autenticación
   const sesion = await getSessionUser()

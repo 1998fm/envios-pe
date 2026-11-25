@@ -1,11 +1,13 @@
 "use client";
 
+import {usePlan} from "@/context/PlanesContext";
 import type { Dispatch, SetStateAction } from "react";
 import type { ConfigState } from "@/types/config";
 import ConfiguracionMetodo from "@/components/ConfiguracionMetodo";
 import TutorialConfiguracion from "./TutorialConfiguracion";
 
 type Props = {
+  plan?:string;
   basico?: boolean;
   config: ConfigState;
   upd: <K extends keyof ConfigState>(key: K, value: ConfigState[K]) => void;
@@ -29,7 +31,9 @@ export default function OnboardingStep3Logistica({
   config,
   upd,
   basico = false,
+  plan="basic",
 }: Props) {
+ const {permite,configuracion:planConfig}=usePlan(plan);
   const hayAgencias =
     config.metodoShalom ||
     config.metodoOlva ||
@@ -70,7 +74,7 @@ export default function OnboardingStep3Logistica({
             </div>
             <ConfiguracionMetodo
               compacto
-              bloqueado={basico}
+              bloqueado={false} permisos={{anticipacion:permite('logistica_anticipacion'),corte:permite('logistica_corte'),cupo:permite('logistica_cupo')}}
               onUpgrade={() =>
                 window.open("/#precios", "_blank", "noopener,noreferrer")
               }
@@ -109,7 +113,7 @@ export default function OnboardingStep3Logistica({
             </div>
             <ConfiguracionMetodo
               compacto
-              bloqueado={basico}
+              bloqueado={false} permisos={{anticipacion:permite('logistica_anticipacion'),corte:permite('logistica_corte'),cupo:permite('logistica_cupo')}}
               onUpgrade={() =>
                 window.open("/#precios", "_blank", "noopener,noreferrer")
               }

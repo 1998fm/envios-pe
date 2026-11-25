@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -10,6 +11,8 @@ import { aProxy } from '@/lib/mediaUrl'
 export async function POST(request: Request) {
   const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'productos_fotos');
+  if(permisoPlan)return permisoPlan;
 
   let form: FormData
   try {
@@ -36,6 +39,8 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'productos_fotos');
+  if(permisoPlan)return permisoPlan;
 
   const ruta = new URL(request.url).searchParams.get('ruta') || ''
   // Solo dentro de la carpeta del propio negocio.

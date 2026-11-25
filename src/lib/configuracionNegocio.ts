@@ -1,6 +1,7 @@
 import { validarPasoInicial } from "@/lib/onboarding";
 import { supabaseAdmin } from "app/f/[slug]/lib/supabase/admin";
-import { computeEffectivePlan } from "@/lib/planGating";
+import { accesoPlan, permitePlan } from "@/lib/planesServidor";
+import type { FuncionPlan } from "@/lib/planCatalogo";
 import { obtenerConfiguracionLogistica } from "@/lib/logistica/guardarConfiguracionLogistica";
 import { urlHttpSegura } from "@/lib/urlSegura";
 import { aProxy, desdeProxy } from "@/lib/mediaUrl";
@@ -125,26 +126,41 @@ async function subirImagenesNegocio(
   return { logoUrl, mensajeImagen } as const;
 }
 
+
+/** Preserva los valores de funciones desactivadas: la restricción no borra configuración. */
+async function prepararConfiguracion(ownerId:string,config:ConfigEntrada,archivos:ArchivosConfig){
+ const plan=await accesoPlan(ownerId);
+ const {data:perfil,error}=await supabaseAdmin.from('profiles').select('*').eq('id',ownerId).single();
+ if(error||!perfil)throw Error('No se pudo verificar la configuración del negocio.');
+ const grupos:Record<string,Record<string,string>>={"empresa": {"empresa": "empresa", "telefonoEmpresa": "telefono", "direccionEmpresa": "direccion", "nuevoOrigen": "origen_shalom"}, "logo": {"logoUrl": "logo_url"}, "redirect": {"redirectUrl": "redirect_url", "redirectMessage": "redirect_message", "redirectMessageImage": "redirect_message_image"}, "redes": {"instagramUrl": "instagram_url", "facebookUrl": "facebook_url", "tiktokUrl": "tiktok_url", "webUrl": "web_url", "whatsappUrl": "whatsapp_url"}, "metodos": {"metodoMotorizado": "metodo_motorizado", "metodoShalom": "metodo_shalom", "metodoOlva": "metodo_olva", "metodoMarvisur": "metodo_marvisur", "metodoFlores": "metodo_flores", "metodoOtro": "metodo_otro", "nombreMetodoOtro": "nombre_metodo_otro", "metodoRecojo": "metodo_recojo", "mensajeRecojo": "mensaje_recojo"}, "logistica_anticipacion": {"logisticaMotoAnticipacion": "logistica_moto_anticipacion", "logisticaMotoAnticipacionSoloHabiles": "logistica_moto_anticipacion_solo_habiles", "logisticaAgenciasAnticipacion": "logistica_agencias_anticipacion", "logisticaAgenciasAnticipacionSoloHabiles": "logistica_agencias_anticipacion_solo_habiles"}, "logistica_corte": {"logisticaMotoUsaHoraCorte": "logistica_moto_usa_hora_corte", "logisticaMotoHoraCorte": "logistica_moto_hora_corte", "logisticaAgenciasUsaHoraCorte": "logistica_agencias_usa_hora_corte", "logisticaAgenciasHoraCorte": "logistica_agencias_hora_corte"}, "logistica_cupo": {"logisticaMotoLimitar": "logistica_moto_limitar", "logisticaMotoCupo": "logistica_moto_cupo", "logisticaAgenciasLimitar": "logistica_agencias_limitar", "logisticaAgenciasCupo": "logistica_agencias_cupo"}, "cantidad": {"solicitarCantidadProductos": "solicitar_cantidad_productos"}, "escoger_fecha": {"mostrarEscogerFecha": "mostrar_escoger_fecha"}, "tracking": {"mostrarTracking": "mostrar_tracking"}, "cierre": {"cerrarFormulario": "cerrar_formulario", "cerradoFormularioMensaje": "cerrar_formulario_mensaje", "cerrarFormularioDias": "cerrar_formulario_dias"}, "colores": {"colorPrimario": "color_formulario_primario", "colorSecundario": "color_formulario_secundario"}, "tarifas": {"motoRegion": "moto_region"}};
+ const normalizado={...config} as unknown as Record<string,unknown>;
+ for(const [funcion,campos] of Object.entries(grupos))if(!permitePlan(plan,funcion))for(const [campo,columna] of Object.entries(campos))normalizado[campo]=perfil[columna];
+ if(!permitePlan(plan,'configuracion')){normalizado.logisticaMotoDias=perfil.logistica_moto_dias;normalizado.logisticaAgenciasDias=perfil.logistica_agencias_dias;}
+ if(archivos.logo&&!permitePlan(plan,'logo'))throw Error('Tu plan no permite cambiar el logo.');
+ if(archivos.mensajeImagen&&!permitePlan(plan,'redirect'))throw Error('Tu plan no permite cambiar el mensaje de confirmación.');
+ const salida=normalizado as unknown as ConfigEntrada;
+ const camposMetodos=Object.entries(grupos.metodos);
+ const cambiaMetodos=camposMetodos.some(([campo,columna])=>normalizado[campo]!==perfil[columna]);
+ if(cambiaMetodos&&permitePlan(plan,'metodos')&&plan.max_metodos!==null&&[salida.metodoMotorizado,salida.metodoShalom,salida.metodoOlva,salida.metodoMarvisur,salida.metodoFlores,salida.metodoOtro,salida.metodoRecojo].filter(Boolean).length>plan.max_metodos)throw Error(`Tu plan permite hasta ${plan.max_metodos} métodos de entrega.`);
+ return {config:salida,plan,slug:perfil.slug as string};
+}
+
 /** Guardado completo (modal de configuración del dashboard). */
 export async function guardarConfiguracion(
   ownerId: string,
   config: ConfigEntrada,
   archivos: ArchivosConfig,
 ): Promise<ResultadoConfig> {
+  const preparado=await prepararConfiguracion(ownerId,config,archivos).catch(e=>({error:(e as Error).message}));
+  if('error' in preparado)return preparado;
+  config=preparado.config;
+  const plan=preparado.plan;
   if (!config.empresa || !config.empresa.trim())
     return { error: "Escribe el nombre de tu negocio." };
   const errorUrl = validarUrls(config);
   if (errorUrl) return { error: errorUrl };
 
-  // El plan lo decide el servidor, no el navegador.
-  const { data: perfil } = await supabaseAdmin
-    .from("profiles")
-    .select("plan, trial_end, pro_until")
-    .eq("id", ownerId)
-    .maybeSingle();
-  const basico = computeEffectivePlan(perfil ?? {}).plan === "basic";
-
-  if (!basico) {
+  {
     for (const [activo, nombre, anticipacion, limitar, cupo] of [
       [
         config.metodoMotorizado,
@@ -167,20 +183,20 @@ export async function guardarConfiguracion(
     ] as const) {
       if (!activo) continue;
       if (
-        !Number.isInteger(Number(anticipacion)) ||
+        permitePlan(plan,'logistica_anticipacion') && (!Number.isInteger(Number(anticipacion)) ||
         Number(anticipacion) < 1 ||
-        Number(anticipacion) > 365
+        Number(anticipacion) > 365)
       )
         return {
           error: `Configura la anticipación de ${nombre} entre 1 y 365 días.`,
         };
-      if (limitar && (!Number.isInteger(Number(cupo)) || Number(cupo) < 1))
+      if (permitePlan(plan,'logistica_cupo') && limitar && (!Number.isInteger(Number(cupo)) || Number(cupo) < 1))
         return {
           error: `Configura un cupo diario mayor que cero para ${nombre}.`,
         };
     }
   }
-  const slug = generarSlug(config.empresa);
+  const slug = permitePlan(plan,'empresa') ? generarSlug(config.empresa) : preparado.slug;
   if (!slug) return { error: "El nombre del negocio no es válido." };
   if (!(await slugLibre(ownerId, slug))) {
     return {
@@ -231,43 +247,25 @@ export async function guardarConfiguracion(
     p_metodo_recojo: config.metodoRecojo,
     p_mensaje_recojo: config.mensajeRecojo,
     p_logistica_moto_dias: config.logisticaMotoDias,
-    p_logistica_moto_usa_hora_corte: basico
-      ? false
-      : config.logisticaMotoUsaHoraCorte,
-    p_logistica_moto_hora_corte: basico
-      ? "18:00"
-      : config.logisticaMotoHoraCorte,
-    p_logistica_moto_anticipacion: basico
-      ? 1
-      : config.logisticaMotoAnticipacion,
-    p_logistica_moto_anticipacion_solo_habiles: basico
-      ? false
-      : solo(
+    p_logistica_moto_usa_hora_corte: config.logisticaMotoUsaHoraCorte,
+    p_logistica_moto_hora_corte: config.logisticaMotoHoraCorte,
+    p_logistica_moto_anticipacion: config.logisticaMotoAnticipacion,
+    p_logistica_moto_anticipacion_solo_habiles: solo(
           config.logisticaMotoAnticipacion,
           config.logisticaMotoAnticipacionSoloHabiles,
         ),
-    p_logistica_moto_limitar: basico ? false : config.logisticaMotoLimitar,
-    p_logistica_moto_cupo: basico ? 0 : config.logisticaMotoCupo,
+    p_logistica_moto_limitar: config.logisticaMotoLimitar,
+    p_logistica_moto_cupo: config.logisticaMotoCupo,
     p_logistica_agencias_dias: config.logisticaAgenciasDias,
-    p_logistica_agencias_usa_hora_corte: basico
-      ? false
-      : config.logisticaAgenciasUsaHoraCorte,
-    p_logistica_agencias_hora_corte: basico
-      ? "18:00"
-      : config.logisticaAgenciasHoraCorte,
-    p_logistica_agencias_anticipacion: basico
-      ? 1
-      : config.logisticaAgenciasAnticipacion,
-    p_logistica_agencias_anticipacion_solo_habiles: basico
-      ? false
-      : solo(
+    p_logistica_agencias_usa_hora_corte: config.logisticaAgenciasUsaHoraCorte,
+    p_logistica_agencias_hora_corte: config.logisticaAgenciasHoraCorte,
+    p_logistica_agencias_anticipacion: config.logisticaAgenciasAnticipacion,
+    p_logistica_agencias_anticipacion_solo_habiles: solo(
           config.logisticaAgenciasAnticipacion,
           config.logisticaAgenciasAnticipacionSoloHabiles,
         ),
-    p_logistica_agencias_limitar: basico
-      ? false
-      : config.logisticaAgenciasLimitar,
-    p_logistica_agencias_cupo: basico ? 0 : config.logisticaAgenciasCupo,
+    p_logistica_agencias_limitar: config.logisticaAgenciasLimitar,
+    p_logistica_agencias_cupo: config.logisticaAgenciasCupo,
     p_solicitar_cantidad_productos: config.solicitarCantidadProductos,
     p_mostrar_escoger_fecha: config.mostrarEscogerFecha,
     p_mostrar_tracking: config.mostrarTracking,
@@ -277,7 +275,7 @@ export async function guardarConfiguracion(
     p_cerrar_formulario_dias: config.cerrarFormularioDias ?? [],
     p_color_formulario_primario: config.colorPrimario ?? "#0284c7",
     p_color_formulario_secundario: config.colorSecundario ?? "#4f46e5",
-    p_tarifas: tarifas,
+    p_tarifas: permitePlan(plan,'tarifas')?tarifas:null,
   });
 
   if (error) {
@@ -307,49 +305,11 @@ export async function guardarPasoOnboarding(
 ): Promise<ResultadoConfig> {
   if (!config || typeof config !== "object" || Array.isArray(config))
     return { error: "Configuración no válida" };
-  // El asistente respeta las mismas restricciones de plan que Configuración.
-  if (paso === 2 || paso === 3) {
-    const perfil = await supabaseAdmin
-      .from("profiles")
-      .select("plan, trial_end, pro_until")
-      .eq("id", ownerId)
-      .maybeSingle();
-    if (perfil.error) return { error: mensajeDb(perfil.error) };
-    if (computeEffectivePlan(perfil.data ?? {}).plan === "basic") {
-      if (
-        paso === 2 &&
-        [
-          config?.metodoMotorizado,
-          config?.metodoShalom,
-          config?.metodoOlva,
-          config?.metodoMarvisur,
-          config?.metodoFlores,
-          config?.metodoOtro,
-          config?.metodoRecojo,
-        ].filter(Boolean).length > 2
-      )
-        return {
-          error:
-            "Básico permite hasta 2 métodos de entrega. Desmarca los que no usarás o revisa Plus.",
-        };
-      if (paso === 3)
-        config = {
-          ...config,
-          logisticaMotoUsaHoraCorte: false,
-          logisticaMotoHoraCorte: "18:00",
-          logisticaMotoAnticipacion: 1,
-          logisticaMotoAnticipacionSoloHabiles: false,
-          logisticaMotoLimitar: false,
-          logisticaMotoCupo: 0,
-          logisticaAgenciasUsaHoraCorte: false,
-          logisticaAgenciasHoraCorte: "18:00",
-          logisticaAgenciasAnticipacion: 1,
-          logisticaAgenciasAnticipacionSoloHabiles: false,
-          logisticaAgenciasLimitar: false,
-          logisticaAgenciasCupo: 0,
-        };
-    }
-  }
+  const preparado=await prepararConfiguracion(ownerId,config,archivos).catch(e=>({error:(e as Error).message}));
+  if('error' in preparado)return preparado;
+  config=preparado.config;
+  const requeridas:Record<number,FuncionPlan>={1:'empresa',2:'metodos',3:'configuracion',4:'tarifas'};
+  if(!permitePlan(preparado.plan,requeridas[paso]))return {error:'Tu plan no permite modificar esta sección.'};
   const validacion = validarPasoInicial(paso, config);
   if (validacion) return { error: validacion };
 

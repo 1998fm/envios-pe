@@ -1,4 +1,6 @@
 'use client'
+import {openUpgrade} from '@/lib/planGating'
+import {usePlan} from '@/context/PlanesContext'
 
 import { useState, useEffect, type ReactNode } from 'react'
 import { api } from '@/lib/clienteApi'
@@ -162,6 +164,8 @@ function InfoTile({
 }
 
 export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan = 'basic' }: Props) {
+  const {permite}=usePlan(plan)
+
   const confirmar = useConfirm()
   const [fechaProgramada, setFechaProgramada] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -173,7 +177,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan
   const [marcandoEnvio, setMarcandoEnvio] = useState(false)
 
   useEffect(() => {
-    if (plan !== 'basic' && (envio?.dni || envio?.telefono)) {
+    if (permite('envios_validar') && (envio?.dni || envio?.telefono)) {
       cargarVentasCliente()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -202,6 +206,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan
   }
 
   async function validarContenido() {
+    if(!permite('envios_validar')){openUpgrade();return}
     if (!(await confirmar({ message: '¿Está seguro que todo lo listado ha sido empacado?', confirmLabel: 'Sí, validar' }))) return
     setMarcandoEnvio(true)
 
@@ -219,6 +224,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan
   }
 
   async function guardarFecha() {
+    if(!permite('envios_reprogramar')){openUpgrade();return}
     if (!fechaProgramada || fechaProgramada === current.fecha_programada?.split('T')[0]) return
     setGuardando(true)
     setMensaje('')
@@ -234,6 +240,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan
   }
 
   async function guardarObservacion() {
+    if(!permite('envios_observaciones')){openUpgrade();return}
     const texto = observacion.trim()
     if (!texto || texto === (current.observaciones || '').trim()) return
     setGuardando(true)
@@ -248,6 +255,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan
   }
 
   async function limpiarObservacion() {
+    if(!permite('envios_observaciones')){openUpgrade();return}
     if (!(await confirmar({ message: '¿Quitar la observación de este pedido?', confirmLabel: 'Sí, quitar' }))) return
     setGuardando(true)
     try {
@@ -262,6 +270,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan
   }
 
   async function eliminarEnvio() {
+    if(!permite('envios_eliminar')){openUpgrade();return}
     try {
       await api(`/api/envios/${current.id}`, { method: 'DELETE' })
       onDelete?.(current.id)
@@ -546,7 +555,7 @@ export default function ModalDetalle({ envio, onCerrar, onUpdate, onDelete, plan
           </Card>
 
           {/* 3. CONTENIDO / PRODUCTOS */}
-          {plan !== 'basic' && (
+          {permite('envios_validar') && (
           <Card
             title="Contenido del pedido"
             subtitle="Revisa y valida que todo lo listado esté correcto"

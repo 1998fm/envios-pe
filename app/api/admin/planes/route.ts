@@ -1,93 +1,92 @@
-import { NextResponse } from 'next/server'
-import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
-import { requireSuperAdmin, registrarAuditoria } from '@/lib/adminAuth'
-import { getPlanFeatures } from '@/lib/planLimits'
-import { mensajeDb } from '@/lib/erroresEs'
-
-// Campos editables de cada plan (límites y features booleanos; NO precios).
-export const CAMPOS_PLAN = [
-  'max_envios',
-  'max_metodos',
-  'max_productos',
-  'max_ventas',
-  'max_exportaciones_shalom',
-  'max_pedidos_copiar',
-  'form_branding',
-  'dashboard_completo',
-  'envios_masivos',
-  'control_logistico',
-] as const
-
-const BOOLEANOS = new Set(['form_branding', 'dashboard_completo', 'envios_masivos', 'control_logistico'])
+import { NextResponse } from "next/server";
+import { supabaseAdmin } from "app/f/[slug]/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/adminAuth";
+import { catalogoPlanes, invalidarPlanes } from "@/lib/planesServidor";
+import { FUNCIONES_PLAN, LIMITES_PLAN } from "@/lib/planCatalogo";
 
 export async function GET() {
-  const auth = await requireSuperAdmin()
-  if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status })
-  }
-
-  const data = await Promise.all(['basic', 'business_plus'].map(getPlanFeatures))
-  const error = null
-
-  if (error) {
-    return NextResponse.json({ error: mensajeDb(error) }, { status: 500 })
-  }
-
-  return NextResponse.json({ planes: data })
-}
-
-export async function PUT(request: Request) {
-  const auth = await requireSuperAdmin()
-  if (!auth.ok) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status })
-  }
-
-  let body: Record<string, Record<string, unknown>>
+  const auth = await requireSuperAdmin();
+  if (!auth.ok)
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   try {
-    body = (await request.json()) as Record<string, Record<string, unknown>>
+    return NextResponse.json(
+      { planes: await catalogoPlanes() },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch {
-    return NextResponse.json({ error: 'Body inválido' }, { status: 400 })
+    return NextResponse.json(
+      { error: "No se pudieron cargar los planes." },
+      { status: 503 },
+    );
   }
-
-  const cambios: { plan: string; valores: Record<string, unknown> }[] = []
-  const cambiosAuditoria: Record<string, unknown> = {}
-
-  for (const [plan, valores] of Object.entries(body)) {
-    if (!['basic', 'business_plus'].includes(plan)) continue
-    const limpio: Record<string, unknown> = {}
-
-    for (const campo of CAMPOS_PLAN) {
-      if (campo !== 'max_metodos' || plan !== 'basic' || valores[campo] === undefined) continue
-      const v = valores[campo]
-      if (BOOLEANOS.has(campo)) {
-        limpio[campo] = v === true
-      } else if (v === null || v === '' || v === 'null' || v === 'Ilimitados' || v === 'Ilimitado') {
-        limpio[campo] = null
-      } else {
-        const n = Number(v)
-        limpio[campo] = Number.isFinite(n) ? n : null
-      }
-    }
-
-    if (Object.keys(limpio).length > 0) {
-      cambios.push({ plan, valores: limpio })
-      cambiosAuditoria[plan] = limpio
-    }
+}
+export async function PUT(request: Request) {
+  const auth = await requireSuperAdmin();
+  if (!auth.ok)
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  const body = await request.json().catch(() => null);
+  const planes = ["basic", "business_plus"];
+  if (
+    !body ||
+    typeof body !== "object" ||
+    Array.isArray(body) ||
+    Object.keys(body).length !== 2 ||
+    !planes.every((p) => body[p])
+  )
+    return NextResponse.json(
+      { error: "Envía ambos planes completos." },
+      { status: 400 },
+    );
+  const claves = new Set([
+    "plan",
+    "revision",
+    "permisos",
+    ...LIMITES_PLAN.map((l) => l.key),
+  ]);
+  for (const plan of planes) {
+    const p = body[plan];
+    if (
+      typeof p !== "object" ||
+      Array.isArray(p) ||
+      p.plan !== plan ||
+      Object.keys(p).some((k) => !claves.has(k)) ||
+      !Number.isSafeInteger(p.revision) ||
+      p.revision < 0 ||
+      !p.permisos ||
+      typeof p.permisos !== "object" ||
+      Object.keys(p.permisos).length !== FUNCIONES_PLAN.length ||
+      !FUNCIONES_PLAN.every((f) => typeof p.permisos[f.key] === "boolean") ||
+      !LIMITES_PLAN.every(
+        (l) =>
+          p[l.key] === null ||
+          (Number.isInteger(p[l.key]) &&
+            p[l.key] >= 0 &&
+            p[l.key] <= 2147483647),
+      )
+    )
+      return NextResponse.json(
+        {
+          error:
+            "Revisa los permisos y los límites: usa enteros desde cero o sin límite.",
+        },
+        { status: 400 },
+      );
   }
-
-  if (cambios.length === 0) {
-    return NextResponse.json({ error: 'Nada que actualizar' }, { status: 400 })
-  }
-
-  for (const c of cambios) {
-    const { error } = await supabaseAdmin.from('plan_features').update(c.valores).eq('plan', c.plan)
-    if (error) {
-      return NextResponse.json({ error: `No se pudo actualizar el plan ${c.plan}. ${mensajeDb(error)}` }, { status: 500 })
-    }
-  }
-
-  await registrarAuditoria(auth, 'editar_planes', cambiosAuditoria)
-
-  const data = await Promise.all(['basic', 'business_plus'].map(getPlanFeatures))
-  return NextResponse.json({ ok: true, planes: data })
+  const { error } = await supabaseAdmin.rpc("tori_publicar_planes", {
+    p_actor: auth.userId,
+    p_email: auth.email,
+    p_planes: body,
+  });
+  if (error)
+    return NextResponse.json(
+      {
+        error:
+          error.code === "40001"
+            ? "Los planes cambiaron. Recarga antes de publicar."
+            : "No se publicaron los cambios. Intenta nuevamente.",
+      },
+      { status: error.code === "40001" ? 409 : 500 },
+    );
+  invalidarPlanes();
+  return NextResponse.json({ ok: true, planes: await catalogoPlanes() });
 }

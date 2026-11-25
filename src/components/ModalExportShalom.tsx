@@ -1,5 +1,6 @@
 'use client'
 
+import {usePlan} from '@/context/PlanesContext'
 import { useEffect, useState } from 'react'
 import { FileSpreadsheet } from 'lucide-react'
 
@@ -31,7 +32,8 @@ export default function ModalExportShalom({
   onCerrar,
   onConfirmar,
 }: Props) {
-  if (!abierto) return null
+  const {permite}=usePlan()
+  const puedeMarcar=permite('cambio_masivo')&&permite('envios_estado')
   const { startTour } = useOnboarding()
 
   const [seleccion, setSeleccion] = useState<boolean[]>([])
@@ -58,6 +60,7 @@ export default function ModalExportShalom({
   const marcarTodos = () => setSeleccion(Array.from({ length: numeroArchivos }, () => true))
   const desmarcarTodos = () => setSeleccion(Array.from({ length: numeroArchivos }, () => false))
 
+  if(!abierto)return null
   return (
     <div role="dialog" aria-modal="true" aria-label="Exportar Shalom" className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white  rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
@@ -162,7 +165,8 @@ export default function ModalExportShalom({
           <div data-tour="export-marcar" className="flex items-center gap-4 bg-slate-50  border border-slate-200  rounded-2xl p-5">
             <input
               type="checkbox"
-              checked={marcarEnviado}
+              disabled={!puedeMarcar}
+              checked={puedeMarcar && marcarEnviado}
               onChange={(e) => onCambiarMarcarEnviado(e.target.checked)}
               className="w-5 h-5 accent-sky-600 cursor-pointer shrink-0"
             />
@@ -171,7 +175,7 @@ export default function ModalExportShalom({
               <span className="font-semibold text-green-600 ">
                 ENVIADO
               </span>{' '}
-              después de exportarlos.
+              después de exportarlos. {!puedeMarcar && 'Esta acción no está incluida en tu plan.'}
             </label>
           </div>
         </div>
@@ -191,7 +195,7 @@ export default function ModalExportShalom({
           >
             {ninguno
               ? 'Selecciona un archivo'
-              : `${marcarEnviado ? 'Exportar y enviar' : 'Descargar'}${numeroArchivos > 1 ? ` (${seleccionadosCount} archivo${seleccionadosCount === 1 ? '' : 's'})` : ''}`}
+              : `${puedeMarcar && marcarEnviado ? 'Exportar y enviar' : 'Descargar'}${numeroArchivos > 1 ? ` (${seleccionadosCount} archivo${seleccionadosCount === 1 ? '' : 's'})` : ''}`}
           </button>
         </div>
 

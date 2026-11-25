@@ -7,6 +7,7 @@ import type { ResolucionNegocio } from '@/lib/roles'
 
 export type SesionApp = {
   user: { id: string; email: string | null }
+  planFeatures?: import("@/lib/planCatalogo").ConfigPlan
   negocio: ResolucionNegocio
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   profile: Record<string, any> | null
@@ -35,6 +36,7 @@ export async function api<T = unknown>(ruta: string, init: RequestInit & { json?
     datos = null
   }
   if (!res.ok) {
+    if(res.status===403) window.dispatchEvent(new Event('planes-actualizados'))
     const msg = (datos as { error?: string } | null)?.error || `Error del servidor (código ${res.status}). Intenta de nuevo.`
     throw new ErrorApi(msg, res.status)
   }

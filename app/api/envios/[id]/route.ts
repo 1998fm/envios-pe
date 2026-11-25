@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requireNegocio } from '@/lib/negocioAuth'
@@ -14,6 +15,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params
   const body = await request.json().catch(() => ({}))
 
+  for(const [campo,funcion] of [['estado','envios_estado'],['tamano','envios_tamano'],['fecha_programada','envios_reprogramar'],['observaciones','envios_observaciones']] as const) {
+    if(campo in body){const denial=requireFunciones(auth,funcion);if(denial)return denial;}
+  }
   const cambios: Record<string, unknown> = {}
 
   if ('estado' in body) {
@@ -67,6 +71,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireNegocio('ver_envios')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'envios_eliminar');
+  if(permisoPlan)return permisoPlan;
   const { id } = await params
 
   const { data: existe } = await supabaseAdmin

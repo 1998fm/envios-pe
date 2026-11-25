@@ -1,3 +1,4 @@
+import {requireAlgunaFuncion} from '@/lib/negocioAuth'
 import { normalizarIdentificador, patronIdentificador } from '@/lib/identidadCliente'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
@@ -17,6 +18,8 @@ export async function GET(request: Request) {
   // encuentra a los clientes ya vinculados al negocio de quien llama.
   const auth = await requirePlus('ver_ventas', 'ver_clientes', 'ver_envios')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireAlgunaFuncion(auth,'ventas','clientes','envios_validar');
+  if(permisoPlan)return permisoPlan;
   const userId = auth.ownerId
 
   const { searchParams } = new URL(request.url)
@@ -64,6 +67,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const auth = await requirePlus('ver_ventas', 'ver_clientes', 'ver_envios')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireAlgunaFuncion(auth,'ventas_crear','clientes_editar','envios_validar');
+  if(permisoPlan)return permisoPlan;
   const user_id = auth.ownerId
 
   const body = await request.json()

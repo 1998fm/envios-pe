@@ -1,4 +1,5 @@
 'use client'
+import {usePlan} from '@/context/PlanesContext'
 
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useEsMovil } from '@/hooks/useEsMovil'
@@ -12,7 +13,7 @@ import { useConfirm } from '@/components/ConfirmDialog'
 import { useOnboarding } from '@/context/OnboardingContext'
 import { tourDone, trayectoDone } from '@/lib/tours'
 import TutorialSeccion from '@/components/TutorialSeccion'
-import { openUpgrade, planNivel } from '@/lib/planGating'
+import { openUpgrade } from '@/lib/planGating'
 import EtiquetasProducto, { COPIAS_A4_OPCIONES, TAMANOS_ETIQUETA_PRODUCTO, type TamanoEtiquetaProducto } from '@/components/EtiquetasProducto'
 import { api } from '@/lib/clienteApi'
 import CatalogoVariantes from './CatalogoVariantes'
@@ -170,6 +171,8 @@ const EJEMPLOS = [
 ]
 
 export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanancias = true }: Props) {
+  const {permite}=usePlan(plan)
+
   const confirmar = useConfirm()
   const esMovil = useEsMovil()
   const { startTour } = useOnboarding()
@@ -297,6 +300,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   }, [showNuevo, startTour])
 
   async function escogerFoto(e: ChangeEvent<HTMLInputElement>, destino: 'nuevo' | 'editar') {
+    if(!permite('productos_fotos')){openUpgrade();return}
     const input = e.target
     const file = input.files?.[0]
     input.value = ''
@@ -316,6 +320,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   }
 
   function quitarFoto(destino: 'nuevo' | 'editar') {
+    if(!permite('productos_fotos')){openUpgrade();return}
     if (destino === 'nuevo' && nuevaFoto) {
       URL.revokeObjectURL(nuevaFoto.preview)
       setNuevaFoto(null)
@@ -344,6 +349,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   }
 
   function iniciarEdicion(p: Producto) {
+    if(!permite('productos_editar')){openUpgrade();return}
     setEditandoId(p.id)
     setEditForm({ ...p })
     setStockOriginalEditando(Number(p.stock_actual ?? 0))
@@ -352,6 +358,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   }
 
   async function abrirHistorial(p: Producto) {
+    if(!permite('productos_kardex')){openUpgrade();return}
     setHistorialProducto(p)
     setMovimientos([])
     setCargandoHistorial(true)
@@ -371,6 +378,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   }
 
   async function guardarEdicion() {
+    if(!permite('productos_editar')){openUpgrade();return}
     if (!editandoId) return
     const stockNuevo = Number(editForm.stock_actual ?? 0)
     const stockCambio = stockOriginalEditando !== null && stockNuevo !== stockOriginalEditando
@@ -416,6 +424,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   }
 
   async function eliminarProducto(id: string, nombre: string) {
+    if(!permite('productos_eliminar')){openUpgrade();return}
     if (!(await confirmar({ message: `¿Eliminar "${nombre}"?`, danger: true, confirmLabel: 'Sí, eliminar' }))) return
     const res = await fetch(`/api/productos/${id}`, { method: 'DELETE' })
     if (res.ok) {
@@ -427,6 +436,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   }
 
   async function cambiarArchivo(ids: string[], archivado: boolean, mensajeExito: string) {
+    if(!permite('productos_archivar')){openUpgrade();return}
     const res = await fetch('/api/productos/batch', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -459,6 +469,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   }
 
   async function eliminarSeleccion() {
+    if(!permite('productos_eliminar')){openUpgrade();return}
     const n = seleccion.size
     if (n === 0) return
     if (!(await confirmar({ message: `¿Eliminar ${n} producto${n === 1 ? '' : 's'} definitivamente? Esta acción no se puede deshacer.`, danger: true, confirmLabel: `Sí, eliminar ${n}` }))) return
@@ -519,6 +530,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   const [creandoProducto, setCreandoProducto] = useState(false)
 
   async function crearProducto() {
+    if(!permite('productos_crear')){openUpgrade();return}
     if (creandoProductoRef.current) return
     creandoProductoRef.current = true
     setCreandoProducto(true)
@@ -658,6 +670,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
   }
 
   async function insertarEjemplos() {
+    if(!permite('productos_crear')){openUpgrade();return}
     setInsertandoEjemplos(true)
     for (const ej of EJEMPLOS) {
       await fetch('/api/productos', {
@@ -727,7 +740,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
               )}
               {familiasDisponibles && (
                 <button
-                  onClick={() => setEditorVariantes('gestionar')}
+                  onClick={() => permite('productos_variantes') ? setEditorVariantes('gestionar') : openUpgrade()}
                   className="flex items-center gap-2 rounded-2xl bg-white/15 px-3 py-2.5 sm:px-4 text-sm font-bold text-white transition-all hover:bg-white/25"
                 >
                   <Boxes size={15} /> Variantes
@@ -736,7 +749,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
               <TutorialSeccion seccion="productos" />
               <button
                 data-tour="productos-nuevo"
-                onClick={() => setShowNuevo(true)}
+                onClick={() => permite('productos_crear') ? setShowNuevo(true) : openUpgrade()}
                 className="btn-shine flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-extrabold sm:px-5 text-tori-700 transition-all hover:bg-tori-50 active:scale-[0.98]"
               >
                 <Plus size={16} /> Nuevo producto
@@ -944,7 +957,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
               {vista === 'activos' && !busquedaAplicada && (
                 <>
                   <button
-                    onClick={() => setShowNuevo(true)}
+                    onClick={() => permite('productos_crear') ? setShowNuevo(true) : openUpgrade()}
                     className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-tori-600 to-tori-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-tori-600/25 transition-all hover:shadow-xl"
                   >
                     <Plus size={16} /> Nuevo producto
@@ -1136,10 +1149,10 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                             : { icono: Archive, titulo: 'Archivar', clase: 'text-slate-600 bg-slate-100', fn: () => archivarProducto(p) },
                           {
                             icono: Printer,
-                            titulo: planNivel(plan) < 1 ? 'Disponible en Plus' : 'Imprimir etiqueta',
+                            titulo: !permite('etiquetas_producto') ? 'Disponible en Plus' : 'Imprimir etiqueta',
                             clase: 'text-slate-600 bg-slate-100',
                             fn: () => {
-                              if (planNivel(plan) < 1) {
+                              if (!permite('etiquetas_producto')) {
                                 openUpgrade()
                                 return
                               }
@@ -1411,12 +1424,12 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                           <BotonFila
                             icono={Printer}
                             titulo={
-                              planNivel(plan) < 1
+                              !permite('etiquetas_producto')
                                 ? 'Disponible en Plus'
                                 : 'Imprimir etiqueta'
                             }
                             onClick={() => {
-                              if (planNivel(plan) < 1) {
+                              if (!permite('etiquetas_producto')) {
                                 openUpgrade()
                                 return
                               }
@@ -1583,7 +1596,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
                   </button>
                   <button
                     type="button"
-                    onClick={() => { if(familiasDisponibles) {setShowNuevo(false);setEditorVariantes('crear')} else setTipoCreacion('variantes') }}
+                    onClick={() => { if(familiasDisponibles) {setShowNuevo(false);permite('productos_variantes') ? setEditorVariantes('crear') : openUpgrade()} else setTipoCreacion('variantes') }}
                     className={`rounded-[15px] border p-3.5 text-left transition-all ${
                       tipoCreacion === 'variantes'
                         ? 'border-tori-400 bg-tori-50 ring-2 ring-tori-400/20'
@@ -1825,7 +1838,7 @@ export default function SeccionProductos({ userId, plan = 'basic', puedeVerGanan
 
                 {puedeVerGanancias && (
                   <div className="mt-2.5">
-                    {planNivel(plan) < 1 ? (
+                    {!permite('etiquetas_producto') ? (
                       <button
                         onClick={openUpgrade}
                         className="w-full rounded-xl px-3 py-2.5 text-sm font-semibold flex items-center justify-between bg-slate-50 text-slate-500 border border-dashed border-slate-300 hover:border-sky-300 transition-colors"

@@ -1,3 +1,4 @@
+import { accesoPlan,permitePlan } from '@/lib/planesServidor'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { permitir } from '@/lib/rateLimit'
@@ -29,6 +30,9 @@ export async function GET(request: Request) {
   if (!userId || !dni || telefono.length < 6) {
     return NextResponse.json({ data: null })
   }
+
+  const plan=await accesoPlan(userId).catch(()=>null)
+  if(!plan||!permitePlan(plan,'tracking'))return NextResponse.json({data:[]})
 
   // Envíos del local (user_id) del último año, con sus ventas e items.
   // Se filtran por coincidencia normalizada de DNI en memoria: tolera

@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { normalizarIdentificador, patronIdentificador } from '@/lib/identidadCliente'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
@@ -21,6 +22,8 @@ type VentaFila = {
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_envios')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'envios_validar');
+  if(permisoPlan)return permisoPlan;
   const { id } = await params
 
   const { data: envio } = await supabaseAdmin
@@ -106,6 +109,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_envios')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'envios_validar');
+  if(permisoPlan)return permisoPlan;
   const { id } = await params
 
   const body = await request.json().catch(() => ({}))

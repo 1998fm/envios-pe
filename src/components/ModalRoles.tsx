@@ -1,5 +1,7 @@
 'use client'
 
+import {usePlan} from '@/context/PlanesContext'
+import {openUpgrade} from '@/lib/planGating'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useConfirm } from '@/components/ConfirmDialog'
@@ -47,7 +49,7 @@ type Props = {
   onCerrar: () => void
   onCambio?: () => void
   plan?: string
-  maxMiembros?: number
+  maxMiembros?: number | null
   puedeUsarRoles?: boolean
 }
 
@@ -61,9 +63,10 @@ export default function ModalRoles({
   abierto,
   onCerrar,
   onCambio,
-  maxMiembros = 4,
+  maxMiembros = null,
   puedeUsarRoles = false,
 }: Props) {
+  const {permite}=usePlan()
   const confirmar = useConfirm()
 
   const [roles, setRoles] = useState<Rol[]>([])
@@ -146,6 +149,7 @@ export default function ModalRoles({
   // ========================================
 
   function empezarNuevo() {
+    if(!permite('roles_crear')){openUpgrade();return}
     if (!puedeUsarRoles) {
       toast.error('Roles disponibles solo en Plus')
       return
@@ -156,6 +160,7 @@ export default function ModalRoles({
   }
 
   function editarRol(rol: Rol) {
+    if(!permite('roles_crear')){openUpgrade();return}
     setEditandoId(rol.id)
     setForm({
       nombre: rol.nombre,
@@ -196,6 +201,7 @@ export default function ModalRoles({
   }
 
   async function guardarRol() {
+    if(!permite('roles_crear')){openUpgrade();return}
     if (!form.nombre.trim()) {
       toast.error('Ponle un nombre al rol')
       return
@@ -243,6 +249,7 @@ export default function ModalRoles({
   }
 
   async function eliminarRol(rol: Rol) {
+    if(!permite('roles_crear')){openUpgrade();return}
     const ok = await confirmar({
       title: 'Eliminar rol',
       message: `Se eliminará el rol "${rol.nombre}" y sus miembros dejarán de tener acceso al negocio.`,
@@ -275,6 +282,7 @@ export default function ModalRoles({
   // ========================================
 
   async function agregarMiembro() {
+    if(!permite('roles_miembros')){openUpgrade();return}
     if (!emailMiembro.trim()) {
       toast.error('Escribe el email del usuario')
       return
@@ -287,7 +295,7 @@ export default function ModalRoles({
       toast.error('Roles disponibles solo en Plus')
       return
     }
-    if (miembros.length >= maxMiembros) {
+    if (maxMiembros!==null && miembros.length >= maxMiembros) {
       toast.error(`Límite de ${maxMiembros} miembros alcanzado en Plus`)
       return
     }
@@ -325,6 +333,7 @@ export default function ModalRoles({
   }
 
   async function cambiarRolMiembro(userId: string, roleId: string) {
+    if(!permite('roles_miembros')){openUpgrade();return}
     try {
       const res = await fetch('/api/roles/members', {
         method: 'PATCH',
@@ -345,6 +354,7 @@ export default function ModalRoles({
   }
 
   async function quitarMiembro(userId: string) {
+    if(!permite('roles_miembros')){openUpgrade();return}
     const ok = await confirmar({
       title: 'Quitar acceso',
       message: 'El usuario perderá el acceso a este negocio.',
@@ -386,6 +396,7 @@ export default function ModalRoles({
   }
 
   async function generarLinkNuevo(inv: Invitacion) {
+    if(!permite('roles_invitaciones')){openUpgrade();return}
     const ok = await confirmar({
       title: 'Generar un link nuevo',
       message: `El link actual de ${inv.email} dejará de funcionar.`,
@@ -413,6 +424,7 @@ export default function ModalRoles({
   }
 
   async function cancelarInvitacion(inv: Invitacion) {
+    if(!permite('roles_invitaciones')){openUpgrade();return}
     const ok = await confirmar({
       title: 'Cancelar invitación',
       message: `${inv.email} ya no podrá unirse con este enlace.`,

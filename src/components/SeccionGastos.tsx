@@ -1,4 +1,6 @@
 'use client'
+import {openUpgrade} from '@/lib/planGating'
+import {usePlan} from '@/context/PlanesContext'
 
 import { useEsMovil } from '@/hooks/useEsMovil'
 import { useEffect, useState } from 'react'
@@ -20,6 +22,8 @@ const fmtSoles = (n: number) => 'S/ ' + n.toLocaleString('es-PE', { minimumFract
 const formVacio = { categoria: 'OTROS', concepto: '', monto: '', fecha: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' }), notas: '' }
 
 export default function SeccionGastos({ userId }: Props) {
+  const {permite}=usePlan()
+
   const esMovil = useEsMovil()
   const confirmar = useConfirm()
   const { startTour } = useOnboarding()
@@ -64,12 +68,14 @@ export default function SeccionGastos({ userId }: Props) {
   }, [showModal, startTour])
 
   function abrirNuevo() {
+    if(!permite('gastos_crear')){openUpgrade();return}
     setEditando(null)
     setForm(formVacio)
     setShowModal(true)
   }
 
   function abrirEdicion(g: Gasto) {
+    if(!permite('gastos_editar')){openUpgrade();return}
     setEditando(g)
     setForm({
       categoria: g.categoria,
@@ -124,6 +130,7 @@ export default function SeccionGastos({ userId }: Props) {
   }
 
   async function eliminarGasto(g: Gasto) {
+    if(!permite('gastos_eliminar')){openUpgrade();return}
     if (!(await confirmar({ message: '¿Eliminar este gasto definitivamente?', danger: true, confirmLabel: 'Sí, eliminar' }))) return
     const res = await fetch(`/api/gastos/${g.id}`, { method: 'DELETE' })
     if (res.ok) {

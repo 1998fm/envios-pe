@@ -1,4 +1,5 @@
-import { computeEffectivePlan } from '@/lib/planGating'
+import {accesoPlan,permitePlan,SECCIONES_ROL} from '@/lib/planesServidor'
+import type {ConfigPlan,FuncionPlan} from '@/lib/planCatalogo'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { getSessionUser } from '@/lib/ownerAuth'
@@ -23,6 +24,7 @@ export type NegocioAuth = {
   ownerId: string
   esOwner: boolean
   permisos: PermisosRol
+  plan: ConfigPlan
 }
 
 export type NegocioAuthResult =
@@ -52,13 +54,18 @@ export async function requireNegocio(
 
   const negocio = await resolverNegocioActual(supabaseAdmin, sesion.id)
 
+  let plan:ConfigPlan
+  try { plan=await accesoPlan(negocio.ownerId) } catch { return fallo(503,'No se pudo verificar la configuración del plan') }
+  const secciones=requeridos.map(k=>SECCIONES_ROL[k]).filter(Boolean)
+  if(secciones.length && !secciones.some(k=>permitePlan(plan,k))) return fallo(403,'Tu plan no permite acceder a esta sección')
   if (negocio.esOwner) {
     return {
       ok: true,
       userId: sesion.id,
       ownerId: sesion.id,
       esOwner: true,
-      permisos: PERMISOS_TODOS,
+      permisos: {...PERMISOS_TODOS,ver_ganancia_producto:permitePlan(plan,'ganancia'),ver_ganancia_venta:permitePlan(plan,'ganancia')},
+      plan,
     }
   }
 
@@ -67,7 +74,8 @@ export async function requireNegocio(
     return fallo(403, 'Sin acceso a este negocio')
   }
 
-  const permisos = negocio.rol.permisos
+  const permisos = {...negocio.rol.permisos}
+  if(!permitePlan(plan,'ganancia')){permisos.ver_ganancia_producto=false;permisos.ver_ganancia_venta=false}
   if (requeridos.length > 0 && !requeridos.some((k) => permisos[k] === true)) {
     return fallo(403, 'Tu rol no tiene permiso para esta acción')
   }
@@ -78,6 +86,7 @@ export async function requireNegocio(
     ownerId: negocio.ownerId,
     esOwner: false,
     permisos,
+    plan,
   }
 }
 
@@ -97,9 +106,11 @@ export function esDelNegocio(
 export async function requirePlus(...requeridos: PermisoKey[]): Promise<NegocioAuthResult> {
   const auth = await requireNegocio(...requeridos)
   if (!auth.ok) return auth
-  const { data, error } = await supabaseAdmin.from('profiles')
-    .select('plan, trial_end, pro_until').eq('id', auth.ownerId).maybeSingle()
-  if (error || !data) return fallo(503, 'No se pudo verificar el plan del negocio')
-  if (computeEffectivePlan(data).plan === 'basic') return fallo(403, 'Esta función requiere el plan Plus')
   return auth
 }
+
+export function requireFunciones(auth:NegocioAuth, ...keys:FuncionPlan[]) {
+ return keys.every(k=>permitePlan(auth.plan,k))?null:NextResponse.json({error:'Tu plan no permite esta función.',code:'PLAN_FEATURE'},{status:403})
+}
+
+export function requireAlgunaFuncion(auth:NegocioAuth,...keys:FuncionPlan[]){return keys.some(k=>permitePlan(auth.plan,k))?null:NextResponse.json({error:'Tu plan no permite esta función.',code:'PLAN_FEATURE'},{status:403})}

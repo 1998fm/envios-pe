@@ -1,3 +1,5 @@
+import {computeEffectivePlan} from '@/lib/planGating'
+import {planConfigurado} from '@/lib/planesServidor'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { getSessionUser } from '@/lib/ownerAuth'
@@ -32,6 +34,7 @@ export async function GET() {
   return NextResponse.json({
     user: { id: sesion.id, email: sesion.email ?? null },
     negocio,
+    planFeatures: await planConfigurado(computeEffectivePlan(perfil??{}).plan),
     profile: perfil ? conImagenesProxy(perfil, ['logo_url', 'redirect_message_image']) : null,
     tarifas: tarifas?.tarifas ?? {},
   })

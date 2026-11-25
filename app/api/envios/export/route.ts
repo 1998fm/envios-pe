@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -9,6 +10,8 @@ import { mensajeDb } from '@/lib/erroresEs'
 export async function GET(request: Request) {
   const auth = await requirePlus('ver_envios')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'shalom');
+  if(permisoPlan)return permisoPlan;
 
   const ids = idsValidos(new URL(request.url).searchParams.get('ids'))
 

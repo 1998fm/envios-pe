@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { imagenEnUso } from '@/lib/productos/imagenes'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
@@ -10,6 +11,8 @@ import { rutaDesdeUrlProducto } from '@/lib/comprimirImagen'
 export async function PATCH(request: Request) {
   const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'productos_archivar');
+  if(permisoPlan)return permisoPlan;
 
   const body = await request.json()
   const ids = body?.ids
@@ -42,6 +45,7 @@ export async function DELETE(request: Request) {
   const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
 
+  const permisoPlan=requireFunciones(auth,'productos_eliminar');if(permisoPlan)return permisoPlan;
   const body = await request.json().catch(() => null)
   const ids = idsValidos(body?.ids, 200)
   if (ids.length === 0) {

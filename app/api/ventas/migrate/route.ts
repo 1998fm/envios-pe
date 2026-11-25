@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -6,6 +7,8 @@ import { mensajeDb } from '@/lib/erroresEs'
 export async function POST(request: Request) {
   const auth = await requirePlus('ver_ventas')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'ventas_editar');
+  if(permisoPlan)return permisoPlan;
   const user_id = auth.ownerId
 
   const { data: ventas, error: fetchError } = await supabaseAdmin

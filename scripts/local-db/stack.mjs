@@ -84,6 +84,7 @@ export const SCHEMA_ORDER = [
   'rpc-resumenes-compactos.sql',
   'mp-eventos.sql',
   'logistica-reserva-atomica.sql',
+  'planes-control-total.sql',
 ]
 
 /** Puerto libre elegido por el sistema (evita choques con restos de ejecuciones anteriores). */

@@ -137,7 +137,7 @@ test.describe('Dashboard: la pantalla no se rompe', () => {
     const u = await createUser({ plan: 'basic', empresa: 'Basico SAC' })
     await abrirDashboard(page, u)
     await expect(page.getByPlaceholder('Buscar por nombre, DNI o teléfono...')).toBeVisible()
-    await expect(page.getByText('Básico · solicitudes ilimitadas y gestión individual.', {exact: false})).toBeVisible()
+    await expect(page.getByText('Básico · solicitudes ilimitadas.', {exact: false})).toBeVisible()
     await expect(page.getByRole('button', {name: 'Compartir formulario', exact: true})).toBeVisible()
     await expect(page.getByText(/Básico|Basic/i).first()).toBeVisible()
   })

@@ -1,4 +1,6 @@
 'use client'
+import {openUpgrade} from '@/lib/planGating'
+import {usePlan} from '@/context/PlanesContext'
 
 import PrecioInput from '@/components/PrecioInput'
 
@@ -19,6 +21,8 @@ type Props = { userId: string }
 const ESTADOS = ['COMPLETADA', 'ANULADA'] as const
 
 export default function SeccionCompras({ userId }: Props) {
+  const {permite}=usePlan()
+
   const esMovil = useEsMovil()
   const confirmar = useConfirm()
   const { startTour } = useOnboarding()
@@ -124,6 +128,7 @@ export default function SeccionCompras({ userId }: Props) {
   const creandoRef = useRef(false)
 
   async function crearCompra() {
+    if(!permite('compras_crear')){openUpgrade();return}
     if (creandoRef.current) return
     creandoRef.current = true
     try {
@@ -169,6 +174,7 @@ export default function SeccionCompras({ userId }: Props) {
   }
 
   async function anularCompra(compra: Compra) {
+    if(!permite('compras_anular')){openUpgrade();return}
     if (!(await confirmar({ message: '¿Estás seguro de anular esta compra? Se revertirá el stock.', danger: true, confirmLabel: 'Sí, anular' }))) return
     const res = await fetch(`/api/compras/${compra.id}`, {
       method: 'PUT',
@@ -184,6 +190,7 @@ export default function SeccionCompras({ userId }: Props) {
   }
 
   async function eliminarCompra(id: string) {
+    if(!permite('compras_anular')){openUpgrade();return}
     if (!(await confirmar({ message: '¿Eliminar esta compra definitivamente?', danger: true, confirmLabel: 'Sí, eliminar' }))) return
     const res = await fetch(`/api/compras/${id}`, { method: 'DELETE' })
     if (res.ok) {
@@ -203,7 +210,7 @@ export default function SeccionCompras({ userId }: Props) {
       <div className="flex items-center gap-3 flex-wrap">
         <button
           data-tour="compras-nueva"
-          onClick={() => setShowNueva(true)}
+          onClick={() => permite('compras_crear') ? setShowNueva(true) : openUpgrade()}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-sky-500/20 transition-all duration-200"
         >
           <Plus size={16} /> Nueva compra

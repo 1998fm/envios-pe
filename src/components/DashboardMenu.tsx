@@ -24,6 +24,7 @@ import TourHelpButton from '@/components/TourHelpButton'
 import { useEsMovil } from '@/hooks/useEsMovil'
 import LogoTori from '@/components/LogoTori'
 import LockedFeature from '@/components/LockedFeature'
+import {usePlan} from '@/context/PlanesContext'
 import { openUpgrade } from '@/lib/planGating'
 import type { TourId } from '@/lib/tours'
 
@@ -51,7 +52,7 @@ type Props = {
   /** Si el plan permite usar roles (Plus activo). */
   puedeUsarRoles?: boolean
   /** Máximo de miembros permitidos (4 en Plus). */
-  maxMiembros?: number
+  maxMiembros?: number | null
 }
 
 export default function DashboardMenu({
@@ -73,6 +74,7 @@ export default function DashboardMenu({
   esOwner = false,
   puedeUsarRoles = false,
 }: Props) {
+  const {permite}=usePlan(plan)
   const [hover, setHover] = useState(false)
   const [fijado, setFijado] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -111,14 +113,15 @@ export default function DashboardMenu({
   const puedeVerFormulario = !visibles || visibles.includes('formulario')
 
   function navegar(p: 'resumen' | 'envios' | 'productos' | 'ventas' | 'compras' | 'gastos' | 'clientes' | 'formulario') {
-    if (plan === 'basic' && p !== 'envios' && p !== 'formulario') { openUpgrade(); return }
+    if (!permite(p)) { openUpgrade(); return }
     onNavegar(p)
     setHover(false)
     setFijado(false)
   }
 
   function ejecutar(fn: () => void) {
-    if (plan === 'basic' && fn !== onConfig) { openUpgrade(); return }
+    const key=fn===onExportShalom?'shalom':fn===onCambioMasivo?'cambio_masivo':fn===onGenerarEtiquetas?'etiquetas':fn===onCopiarDatos?'copiar':fn===onConfig?'configuracion':'roles'
+    if(!permite(key) && !(fn===onCopiarDatos&&permite('exportar'))){openUpgrade();return}
     fn()
     setHover(false)
     setFijado(false)
@@ -292,7 +295,7 @@ export default function DashboardMenu({
                 </p>                {tieneShalom && (
                   <button data-tour="exportar-shalom" onClick={() => ejecutar(onExportShalom)} className={itemClass}>
                     <Download size={16} className="text-sky-500" />
-                    Shalom Pro{plan === 'basic' ? ' · Plus' : ''}
+                    Shalom Pro{!permite('shalom') ? ' · Bloqueado' : ''}
                     {shalomUso.max != null && (
                       <span className="ml-auto text-[10px] font-semibold text-slate-400">
                         {shalomUso.used}/{shalomUso.max} este mes
@@ -300,7 +303,7 @@ export default function DashboardMenu({
                     )}
                   </button>
                 )}
-                {plan !== 'basic' ? (
+                {permite('cambio_masivo') ? (
                   <button data-tour="cambio-masivo" onClick={() => ejecutar(onCambioMasivo)} className={itemClass}>
                     <Replace size={16} className="text-indigo-500" />
                     Cambio Masivo
@@ -312,7 +315,7 @@ export default function DashboardMenu({
                 )}
                 <button data-tour="generar-etiquetas" onClick={() => ejecutar(onGenerarEtiquetas)} className={itemClass}>
                   <Tag size={16} className="text-emerald-500" />
-                  Generar etiquetas{plan === 'basic' ? ' · Plus' : ''}
+                  Generar etiquetas{!permite('etiquetas') ? ' · Bloqueado' : ''}
                 </button>
                 {showCopiarDatos && (copiarDatosLocked ? (
                   <div data-tour="copiar-datos" className="flex items-center justify-between pr-3">

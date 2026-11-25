@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -38,6 +39,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const auth = await requirePlus('ver_compras')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'compras_crear');
+  if(permisoPlan)return permisoPlan;
 
   const body = await request.json()
   const { proveedor, items } = body

@@ -11,6 +11,8 @@ import {
   pasosIniciales,
   validarPasoInicial,
 } from "@/lib/onboarding";
+import {usePlan} from "@/context/PlanesContext";
+import {FUNCION_CAMPO_CONFIG} from "@/lib/planCamposConfig";
 import { computeEffectivePlan } from "@/lib/planGating";
 import { markTrayectoDone } from "@/lib/tours";
 import { useAgenciasShalom } from "@/lib/hooks/useAgenciasShalom";
@@ -30,7 +32,7 @@ const titulos: Record<number, string> = {
 export default function OnboardingWizard() {
   const router = useRouter();
   const [config, setConfig] = useState<ConfigState>(initialConfigState);
-  const [step, setStep] = useState(1),
+  const [pasoSolicitado, setStep] = useState(1),
     [listo, setListo] = useState(false),
     [cargando, setCargando] = useState(true);
   const [saving, setSaving] = useState(false),
@@ -42,6 +44,7 @@ export default function OnboardingWizard() {
     [copiado, setCopiado] = useState(false),
     [plan, setPlan] = useState("basic"),
     [dias, setDias] = useState<number | null>(null);
+  const {permite}=usePlan(plan);
   const bloqueo = useRef(false),
     alerta = useRef<HTMLDivElement>(null);
   const { agencias } = useAgenciasShalom();
@@ -87,12 +90,15 @@ export default function OnboardingWizard() {
   useEffect(() => {
     if (error) alerta.current?.focus();
   }, [error]);
-  const pasos = pasosIniciales(config),
-    posicion = pasos.indexOf(step);
+  const pasos = pasosIniciales(config).filter(p=>permite(({1:'empresa',2:'metodos',3:'configuracion',4:'tarifas'} as Record<number,string>)[p]));
+  const step=pasos.includes(pasoSolicitado)?pasoSolicitado:(pasos[0]??0);
+  const posicion = pasos.indexOf(step);
   function upd<K extends keyof ConfigState>(key: K, value: ConfigState[K]) {
+    if(FUNCION_CAMPO_CONFIG[key]&&!permite(FUNCION_CAMPO_CONFIG[key])){setError('Esta función no está incluida en tu plan.');return}
     setConfig((c) => ({ ...c, [key]: value }));
     setError("");
   }
+  useEffect(()=>{if(!cargando && !pasos.length)router.replace('/dashboard')},[cargando,pasos.length,router]);
   function entrar() {
     markTrayectoDone();
     router.push("/dashboard?v=envios");
@@ -232,17 +238,17 @@ export default function OnboardingWizard() {
                       <OnboardingStep1Empresa config={config} upd={upd} />
                     )}
                     {step === 2 && (
-                      <OnboardingStep2Metodos
+                      <OnboardingStep2Metodos plan={plan}
                         config={config}
                         upd={upd}
-                        basico={plan === "basic"}
+                        basico={false}
                       />
                     )}
                     {step === 3 && (
-                      <OnboardingStep3Logistica
+                      <OnboardingStep3Logistica plan={plan}
                         config={config}
                         upd={upd}
-                        basico={plan === "basic"}
+                        basico={false}
                       />
                     )}
                     {step === 4 && (

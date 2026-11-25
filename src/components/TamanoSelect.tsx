@@ -1,5 +1,7 @@
 'use client'
 
+import {usePlan} from '@/context/PlanesContext'
+import {openUpgrade} from '@/lib/planGating'
 import { useState } from 'react'
 import MenuSelect from '@/components/ui/MenuSelect'
 import { toast } from 'sonner'
@@ -19,9 +21,11 @@ const options = [
 ]
 
 export default function TamanoSelect({ envioId, tamanoActual }: Props) {
+  const {permite}=usePlan()
   const [tamano, setTamano] = useState(tamanoActual || '')
 
   async function actualizarTamano(nuevoTamano: string) {
+    if(!permite('envios_tamano')){openUpgrade();return}
     const anterior = tamano
     setTamano(nuevoTamano)
     try {

@@ -250,7 +250,7 @@ test("Básico no muestra controles que el servidor descarta y mantiene recepció
   await expect(
     page
       .getByText(
-        "Básico programa con 1 día de anticipación y sin cupo diario.",
+        "Tu plan programa con 1 día de anticipación, sin hora de corte ni cupo diario.",
         { exact: false },
       )
       .first(),

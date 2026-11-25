@@ -4,6 +4,7 @@ import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { urlHttpSegura } from '@/lib/urlSegura'
 import { aProxy } from '@/lib/mediaUrl'
 import PublicForm from '@/components/PublicForm'
+import {planConfigurado,permitePlan} from '@/lib/planesServidor'
 import { computeEffectivePlan } from '@/lib/planGating'
 import { validarHoraCorte } from '@/lib/logistica/validarHoraCorte'
 import { esDiaDeshabilitado } from '@/lib/logistica/esDiaDeshabilitado'
@@ -30,21 +31,22 @@ export default async function FormPage({
   }
 
   const planEfectivo = computeEffectivePlan(profile)
-  const isPro = planEfectivo.plan !== 'basic'
-  const isBusinessPlus = planEfectivo.plan === 'business_plus'
+  const plan=await planConfigurado(planEfectivo.plan)
+  const permite=(key:string)=>permitePlan(plan,key)
+  if(!permite('formulario'))return <div className="p-10 text-center">Este formulario no está disponible. Contacta al negocio.</div>
 
   const superaCorteMoto =
-    (profile.logistica_moto_usa_hora_corte ?? false) &&
+    permite('logistica_corte') && (profile.logistica_moto_usa_hora_corte ?? false) &&
     validarHoraCorte(profile.logistica_moto_hora_corte ?? '18:00')
 
   const superaCorteAgencias =
-    (profile.logistica_agencias_usa_hora_corte ?? false) &&
+    permite('logistica_corte') && (profile.logistica_agencias_usa_hora_corte ?? false) &&
     validarHoraCorte(profile.logistica_agencias_hora_corte ?? '18:00')
 
   const cerradoPorDia = esDiaDeshabilitado(profile.cerrar_formulario_dias ?? [])
 
   const formularioDeshabilitado =
-    (profile.cerrar_formulario ?? false) &&
+    permite('cierre') && (profile.cerrar_formulario ?? false) &&
     (superaCorteMoto || superaCorteAgencias || cerradoPorDia)
 
   const { data: tarifasMoto } = await supabaseAdmin
@@ -87,8 +89,7 @@ export default async function FormPage({
 
       <PublicForm
         userId={profile.id}
-        isPro={isPro}
-        isBusinessPlus={isBusinessPlus}
+        permisos={plan.permisos}
         logoUrl={aProxy(profile.logo_url) ?? undefined}
         redirectMessage={profile.redirect_message}
         redirectMessageImage={aProxy(profile.redirect_message_image) ?? undefined}
@@ -117,14 +118,14 @@ nombreMetodoOtro={profile.nombre_metodo_otro}
 
         mensajeRecojo={profile.mensaje_recojo}
 
-        solicitarCantidadProductos={profile.solicitar_cantidad_productos ?? false}
-        mostrarEscogerFecha={profile.mostrar_escoger_fecha ?? true}
-        mostrarTracking={profile.mostrar_tracking ?? true}
+        solicitarCantidadProductos={permite('cantidad') && (profile.solicitar_cantidad_productos ?? false)}
+        mostrarEscogerFecha={permite('escoger_fecha') && (profile.mostrar_escoger_fecha ?? true)}
+        mostrarTracking={permite('tracking') && (profile.mostrar_tracking ?? true)}
         formularioDeshabilitado={formularioDeshabilitado}
         cerrarFormularioMensaje={profile.cerrar_formulario_mensaje ?? ''}
         distritosMotorizado={distritosMotorizado}
-        colorPrimario={profile.color_formulario_primario ?? '#0284c7'}
-        colorSecundario={profile.color_formulario_secundario ?? '#4f46e5'}
+        colorPrimario={permite('colores') ? profile.color_formulario_primario ?? '#0284c7' : '#0284c7'}
+        colorSecundario={permite('colores') ? profile.color_formulario_secundario ?? '#4f46e5' : '#4f46e5'}
       />
 
     </div>

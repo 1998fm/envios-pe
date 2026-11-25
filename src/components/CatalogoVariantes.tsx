@@ -1,4 +1,6 @@
 "use client";
+import {usePlan} from "@/context/PlanesContext";
+import {openUpgrade} from "@/lib/planGating";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/clienteApi";
 import PrecioInput from "./PrecioInput";
@@ -221,6 +223,7 @@ export default function CatalogoVariantes({
   iniciarCreacion?: boolean;
   onConsumirCreacion: () => void;
 }) {
+  const {permite}=usePlan();
   const [grupos, setGrupos] = useState<ResumenFamilia[]>([]),
     [individuales, setIndividuales] = useState<Producto[]>([]),
     [total, setTotal] = useState(0),
@@ -336,6 +339,7 @@ export default function CatalogoVariantes({
     setDirty(true);
   };
   function nuevo(tipo: "crear" | "agrupar") {
+    if(!permite('productos_variantes')){openUpgrade();return}
     setModo(tipo);
     setDatos(inicial());
     setCostoGeneral(0);
@@ -347,6 +351,7 @@ export default function CatalogoVariantes({
     setDirty(false);
   }
   async function abrir(id: string) {
+    if(!permite('productos_variantes')){openUpgrade();return}
     setOcupado(true);
     setError("");
     try {
@@ -405,6 +410,7 @@ export default function CatalogoVariantes({
     );
   }
   async function foto(file: File | undefined, i?: number) {
+    if(!permite('productos_fotos')){openUpgrade();return}
     if (!file) return;
     setOcupado(true);
     setError("");
@@ -555,6 +561,7 @@ export default function CatalogoVariantes({
     });
   }
   async function guardar() {
+    if(!permite('productos_variantes')||(modo==='crear'&&!permite('productos_crear'))||(modo==='editar'&&!permite('productos_editar'))){openUpgrade();return}
     if (guardando.current) return;
     if (!datos.nombre.trim()) {
       setError(
@@ -610,6 +617,7 @@ export default function CatalogoVariantes({
     }
   }
   async function eliminarCompleto() {
+    if(!permite('productos_eliminar')){openUpgrade();return}
     if (!original || ocupado || dirty) return;
     if (
       !window.confirm(`¿Eliminar definitivamente "${original.familia.nombre}" y sus ${original.variantes.length} variantes?
@@ -643,6 +651,7 @@ Esta acción no se puede deshacer. Si solo quieres ocultarlos, usa Archivar.`)
     }
   }
   async function separar(id?: string) {
+    if(!permite('productos_editar')){openUpgrade();return}
     if (
       !original ||
       !window.confirm(

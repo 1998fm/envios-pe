@@ -1,4 +1,6 @@
 'use client'
+import {openUpgrade} from '@/lib/planGating'
+import {usePlan} from '@/context/PlanesContext'
 import { leerConRevision, type ControlLectura } from '@/lib/lecturaCondicionalCliente'
 import TutorialSeccion from '@/components/TutorialSeccion'
 
@@ -30,7 +32,7 @@ import ModalNuevaVenta from '@/components/ModalNuevaVenta'
 import ItemsVentaConBurbuja from '@/components/ItemsVentaConBurbuja'
 import { useConfirm } from '@/components/ConfirmDialog'
 import { fmtSoles, fmtMontoCorto } from '@/lib/format'
-import { planNivel } from '@/lib/planGating'
+
 import {
   FILTROS,
   TONO_BADGE,
@@ -69,8 +71,10 @@ export default function SeccionVentas({
   puedeVerGanancias = true,
   puedeVerKpis = true,
 }: Props) {
+  const {permite}=usePlan(plan)
+
   const confirmar = useConfirm()
-  const muestraGanancia = planNivel(plan) >= 1 && puedeVerGanancias
+  const muestraGanancia = permite('ganancia') && puedeVerGanancias
   // Los KPIs son los totales del negocio (vendido, por cobrar, ticket
   // promedio). Si el rol no los puede ver, tampoco se muestra la cifra
   // grande de arriba: solo la lista de ventas.
@@ -151,6 +155,7 @@ export default function SeccionVentas({
   /* ------------------------------------------------------------------ */
 
   async function anularVenta(venta: Venta) {
+    if(!permite('ventas_anular')){openUpgrade();return}
     const ok = await confirmar({
       title: 'Anular la venta',
       message: `Se anulará la venta de ${venta.persona_nombre} y se restaurará el stock.`,
@@ -172,6 +177,7 @@ export default function SeccionVentas({
   }
 
   async function confirmarVenta(venta: Venta) {
+    if(!permite('ventas_editar')){openUpgrade();return}
     const ok = await confirmar({
       title: 'Confirmar el pago',
       message: `Se marcará como completada la venta de ${venta.persona_nombre} por ${fmtSoles(venta.total)}.`,
@@ -192,6 +198,7 @@ export default function SeccionVentas({
   }
 
   async function eliminarVenta(venta: Venta) {
+    if(!permite('ventas_anular')){openUpgrade();return}
     const ok = await confirmar({
       title: 'Eliminar la venta',
       message: `Se eliminará para siempre la venta de ${venta.persona_nombre} por ${fmtSoles(venta.total)}. No se puede deshacer.`,
@@ -269,7 +276,7 @@ export default function SeccionVentas({
               <TutorialSeccion seccion="ventas" />
               <button
                 data-tour="ventas-nueva"
-                onClick={() => setShowNueva(true)}
+                onClick={() => permite('ventas_crear') ? setShowNueva(true) : openUpgrade()}
                 className="btn-shine flex shrink-0 items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-extrabold text-tori-700 shadow-lg shadow-black/10 transition-all hover:shadow-xl hover:shadow-black/15 active:scale-[0.98]"
               >
                 <Plus size={17} /> Nueva venta
@@ -377,7 +384,7 @@ export default function SeccionVentas({
           LISTA
           ================================================================= */}
       {ventas.length === 0 ? (
-        <Vacio hayFiltro={hayFiltro} onLimpiar={() => { setFiltroEstado(''); setBusqueda('') }} onNueva={() => setShowNueva(true)} />
+        <Vacio hayFiltro={hayFiltro} onLimpiar={() => { setFiltroEstado(''); setBusqueda('') }} onNueva={() => permite('ventas_crear') ? setShowNueva(true) : openUpgrade()} />
       ) : (
         <>
           {/* --- Escritorio: tabla --- */}

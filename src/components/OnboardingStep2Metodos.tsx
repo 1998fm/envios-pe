@@ -1,5 +1,6 @@
 "use client";
 
+import {usePlan} from "@/context/PlanesContext";
 import TutorialConfiguracion from "./TutorialConfiguracion";
 import AutocompleteInput from "@/components/AutocompleteInput";
 import type { ConfigState } from "@/types/config";
@@ -7,6 +8,7 @@ import { useAgenciasShalom } from "@/lib/hooks/useAgenciasShalom";
 import { Bike, Truck, Package, Ship, Flower2, Plus, Store } from "lucide-react";
 
 type Props = {
+  plan?:string;
   basico?: boolean;
   config: ConfigState;
   upd: <K extends keyof ConfigState>(key: K, value: ConfigState[K]) => void;
@@ -61,7 +63,9 @@ export default function OnboardingStep2Metodos({
   config,
   upd,
   basico = false,
+  plan="basic",
 }: Props) {
+ const {permite,configuracion:planConfig}=usePlan(plan);
   const { agencias: agenciasShalom } = useAgenciasShalom();
 
   return (
@@ -79,9 +83,9 @@ export default function OnboardingStep2Metodos({
         </p>
       </div>
 
-      {basico && (
+      {planConfig.max_metodos!==null && (
         <p className="text-xs text-slate-500">
-          Básico permite hasta 2 métodos de entrega.
+          Tu plan permite hasta {planConfig.max_metodos} métodos de entrega.
         </p>
       )}
       <div className="space-y-3">
@@ -99,9 +103,7 @@ export default function OnboardingStep2Metodos({
               <input
                 type="checkbox"
                 disabled={
-                  basico &&
-                  !config[item.key] &&
-                  metodos.filter((m) => config[m.key]).length >= 2
+                  !permite('metodos') || (planConfig.max_metodos!==null && !config[item.key] && metodos.filter((m) => config[m.key]).length >= planConfig.max_metodos)
                 }
                 checked={config[item.key]}
                 onChange={(e) => upd(item.key, e.target.checked)}

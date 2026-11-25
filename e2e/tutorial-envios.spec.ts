@@ -153,6 +153,6 @@ test("El selector de estado refleja un cambio masivo recibido del servidor", asy
     card
       .locator('[data-tour="estado"]')
       .getByRole("button", { name: "Empacado", exact: true }),
-  ).toBeVisible({ timeout: 20000 });
+  ).toBeVisible({ timeout: 40000 }); // El refresco de Envíos usa 30 s para reducir egress.
   await api.dispose();
 });

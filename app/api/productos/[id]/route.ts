@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { imagenEnUso } from '@/lib/productos/imagenes'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
@@ -32,6 +33,8 @@ async function borrarArchivoProducto(imagenUrl: string | null | undefined) {
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'productos_editar');
+  if(permisoPlan)return permisoPlan;
   const { id } = await params
   const body = await request.json()
 
@@ -47,6 +50,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (!actual) {
     return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
   }
+
+  if(body.imagen_url!==undefined && validarImagenUrl(body.imagen_url)!==actual.imagen_url){const imagen=requireFunciones(auth,'productos_fotos');if(imagen)return imagen;}
 
   // El stock NUNCA se escribe directo en el PUT: para cambiarlo se exige un
   // motivo y se usa el RPC ajustar_stock (queda registrado en el kardex).
@@ -114,6 +119,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_productos')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'productos_eliminar');
+  if(permisoPlan)return permisoPlan;
   const { id } = await params
 
   // Leer la URL de la foto ANTES de eliminar el registro

@@ -1,5 +1,7 @@
 'use client'
 
+import {usePlan} from '@/context/PlanesContext'
+import {FUNCION_CAMPO_CONFIG} from '@/lib/planCamposConfig'
 import TutorialConfiguracion from '@/components/TutorialConfiguracion'
 import Modal from '@/components/ui/Modal'
 import ConfiguracionMetodo from '@/components/ConfiguracionMetodo'
@@ -41,24 +43,26 @@ function ModalConfiguracionContenido({
     }
   }, [abierto, startTour])
 
-  const isBasic = plan === 'basic'
+  const {permite,configuracion:planConfig}=usePlan(plan)
+  const isBasic = !permite('tarifas')
 
   const tabs = [
-    { key: 'EMPRESA', label: 'Empresa' },
-    { key: 'METODOS', label: 'Métodos' },
+    { key: 'EMPRESA', label: 'Empresa',locked:!permite('empresa') && !permite('logo') && !permite('redes') },
+    { key: 'METODOS', label: 'Métodos',locked:!permite('metodos') },
     { key: 'LOGISTICA' as const, label: 'Logística' },
     { key: 'TARIFAS' as const, label: 'Tarifas', locked: isBasic },
   ]
 
   function upd<K extends keyof typeof config>(key: K, value: (typeof config)[K]) {
+    if(FUNCION_CAMPO_CONFIG[key]&&!permite(FUNCION_CAMPO_CONFIG[key])){onUpgrade?.();return}
     setConfig(prev => ({ ...prev, [key]: value }))
   }
 
   function setter<K extends keyof typeof config>(key: K): React.Dispatch<React.SetStateAction<(typeof config)[K]>> {
-    return (value) => setConfig(prev => ({
+    return (value) => {if(FUNCION_CAMPO_CONFIG[key]&&!permite(FUNCION_CAMPO_CONFIG[key])){onUpgrade?.();return} setConfig(prev => ({
       ...prev,
       [key]: typeof value === 'function' ? (value as (prev: (typeof config)[K]) => (typeof config)[K])(prev[key]) : value,
-    }))
+    }))}
   }
 
   return (
@@ -146,7 +150,7 @@ function ModalConfiguracionContenido({
                   />
               </div>
 
-              {isBasic ? (
+              {!permite('logo') ? (
                 <div className="p-5 border border-dashed border-slate-300 rounded-2xl bg-slate-50 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center">
@@ -185,7 +189,7 @@ function ModalConfiguracionContenido({
                 </div>
               )}
 
-              {plan !== 'business_plus' ? (
+              {!permite('redes') ? (
                 <div className="p-5 border border-dashed border-slate-300 rounded-2xl bg-slate-50 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center">
@@ -242,8 +246,8 @@ function ModalConfiguracionContenido({
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 mb-1">Métodos de envío</h3>
                   <p className="text-sm text-slate-500">
-                    {isBasic
-                      ? `Selecciona hasta ${maxMetodos ?? 2} métodos de envío para ofrecer a tus clientes.`
+                    {planConfig.max_metodos!==null
+                      ? `Selecciona hasta ${planConfig.max_metodos} métodos de envío para ofrecer a tus clientes.`
                       : 'Activa los métodos que ofrecerás a tus clientes.'}
                   </p>
                 </div>
@@ -271,8 +275,7 @@ function ModalConfiguracionContenido({
                   ].filter(Boolean).length
 
                   const checked = config[item.key]
-                  const topeMetodos = maxMetodos ?? 2
-                  const disabled = isBasic && !checked && metodosActivos >= topeMetodos
+                  const disabled = !permite('metodos') || (!checked && planConfig.max_metodos!==null && metodosActivos >= planConfig.max_metodos)
                   const Icon = item.icon
 
                   return (
@@ -357,7 +360,7 @@ function ModalConfiguracionContenido({
                         <AyudaLogistica className="ml-auto" />
                       </div>
                       <ConfiguracionMetodo
-                        bloqueado={isBasic}
+                        bloqueado={false} permisos={{anticipacion:permite('logistica_anticipacion'),corte:permite('logistica_corte'),cupo:permite('logistica_cupo')}}
                         onUpgrade={onUpgrade}
                         dias={config.logisticaMotoDias}
                         setDias={setter('logisticaMotoDias')}
@@ -378,8 +381,8 @@ function ModalConfiguracionContenido({
                       <label className="flex items-center gap-3 cursor-pointer mt-5 pt-4 border-t border-slate-100">
                         <input
                           type="checkbox"
-                          disabled={isBasic}
-                          checked={!isBasic && config.mostrarEscogerFecha}
+                          disabled={!permite('escoger_fecha')}
+                          checked={permite('escoger_fecha') && config.mostrarEscogerFecha}
                           onChange={(e) => upd('mostrarEscogerFecha', e.target.checked)}
                           className="accent-sky-600 w-4 h-4"
                         />
@@ -402,7 +405,7 @@ function ModalConfiguracionContenido({
                           <AyudaLogistica className="ml-auto" />
                         </div>
                         <ConfiguracionMetodo
-                          bloqueado={isBasic}
+                          bloqueado={false} permisos={{anticipacion:permite('logistica_anticipacion'),corte:permite('logistica_corte'),cupo:permite('logistica_cupo')}}
                           onUpgrade={onUpgrade}
                           dias={config.logisticaAgenciasDias}
                           setDias={setter('logisticaAgenciasDias')}
@@ -436,7 +439,7 @@ function ModalConfiguracionContenido({
                 ¿Necesitas más funciones?
               </p>
               <p className="text-xs text-amber-700  mt-1">
-                Actualiza a Plus y obtén logo personalizado, tarifas, control logístico y más.
+                Consulta las funciones disponibles en cada plan.
               </p>
               <button
                 onClick={onUpgrade}

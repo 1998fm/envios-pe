@@ -1,5 +1,7 @@
 'use client'
 
+import {usePlan} from '@/context/PlanesContext'
+import {FUNCION_CAMPO_CONFIG} from '@/lib/planCamposConfig'
 import { useRef, useState } from 'react'
 import {
   ClipboardList,
@@ -129,10 +131,12 @@ function Grupo({ children }: { children: React.ReactNode }) {
 }
 
 export default function SeccionFormulario({ userId, config, setConfig, guardarConfiguracion, plan = 'basic', onUpgrade, distritosMotorizado }: Props) {
-  const isBasic = plan === 'basic'
+  const {permite}=usePlan(plan)
+  const isBasic = !permite('redirect')
   const [avanzado, setAvanzado] = useState<Record<string, boolean>>({})
 
   function guardarForm<K extends keyof ConfigState>(key: K, value: ConfigState[K]) {
+    if(FUNCION_CAMPO_CONFIG[key]&&!permite(FUNCION_CAMPO_CONFIG[key])){onUpgrade?.();return}
     setConfig(prev => ({ ...prev, [key]: value }))
     guardarConfiguracion({ [key]: value } as Partial<ConfigState>)
   }
@@ -145,6 +149,7 @@ export default function SeccionFormulario({ userId, config, setConfig, guardarCo
   const timerColor = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function guardarColor<T extends 'colorPrimario' | 'colorSecundario'>(key: T, value: ConfigState[T]) {
+    if(FUNCION_CAMPO_CONFIG[key]&&!permite(FUNCION_CAMPO_CONFIG[key])){onUpgrade?.();return}
     setConfig(prev => ({ ...prev, [key]: value }))
     pendientesColor.current[key] = value
     if (timerColor.current) clearTimeout(timerColor.current)
@@ -236,8 +241,8 @@ export default function SeccionFormulario({ userId, config, setConfig, guardarCo
                   <div className="space-y-3">
                     <textarea
                       value={config.redirectMessage}
-                      onChange={(e) => setConfig(prev => ({ ...prev, redirectMessage: e.target.value }))}
-                      onBlur={() => guardarConfiguracion({ redirectMessage: config.redirectMessage })}
+                      onChange={(e) => permite('redirect') ? setConfig(prev => ({ ...prev, redirectMessage: e.target.value })) : onUpgrade?.()}
+                      onBlur={() => permite('redirect') && guardarConfiguracion({ redirectMessage: config.redirectMessage })}
                       rows={3}
                       className={inputClase}
                       placeholder="Gracias por tu compra. En unos segundos te redirigiremos."
@@ -251,6 +256,7 @@ export default function SeccionFormulario({ userId, config, setConfig, guardarCo
                         />
                         <button
                           onClick={() => {
+                            if(!permite('redirect')){onUpgrade?.();return}
                             setConfig(prev => ({ ...prev, redirectMessageImage: '', redirectMessageImageFile: null }))
                             guardarConfiguracion({ redirectMessageImage: '', redirectMessageImageFile: null })
                           }}
@@ -264,6 +270,7 @@ export default function SeccionFormulario({ userId, config, setConfig, guardarCo
                         type="file"
                         accept="image/png,image/jpeg,image/webp"
                         onChange={async (e) => {
+                          if(!permite('redirect')){onUpgrade?.();return}
                           const file = e.target.files?.[0] || null
                           const cv = file ? await comprimirImagenWebP(file) : null
                           setConfig(prev => ({ ...prev, redirectMessageImageFile: cv }))

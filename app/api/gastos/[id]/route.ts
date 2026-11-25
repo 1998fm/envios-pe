@@ -1,3 +1,4 @@
+import {requireFunciones} from '@/lib/negocioAuth'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from 'app/f/[slug]/lib/supabase/admin'
 import { requirePlus } from '@/lib/negocioAuth'
@@ -8,6 +9,8 @@ const CATEGORIAS_GASTO = ['MATERIALES', 'PASAJES', 'DELIVERY', 'PUBLICIDAD', 'SE
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_gastos')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'gastos_editar');
+  if(permisoPlan)return permisoPlan;
   const { id } = await params
   const body = await request.json()
 
@@ -44,6 +47,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlus('ver_gastos')
   if (!auth.ok) return auth.response
+  const permisoPlan=requireFunciones(auth,'gastos_eliminar');
+  if(permisoPlan)return permisoPlan;
   const { id } = await params
 
   const { data: borrados, error } = await supabaseAdmin
